@@ -49,3 +49,21 @@ Until the backend is hooked up: **frontend only**. Extend mocks, screens, and
 frontend view models. Do not change `frontend/src/types` (parity with
 `backend/app/schemas`, checked by contract tests) or any `backend/` code.
 See `docs/FRONTEND_MOCK_SCOPE.md`.
+
+## Decisions
+
+Confirmed: desktop-first product, backend independent; capability/provider
+abstraction; asset lineage; extension ecosystem.
+
+Provisional: Tauri 2 desktop shell; PostgreSQL for multi-user/hosted, SQLite
+optional local; S3-compatible storage; WebSockets real-time; evaluate Temporal
+vs simpler queue.
+
+Assumptions: Linux-first dev, cross-platform via CI; no local GPU required
+initially.
+
+## Open questions
+
+Extension isolation model; capability/provider contract details; large media
+storage; multi-tenant boundaries; local runtime install strategy;
+collaboration scope.

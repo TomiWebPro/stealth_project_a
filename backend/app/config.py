@@ -6,7 +6,7 @@ or a local SQLite database:
 
     STUDIO_STORAGE=sqlite STUDIO_SQLITE_PATH=./data/studio.db uvicorn app.main:app
 
-PostgreSQL is the target production store (see docs/ARCHITECTURE_DECISIONS.md);
+PostgreSQL is the target production store (see docs/SYSTEM_ARCHITECTURE.md);
 SQLite/in-memory are the Phase 2 local implementations behind the same document
 store interface.
 """

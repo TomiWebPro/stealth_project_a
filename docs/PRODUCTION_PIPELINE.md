@@ -2,7 +2,7 @@
 
 Canonical end-to-end spec for the AI film/animation pipeline. Builder agents
 treat this as normative for stage ordering, operation IDs, asset types, and
-folder mappings. App-level API rules live in `docs/API_ARCHITECTURE.md`;
+folder mappings. App-level API rules live in `docs/API.md`;
 on-disk rules live in `docs/PROJECT_FOLDERS.md`.
 
 ## 0. Mental model
@@ -68,7 +68,7 @@ applicable (test short may skip a category, but the slot exists).
   user-facing `settings` only (never raw node params), `provider_id` optional.
 - Common job lifecycle for all long ops: submit → job id → queued/running with
   progress + intermediate results → succeeded/failed/canceled → retry/recovery.
-  See `docs/API_ARCHITECTURE.md` §4.
+  See `docs/API.md` §4.
 
 ## 5. 3D / splat environments
 

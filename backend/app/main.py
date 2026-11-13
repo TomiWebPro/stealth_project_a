@@ -1,7 +1,7 @@
 """FastAPI application factory.
 
 Mounts the stable application API under ``/api/v1`` (see
-docs/API_ARCHITECTURE.md). All non-2xx responses use the shared error envelope.
+docs/API.md). All non-2xx responses use the shared error envelope.
 """
 
 from __future__ import annotations

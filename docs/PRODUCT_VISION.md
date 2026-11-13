@@ -198,4 +198,4 @@ runs, downstream demo tuning, filter thresholds, and real splat quality are
 projections, not facts.
 
 Roadmap implications: see `docs/DEVELOPMENT_ROADMAP.md` (GPU validation gate)
-and `docs/ARCHITECTURE_DECISIONS.md` (open questions with owners).
+and `docs/SYSTEM_ARCHITECTURE.md` (open questions).
