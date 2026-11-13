@@ -60,7 +60,9 @@ optional local; S3-compatible storage; WebSockets real-time; evaluate Temporal
 vs simpler queue.
 
 Assumptions: Linux-first dev, cross-platform via CI; no local GPU required
-initially.
+initially — and none needed for Phase 1b (CPU + mocks). One small shared box
+(Tesla M60 8 GB, `ssh gpu-resource`, see roadmap gate) exists for smoke
+validation if really needed, not for training.
 
 ## Open questions
 
