@@ -1,6 +1,7 @@
 import type { ApiClient } from "./apiClient";
 import type { HomeSummary } from "./homeSummary";
-import type { Asset, Project, Provider } from "./types";
+import type { ProjectDetail } from "./projectDetail";
+import type { Asset, Job, Project, Provider } from "./types";
 
 /**
  * Live HTTP client for the real application API.
@@ -30,8 +31,14 @@ export function createHttpApiClient(baseUrl: string): ApiClient {
   return {
     getHomeSummary: () => getJson<HomeSummary>("/home/summary"),
     listProjects: () => getJson<readonly Project[]>("/projects"),
+    getProject: (projectId) => getJson<Project | undefined>(`/projects/${projectId}`),
     listRecentAssets: (limit = 6) =>
       getJson<readonly Asset[]>(`/assets?limit=${limit}`),
+    listAssetsByProject: (projectId) =>
+      getJson<readonly Asset[]>(`/assets?project_id=${projectId}`),
+    listJobs: (projectId) =>
+      getJson<readonly Job[]>(projectId ? `/jobs?project_id=${projectId}` : "/jobs"),
+    getProjectDetail: (projectId) => getJson<ProjectDetail | undefined>(`/projects/${projectId}/detail`),
     listProviders: () => getJson<readonly Provider[]>("/providers"),
   };
 }

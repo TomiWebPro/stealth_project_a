@@ -1,4 +1,5 @@
 import { ApiProvider } from "./app/ApiProvider";
+import { AssetsBrowserScreen } from "./features/assets/AssetsBrowserScreen";
 import { HomeScreen } from "./features/home/HomeScreen";
 import { ProjectsScreen } from "./features/projects/ProjectsScreen";
 import { PlaceholderScreen } from "./features/PlaceholderScreen";
@@ -18,6 +19,9 @@ function CurrentScreen() {
   }
   if (activeRoute === "projects") {
     return <ProjectsScreen />;
+  }
+  if (activeRoute === "assets") {
+    return <AssetsBrowserScreen />;
   }
   return <PlaceholderScreen />;
 }

@@ -11,10 +11,16 @@ export const queryKeys = {
   },
   projects: {
     all: () => ["projects"] as const,
+    byId: (id: string) => ["projects", "by-id", id] as const,
     detail: (id: string) => ["projects", "detail", id] as const,
   },
   assets: {
     recent: (limit: number) => ["assets", "recent", limit] as const,
+    byProject: (projectId: string) => ["assets", "by-project", projectId] as const,
+  },
+  jobs: {
+    all: () => ["jobs"] as const,
+    byProject: (projectId: string) => ["jobs", "by-project", projectId] as const,
   },
   providers: {
     all: () => ["providers"] as const,

@@ -2,12 +2,20 @@ import { useProjects } from "../../hooks/useQueries";
 import { errorMessage } from "../../lib/errors";
 import type { Project } from "../../lib/types";
 import { PageHeader } from "../../layout/AppLayout";
+import { useUiStore } from "../../stores/uiStore";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ProjectDetailScreen } from "./ProjectDetailScreen";
 
-function ProjectRow({ project }: { readonly project: Project }) {
+function ProjectRow({
+  project,
+  onOpen,
+}: {
+  readonly project: Project;
+  readonly onOpen: (id: string) => void;
+}) {
   return (
     <li className="flex items-center justify-between gap-4 px-4 py-3">
       <div className="min-w-0">
@@ -23,6 +31,9 @@ function ProjectRow({ project }: { readonly project: Project }) {
         <time dateTime={project.updated_at}>
           {new Date(project.updated_at).toLocaleDateString()}
         </time>
+        <Button variant="secondary" size="sm" onClick={() => onOpen(project.id)}>
+          Open
+        </Button>
       </div>
     </li>
   );
@@ -39,13 +50,19 @@ function ProjectsSkeleton() {
 }
 
 export function ProjectsScreen() {
+  const selectedProjectId = useUiStore((s) => s.selectedProjectId);
+  const selectProject = useUiStore((s) => s.selectProject);
   const { data, isPending, isError, error, refetch } = useProjects();
+
+  if (selectedProjectId) {
+    return <ProjectDetailScreen projectId={selectedProjectId} />;
+  }
 
   return (
     <div>
       <PageHeader
         title="Projects"
-        description="Production work across your studio."
+        description="Production work across your studio. Open a project for detail, assets, jobs, and lineage."
         actions={
           <Button variant="secondary" size="sm" onClick={() => void refetch()}>
             Refresh
@@ -74,13 +91,13 @@ export function ProjectsScreen() {
           <div className="p-4">
             <SectionHeader
               title="All projects"
-              description="Mock data from the in-memory API client."
+              description="Select a project to view detail, assets, jobs, and lineage."
             />
           </div>
           {data.length > 0 ? (
             <ul className="divide-y divide-line border-t border-line">
               {data.map((project) => (
-                <ProjectRow key={project.id} project={project} />
+                <ProjectRow key={project.id} project={project} onOpen={selectProject} />
               ))}
             </ul>
           ) : (
