@@ -1,8 +1,8 @@
 import { ApiProvider } from "./app/ApiProvider";
 import { AssetsBrowserScreen } from "./features/assets/AssetsBrowserScreen";
 import { HomeScreen } from "./features/home/HomeScreen";
+import { JobsScreen } from "./features/jobs/JobsScreen";
 import { ProjectsScreen } from "./features/projects/ProjectsScreen";
-import { PlaceholderScreen } from "./features/PlaceholderScreen";
 import { AppHeader } from "./layout/AppHeader";
 import { AppLayout } from "./layout/AppLayout";
 import { AppSidebar } from "./layout/AppSidebar";
@@ -23,7 +23,7 @@ function CurrentScreen() {
   if (activeRoute === "assets") {
     return <AssetsBrowserScreen />;
   }
-  return <PlaceholderScreen />;
+  return <JobsScreen />;
 }
 
 /**

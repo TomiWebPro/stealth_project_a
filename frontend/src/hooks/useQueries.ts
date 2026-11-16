@@ -38,6 +38,22 @@ export function useProjectDetail(projectId: string): UseQueryResult<ProjectDetai
   });
 }
 
+export function useAssets(): UseQueryResult<readonly Asset[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.assets.all(),
+    queryFn: () => api.listAssets(),
+  });
+}
+
+export function useAsset(assetId: string): UseQueryResult<Asset | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.assets.byId(assetId),
+    queryFn: () => api.getAsset(assetId),
+  });
+}
+
 export function useRecentAssets(limit = 6): UseQueryResult<readonly Asset[]> {
   const api = useApiClient();
   return useQuery({
@@ -54,11 +70,31 @@ export function useAssetsByProject(projectId: string): UseQueryResult<readonly A
   });
 }
 
-export function useJobs(projectId?: string): UseQueryResult<readonly Job[]> {
+export function useJobs(
+  projectId?: string,
+  status?: Job["status"],
+): UseQueryResult<readonly Job[]> {
+  const api = useApiClient();
+  const params = projectId || status ? { projectId, status } : undefined;
+  return useQuery({
+    queryKey: params ? queryKeys.jobs.list(params) : queryKeys.jobs.all(),
+    queryFn: () => api.listJobs(projectId, status),
+  });
+}
+
+export function useJobsByProject(projectId: string): UseQueryResult<readonly Job[]> {
   const api = useApiClient();
   return useQuery({
-    queryKey: projectId ? queryKeys.jobs.byProject(projectId) : queryKeys.jobs.all(),
-    queryFn: () => api.listJobs(projectId),
+    queryKey: queryKeys.jobs.byProject(projectId),
+    queryFn: () => api.listJobsByProject(projectId),
+  });
+}
+
+export function useJob(jobId: string): UseQueryResult<Job | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.jobs.byId(jobId),
+    queryFn: () => api.getJob(jobId),
   });
 }
 
@@ -67,5 +103,13 @@ export function useProviders(): UseQueryResult<readonly Provider[]> {
   return useQuery({
     queryKey: queryKeys.providers.all(),
     queryFn: () => api.listProviders(),
+  });
+}
+
+export function useProvider(providerId: string): UseQueryResult<Provider | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.providers.byId(providerId),
+    queryFn: () => api.getProvider(providerId),
   });
 }

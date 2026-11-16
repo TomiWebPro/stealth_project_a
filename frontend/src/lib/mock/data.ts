@@ -364,7 +364,11 @@ export const ASSETS: readonly Asset[] = [
         sequence: "s01",
         lora_slot: "character",
         trigger_word: "moonAstronaut",
-        publish_receipt: { comment: "s01 approved character LoRA", sidecar: "config hash pinned" },
+        publish_receipt: {
+          comment: "s01 approved character LoRA",
+          publisher: CREATOR_ID,
+          sidecar: "Publish/moonAstronaut.sidecar.json",
+        },
       },
     },
   ),
@@ -384,7 +388,16 @@ export const ASSETS: readonly Asset[] = [
         job_id: "0b5c1e2a-3000-4000-8000-000000000013",
         provider_id: "prov_train",
       },
-      metadata: { sequence: "s01", lora_slot: "prop", trigger_word: "moonBuggy" },
+      metadata: {
+        sequence: "s01",
+        lora_slot: "prop",
+        trigger_word: "moonBuggy",
+        publish_receipt: {
+          comment: "s01 approved prop LoRA",
+          publisher: CREATOR_ID,
+          sidecar: "Publish/moonBuggy.sidecar.json",
+        },
+      },
     },
   ),
   pipelineAsset(
@@ -402,7 +415,16 @@ export const ASSETS: readonly Asset[] = [
         operation_id: "lora-train",
         provider_id: "prov_train",
       },
-      metadata: { sequence: "s01", lora_slot: "environment", trigger_word: "moonSurface" },
+      metadata: {
+        sequence: "s01",
+        lora_slot: "environment",
+        trigger_word: "moonSurface",
+        publish_receipt: {
+          comment: "s01 approved environment LoRA",
+          publisher: CREATOR_ID,
+          sidecar: "Publish/moonSurface.sidecar.json",
+        },
+      },
     },
   ),
   pipelineAsset(
@@ -434,10 +456,10 @@ export const ASSETS: readonly Asset[] = [
     PROJECT_IDS.moonshot,
     "s01_c01_v001.mp4",
     "video",
-    "moonshot/Shots/s01_c01/Ver_001/Compose/Output/s01_c01_v001.mp4",
+    "moonshot/Shots/s01_c01/Ver_001/Compose/Publish/s01_c01_v001.mp4",
     "video/mp4",
     null,
-    ["shot", "s01_c01"],
+    ["shot", "s01_c01", "published"],
     8,
     {
       provenance: {
@@ -452,7 +474,15 @@ export const ASSETS: readonly Asset[] = [
         "0b5c1e2a-2000-4000-8000-000000000014",
         "0b5c1e2a-2000-4000-8000-000000000015",
       ],
-      metadata: { sequence: "s01", shot: "s01_c01" },
+      metadata: {
+        sequence: "s01",
+        shot: "s01_c01",
+        publish_receipt: {
+          comment: "Approved s01_c01 final cut",
+          publisher: CREATOR_ID,
+          sidecar: "Publish/s01_c01_v001.sidecar.json",
+        },
+      },
     },
   ),
   pipelineAsset(
@@ -616,6 +646,89 @@ export const ASSETS: readonly Asset[] = [
       },
     },
   ),
+  // --- Moonshot s02_c02: second shot in s02, still reusing the same three LoRAs.
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000025",
+    PROJECT_IDS.moonshot,
+    "s02_c02-first_v001.png",
+    "image",
+    "moonshot/Shots/s02_c02/Ver_001/Compose/Output/first_v001.png",
+    "image/png",
+    25,
+    ["shot", "first-frame", "s02_c02"],
+    3,
+    {
+      provenance: {
+        operation_id: "image-to-image",
+        prompt: "s02_c02 first frame, moonAstronaut parks moonBuggy on moonSurface ridge",
+        provider_id: "prov_comfy",
+      },
+      parentAssetIds: [
+        "0b5c1e2a-2000-4000-8000-000000000013",
+        "0b5c1e2a-2000-4000-8000-000000000014",
+        "0b5c1e2a-2000-4000-8000-000000000015",
+      ],
+      metadata: { sequence: "s02", shot: "s02_c02" },
+    },
+  ),
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000027",
+    PROJECT_IDS.moonshot,
+    "s02_c02-last_v001.png",
+    "image",
+    "moonshot/Shots/s02_c02/Ver_001/Compose/Output/last_v001.png",
+    "image/png",
+    26,
+    ["shot", "last-frame", "s02_c02"],
+    3,
+    {
+      provenance: {
+        operation_id: "image-to-image",
+        prompt: "s02_c02 last frame, buggy settled on ridge, dust cloud drifting",
+        provider_id: "prov_comfy",
+      },
+      parentAssetIds: [
+        "0b5c1e2a-2000-4000-8000-000000000013",
+        "0b5c1e2a-2000-4000-8000-000000000014",
+        "0b5c1e2a-2000-4000-8000-000000000015",
+      ],
+      metadata: { sequence: "s02", shot: "s02_c02" },
+    },
+  ),
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000026",
+    PROJECT_IDS.moonshot,
+    "s02_c02_v001.mp4",
+    "video",
+    "moonshot/Shots/s02_c02/Ver_001/Compose/Publish/s02_c02_v001.mp4",
+    "video/mp4",
+    null,
+    ["shot", "s02_c02", "published"],
+    2,
+    {
+      provenance: {
+        operation_id: "flf2v",
+        prompt: "s02_c02 buggy settles on ridge, dust kick, shared LoRAs",
+        provider_id: "prov_cloud",
+      },
+      parentAssetIds: [
+        "0b5c1e2a-2000-4000-8000-000000000025",
+        "0b5c1e2a-2000-4000-8000-000000000027",
+        "0b5c1e2a-2000-4000-8000-000000000013",
+        "0b5c1e2a-2000-4000-8000-000000000014",
+        "0b5c1e2a-2000-4000-8000-000000000015",
+      ],
+      metadata: {
+        sequence: "s02",
+        shot: "s02_c02",
+        publish_receipt: {
+          comment: "s02_c02 ridge beat approved",
+          publisher: CREATOR_ID,
+          sidecar: "Publish/s02_c02_v001.sidecar.json",
+        },
+      },
+    },
+  ),
 ];
 
 function job(
@@ -713,3 +826,9 @@ export const PROVIDERS: readonly Provider[] = [
     "splat-train",
   ]),
 ];
+
+/** Projects that are archived (for drill/filter states). */
+export const ARCHIVED_PROJECTS: readonly Project[] = PROJECTS.filter(
+  (project) => project.archived,
+);
+

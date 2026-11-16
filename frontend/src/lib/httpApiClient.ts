@@ -32,13 +32,26 @@ export function createHttpApiClient(baseUrl: string): ApiClient {
     getHomeSummary: () => getJson<HomeSummary>("/home/summary"),
     listProjects: () => getJson<readonly Project[]>("/projects"),
     getProject: (projectId) => getJson<Project | undefined>(`/projects/${projectId}`),
+    listAssets: () => getJson<readonly Asset[]>("/assets"),
+    getAsset: (assetId) => getJson<Asset | undefined>(`/assets/${assetId}`),
     listRecentAssets: (limit = 6) =>
       getJson<readonly Asset[]>(`/assets?limit=${limit}`),
     listAssetsByProject: (projectId) =>
       getJson<readonly Asset[]>(`/assets?project_id=${projectId}`),
-    listJobs: (projectId) =>
-      getJson<readonly Job[]>(projectId ? `/jobs?project_id=${projectId}` : "/jobs"),
-    getProjectDetail: (projectId) => getJson<ProjectDetail | undefined>(`/projects/${projectId}/detail`),
+    listJobs: (projectId, status) => {
+      const params = new URLSearchParams();
+      if (projectId) params.set("project_id", projectId);
+      if (status) params.set("status", status);
+      const query = params.toString();
+      return getJson<readonly Job[]>(query ? `/jobs?${query}` : "/jobs");
+    },
+    listJobsByProject: (projectId) =>
+      getJson<readonly Job[]>(`/jobs?project_id=${projectId}`),
+    getJob: (jobId) => getJson<Job | undefined>(`/jobs/${jobId}`),
+    getProjectDetail: (projectId) =>
+      getJson<ProjectDetail | undefined>(`/projects/${projectId}/detail`),
     listProviders: () => getJson<readonly Provider[]>("/providers"),
+    getProvider: (providerId) =>
+      getJson<Provider | undefined>(`/providers/${providerId}`),
   };
 }

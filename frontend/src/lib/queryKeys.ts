@@ -15,14 +15,20 @@ export const queryKeys = {
     detail: (id: string) => ["projects", "detail", id] as const,
   },
   assets: {
+    all: () => ["assets"] as const,
+    byId: (id: string) => ["assets", "by-id", id] as const,
     recent: (limit: number) => ["assets", "recent", limit] as const,
     byProject: (projectId: string) => ["assets", "by-project", projectId] as const,
   },
   jobs: {
     all: () => ["jobs"] as const,
+    byId: (id: string) => ["jobs", "by-id", id] as const,
     byProject: (projectId: string) => ["jobs", "by-project", projectId] as const,
+    list: (params: { projectId?: string; status?: string } = {}) =>
+      ["jobs", "list", params] as const,
   },
   providers: {
     all: () => ["providers"] as const,
+    byId: (id: string) => ["providers", "by-id", id] as const,
   },
 } as const;

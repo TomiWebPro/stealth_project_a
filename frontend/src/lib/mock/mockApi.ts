@@ -72,11 +72,20 @@ export async function fetchAssetsByProject(projectId: string): Promise<readonly 
   return delay(assets);
 }
 
-export async function fetchJobs(projectId?: string): Promise<readonly Job[]> {
-  const jobs = (projectId ? JOBS.filter((job) => job.project_id === projectId) : [...JOBS]).sort(
-    (a, b) => b.created_at.localeCompare(a.created_at),
-  );
+export async function fetchJobs(
+  projectId?: string,
+  status?: Job["status"],
+): Promise<readonly Job[]> {
+  const jobs = JOBS.filter((job) => {
+    if (projectId && job.project_id !== projectId) return false;
+    if (status && job.status !== status) return false;
+    return true;
+  }).sort((a, b) => b.created_at.localeCompare(a.created_at));
   return delay(jobs);
+}
+
+export async function fetchJobsByProject(projectId: string): Promise<readonly Job[]> {
+  return fetchJobs(projectId);
 }
 
 export async function fetchProjectDetail(projectId: string): Promise<ProjectDetail | undefined> {
@@ -97,4 +106,21 @@ export async function fetchProjectDetail(projectId: string): Promise<ProjectDeta
 
 export async function fetchProviders(): Promise<readonly Provider[]> {
   return delay(PROVIDERS);
+}
+
+export async function fetchAssets(): Promise<readonly Asset[]> {
+  const assets = [...ASSETS].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return delay(assets);
+}
+
+export async function fetchAsset(assetId: string): Promise<Asset | undefined> {
+  return delay(ASSETS.find((asset) => asset.id === assetId));
+}
+
+export async function fetchJob(jobId: string): Promise<Job | undefined> {
+  return delay(JOBS.find((job) => job.id === jobId));
+}
+
+export async function fetchProvider(providerId: string): Promise<Provider | undefined> {
+  return delay(PROVIDERS.find((provider) => provider.id === providerId));
 }

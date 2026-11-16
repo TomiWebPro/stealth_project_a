@@ -9,6 +9,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { LineageView } from "../lineage/LineageView";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
+import { formatProjectUpdatedAtLong } from "./helpers";
 
 function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
   const selectProject = useUiStore((s) => s.selectProject);
@@ -100,7 +101,7 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
           </div>
           <div>
             <dt className="text-xs text-content-muted">Updated</dt>
-            <dd className="mt-1 text-content">{new Date(project.updated_at).toLocaleString()}</dd>
+            <dd className="mt-1 text-content">{formatProjectUpdatedAtLong(project.updated_at)}</dd>
           </div>
         </dl>
       </Card>

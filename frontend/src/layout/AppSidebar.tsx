@@ -83,10 +83,9 @@ export function AppSidebar() {
 
       {collapsed ? null : (
         <div className="mt-auto rounded-md border border-line bg-surface-raised p-3 text-xs text-content-muted">
-          <p className="font-medium text-content">Phase 1 · Shell</p>
+          <p className="font-medium text-content">Phase 1b · Mock screens</p>
           <p className="mt-1 leading-relaxed">
-            Navigation and design system. Screens beyond Home land in upcoming
-            phases.
+            Projects, assets, jobs, and lineage render from the mock API client.
           </p>
         </div>
       )}

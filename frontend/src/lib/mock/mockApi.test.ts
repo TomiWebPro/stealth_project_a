@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  fetchAsset,
+  fetchAssets,
   fetchAssetsByProject,
   fetchHomeSummary,
+  fetchJob,
   fetchJobs,
+  fetchJobsByProject,
   fetchProject,
   fetchProjectDetail,
   fetchProjects,
+  fetchProvider,
+  fetchProviders,
   fetchRecentAssets,
 } from "./mockApi";
 
@@ -89,11 +95,20 @@ describe("mock API list helpers", () => {
     const empty = projects.find((project) => project.name.startsWith("Blank Slate"));
     expect(empty).toBeDefined();
     if (!empty) return;
+    expect(empty.archived).toBe(false);
     await expect(fetchAssetsByProject(empty.id)).resolves.toEqual([]);
     await expect(fetchJobs(empty.id)).resolves.toEqual([]);
+    await expect(fetchJobs(empty.id, "failed")).resolves.toEqual([]);
     const detail = await fetchProjectDetail(empty.id);
     expect(detail?.assets).toEqual([]);
     expect(detail?.jobs).toEqual([]);
+  });
+
+  it("covers archived-only filter state with archived projects present", async () => {
+    const projects = await fetchProjects();
+    const archived = projects.filter((project) => project.archived);
+    expect(archived.length).toBeGreaterThan(0);
+    expect(archived.every((project) => project.name.startsWith("Archive"))).toBe(true);
   });
 
   it("lists jobs with full lifecycle coverage", async () => {
@@ -106,6 +121,18 @@ describe("mock API list helpers", () => {
     expect(failed?.error?.retryable).toBe(true);
   });
 
+  it("filters jobs by status", async () => {
+    const failed = await fetchJobs(undefined, "failed");
+    expect(failed.length).toBeGreaterThan(0);
+    expect(failed.every((job) => job.status === "failed")).toBe(true);
+    const projects = await fetchProjects();
+    const film = projects.find((project) => project.name.startsWith("Moonshot"));
+    expect(film).toBeDefined();
+    if (!film) return;
+    const filmFailed = await fetchJobs(film.id, "failed");
+    expect(filmFailed.every((job) => job.project_id === film.id && job.status === "failed")).toBe(true);
+  });
+
   it("scopes jobs by project", async () => {
     const projects = await fetchProjects();
     const target = projects.find((project) => !project.archived);
@@ -113,9 +140,11 @@ describe("mock API list helpers", () => {
     if (!target) return;
     const jobs = await fetchJobs(target.id);
     expect(jobs.every((job) => job.project_id === target.id)).toBe(true);
+    const byProject = await fetchJobsByProject(target.id);
+    expect(byProject).toEqual(jobs);
   });
 
-  it("surfaces failed retryable jobs through detail queries", async () => {
+  it("surfaces failed retryable jobs through detail and by-id queries", async () => {
     const projects = await fetchProjects();
     const film = projects.find((project) => project.name.startsWith("Moonshot"));
     expect(film).toBeDefined();
@@ -124,6 +153,14 @@ describe("mock API list helpers", () => {
     const failed = detail?.jobs.find((job) => job.status === "failed");
     expect(failed?.error?.retryable).toBe(true);
     expect(failed?.error?.code).toBe("TRAIN_OOM");
+    expect(failed).toBeDefined();
+    if (!failed) return;
+    await expect(fetchJob(failed.id)).resolves.toMatchObject({
+      id: failed.id,
+      status: "failed",
+      error: { code: "TRAIN_OOM", retryable: true },
+    });
+    await expect(fetchJob("00000000-0000-4000-8000-000000000000")).resolves.toBeUndefined();
   });
 
   it("returns project detail with matching assets and jobs", async () => {
@@ -154,14 +191,37 @@ describe("mock API list helpers", () => {
     const loraIds = assets.filter((asset) => asset.type === "lora").map((asset) => asset.id);
     expect(loraIds).toHaveLength(3);
 
-    const shots = ["s01_c01", "s01_c02", "s02_c01"] as const;
+    const firstFrames = assets.filter((asset) =>
+      (asset.tags ?? []).includes("first-frame"),
+    );
+    const lastFrames = assets.filter((asset) =>
+      (asset.tags ?? []).includes("last-frame"),
+    );
+    expect(firstFrames.length).toBeGreaterThan(0);
+    expect(lastFrames.length).toBeGreaterThan(0);
+
+    const shots = ["s01_c01", "s01_c02", "s02_c01", "s02_c02"] as const;
     for (const shot of shots) {
-      const video = assets.find((asset) => asset.type === "video" && asset.metadata?.["shot"] === shot);
+      const video = assets.find(
+        (asset) => asset.type === "video" && asset.metadata?.["shot"] === shot,
+      );
       expect(video).toBeDefined();
+      expect(String(video?.storage.key)).toContain("/Publish/");
+      const receipt = video?.metadata?.["publish_receipt"];
+      expect(typeof receipt).toBe("object");
       for (const loraId of loraIds) {
         expect(video?.parent_asset_ids).toContain(loraId);
       }
     }
+
+    const flf2v = assets.find(
+      (asset) => asset.type === "video" && asset.provenance?.operation_id === "flf2v",
+    );
+    expect(flf2v).toBeDefined();
+    const flf2vLast = lastFrames.find((asset) =>
+      (flf2v?.parent_asset_ids ?? []).includes(asset.id),
+    );
+    expect(flf2vLast).toBeDefined();
 
     const sequences = new Set(
       assets
@@ -176,10 +236,40 @@ describe("mock API list helpers", () => {
     );
     expect(published.length).toBeGreaterThan(0);
     expect(
-      published.some((asset) => {
-        const receipt = asset.metadata?.["publish_receipt"];
-        return typeof receipt === "object" && receipt !== null;
+      published.every((asset) => {
+        const receipt = asset.metadata?.["publish_receipt"] as
+          | { comment?: unknown; publisher?: unknown; sidecar?: unknown }
+          | undefined;
+        return (
+          typeof receipt?.comment === "string" &&
+          typeof receipt?.publisher === "string" &&
+          typeof receipt?.sidecar === "string"
+        );
       }),
     ).toBe(true);
+  });
+
+  it("fetches assets and single assets by id", async () => {
+    const assets = await fetchAssets();
+    expect(assets.length).toBeGreaterThan(0);
+    const createdTimes = assets.map((asset) => Date.parse(asset.created_at));
+    expect(createdTimes).toEqual([...createdTimes].sort((a, b) => b - a));
+    const target = assets[0];
+    expect(target).toBeDefined();
+    if (!target) return;
+    await expect(fetchAsset(target.id)).resolves.toMatchObject({ id: target.id });
+    await expect(
+      fetchAsset("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("fetches providers and a single provider by id", async () => {
+    const providers = await fetchProviders();
+    expect(providers.length).toBeGreaterThan(0);
+    const local = await fetchProvider("prov_local");
+    expect(local?.name).toBe("Local Runtime");
+    await expect(
+      fetchProvider("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
   });
 });

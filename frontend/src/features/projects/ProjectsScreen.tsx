@@ -7,6 +7,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { formatProjectUpdatedAt } from "./helpers";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
 
 function ProjectRow({
@@ -28,9 +29,7 @@ function ProjectRow({
         <Badge tone={project.archived ? "neutral" : "success"}>
           {project.archived ? "Archived" : "Active"}
         </Badge>
-        <time dateTime={project.updated_at}>
-          {new Date(project.updated_at).toLocaleDateString()}
-        </time>
+        <time dateTime={project.updated_at}>{formatProjectUpdatedAt(project.updated_at)}</time>
         <Button variant="secondary" size="sm" onClick={() => onOpen(project.id)}>
           Open
         </Button>
