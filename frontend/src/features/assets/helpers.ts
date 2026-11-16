@@ -108,7 +108,7 @@ export function groupAssetsByShot(assets: readonly Asset[]): readonly ShotGroup[
   return Array.from(groups.entries())
     .map(([key, value]) => ({
       key,
-      label: value.sequence && value.shot ? `${value.sequence} / ${value.shot}` : (value.shot ?? value.sequence ?? "Unassigned"),
+      label: value.shot ?? value.sequence ?? "Unassigned",
       sequence: value.sequence,
       shot: value.shot,
       assets: value.assets,
