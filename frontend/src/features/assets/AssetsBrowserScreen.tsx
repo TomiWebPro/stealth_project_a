@@ -15,8 +15,11 @@ import {
   assetTypeTone,
   filterAssets,
   formatAssetMeta,
+  groupAssetsByShot,
   isPublishAsset,
+  shotGroupSummary,
 } from "./helpers";
+import { VersionPanel } from "./VersionPanel";
 
 type ViewMode = "grid" | "list";
 
@@ -83,6 +86,7 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
     () => (data ? filterAssets(data, search, typeFilter) : []),
     [data, search, typeFilter],
   );
+  const shotGroups = useMemo(() => groupAssetsByShot(filtered), [filtered]);
 
   if (isPending) {
     return (
@@ -198,6 +202,41 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
           </ul>
         )}
       </Card>
+
+      <Card>
+        <div className="p-4">
+          <SectionHeader
+            title="Shot/sequence browser"
+            description={`${shotGroupSummary(shotGroups)} grouped by metadata.sequence/shot (s01_c01 style).`}
+          />
+        </div>
+        {shotGroups.length === 0 ? (
+          <div className="border-t border-line p-4">
+            <EmptyState
+              title="No shot-tagged assets"
+              description="Assets with metadata.sequence or metadata.shot will appear grouped here."
+            />
+          </div>
+        ) : (
+          <div className="space-y-4 border-t border-line p-4">
+            {shotGroups.map((group) => (
+              <section key={group.key} aria-label={`Shot group ${group.label}`}>
+                <div className="mb-2 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-content">{group.label}</h3>
+                  <Badge tone="info">{String(group.assets.length)}</Badge>
+                </div>
+                <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {group.assets.map((asset) => (
+                    <AssetGridItem key={asset.id} asset={asset} />
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <VersionPanel assets={filtered} />
     </div>
   );
 }

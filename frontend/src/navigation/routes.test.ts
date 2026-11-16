@@ -22,7 +22,17 @@ describe("routes", () => {
   });
 
   it("round-trips every navigable route through path helpers", () => {
-    for (const route of ["home", "chat", "projects", "assets", "settings"] as const) {
+    for (const route of [
+      "home",
+      "chat",
+      "projects",
+      "assets",
+      "jobs",
+      "workspaces",
+      "extensions",
+      "providers",
+      "settings",
+    ] as const) {
       expect(isRouteId(route)).toBe(true);
       expect(pathToRoute(routeToPath(route))).toBe(route);
     }

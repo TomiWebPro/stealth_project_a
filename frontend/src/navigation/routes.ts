@@ -11,8 +11,10 @@ export type RouteId =
   | "chat"
   | "projects"
   | "assets"
+  | "jobs"
   | "workspaces"
   | "extensions"
+  | "providers"
   | "settings";
 
 export interface NavItem {
@@ -40,6 +42,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { id: "chat", label: "Chat", description: "Conversational workspace", glyph: "✦" },
       { id: "projects", label: "Projects", description: "Organize production work", glyph: "▤" },
       { id: "assets", label: "Assets", description: "Library and lineage", glyph: "◈" },
+      { id: "jobs", label: "Jobs", description: "Tasks and pipeline runs", glyph: "◷" },
     ],
   },
   {
@@ -48,6 +51,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     items: [
       { id: "workspaces", label: "Workspaces", description: "Shared team spaces", glyph: "⬡" },
       { id: "extensions", label: "Extensions", description: "Connectors and add-ons", glyph: "⌘" },
+      { id: "providers", label: "Providers", description: "Local and cloud capabilities", glyph: "☁" },
       { id: "settings", label: "Settings", description: "Preferences and connections", glyph: "⚙" },
     ],
   },

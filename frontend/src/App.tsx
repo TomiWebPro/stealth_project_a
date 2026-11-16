@@ -2,7 +2,10 @@ import { ApiProvider } from "./app/ApiProvider";
 import { AssetsBrowserScreen } from "./features/assets/AssetsBrowserScreen";
 import { HomeScreen } from "./features/home/HomeScreen";
 import { JobsScreen } from "./features/jobs/JobsScreen";
+import { PlaceholderScreen } from "./features/placeholder/PlaceholderScreen";
 import { ProjectsScreen } from "./features/projects/ProjectsScreen";
+import { ProvidersScreen } from "./features/providers/ProvidersScreen";
+import { WorkspacesScreen } from "./features/workspaces/WorkspacesScreen";
 import { AppHeader } from "./layout/AppHeader";
 import { AppLayout } from "./layout/AppLayout";
 import { AppSidebar } from "./layout/AppSidebar";
@@ -14,16 +17,51 @@ const apiClient = resolveApiClient();
 function CurrentScreen() {
   const activeRoute = useUiStore((state) => state.activeRoute);
 
-  if (activeRoute === "home") {
-    return <HomeScreen />;
+  switch (activeRoute) {
+    case "home":
+      return <HomeScreen />;
+    case "chat":
+      return (
+        <PlaceholderScreen
+          route="chat"
+          title="Chat"
+          description="Conversational workspace for prompting and orchestration."
+          note="Phase 1b is frontend-mock only; chat interactions are not wired yet."
+        />
+      );
+    case "projects":
+      return <ProjectsScreen />;
+    case "assets":
+      return <AssetsBrowserScreen />;
+    case "jobs":
+      return <JobsScreen />;
+    case "workspaces":
+      return <WorkspacesScreen />;
+    case "extensions":
+      return (
+        <PlaceholderScreen
+          route="extensions"
+          title="Extensions"
+          description="Connectors and add-ons with permissioned capabilities."
+          note="Extension platform arrives in Phase 5; this screen is an intentional placeholder."
+        />
+      );
+    case "providers":
+      return <ProvidersScreen />;
+    case "settings":
+      return (
+        <PlaceholderScreen
+          route="settings"
+          title="Settings"
+          description="Preferences, connections, and backend configuration."
+          note="Settings editing is not available in the mock-only phase."
+        />
+      );
+    default: {
+      const exhaustive: never = activeRoute;
+      return <PlaceholderScreen route="home" title="Unknown" description={`Unknown route: ${String(exhaustive)}`} />;
+    }
   }
-  if (activeRoute === "projects") {
-    return <ProjectsScreen />;
-  }
-  if (activeRoute === "assets") {
-    return <AssetsBrowserScreen />;
-  }
-  return <JobsScreen />;
 }
 
 /**

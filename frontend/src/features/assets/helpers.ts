@@ -75,3 +75,49 @@ export function filterAssets(
     return matchesAssetSearch(asset, search);
   });
 }
+
+export interface ShotGroup {
+  readonly key: string;
+  readonly label: string;
+  readonly sequence: string | null;
+  readonly shot: string | null;
+  readonly assets: readonly Asset[];
+}
+
+function readShotMeta(asset: Asset): { sequence: string | null; shot: string | null } {
+  const meta = asset.metadata ?? {};
+  const sequence = typeof meta.sequence === "string" ? meta.sequence : null;
+  const shot = typeof meta.shot === "string" ? meta.shot : null;
+  return { sequence, shot };
+}
+
+/** Group assets by metadata.sequence/shot (e.g. s01/s01_c01) per PROJECT_FOLDERS.md. */
+export function groupAssetsByShot(assets: readonly Asset[]): readonly ShotGroup[] {
+  const groups = new Map<string, { sequence: string | null; shot: string | null; assets: Asset[] }>();
+  for (const asset of assets) {
+    const { sequence, shot } = readShotMeta(asset);
+    if (!sequence && !shot) continue;
+    const key = shot ?? sequence ?? "unassigned";
+    const existing = groups.get(key);
+    if (existing) {
+      existing.assets.push(asset);
+    } else {
+      groups.set(key, { sequence, shot, assets: [asset] });
+    }
+  }
+  return Array.from(groups.entries())
+    .map(([key, value]) => ({
+      key,
+      label: value.sequence && value.shot ? `${value.sequence} / ${value.shot}` : (value.shot ?? value.sequence ?? "Unassigned"),
+      sequence: value.sequence,
+      shot: value.shot,
+      assets: value.assets,
+    }))
+    .sort((a, b) => a.key.localeCompare(b.key));
+}
+
+export function shotGroupSummary(groups: readonly ShotGroup[]): string {
+  if (groups.length === 0) return "No shot-tagged assets";
+  const total = groups.reduce((sum, g) => sum + g.assets.length, 0);
+  return `${groups.length} shot group${groups.length === 1 ? "" : "s"} · ${total} asset${total === 1 ? "" : "s"}`;
+}
