@@ -53,5 +53,10 @@ export function createHttpApiClient(baseUrl: string): ApiClient {
     listProviders: () => getJson<readonly Provider[]>("/providers"),
     getProvider: (providerId) =>
       getJson<Provider | undefined>(`/providers/${providerId}`),
+    listWorkflowTemplates: (projectId) => {
+      const params = new URLSearchParams({ type: "resource", template: "true" });
+      if (projectId) params.set("project_id", projectId);
+      return getJson<readonly Asset[]>(`/assets?${params.toString()}`);
+    },
   };
 }

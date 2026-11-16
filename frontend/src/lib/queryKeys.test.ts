@@ -13,11 +13,21 @@ describe("queryKeys", () => {
     expect(queryKeys.projects.detail("p1")).toEqual(["projects", "detail", "p1"]);
   });
 
-  it("scopes asset keys by limit, id, and project", () => {
+  it("scopes asset keys by limit, id, project, and workflow templates", () => {
     expect(queryKeys.assets.all()).toEqual(["assets"]);
     expect(queryKeys.assets.byId("a1")).toEqual(["assets", "by-id", "a1"]);
     expect(queryKeys.assets.recent(10)).toEqual(["assets", "recent", 10]);
     expect(queryKeys.assets.byProject("p1")).toEqual(["assets", "by-project", "p1"]);
+    expect(queryKeys.assets.workflowTemplates()).toEqual([
+      "assets",
+      "workflow-templates",
+      "all",
+    ]);
+    expect(queryKeys.assets.workflowTemplates("p1")).toEqual([
+      "assets",
+      "workflow-templates",
+      "p1",
+    ]);
   });
 
   it("scopes job list and detail keys", () => {

@@ -19,6 +19,8 @@ export const queryKeys = {
     byId: (id: string) => ["assets", "by-id", id] as const,
     recent: (limit: number) => ["assets", "recent", limit] as const,
     byProject: (projectId: string) => ["assets", "by-project", projectId] as const,
+    workflowTemplates: (projectId?: string) =>
+      ["assets", "workflow-templates", projectId ?? "all"] as const,
   },
   jobs: {
     all: () => ["jobs"] as const,

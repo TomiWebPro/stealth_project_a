@@ -113,3 +113,12 @@ export function useProvider(providerId: string): UseQueryResult<Provider | undef
     queryFn: () => api.getProvider(providerId),
   });
 }
+
+
+export function useWorkflowTemplates(projectId?: string): UseQueryResult<readonly Asset[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.assets.workflowTemplates(projectId),
+    queryFn: () => api.listWorkflowTemplates(projectId),
+  });
+}

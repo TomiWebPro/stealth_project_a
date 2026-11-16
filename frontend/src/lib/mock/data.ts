@@ -729,6 +729,114 @@ export const ASSETS: readonly Asset[] = [
       },
     },
   ),
+  // --- Version chain: s01_c01 Ver_002 iterates on Ver_001 with Output + Publish.
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000028",
+    PROJECT_IDS.moonshot,
+    "s01_c01_v002.mp4",
+    "video",
+    "moonshot/Shots/s01_c01/Ver_002/Compose/Output/s01_c01_v002.mp4",
+    "video/mp4",
+    null,
+    ["shot", "s01_c01", "wip"],
+    1,
+    {
+      version: 2,
+      provenance: {
+        operation_id: "image-to-video",
+        prompt: "s01_c01 iteration: slower push-in, adjusted dust pass",
+        provider_id: "prov_comfy",
+      },
+      parentAssetIds: [
+        "0b5c1e2a-2000-4000-8000-000000000017",
+        "0b5c1e2a-2000-4000-8000-000000000013",
+        "0b5c1e2a-2000-4000-8000-000000000014",
+        "0b5c1e2a-2000-4000-8000-000000000015",
+      ],
+      metadata: { sequence: "s01", shot: "s01_c01" },
+    },
+  ),
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000029",
+    PROJECT_IDS.moonshot,
+    "s01_c01_v002_publish.mp4",
+    "video",
+    "moonshot/Shots/s01_c01/Ver_002/Compose/Publish/s01_c01_v002.mp4",
+    "video/mp4",
+    null,
+    ["shot", "s01_c01", "published"],
+    0,
+    {
+      version: 2,
+      provenance: {
+        operation_id: "image-to-video",
+        prompt: "s01_c01 v002 approved publish",
+        provider_id: "prov_comfy",
+      },
+      parentAssetIds: [
+        "0b5c1e2a-2000-4000-8000-000000000028",
+        "0b5c1e2a-2000-4000-8000-000000000013",
+        "0b5c1e2a-2000-4000-8000-000000000014",
+        "0b5c1e2a-2000-4000-8000-000000000015",
+      ],
+      metadata: {
+        sequence: "s01",
+        shot: "s01_c01",
+        publish_receipt: {
+          comment: "s01_c01 v002 supersedes v001 with refined motion",
+          publisher: CREATOR_ID,
+          sidecar: "Publish/s01_c01_v002.sidecar.json",
+        },
+      },
+    },
+  ),
+  // --- Additional workflow-template resource seeds for template gallery/filtering.
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000030",
+    PROJECT_IDS.moonshot,
+    "dataset-prep-template.json",
+    "resource",
+    "moonshot/Resources/Workflows/Dataset/dataset-prep-template.json",
+    "application/json",
+    null,
+    ["workflow", "template", "dataset"],
+    310,
+    {
+      metadata: {
+        template: true,
+        workflow_template: {
+          operation_id: "dataset-prep",
+          description: "Curate and expand a character dataset for LoRA training.",
+          inputs: ["concept-frames"],
+          outputs: ["dataset"],
+        },
+        operations: ["dataset-prep"],
+      },
+    },
+  ),
+  pipelineAsset(
+    "0b5c1e2a-2000-4000-8000-000000000031",
+    PROJECT_IDS.moonshot,
+    "lora-train-template.json",
+    "resource",
+    "moonshot/Resources/Workflows/Training/lora-train-template.json",
+    "application/json",
+    null,
+    ["workflow", "template", "training"],
+    320,
+    {
+      metadata: {
+        template: true,
+        workflow_template: {
+          operation_id: "lora-train",
+          description: "Train a sequence LoRA from a prepared dataset.",
+          inputs: ["dataset"],
+          outputs: ["lora"],
+        },
+        operations: ["lora-train"],
+      },
+    },
+  ),
 ];
 
 function job(

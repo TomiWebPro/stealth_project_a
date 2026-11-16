@@ -14,6 +14,7 @@ import {
   fetchProvider,
   fetchProviders,
   fetchRecentAssets,
+  fetchWorkflowTemplates,
 } from "./mockApi";
 
 describe("mock API home summary", () => {
@@ -271,5 +272,63 @@ describe("mock API list helpers", () => {
     await expect(
       fetchProvider("00000000-0000-4000-8000-000000000000"),
     ).resolves.toBeUndefined();
+  });
+
+  it("lists workflow-template resources with filter queries", async () => {
+    const templates = await fetchWorkflowTemplates();
+    expect(templates.length).toBeGreaterThanOrEqual(3);
+    expect(
+      templates.every(
+        (asset) => asset.type === "resource" && asset.metadata?.["template"] === true,
+      ),
+    ).toBe(true);
+    expect(templates.map((a) => a.name)).toEqual([...templates.map((a) => a.name)].sort());
+    const projects = await fetchProjects();
+    const film = projects.find((project) => project.name.startsWith("Moonshot"));
+    expect(film).toBeDefined();
+    if (!film) return;
+    const scoped = await fetchWorkflowTemplates(film.id);
+    expect(scoped.every((asset) => asset.project_id === film.id)).toBe(true);
+    await expect(fetchWorkflowTemplates("00000000-0000-4000-8000-000000000000")).resolves.toEqual([]);
+  });
+
+  it("seeds Ver_001/Ver_002 chains with Output/Publish keys and publish receipts", async () => {
+    const v2Out = await fetchAsset("0b5c1e2a-2000-4000-8000-000000000028");
+    const v2Pub = await fetchAsset("0b5c1e2a-2000-4000-8000-000000000029");
+    expect(v2Out?.storage.key).toContain("/Shots/s01_c01/Ver_002/Compose/Output/");
+    expect(v2Pub?.storage.key).toContain("/Shots/s01_c01/Ver_002/Compose/Publish/");
+    const receipt = v2Pub?.metadata?.["publish_receipt"] as
+      | { comment?: string; publisher?: string; sidecar?: string }
+      | undefined;
+    expect(receipt?.comment).toContain("supersedes");
+    expect(typeof receipt?.publisher).toBe("string");
+    expect(receipt?.sidecar).toBe("Publish/s01_c01_v002.sidecar.json");
+    expect(v2Out?.metadata?.["publish_receipt"]).toBeUndefined();
+  });
+
+  it("covers single-item detail for new workflow-template and version seeds", async () => {
+    const template = await fetchAsset("0b5c1e2a-2000-4000-8000-000000000030");
+    expect(template?.type).toBe("resource");
+    expect(template?.metadata?.["template"]).toBe(true);
+    const templateMeta = template?.metadata?.["workflow_template"] as
+      | { operation_id?: string }
+      | undefined;
+    expect(templateMeta?.operation_id).toBe("dataset-prep");
+
+    await expect(fetchAsset("0b5c1e2a-2000-4000-8000-000000000031")).resolves.toMatchObject({
+      type: "resource",
+      name: "lora-train-template.json",
+    });
+    await expect(fetchAsset("ffffffff-0000-4000-8000-000000000000")).resolves.toBeUndefined();
+
+    await expect(fetchJob("0b5c1e2a-3000-4000-8000-000000000016")).resolves.toMatchObject({
+      status: "failed",
+    });
+    await expect(fetchJob("ffffffff-0000-4000-8000-000000000000")).resolves.toBeUndefined();
+    await expect(fetchProvider("prov_train")).resolves.toMatchObject({
+      id: "prov_train",
+      location: "cloud",
+    });
+    await expect(fetchProvider("ffffffff-0000-4000-8000-000000000000")).resolves.toBeUndefined();
   });
 });

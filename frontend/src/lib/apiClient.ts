@@ -25,6 +25,7 @@ export interface ApiClient {
   getProjectDetail(projectId: string): Promise<ProjectDetail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
   getProvider(providerId: string): Promise<Provider | undefined>;
+  listWorkflowTemplates(projectId?: string): Promise<readonly Asset[]>;
 }
 
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
@@ -42,4 +43,5 @@ export const mockApiClient: ApiClient = {
   getProjectDetail: mockApi.fetchProjectDetail,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,
+  listWorkflowTemplates: mockApi.fetchWorkflowTemplates,
 };

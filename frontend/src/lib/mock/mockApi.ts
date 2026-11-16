@@ -124,3 +124,15 @@ export async function fetchJob(jobId: string): Promise<Job | undefined> {
 export async function fetchProvider(providerId: string): Promise<Provider | undefined> {
   return delay(PROVIDERS.find((provider) => provider.id === providerId));
 }
+
+
+export async function fetchWorkflowTemplates(projectId?: string): Promise<readonly Asset[]> {
+  const templates = ASSETS.filter((asset) => {
+    if (asset.type !== "resource") return false;
+    const meta = asset.metadata ?? {};
+    if (meta["template"] !== true) return false;
+    if (projectId && asset.project_id !== projectId) return false;
+    return true;
+  }).sort((a, b) => a.name.localeCompare(b.name));
+  return delay(templates);
+}
