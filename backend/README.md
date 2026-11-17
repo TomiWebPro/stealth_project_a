@@ -1,7 +1,8 @@
-# Studio Platform Backend (Phase 2)
+# Studio Platform Backend
 
-FastAPI application implementing the stable application API (`/api/v1`) for
-health, projects, conversations, assets/lineage/versions and uploads.
+FastAPI application implementing the stable application API (`/api/v1`). The
+backend is authoritative for jobs and assets; routers depend only on contracts
+in `app/schemas`, never on provider/GPU internals.
 
 ## Run
 
@@ -31,25 +32,52 @@ Other environment variables:
 
 - `STUDIO_SQLITE_PATH` (default `data/studio.db`)
 - `STUDIO_UPLOAD_DIR` (default `data/uploads`)
+- `STUDIO_ROOT` (default `data/studio`) — on-disk project tree root
 - `STUDIO_MAX_UPLOAD_BYTES` (default 512 MiB)
+- `STUDIO_STORAGE_QUOTA_BYTES` (default 10 GiB) — reported by `/storage/stats`
 - `STUDIO_DEFAULT_ORG_ID`, `STUDIO_DEFAULT_USER_ID`
 - `STUDIO_CORS_ORIGINS` (comma separated), `STUDIO_CORS_ALLOW_CREDENTIALS`
 
 ## Endpoints
 
-- `GET /api/v1/health`, `GET /api/v1/version`
-- `GET|POST /api/v1/projects`, `GET|PATCH|DELETE /api/v1/projects/{id}`
-- `GET /api/v1/conversations?project_id=`
-- `POST /api/v1/projects/{id}/conversations`
-- `GET /api/v1/conversations/{id}` and `/messages` (`GET`/`POST`)
-- `GET /api/v1/assets`, `POST /api/v1/assets/register`
-- `GET|PATCH|DELETE /api/v1/assets/{id}`
-- `GET /api/v1/assets/{id}/versions|relationships|lineage|download|content`
-- `POST /api/v1/uploads`, `PUT /api/v1/uploads/{id}`,
-  `GET /api/v1/uploads/{id}/content`
+All paths are prefixed with `/api/v1`.
+
+- **Core:** `GET /health`, `GET /version`
+- **Projects:** `GET|POST /projects`, `GET|PATCH|DELETE /projects/{id}`
+- **Project tree:** `GET|POST /projects/{id}/tree`,
+  `POST /projects/{id}/links/{plan|apply}`, `GET /projects/{id}/links`
+- **Conversations:** `GET /conversations?project_id=`,
+  `POST /projects/{id}/conversations`, `GET /conversations/{id}`,
+  `GET|POST /conversations/{id}/messages`
+- **Assets:** `GET /assets`, `POST /assets/register`,
+  `GET|PATCH|DELETE /assets/{id}`,
+  `GET|POST /assets/{id}/versions`, `GET /assets/{id}/relationships|lineage|download|content`,
+  `GET|POST /assets/{id}/publish`, `GET|POST /assets/{id}/exports`
+- **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`
+- **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
+  `GET|POST /jobs`, `GET /jobs/{id}`, `GET /jobs/{id}/events`,
+  `POST /jobs/{id}/cancel|retry|run`,
+  `GET /jobs/{id}/events/stream` (SSE, `since`/`idle_timeout`)
+- **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
+  `GET /capabilities`, `GET /adapters`, `GET /adapters/{id}/health`
+- **Orchestration/collaboration:** `GET|POST /orchestration/plans`,
+  `GET|POST /orchestration/runs`, `GET /orchestration/plans/{id}`,
+  `GET /orchestration/runs/{id}`, `GET|POST /presence`,
+  `GET|POST /comments`, `GET /storage/stats`
+- **Auth/orgs:** `POST /auth/login|refresh`, `GET /auth/session|me`,
+  `GET|POST /orgs` (alias `/organizations`), `GET /orgs/{id}`,
+  `GET|POST /orgs/{id}/members`
+- **Extensions:** `GET /extensions/registry`, `GET /extensions`,
+  `POST /extensions/install`, `GET /extensions/{id}`,
+  `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`
+- **Pipelines:** `GET|POST /pipelines/lora`, `/pipelines/shot`, `/pipelines/splat`
+  (each with `GET /pipelines/<kind>/{id}`)
+- **Exports:** `GET /projects/{id}/exports`, `GET /assets/{id}/exports`
 
 All non-2xx responses use the shared `ErrorResponse` envelope with an
-`X-Request-ID` header.
+`X-Request-ID` header. Bearer tokens from `POST /auth/login` authenticate
+`/auth/me` and `/auth/session`; other endpoints accept `X-User-Id`/`X-Org-Id`
+headers or the configured development identities.
 
 ## Testing
 
@@ -62,23 +90,23 @@ Tests run every API test against both storage backends, verify SQLite
 persistence across restarts, and check Pydantic/TypeScript contract parity in
 `tests/test_contract_parity.py`.
 
-## Phase 2 boundaries / integration dependencies
+## Boundaries / integration dependencies
 
-- **Auth**: no session verification yet. Requests use `X-User-Id` / `X-Org-Id`
-  headers or the configured development identities. Replace
-  `app.deps.get_current_user_id` when the auth service lands.
+- **Auth**: dev-local adapter only. Tokens are opaque random strings in the
+  document store; no external IdP, JWT verification or password hashing yet.
 - **Uploads**: dev-local filesystem adapter. The ticket contract is stable; an
-  S3 adapter will return real presigned URLs. `AssetRegisterRequest` has no
-  `upload_id`, so the client currently builds the `StorageRef` itself (using the
-  upload ID as `key` works with the local adapter). Adding an explicit binding
-  field is a future shared-contract change.
-- **Asset versions**: version 1 is recorded on registration; a create-version
-  endpoint needs a shared contract addition (frontend type + schema) first.
-- **Real-time**: conversation WebSocket streaming (`/conversations/{id}/stream`)
-  is not implemented yet; the shared `StreamEvent` contract exists and the REST
-  message endpoints are ready to feed it.
-- **Jobs/operations/providers**: schemas exist, routers are not part of this
-  slice.
+  S3 adapter will return real presigned URLs.
+- **Assets**: version 1 is recorded on registration; `POST /assets/{id}/versions`
+  creates subsequent versions. Publishing copies bytes into `Publish/` with a
+  `_vNNN` suffix and a JSON receipt; re-publishing different bytes for the same
+  version is rejected.
+- **Real-time**: job events stream over SSE (`/jobs/{id}/events/stream`) with a
+  polling fallback (`GET /jobs/{id}/events`). Presence is polled via
+  `/presence`; the shared `StreamEvent` contract is not wired to a conversation
+  WebSocket yet.
+- **Adapters/execution**: local and cloud runtimes are CPU-only simulations
+  behind one `ExecutionAdapter` contract. No ComfyUI/RunPod/GPU connection yet
+  (see P4.5 in the backlog).
 - **Pagination**: asset `cursor` is the last asset ID from the previous page
   (keyset). The shared `Asset[]` response has no `next_cursor`; this limitation
   is tracked for a future contract revision.
