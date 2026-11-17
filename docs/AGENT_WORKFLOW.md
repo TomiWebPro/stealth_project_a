@@ -6,14 +6,14 @@ Process: repository discovery -> specialist analysis -> architecture synthesis -
 
 Rules: delegate only when useful; communicate via docs/contracts; no silent shared changes; document alternatives; report incomplete work honestly.
 
-## Scheduled workforce (opencode-scheduler, `studio-p1-*`)
+## Scheduled workforce (opencode-scheduler, `studio-*`)
 
 Four active jobs share this repo; each prompt is self-contained (agents have no
 memory). They run as a **completion-driven relay loop**, not on a fixed cron
 cadence:
 
 ```
-studio-p1-backend-core -> studio-p1-screens -> studio-p1-mocks -> studio-p1-ci
+studio-backend-core -> studio-screens -> studio-mocks -> studio-ci
         ^                                                                |
         +-------------------------(ALWAYS)--------------------------------+
 ```
@@ -30,10 +30,10 @@ choices, document them, and keep shipping.
 
 | Job | Loop position | Owns (may write) | Never touches |
 |-----|---------------|------------------|---------------|
-| `studio-p1-backend-core` | root → screens | `backend/**`, `frontend/src/types/**`, backlog (backend rows) | other frontend dirs |
-| `studio-p1-screens` | after backend → mocks | `frontend/src/app,layout,navigation,stores,ui,features,styles`, `App.tsx`, `main.tsx`, `index.css`, backlog (screens rows) | `frontend/src/{types,api,lib,hooks}`, `backend/`, `.github/` |
-| `studio-p1-mocks` | after screens → ci | `frontend/src/lib`, `frontend/src/hooks`, `frontend/src/api` (incl. `lib/mock`), backlog (mocks rows) | `frontend/src/types`, `backend/`, UI dirs |
-| `studio-p1-ci` | after mocks → backend | `.github/`, repo config, tooling, backlog (CI rows) | product code (reports failures with owner instead) |
+| `studio-backend-core` | root → screens | `backend/**`, `frontend/src/types/**`, backlog (backend rows) | other frontend dirs |
+| `studio-screens` | after backend → mocks | `frontend/src/app,layout,navigation,stores,ui,features,styles`, `App.tsx`, `main.tsx`, `index.css`, backlog (screens rows) | `frontend/src/{types,api,lib,hooks}`, `backend/`, `.github/` |
+| `studio-mocks` | after screens → ci | `frontend/src/lib`, `frontend/src/hooks`, `frontend/src/api` (incl. `lib/mock`), backlog (mocks rows) | `frontend/src/types`, `backend/`, UI dirs |
+| `studio-ci` | after mocks → backend | `.github/`, repo config, tooling, backlog (CI rows) | product code (reports failures with owner instead) |
 
 Rules for scheduled agents:
 

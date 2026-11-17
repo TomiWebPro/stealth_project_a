@@ -30,10 +30,10 @@ this file is the execution checklist.
 
 | Agent | May write | Never write |
 |-------|-----------|-------------|
-| `studio-p1-backend-core` | `backend/**`, `frontend/src/types/**`, `docs/AUTONOMOUS_BACKLOG.md` (backend rows) | `frontend/src/{features,lib,hooks,api,app,layout,navigation,ui,styles}` |
-| `studio-p1-screens` | `frontend/src/{app,layout,navigation,stores,ui,features,styles}`, `App.tsx`, `main.tsx`, `index.css`, backlog (screens rows) | `frontend/src/{types,lib,hooks,api}`, `backend/**`, `.github/**` |
-| `studio-p1-mocks` | `frontend/src/{lib,hooks,api}`, `frontend/src/lib/mock/**`, backlog (mocks rows) | `frontend/src/{types,features,app,layout,navigation,ui,styles}`, `backend/**`, `.github/**` |
-| `studio-p1-ci` | `.github/**`, repo config, CI/test tooling, backlog (CI rows) | product code under `frontend/src/**` or `backend/app/**` |
+| `studio-backend-core` | `backend/**`, `frontend/src/types/**`, `docs/AUTONOMOUS_BACKLOG.md` (backend rows) | `frontend/src/{features,lib,hooks,api,app,layout,navigation,ui,styles}` |
+| `studio-screens` | `frontend/src/{app,layout,navigation,stores,ui,features,styles}`, `App.tsx`, `main.tsx`, `index.css`, backlog (screens rows) | `frontend/src/{types,lib,hooks,api}`, `backend/**`, `.github/**` |
+| `studio-mocks` | `frontend/src/{lib,hooks,api}`, `frontend/src/lib/mock/**`, backlog (mocks rows) | `frontend/src/{types,features,app,layout,navigation,ui,styles}`, `backend/**`, `.github/**` |
+| `studio-ci` | `.github/**`, repo config, CI/test tooling, backlog (CI rows) | product code under `frontend/src/**` or `backend/app/**` |
 
 ## Phase 2 — Backend hookup (OPEN — owner: backend-core, mocks, screens)
 
@@ -66,8 +66,11 @@ this file is the execution checklist.
   publish receipt sidecars.
 - [ ] P3.3 Reference links (`.link.txt` fallback + `.links.json`) with dry-run plan
   mode; never copy weights.
-- [ ] P3.4 Asset search/filter, previews and metadata editing in the UI.
+- [x] P3.4 Asset search/filter, previews and metadata editing in the UI.
+  (2026-11-17, cc7a398) — local-optimistic editor; needs `updateAsset` hook to persist.
 - [ ] P3.5 Settings screen: backend URL, API mode, provider connections, test button.
+- [ ] P3.6 (mocks/backend) Expose `PATCH /assets/{id}` as `updateAsset` on `ApiClient`
+  + `useQueries` mutation so the P3.4 metadata editor can persist edits.
 
 ## Phase 4 — First production capability (owner: backend-core + mocks + screens)
 
