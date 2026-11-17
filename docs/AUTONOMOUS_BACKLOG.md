@@ -95,7 +95,8 @@ this file is the execution checklist.
 - [ ] P5.1 Manifest/schema + registration, install/remove, enable/disable.
 - [ ] P5.2 Permission enforcement and isolation boundary for extensions.
 - [x] P5.3 SDK + connector examples; replace the Extensions placeholder screen.
-  (2026-11-17, pending) — registry from `useExtensions`, permission/capability cards, SDK examples.
+  ✅ 2026-11-17 — `746f7a0` — registry from `useExtensions`, permission/capability/trust cards,
+  SDK examples; loading/error/empty/populated states + helper unit tests.
 
 ## Phase 6 — Professional capabilities (owner: all)
 
@@ -142,3 +143,4 @@ this file is the execution checklist.
 - 2026-11-17 — `a9b27a8` — P4/P5 mocks parity: added auth/session, orchestration-run, presence, comments, storage-stats and extension-registry queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeded populated+empty/error states and 9 new tests; lint/test/build green.
 - 2026-11-17 — `f7d243e` — P2.6: SSE job-event stream (`/jobs/{id}/events/stream?since=&idle_timeout=`) with resume cursor, idle close and documented polling fallback to `GET /jobs/{id}/events`; 10 new tests green on memory+sqlite (244 passed).
 - 2026-11-17 — `93a56fd` — P2.3 rescued from an interrupted concurrent run: deterministic local planner, plan/run reads, presence upsert, comments, storage stats; 32 new tests green on memory+sqlite (276 passed).
+- 2026-11-17 — `746f7a0` — P5.3: replaced Extensions placeholder with a registry screen (useExtensions hook; permission/capability/trust cards; loading/error/empty/populated states) plus SDK/connector examples shipped as data and helper unit tests; lint/test (86 passed)/build green.
