@@ -107,10 +107,10 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   if (path.startsWith("/orchestration/runs/")) {
     return ORCHESTRATION_RUNS.find((r) => r.run_id === id) ?? NOT_FOUND;
   }
-  if (path === "/collaboration/presence") {
+  if (path === "/presence") {
     return PRESENCE.filter((p) => p.project_id === params.get("project_id"));
   }
-  if (path === "/collaboration/comments") {
+  if (path === "/comments") {
     const assetId = params.get("asset_id");
     return COMMENTS.filter(
       (c) => c.project_id === params.get("project_id") && (!assetId || c.asset_id === assetId),

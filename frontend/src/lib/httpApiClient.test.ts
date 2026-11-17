@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { StreamEvent } from "../types";
 import { API_PREFIX } from "../types/common";
 import type { Asset, Job, Project, Provider } from "./types";
 import { createHttpApiClient } from "./httpApiClient";
@@ -371,10 +372,10 @@ describe("createHttpApiClient auth, orchestration and extension queries", () => 
       "/auth/me": { id: "u1", email: "a@b.co", display_name: "A", created_at: "2026-01-01T00:00:00Z" },
       "/orgs": [{ id: "o1", name: "Org", slug: "org", created_at: "2026-01-01T00:00:00Z" }],
       "/orchestration/runs/r1": run,
-      "/collaboration/presence": [
+      "/presence": [
         { user_id: "u1", project_id: project.id, state: "online", last_seen_at: "2026-01-01T00:00:00Z" },
       ],
-      "/collaboration/comments": [
+      "/comments": [
         { id: "c1", project_id: project.id, author_id: "u1", body: "hi", created_at: "2026-01-01T00:00:00Z" },
       ],
       "/storage/stats": {
@@ -398,9 +399,103 @@ describe("createHttpApiClient auth, orchestration and extension queries", () => 
     await expect(api.getExtension("ext1")).resolves.toMatchObject({ status: "enabled" });
     await expect(api.getExtension("missing")).resolves.toBeUndefined();
 
-    const commentCall = fake.calls.find((call) => call.includes("/collaboration/comments"));
+    const commentCall = fake.calls.find((call) => call.includes("/comments"));
     expect(commentCall).toBeDefined();
     const commentUrl = new URL(commentCall ?? "");
     expect(commentUrl.searchParams.get("asset_id")).toBe("a1");
+  });
+});
+
+describe("createHttpApiClient chat writes and streams", () => {
+  it("POSTs a message and normalizes a failed write into ApiError", async () => {
+    const created = {
+      id: "m3",
+      conversation_id: "c1",
+      role: "user",
+      content: "hi",
+      status: "complete",
+      created_at: "2026-01-07T00:00:00Z",
+    };
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      seen.push({ url: String(input), init });
+      return jsonResponse(created, { status: 201 });
+    }) as typeof fetch;
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.sendMessage("c1", { content: "hi", operation_id: "text-to-image" }),
+    ).resolves.toMatchObject({ id: "m3" });
+
+    expect(seen[0]?.init?.method).toBe("POST");
+    expect(JSON.parse(String(seen[0]?.init?.body))).toEqual({
+      content: "hi",
+      operation_id: "text-to-image",
+    });
+    expect(new URL(seen[0]?.url ?? "").pathname).toBe(
+      `${API_PREFIX}/conversations/c1/messages`,
+    );
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "conflict", message: "nope" } }, { status: 409 })) as typeof fetch,
+    });
+    await expect(failing.sendMessage("c1", { content: "hi" })).rejects.toMatchObject({
+      status: 409,
+      code: "conflict",
+      message: "nope",
+    });
+  });
+
+  it("opens a resumable stream, parses typed frames and closes cleanly", () => {
+    const listeners = new Map<string, Array<(event: { data?: unknown }) => void>>();
+    let openedUrl = "";
+    let closeCount = 0;
+    const webSocketImpl = (url: string) => {
+      openedUrl = url;
+      return {
+        addEventListener(type: string, listener: (event: { data?: unknown }) => void) {
+          listeners.set(type, [...(listeners.get(type) ?? []), listener]);
+        },
+        removeEventListener(type: string, listener: (event: { data?: unknown }) => void) {
+          listeners.set(type, (listeners.get(type) ?? []).filter((candidate) => candidate !== listener));
+        },
+        close() {
+          closeCount += 1;
+        },
+      };
+    };
+    const api = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: router({}).fetchImpl,
+      webSocketImpl,
+    });
+
+    const received: StreamEvent[] = [];
+    const stream = api.openConversationStream("conv 1", 5);
+    const unsubscribe = stream.onEvent((event) => received.push(event));
+    const emit = (data: string) => {
+      for (const listener of listeners.get("message") ?? []) listener({ data });
+    };
+
+    emit(
+      JSON.stringify({
+        type: "delta",
+        message_id: "m1",
+        seq: 6,
+        delta: "hi",
+      }),
+    );
+    emit("not json");
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toMatchObject({ type: "delta", seq: 6, delta: "hi" });
+    expect(openedUrl).toBe(
+      `ws://localhost:8000${API_PREFIX}/conversations/conv%201/stream?since=5`,
+    );
+
+    unsubscribe();
+    stream.close();
+    expect(closeCount).toBe(1);
+    expect(listeners.get("message")).toHaveLength(0);
   });
 });

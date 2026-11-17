@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import type { StreamEvent } from "../../types";
 import {
+  clearMockFailures,
   fetchAsset,
   fetchAssets,
   fetchAssetsByProject,
@@ -17,6 +19,9 @@ import {
   fetchJobsByProject,
   fetchMessages,
   fetchOperations,
+  openConversationStream,
+  sendMessage,
+  setMockFailure,
   fetchOrganizations,
   fetchOrchestrationRun,
   fetchPresence,
@@ -435,5 +440,90 @@ describe("mock API list helpers", () => {
       status: "enabled",
     });
     await expect(fetchExtension("missing")).resolves.toBeUndefined();
+  });
+});
+
+describe("mock chat writes and streams", () => {
+  const syntheticConversationId = "00000000-0000-4000-8000-000000000099";
+
+  async function waitForEvents(events: readonly StreamEvent[], count: number): Promise<void> {
+    const deadline = Date.now() + 5_000;
+    while (events.length < count && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+  }
+
+  it("sendMessage persists an authoritative message visible on refetch", async () => {
+    const message = await sendMessage(syntheticConversationId, {
+      content: "Make it so",
+      operation_id: "text-to-image",
+    });
+
+    expect(message).toMatchObject({
+      conversation_id: syntheticConversationId,
+      role: "user",
+      content: "Make it so",
+      status: "complete",
+      operation_id: "text-to-image",
+    });
+    expect(message.id).toMatch(/^0b5c1e2a-7000-4000-8000-\d{12}$/);
+    await expect(fetchMessages(syntheticConversationId)).resolves.toEqual([message]);
+    await expect(fetchMessages(syntheticConversationId, 1)).resolves.toEqual([message]);
+    await expect(fetchMessages("00000000-0000-4000-8000-000000000098")).resolves.toEqual([]);
+  });
+
+  it("streams ordered events from the resume cursor and stops on close", async () => {
+    const events: StreamEvent[] = [];
+    const stream = openConversationStream("c1", 10);
+    const unsubscribe = stream.onEvent((event) => events.push(event));
+    await waitForEvents(events, 4);
+
+    expect(events.map((event) => event.type)).toEqual([
+      "message_start",
+      "delta",
+      "delta",
+      "message_complete",
+    ]);
+    expect(events.map((event) => event.seq)).toEqual([11, 12, 13, 14]);
+    unsubscribe();
+    stream.close();
+
+    const afterClose: StreamEvent[] = [];
+    const closed = openConversationStream("c1");
+    closed.onEvent((event) => afterClose.push(event));
+    closed.close();
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    expect(afterClose).toEqual([]);
+  });
+
+  it("exposes guardable error states that reset cleanly", async () => {
+    try {
+      setMockFailure("home");
+      await expect(fetchHomeSummary()).rejects.toMatchObject({
+        status: 503,
+        code: "mock_failure",
+      });
+
+      setMockFailure("*");
+      await expect(fetchProjects()).rejects.toMatchObject({ code: "mock_failure" });
+      await expect(fetchMessages("c1")).rejects.toMatchObject({ code: "mock_failure" });
+      await expect(sendMessage("c1", { content: "x" })).rejects.toMatchObject({
+        code: "mock_failure",
+      });
+
+      setMockFailure("*", false);
+      setMockFailure("stream");
+      const events: StreamEvent[] = [];
+      const stream = openConversationStream("c1");
+      stream.onEvent((event) => events.push(event));
+      await waitForEvents(events, 1);
+      expect(events[0]).toMatchObject({ type: "error", error: "Mock stream failure" });
+      stream.close();
+    } finally {
+      clearMockFailures();
+    }
+
+    await expect(fetchHomeSummary()).resolves.toBeDefined();
+    await expect(fetchProjects()).resolves.toBeDefined();
   });
 });

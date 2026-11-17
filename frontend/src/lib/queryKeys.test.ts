@@ -64,6 +64,7 @@ describe("queryKeys", () => {
       "p1",
     ]);
     expect(queryKeys.conversations.byId("c1")).toEqual(["conversations", "by-id", "c1"]);
+    expect(queryKeys.messages.all()).toEqual(["messages"]);
     expect(queryKeys.messages.byConversation("c1")).toEqual([
       "messages",
       "by-conversation",

@@ -1,4 +1,6 @@
 import type { CapabilityMatch } from "./catalog";
+import type { ConversationStream } from "./conversationStream";
+export type { ConversationStream };
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type {
@@ -8,6 +10,7 @@ import type {
   Extension,
   Job,
   Message,
+  MessageCreate,
   OperationCatalog,
   Organization,
   OrchestrationRun,
@@ -49,6 +52,10 @@ export interface ApiClient {
   listConversations(projectId: string): Promise<readonly Conversation[]>;
   getConversation(conversationId: string): Promise<Conversation | undefined>;
   listMessages(conversationId: string, limit?: number): Promise<readonly Message[]>;
+  /** Persist a message through the conversations write API. */
+  sendMessage(conversationId: string, body: MessageCreate): Promise<Message>;
+  /** Open a resumable, transport-agnostic conversation event stream. */
+  openConversationStream(conversationId: string, resumeFrom?: number): ConversationStream;
   getCurrentUser(): Promise<User>;
   listOrganizations(): Promise<readonly Organization[]>;
   getOrchestrationRun(runId: string): Promise<OrchestrationRun | undefined>;
@@ -80,6 +87,8 @@ export const mockApiClient: ApiClient = {
   listConversations: mockApi.fetchConversations,
   getConversation: mockApi.fetchConversation,
   listMessages: mockApi.fetchMessages,
+  sendMessage: mockApi.sendMessage,
+  openConversationStream: mockApi.openConversationStream,
   getCurrentUser: mockApi.fetchCurrentUser,
   listOrganizations: mockApi.fetchOrganizations,
   getOrchestrationRun: mockApi.fetchOrchestrationRun,

@@ -1,5 +1,6 @@
 import { ApiError } from "../../api/client";
 import type { CapabilityMatch } from "../catalog";
+import type { ConversationStream } from "../conversationStream";
 import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
 import type { ProjectDetail } from "../projectDetail";
@@ -10,6 +11,7 @@ import type {
   Extension,
   Job,
   Message,
+  MessageCreate,
   OperationCatalog,
   Organization,
   OrchestrationRun,
@@ -17,6 +19,7 @@ import type {
   Project,
   Provider,
   StorageStats,
+  StreamEvent,
   User,
 } from "../types";
 import {
@@ -76,6 +79,14 @@ function failIfEnabled(domain: string): void {
     message: `Mock ${domain} query is configured to fail.`,
   });
 }
+
+/**
+ * Messages written through the mock transport. Kept separate from the seed
+ * arrays so the deterministic fixtures used by other queries and parity tests
+ * are never mutated by a send.
+ */
+const sentMessages: Message[] = [];
+let nextMessageSeq = 1;
 
 function toSummary(): HomeSummary {
   return {
@@ -243,11 +254,85 @@ export async function fetchMessages(
   conversationId: string,
   limit?: number,
 ): Promise<readonly Message[]> {
-  let messages = MESSAGES.filter((message) => message.conversation_id === conversationId).sort(
-    (a, b) => a.created_at.localeCompare(b.created_at),
-  );
+  failIfEnabled("messages");
+  let messages = [...MESSAGES, ...sentMessages]
+    .filter((message) => message.conversation_id === conversationId)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
   if (limit !== undefined) messages = messages.slice(-limit);
   return delay(messages);
+}
+
+/**
+ * Persist a message with an authoritative, UUID-shaped id and surface it on
+ * subsequent `fetchMessages` calls, mirroring the live conversations POST.
+ */
+export async function sendMessage(
+  conversationId: string,
+  body: MessageCreate,
+): Promise<Message> {
+  failIfEnabled("messages");
+  const message: Message = {
+    id: `0b5c1e2a-7000-4000-8000-${String(nextMessageSeq++).padStart(12, "0")}`,
+    conversation_id: conversationId,
+    role: body.role ?? "user",
+    content: body.content,
+    status: "complete",
+    ...(body.attachments ? { attachments: body.attachments } : {}),
+    ...(body.operation_id !== undefined ? { operation_id: body.operation_id } : {}),
+    created_at: new Date().toISOString(),
+  };
+  sentMessages.push(message);
+  return delay(message);
+}
+
+/**
+ * Simulated stream: emits `message_start` → `delta` → `message_complete` in
+ * sequence order (or a single `error` frame when the `stream` domain fails),
+ * with `seq` continuing from the resume cursor. `close` cancels pending timers
+ * so no events leak after teardown.
+ */
+export function openConversationStream(
+  _conversationId: string,
+  resumeFrom?: number,
+): ConversationStream {
+  const listeners = new Set<(event: StreamEvent) => void>();
+  const timers: Array<ReturnType<typeof setTimeout>> = [];
+  let closed = false;
+  const start = resumeFrom ?? 0;
+  const messageId = "0b5c1e2a-7000-4000-8000-000000000001";
+  const failing = activeFailures.has("stream") || activeFailures.has("*");
+  const events: StreamEvent[] = failing
+    ? [{ type: "error", message_id: messageId, seq: start + 1, error: "Mock stream failure" }]
+    : [
+        { type: "message_start", message_id: messageId, seq: start + 1 },
+        { type: "delta", message_id: messageId, seq: start + 2, delta: "Acknowledged. " },
+        { type: "delta", message_id: messageId, seq: start + 3, delta: "Working on it…" },
+        { type: "message_complete", message_id: messageId, seq: start + 4 },
+      ];
+
+  events.forEach((event, index) => {
+    timers.push(
+      setTimeout(
+        () => {
+          if (closed) return;
+          for (const handler of listeners) handler(event);
+        },
+        env.mockLatencyMs * (index + 1),
+      ),
+    );
+  });
+
+  return {
+    onEvent(handler) {
+      listeners.add(handler);
+      return () => listeners.delete(handler);
+    },
+    close() {
+      closed = true;
+      for (const timer of timers) clearTimeout(timer);
+      listeners.clear();
+    },
+  };
 }
 
 /** Current dev-local session user. */

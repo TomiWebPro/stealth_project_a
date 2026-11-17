@@ -1,5 +1,6 @@
-import type { UseQueryResult } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
+import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { HomeSummary } from "../lib/homeSummary";
@@ -11,6 +12,7 @@ import type {
   Extension,
   Job,
   Message,
+  MessageCreate,
   OperationCatalog,
   Organization,
   OrchestrationRun,
@@ -18,6 +20,7 @@ import type {
   Project,
   Provider,
   StorageStats,
+  StreamEvent,
   User,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
@@ -180,6 +183,45 @@ export function useMessages(
     queryKey: queryKeys.messages.byConversation(conversationId, limit),
     queryFn: () => api.listMessages(conversationId, limit),
   });
+}
+
+export interface SendMessageVariables {
+  readonly conversationId: string;
+  readonly body: MessageCreate;
+}
+
+/** Send a message through the active transport and refresh the message cache. */
+export function useSendMessage(): UseMutationResult<Message, Error, SendMessageVariables> {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ conversationId, body }: SendMessageVariables) =>
+      api.sendMessage(conversationId, body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.messages.all() });
+    },
+  });
+}
+
+/**
+ * Subscribe to a conversation's event stream for the lifetime of the component.
+ * Pass a `useCallback`-stable `onEvent` (and `conversationId = null` to disable).
+ */
+export function useConversationStream(
+  conversationId: string | null,
+  onEvent: (event: StreamEvent) => void,
+  resumeFrom?: number,
+): void {
+  const api = useApiClient();
+  useEffect(() => {
+    if (!conversationId) return;
+    const stream = api.openConversationStream(conversationId, resumeFrom);
+    const unsubscribe = stream.onEvent(onEvent);
+    return () => {
+      unsubscribe();
+      stream.close();
+    };
+  }, [api, conversationId, resumeFrom, onEvent]);
 }
 
 export function useCurrentUser(): UseQueryResult<User> {

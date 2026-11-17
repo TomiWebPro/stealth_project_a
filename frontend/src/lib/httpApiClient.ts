@@ -1,7 +1,9 @@
 import { ApiError } from "../api/client";
+import { parseStreamEvent } from "../api/conversations";
 import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
+import type { ConversationStream } from "./conversationStream";
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type {
@@ -11,6 +13,7 @@ import type {
   Extension,
   Job,
   Message,
+  MessageCreate,
   OperationCatalog,
   Organization,
   OrchestrationRun,
@@ -38,11 +41,20 @@ import type {
  * (`http://host:8000/api/v1`, the `env.apiBaseUrl` default); both resolve to
  * the same mounted root without ever doubling the prefix.
  */
+/** Minimal surface of a WebSocket needed to carry a conversation stream. */
+export interface StreamSocket {
+  addEventListener(type: string, listener: (event: { data?: unknown }) => void): void;
+  removeEventListener(type: string, listener: (event: { data?: unknown }) => void): void;
+  close(): void;
+}
+
 export interface HttpApiClientOptions {
   /** Injectable fetch (tests / custom runtimes). Defaults to global `fetch`. */
   fetchImpl?: typeof fetch;
   /** Supplies the bearer token appended to every request. */
   getAccessToken?: () => string | null | undefined;
+  /** Injectable WebSocket factory (tests / custom runtimes). */
+  webSocketImpl?: (url: string) => StreamSocket;
 }
 
 type QueryValue = string | number | boolean | undefined;
@@ -126,14 +138,25 @@ export function createHttpApiClient(
   async function request<T>(
     path: string,
     query?: Record<string, QueryValue>,
+    options?: { method?: "GET" | "POST"; body?: unknown },
   ): Promise<T> {
     const headers: Record<string, string> = { Accept: "application/json" };
     const token = getAccessToken();
     if (token) headers.Authorization = `Bearer ${token}`;
 
+    let body: string | undefined;
+    if (options?.body !== undefined) {
+      headers["Content-Type"] = "application/json";
+      body = JSON.stringify(options.body);
+    }
+
     let response: Response;
     try {
-      response = await fetchImpl(`${root}${path}${buildQuery(query)}`, { headers });
+      response = await fetchImpl(`${root}${path}${buildQuery(query)}`, {
+        method: options?.method ?? "GET",
+        headers,
+        body,
+      });
     } catch (cause) {
       if (cause instanceof Error && cause.name === "AbortError") throw cause;
       throw new ApiError({
@@ -309,6 +332,40 @@ export function createHttpApiClient(
       return limit === undefined ? ordered : ordered.slice(-limit);
     },
 
+    sendMessage(conversationId: string, body: MessageCreate): Promise<Message> {
+      return request<Message>(
+        `/conversations/${encodeURIComponent(conversationId)}/messages`,
+        undefined,
+        { method: "POST", body },
+      );
+    },
+
+    openConversationStream(conversationId: string, resumeFrom?: number): ConversationStream {
+      const suffix = resumeFrom === undefined ? "" : `?since=${resumeFrom}`;
+      const url = `${root.replace(/^http/, "ws")}/conversations/${encodeURIComponent(conversationId)}/stream${suffix}`;
+      const factory =
+        options.webSocketImpl ??
+        ((target: string) => new WebSocket(target) as unknown as StreamSocket);
+      const socket = factory(url);
+      return {
+        onEvent(handler) {
+          const listener = (event: { data?: unknown }) => {
+            if (typeof event?.data !== "string") return;
+            try {
+              handler(parseStreamEvent(event.data));
+            } catch {
+              // Ignore malformed frames from older backend builds.
+            }
+          };
+          socket.addEventListener("message", listener);
+          return () => socket.removeEventListener("message", listener);
+        },
+        close() {
+          socket.close();
+        },
+      };
+    },
+
     getCurrentUser: () => request<User>("/auth/me"),
 
     listOrganizations: () => request<Organization[]>("/orgs"),
@@ -317,10 +374,10 @@ export function createHttpApiClient(
       maybe(() => request<OrchestrationRun>(`/orchestration/runs/${runId}`)),
 
     listPresence: (projectId) =>
-      request<Presence[]>("/collaboration/presence", { project_id: projectId }),
+      request<Presence[]>("/presence", { project_id: projectId }),
 
     async listComments(projectId, assetId): Promise<readonly Comment[]> {
-      const comments = await request<Comment[]>("/collaboration/comments", {
+      const comments = await request<Comment[]>("/comments", {
         project_id: projectId,
         asset_id: assetId,
       });

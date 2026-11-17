@@ -25,15 +25,15 @@ export function createOrchestrationApi(client: ApiClient) {
 export function createCollaborationApi(client: ApiClient) {
   return {
     presence(projectId: Uuid): Promise<Presence[]> {
-      return client.get("/collaboration/presence", { query: { project_id: projectId } });
+      return client.get("/presence", { query: { project_id: projectId } });
     },
     listComments(projectId: Uuid, assetId?: Uuid): Promise<Comment[]> {
-      return client.get("/collaboration/comments", {
+      return client.get("/comments", {
         query: { project_id: projectId, asset_id: assetId },
       });
     },
     addComment(projectId: Uuid, body: string, assetId?: Uuid): Promise<Comment> {
-      return client.post("/collaboration/comments", {
+      return client.post("/comments", {
         project_id: projectId,
         asset_id: assetId ?? null,
         body,
