@@ -27,7 +27,8 @@ on. CI, lint, frontend tests (46) and backend tests (148) are green.
 `.github/workflows/ci.yml` runs on pushes to `main`, pull requests, and manual
 dispatches, with three Linux jobs:
 
-- **Frontend** — `npm ci`, `npm run lint`, `npm test` (Vitest), `npm run build`.
+- **Frontend** — `npm ci`, `npm run lint`, `npm test` (Vitest), `npm run test:coverage`
+  (V8 text report, informational), `npm run build`.
 - **Backend** — installs `requirements.txt` + `requirements-dev.txt`, runs
   `python -m pytest -q` on Python 3.12 (includes the frontend/backend contract
   parity tests, so it needs the full repo checkout), then runs a `pytest-cov`

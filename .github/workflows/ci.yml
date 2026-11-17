@@ -26,6 +26,8 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm test
+      - name: Coverage (supports C2)
+        run: npm run test:coverage
       - name: Build
         run: npm run build
 
