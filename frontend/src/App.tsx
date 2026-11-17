@@ -1,6 +1,7 @@
 import { ApiProvider } from "./app/ApiProvider";
 import { AssetsBrowserScreen } from "./features/assets/AssetsBrowserScreen";
 import { ChatScreen } from "./features/chat/ChatScreen";
+import { ExtensionsScreen } from "./features/extensions/ExtensionsScreen";
 import { HomeScreen } from "./features/home/HomeScreen";
 import { JobsScreen } from "./features/jobs/JobsScreen";
 import { PlaceholderScreen } from "./features/placeholder/PlaceholderScreen";
@@ -33,14 +34,7 @@ function CurrentScreen() {
     case "workspaces":
       return <WorkspacesScreen />;
     case "extensions":
-      return (
-        <PlaceholderScreen
-          route="extensions"
-          title="Extensions"
-          description="Connectors and add-ons with permissioned capabilities."
-          note="Extension platform arrives in Phase 5; this screen is an intentional placeholder."
-        />
-      );
+      return <ExtensionsScreen />;
     case "providers":
       return <ProvidersScreen />;
     case "settings":
