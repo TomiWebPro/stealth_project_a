@@ -73,7 +73,8 @@ this file is the execution checklist.
   (2026-11-17, d7f1c3c) — live provider refetch test; runtime mode/URL switcher pending.
 - [x] P3.6 (mocks/backend/screens) Expose `PATCH /assets/{id}` as `updateAsset` on `ApiClient`
   + `useQueries` mutation so the P3.4 metadata editor can persist edits.
-  ✅ 2026-11-17 — mocks transport + `useUpdateAsset` hook; `b9a2ef0` (screens) wires the editor.
+  ✅ 2026-11-17 — `32f0053` (mocks transport: `updateAsset` across mock/live + `useUpdateAsset`);
+  `b9a2ef0` (screens) wires the editor.
 
 ## Phase 4 — First production capability (owner: backend-core + mocks + screens)
 
@@ -224,3 +225,4 @@ this file is the execution checklist.
 - 2026-11-17 — `3c1488a`/`6ddb5bd` — P5.1/C14: marked extension manifest+registry item delivered by the P2.5 registry commit; added authoritative backend UE/Blender export endpoints matching the UI path convention (486 passed).
 - 2026-11-17 — `c7ce5bc` — C15: backend README now lists every mounted router, all env vars and honest Phase 4 boundaries (simulated adapters, SSE + polling, dev-local auth).
 - 2026-11-17 — `bba1718` — P4.5: harness ran a real CUDA probe on `ssh gpu-resource` (Tesla M60, 1.856 TFLOP/s FP32, 0.0926 s for 10×2048² matmuls); measurements recorded in gitignored `backend/data/gpu-smoke.json` and in this log; 4 harness tests green (490 passed).
+- 2026-11-17 — `32f0053` — P3.6 (mocks): added `updateAsset` mutation atomically across mockApi (overlay store + not-found/deleted/null-name errors), the stable `ApiClient` facade, live `httpApiClient` (PATCH), `queryKeys.assetWriteRoots()` and `useUpdateAsset`; 8 new tests, parity surface guard extended; lint/test (144 passed)/build green.
