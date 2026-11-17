@@ -8,6 +8,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ExportPanel } from "../export/ExportPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
+import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
 import { StoragePanel } from "../storage/StoragePanel";
 import { LineageView } from "../lineage/LineageView";
@@ -155,7 +156,8 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <VersionPanel assets={assets} />
       <LineageView assets={assets} />
-      <LineageGraph assets={assets} jobs={jobs} />
+      <LineageGraph assets={assets} />
+      <AuditFeedPanel projectId={projectId} />
       <ExportPanel assets={assets} project={project} />
     </div>
   );

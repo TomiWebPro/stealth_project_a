@@ -1,5 +1,4 @@
-import type { Asset, Job, JobStatus } from "../../lib/types";
-import type { BadgeTone } from "../../ui/Badge";
+import type { Asset } from "../../lib/types";
 
 export interface GraphNode {
   readonly id: string;
@@ -19,15 +18,6 @@ export interface GraphLayer {
   readonly nodes: readonly GraphNode[];
 }
 
-export interface AuditEvent {
-  readonly id: string;
-  readonly kind: "asset" | "publish" | "job";
-  readonly label: string;
-  readonly detail: string;
-  readonly timestamp: string;
-  readonly tone: BadgeTone;
-}
-
 const STAGE_BY_TYPE: Readonly<Partial<Record<Asset["type"], string>>> = {
   dataset: "Dataset",
   lora: "LoRA",
@@ -35,14 +25,6 @@ const STAGE_BY_TYPE: Readonly<Partial<Record<Asset["type"], string>>> = {
   splat: "Splat",
   scene: "Scene",
   resource: "Template",
-};
-
-const JOB_TONE: Readonly<Record<JobStatus, BadgeTone>> = {
-  queued: "neutral",
-  running: "info",
-  succeeded: "success",
-  failed: "danger",
-  canceled: "neutral",
 };
 
 function stageFor(asset: Asset): string {
@@ -113,53 +95,4 @@ export function graphSummary(layers: readonly GraphLayer[]): string {
   const count = layers.reduce((sum, layer) => sum + layer.nodes.length, 0);
   if (count === 0) return "No graph nodes";
   return `${count} node${count === 1 ? "" : "s"} across ${layers.length} level${layers.length === 1 ? "" : "s"}`;
-}
-
-export function buildAuditTrail(
-  assets: readonly Asset[],
-  jobs: readonly Job[],
-): readonly AuditEvent[] {
-  const events: AuditEvent[] = [];
-
-  for (const asset of assets) {
-    events.push({
-      id: `asset-${asset.id}`,
-      kind: "asset",
-      label: `Created ${asset.name}`,
-      detail: asset.provenance?.operation_id ?? asset.type,
-      timestamp: asset.created_at,
-      tone: "info",
-    });
-    const receipt = asset.metadata?.publish_receipt;
-    if (receipt && typeof receipt === "object" && receipt !== null) {
-      const comment = (receipt as Record<string, unknown>).comment;
-      events.push({
-        id: `publish-${asset.id}`,
-        kind: "publish",
-        label: `Published ${asset.name}`,
-        detail: typeof comment === "string" ? comment : "Publish receipt recorded",
-        timestamp: asset.updated_at,
-        tone: "success",
-      });
-    }
-  }
-
-  for (const job of jobs) {
-    events.push({
-      id: `job-${job.id}`,
-      kind: "job",
-      label: `${job.operation_id} · ${job.status}`,
-      detail: job.error?.message ?? `Attempt ${job.attempt ?? 1}`,
-      timestamp: job.created_at,
-      tone: JOB_TONE[job.status],
-    });
-  }
-
-  return events.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-}
-
-export function auditTrailSummary(events: readonly AuditEvent[]): string {
-  if (events.length === 0) return "No audit events";
-  const latest = events[0];
-  return `${events.length} event${events.length === 1 ? "" : "s"} · latest: ${latest?.label ?? "—"}`;
 }
