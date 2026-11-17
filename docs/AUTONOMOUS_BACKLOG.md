@@ -89,7 +89,8 @@ this file is the execution checklist.
   statuses surfaced; composer optimistic pending send mutation + stream (P4.7).
 - [x] P4.7 (mocks/backend) Add `sendMessage` mutation + conversation stream events to
   `ApiClient`/`useQueries` so the P4.6 composer can send and stream for real.
-  ✅ 2026-11-17 — `15accbb` (mocks transport; screens composer wiring follows)
+  ✅ 2026-11-17 — `15accbb` (mocks transport) + `b48f4e2` (screens) — composer sends via
+  `useSendMessage` and renders live `delta`/`message_complete` events from `useConversationStream`.
 
 ## Phase 5 — Extension platform (owner: backend-core + screens)
 
@@ -162,6 +163,7 @@ this file is the execution checklist.
 - 2026-11-17 — `15accbb` — P2.7 follow-up: aligned live presence/comments paths with the mounted backend routers (`/presence`, `/comments` instead of `/collaboration/*`) in both `lib/httpApiClient` and typed `api/orchestration`, updated parity/live tests, and re-exported `PresenceState`; lint/test (97 passed)/build green.
 - 2026-11-17 — `f5bdfa9` — P3.1: canonical on-disk project tree materialization/verification (`/projects/{id}/tree`), dir-only Default template, studio-root config, name/kind/version helpers; 12 new tests green (346 passed).
 - 2026-11-17 — `0093a77` — P6.2: Providers screen now shows a health summary, per-location runtime groups, location/status filters, and degraded/unavailable guidance, with helper tests.
+- 2026-11-17 — `b48f4e2` — P4.7 screens follow-up: Chat composer uses `useSendMessage` with pending/error states and renders streamed assistant replies from `useConversationStream`; removed the temporary optimistic chat store.
 - 2026-11-17 — `15accbb` — P4.7 (mocks transport): added `sendMessage` mutation + resumable `openConversationStream` to `ApiClient`/mock/live transports, `useSendMessage` + `useConversationStream` hooks, deterministic ordered stream events, seeded sent-message store, `messages.all` key, and error-state guards; 4 new tests across mock/live/key suites; lint/test (101 passed)/build green. Screens composer wiring is a screens-agent follow-up.
 - 2026-11-17 — `1fa8f81` — P3.2: publish ceremony — Ver_NNN↔AssetVersion mapping, immutable `Publish/` copies with `_vNNN` suffix, JSON receipt sidecars + registry metadata, idempotent replay and byte-change conflict guard; 17 new tests green (363 passed).
 - 2026-11-17 — `4c45a40` — P3.3: reference links with side-effect-free dry-run plan, symlink apply + `.link.txt` fallback, `Resources/.links.json` registry, conflict/traversal guards; never copies weights (`copied_bytes` always 0); 16 new tests green (379 passed).
