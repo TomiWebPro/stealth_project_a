@@ -25,6 +25,7 @@ class Collections:
     JOBS = "jobs"
     JOB_EVENTS = "job_events"
     JOB_RETRIES = "job_retries"
+    PROVIDERS = "providers"
 
 
 Document = dict[str, Any]

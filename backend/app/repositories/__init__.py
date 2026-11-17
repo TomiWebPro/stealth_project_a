@@ -11,6 +11,7 @@ from .assets import AssetRepository
 from .conversations import ConversationRepository
 from .jobs import JobRepository
 from .projects import ProjectRepository
+from .providers import ProviderRepository
 from .uploads import UploadRepository
 
 
@@ -21,6 +22,7 @@ class Repositories:
     conversations: ConversationRepository
     uploads: UploadRepository
     jobs: JobRepository
+    providers: ProviderRepository
 
     @classmethod
     def build(
@@ -36,12 +38,14 @@ class Repositories:
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
         jobs = JobRepository(store, projects, clock=clock)
+        providers = ProviderRepository(store, clock=clock)
         return cls(
             projects=projects,
             assets=assets,
             conversations=conversations,
             uploads=uploads,
             jobs=jobs,
+            providers=providers,
         )
 
 
