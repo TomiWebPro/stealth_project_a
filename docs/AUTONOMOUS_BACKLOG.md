@@ -114,7 +114,9 @@ this file is the execution checklist.
 - [x] P6.4 Audio integration (TTS/dialogue hooks) behind capability flags.
   ✅ 2026-11-17 — `978689c` — Chat capability-gated dialogue/TTS panel; enabled only when a
   provider advertises an available audio operation, with script parsing + tests.
-- [ ] P6.5 Export paths to UE / Blender.
+- [x] P6.5 Export paths to UE / Blender.
+  ✅ 2026-11-17 — `aa72e04` — published-asset export panel with provisional UE/Blender path
+  convention, target filters and compatibility badges (backend export endpoint pending).
 
 ## Never-empty well (pick these when your column is otherwise done)
 
@@ -172,4 +174,5 @@ this file is the execution checklist.
 - 2026-11-17 — `fd9cf91` — C11: pinned all five GitHub Actions in `.github/workflows/ci.yml` to full commit SHAs (immutable refs) with version comments, plus explicit `toolchain: stable` for dtolnay; YAML validated, all three jobs intact; frontend lint/test/build (104 tests) and backend pytest (379 passed) green.
 - 2026-11-17 — `4c45a40` — P3.3: reference links with side-effect-free dry-run plan, symlink apply + `.link.txt` fallback, `Resources/.links.json` registry, conflict/traversal guards; never copies weights (`copied_bytes` always 0); 16 new tests green (379 passed).
 - 2026-11-17 — `978689c` — P6.4: Chat gains a capability-gated audio/dialogue panel that enables only when a provider advertises an available TTS/voice operation; script parsing + helper tests.
+- 2026-11-17 — `aa72e04` — P6.5: Project detail now shows Unreal/Blender export paths for published assets with target filters, provisional path convention and tests.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
