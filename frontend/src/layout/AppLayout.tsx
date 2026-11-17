@@ -13,10 +13,21 @@ export interface AppLayoutProps {
 export function AppLayout({ header, sidebar, children }: AppLayoutProps) {
   return (
     <div className="flex h-full flex-col bg-canvas text-content">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-accent focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-accent-contrast"
+      >
+        Skip to main content
+      </a>
       {header}
       <div className="flex min-h-0 flex-1">
         {sidebar}
-        <main className="min-w-0 flex-1 overflow-y-auto" aria-label="Main content">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="min-w-0 flex-1 overflow-y-auto"
+          aria-label="Main content"
+        >
           <div className="mx-auto w-full max-w-6xl px-6 py-8">{children}</div>
         </main>
       </div>

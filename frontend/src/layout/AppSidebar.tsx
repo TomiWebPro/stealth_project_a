@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import type { KeyboardEvent, MouseEvent } from "react";
 import { NAV_GROUPS, routeToPath, type RouteId } from "../navigation/routes";
 import { useUiStore } from "../stores/uiStore";
 import { cn } from "../ui/cn";
@@ -10,9 +10,10 @@ interface SidebarItemProps {
   readonly active: boolean;
   readonly collapsed: boolean;
   readonly onSelect: () => void;
+  readonly onArrow: (element: HTMLAnchorElement, direction: -1 | 1) => void;
 }
 
-function SidebarItem({ id, label, glyph, active, collapsed, onSelect }: SidebarItemProps) {
+function SidebarItem({ id, label, glyph, active, collapsed, onSelect, onArrow }: SidebarItemProps) {
   // Render a real link for semantics (focusable, openable in a new tab), but
   // intercept plain left-clicks so in-app navigation goes through the store.
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
@@ -21,10 +22,18 @@ function SidebarItem({ id, label, glyph, active, collapsed, onSelect }: SidebarI
     onSelect();
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLAnchorElement>) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      onArrow(event.currentTarget, event.key === "ArrowDown" ? 1 : -1);
+    }
+  }
+
   return (
     <a
       href={routeToPath(id)}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       aria-current={active ? "page" : undefined}
       title={collapsed ? label : undefined}
       className={cn(
@@ -49,6 +58,18 @@ export function AppSidebar() {
   const activeRoute = useUiStore((state) => state.activeRoute);
   const collapsed = useUiStore((state) => state.sidebarCollapsed);
   const navigate = useUiStore((state) => state.navigate);
+
+  // Roving focus across all nav links so keyboard users can traverse the rail
+  // with Up/Down without tabbing through every item.
+  function moveFocus(from: HTMLElement, direction: -1 | 1) {
+    const links = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("aside nav a[href]"),
+    );
+    const index = links.indexOf(from as HTMLAnchorElement);
+    if (index === -1 || links.length === 0) return;
+    const next = links[(index + direction + links.length) % links.length];
+    next?.focus();
+  }
 
   return (
     <aside
@@ -76,6 +97,7 @@ export function AppSidebar() {
               collapsed={collapsed}
               active={activeRoute === item.id}
               onSelect={() => navigate(item.id)}
+              onArrow={(element, direction) => moveFocus(element, direction)}
             />
           ))}
         </nav>

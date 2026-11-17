@@ -27,7 +27,8 @@
   /* Text */
   --color-content: #f4f4f5;
   --color-content-muted: #a1a1ac;
-  --color-content-subtle: #6f6f7c;
+  /* Raised from #6f6f7c (~3.5:1) to meet 4.5:1 on surface backgrounds. */
+  --color-content-subtle: #8b8b99;
 
   /* Semantic status */
   --color-success: #4ade80;
