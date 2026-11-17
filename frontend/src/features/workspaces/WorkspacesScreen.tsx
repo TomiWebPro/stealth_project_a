@@ -5,6 +5,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { CollaborationPanel } from "./CollaborationPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
 
 export function WorkspacesScreen() {
@@ -15,13 +16,15 @@ export function WorkspacesScreen() {
     <div className="space-y-6">
       <PageHeader
         title="Workspaces"
-        description="Shared workspace resources and workflow template gallery."
+        description="Collaboration, presence, shared resources, and workflow templates."
         actions={
           <Button variant="secondary" size="sm" onClick={() => void refetch()}>
             Refresh
           </Button>
         }
       />
+
+      <CollaborationPanel />
 
       {isPending ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading templates">
