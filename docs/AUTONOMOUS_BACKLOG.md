@@ -73,7 +73,7 @@ this file is the execution checklist.
   (2026-11-17, d7f1c3c) — live provider refetch test; runtime mode/URL switcher pending.
 - [x] P3.6 (mocks/backend/screens) Expose `PATCH /assets/{id}` as `updateAsset` on `ApiClient`
   + `useQueries` mutation so the P3.4 metadata editor can persist edits.
-  ✅ 2026-11-17 — mocks transport + `useUpdateAsset` hook; `3034cf2` (screens) wires the editor.
+  ✅ 2026-11-17 — mocks transport + `useUpdateAsset` hook; `b9a2ef0` (screens) wires the editor.
 
 ## Phase 4 — First production capability (owner: backend-core + mocks + screens)
 
@@ -162,7 +162,7 @@ this file is the execution checklist.
 - [x] C12 Global Cmd/Ctrl+K quick switcher (owner: screens) — filterable route palette with keyboard nav, header trigger, no route changes. ✅ 2026-11-17 — `777ba82`
 - [x] C13 App-level error boundary + reduced-motion support (owner: screens) — render failures show a retry card without losing the shell. ✅ 2026-11-17 — `0ee0fae`
 - [x] C14 Non-blocking job-retry feedback (owner: screens) — replace `window.alert` with inline staged-retry status. ✅ 2026-11-17 — `67c1ece`
-- [x] C15 Home per-section empty states + persisted asset edits (owner: screens) — empty sections in live mode; metadata editor uses `useUpdateAsset`. ✅ 2026-11-17 — `3034cf2`
+- [x] C15 Home per-section empty states + persisted asset edits (owner: screens) — empty sections in live mode; metadata editor uses `useUpdateAsset`. ✅ 2026-11-17 — `b9a2ef0`
 - [x] C14 (backend) Authoritative UE/Blender export path endpoint replacing the
   UI-only provisional convention (P6.5 follow-up).
   ✅ 2026-11-17 — `6ddb5bd` — `GET /projects/{id}/exports` + `/assets/{id}/exports`,
@@ -214,7 +214,7 @@ this file is the execution checklist.
 - 2026-11-17 — `777ba82` — C12: added a global Cmd/Ctrl+K quick switcher (searchable route palette, arrow/enter keyboard nav, header trigger) that navigates through the UI store without changing RouteId.
 - 2026-11-17 — `0ee0fae` — C13: wrapped the active screen in an error boundary with a retry action and added a global prefers-reduced-motion rule.
 - 2026-11-17 — `67c1ece` — C14: job retry no longer opens a blocking browser alert; it shows an inline, accessible staged-retry status instead.
-- 2026-11-17 — `3034cf2` — P3.6 screens wiring + C15: asset metadata editor now persists via `useUpdateAsset` with pending/error states; Home sections render explicit empty states for live-mode empty data.
+- 2026-11-17 — `b9a2ef0` — P3.6 screens wiring + C15: asset metadata editor now persists via `useUpdateAsset` with pending/error states; Home sections render explicit empty states for live-mode empty data.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
@@ -223,3 +223,4 @@ this file is the execution checklist.
 - 2026-11-17 — `777ba82` — C13 (screens): completed C2 state-derivation coverage for assets/projects/workspaces/lineage (empty/populated/error-safe cases) and fixed buildLineageStages duplicating Design assets into Other; lint/test (137 tests)/build green.
 - 2026-11-17 — `3c1488a`/`6ddb5bd` — P5.1/C14: marked extension manifest+registry item delivered by the P2.5 registry commit; added authoritative backend UE/Blender export endpoints matching the UI path convention (486 passed).
 - 2026-11-17 — `c7ce5bc` — C15: backend README now lists every mounted router, all env vars and honest Phase 4 boundaries (simulated adapters, SSE + polling, dev-local auth).
+- 2026-11-17 — `bba1718` — P4.5: harness ran a real CUDA probe on `ssh gpu-resource` (Tesla M60, 1.856 TFLOP/s FP32, 0.0926 s for 10×2048² matmuls); measurements recorded in gitignored `backend/data/gpu-smoke.json` and in this log; 4 harness tests green (490 passed).
