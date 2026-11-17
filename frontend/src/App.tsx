@@ -1,4 +1,5 @@
 import { ApiProvider } from "./app/ApiProvider";
+import { AppErrorBoundary } from "./app/AppErrorBoundary";
 import { AssetsBrowserScreen } from "./features/assets/AssetsBrowserScreen";
 import { ChatScreen } from "./features/chat/ChatScreen";
 import { ExtensionsScreen } from "./features/extensions/ExtensionsScreen";
@@ -55,7 +56,9 @@ export function App() {
   return (
     <ApiProvider client={apiClient}>
       <AppLayout header={<AppHeader />} sidebar={<AppSidebar />}>
-        <CurrentScreen />
+        <AppErrorBoundary>
+          <CurrentScreen />
+        </AppErrorBoundary>
       </AppLayout>
       <CommandPalette />
     </ApiProvider>
