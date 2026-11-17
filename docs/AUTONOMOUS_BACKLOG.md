@@ -111,7 +111,9 @@ this file is the execution checklist.
 - [x] P6.3 Advanced lineage graph UI + audit trail.
   ✅ 2026-11-17 — `14e128c` — depth-layered parent/child graph + chronological
   asset/publish/job audit trail on project detail, with cycle-safe helpers.
-- [ ] P6.4 Audio integration (TTS/dialogue hooks) behind capability flags.
+- [x] P6.4 Audio integration (TTS/dialogue hooks) behind capability flags.
+  ✅ 2026-11-17 — `978689c` — Chat capability-gated dialogue/TTS panel; enabled only when a
+  provider advertises an available audio operation, with script parsing + tests.
 - [ ] P6.5 Export paths to UE / Blender.
 
 ## Never-empty well (pick these when your column is otherwise done)
@@ -169,3 +171,4 @@ this file is the execution checklist.
 - 2026-11-17 — `1fa8f81` — P3.2: publish ceremony — Ver_NNN↔AssetVersion mapping, immutable `Publish/` copies with `_vNNN` suffix, JSON receipt sidecars + registry metadata, idempotent replay and byte-change conflict guard; 17 new tests green (363 passed).
 - 2026-11-17 — `fd9cf91` — C11: pinned all five GitHub Actions in `.github/workflows/ci.yml` to full commit SHAs (immutable refs) with version comments, plus explicit `toolchain: stable` for dtolnay; YAML validated, all three jobs intact; frontend lint/test/build (104 tests) and backend pytest (379 passed) green.
 - 2026-11-17 — `4c45a40` — P3.3: reference links with side-effect-free dry-run plan, symlink apply + `.link.txt` fallback, `Resources/.links.json` registry, conflict/traversal guards; never copies weights (`copied_bytes` always 0); 16 new tests green (379 passed).
+- 2026-11-17 — `978689c` — P6.4: Chat gains a capability-gated audio/dialogue panel that enables only when a provider advertises an available TTS/voice operation; script parsing + helper tests.
