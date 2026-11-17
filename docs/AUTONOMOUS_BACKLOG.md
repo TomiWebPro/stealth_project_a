@@ -103,7 +103,9 @@ this file is the execution checklist.
 - [x] P6.1 Workspaces with collaboration roles and presence.
   ✅ 2026-11-17 — `a152ae8` — organizations/session, derived owner/member/viewer roles,
   presence and comments panels with loading/error/empty/populated states.
-- [ ] P6.2 Multiple providers/local runtimes with health/degraded states.
+- [x] P6.2 Multiple providers/local runtimes with health/degraded states.
+  ✅ 2026-11-17 — `0093a77` — health summary (available/degraded/unavailable), per-location
+  runtime groups, location/status filters and degraded-state guidance.
 - [ ] P6.3 Advanced lineage graph UI + audit trail.
 - [ ] P6.4 Audio integration (TTS/dialogue hooks) behind capability flags.
 - [ ] P6.5 Export paths to UE / Blender.
@@ -156,3 +158,4 @@ this file is the execution checklist.
 - 2026-11-17 — `a152ae8` — P6.1: Workspaces screen now shows organization/session identity, derived collaboration roles (owner/member/viewer), live presence and project comments from hooks, with all UI states and helper tests.
 - 2026-11-17 — `15accbb` — P2.7 follow-up: aligned live presence/comments paths with the mounted backend routers (`/presence`, `/comments` instead of `/collaboration/*`) in both `lib/httpApiClient` and typed `api/orchestration`, updated parity/live tests, and re-exported `PresenceState`; lint/test (97 passed)/build green.
 - 2026-11-17 — `f5bdfa9` — P3.1: canonical on-disk project tree materialization/verification (`/projects/{id}/tree`), dir-only Default template, studio-root config, name/kind/version helpers; 12 new tests green (346 passed).
+- 2026-11-17 — `0093a77` — P6.2: Providers screen now shows a health summary, per-location runtime groups, location/status filters, and degraded/unavailable guidance, with helper tests.
