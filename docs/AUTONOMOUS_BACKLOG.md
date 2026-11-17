@@ -71,8 +71,9 @@ this file is the execution checklist.
   (2026-11-17, cc7a398) — local-optimistic editor; needs `updateAsset` hook to persist.
 - [x] P3.5 Settings screen: backend URL, API mode, provider connections, test button.
   (2026-11-17, d7f1c3c) — live provider refetch test; runtime mode/URL switcher pending.
-- [ ] P3.6 (mocks/backend) Expose `PATCH /assets/{id}` as `updateAsset` on `ApiClient`
+- [x] P3.6 (mocks/backend/screens) Expose `PATCH /assets/{id}` as `updateAsset` on `ApiClient`
   + `useQueries` mutation so the P3.4 metadata editor can persist edits.
+  ✅ 2026-11-17 — mocks transport + `useUpdateAsset` hook; `3034cf2` (screens) wires the editor.
 
 ## Phase 4 — First production capability (owner: backend-core + mocks + screens)
 
@@ -82,8 +83,13 @@ this file is the execution checklist.
   operations with lineage. ✅ 2026-11-17 — `657ed3a`
 - [x] P4.3 First/last-frame + video generation operations with LoRA auto-mounting. ✅ 2026-11-17 — `eca98f8`
 - [x] P4.4 Splat/COLMAP + camera-path bridge operations (CPU smoke mode by default). ✅ 2026-11-17 — `5ea7d51`
-- [ ] P4.5 GPU validation harness: scripted end-to-end smoke run targeting
+- [x] P4.5 GPU validation harness: scripted end-to-end smoke run targeting
   `ssh gpu-reach` box; record real numbers, replace provisional mock values.
+  ✅ 2026-11-17 — `bba1718` (harness + `backend/data/gpu-smoke.json`, gitignored).
+  Real numbers: Tesla M60 8 GB, CUDA 12.4 / torch 2.6.0+cu124, sm_52,
+  **1.856 TFLOP/s FP32** (2048² matmul ×10, 0.0926 s), 8318 MiB free at rest.
+  Box alias is `gpu-resource` (see `~/GPU-RESOURCE.md`); "replace provisional mock
+  values" in frontend provider cards remains a mocks-agent follow-up.
 - [x] P4.6 Chat screen: connect conversations API to a real orchestration loop with
   streaming events. (2026-11-17, 51146fd) — conversation/message hooks wired, streaming
   statuses surfaced; composer optimistic pending send mutation + stream (P4.7).
@@ -156,6 +162,7 @@ this file is the execution checklist.
 - [x] C12 Global Cmd/Ctrl+K quick switcher (owner: screens) — filterable route palette with keyboard nav, header trigger, no route changes. ✅ 2026-11-17 — `777ba82`
 - [x] C13 App-level error boundary + reduced-motion support (owner: screens) — render failures show a retry card without losing the shell. ✅ 2026-11-17 — `0ee0fae`
 - [x] C14 Non-blocking job-retry feedback (owner: screens) — replace `window.alert` with inline staged-retry status. ✅ 2026-11-17 — `67c1ece`
+- [x] C15 Home per-section empty states + persisted asset edits (owner: screens) — empty sections in live mode; metadata editor uses `useUpdateAsset`. ✅ 2026-11-17 — `3034cf2`
 - [x] C14 (backend) Authoritative UE/Blender export path endpoint replacing the
   UI-only provisional convention (P6.5 follow-up).
   ✅ 2026-11-17 — `6ddb5bd` — `GET /projects/{id}/exports` + `/assets/{id}/exports`,
@@ -207,6 +214,7 @@ this file is the execution checklist.
 - 2026-11-17 — `777ba82` — C12: added a global Cmd/Ctrl+K quick switcher (searchable route palette, arrow/enter keyboard nav, header trigger) that navigates through the UI store without changing RouteId.
 - 2026-11-17 — `0ee0fae` — C13: wrapped the active screen in an error boundary with a retry action and added a global prefers-reduced-motion rule.
 - 2026-11-17 — `67c1ece` — C14: job retry no longer opens a blocking browser alert; it shows an inline, accessible staged-retry status instead.
+- 2026-11-17 — `3034cf2` — P3.6 screens wiring + C15: asset metadata editor now persists via `useUpdateAsset` with pending/error states; Home sections render explicit empty states for live-mode empty data.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
