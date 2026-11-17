@@ -19,11 +19,17 @@ import {
   isPublishAsset,
   shotGroupSummary,
 } from "./helpers";
+import { AssetDetailPanel } from "./AssetDetailPanel";
 import { VersionPanel } from "./VersionPanel";
 
 type ViewMode = "grid" | "list";
 
-function AssetGridItem({ asset }: { readonly asset: Asset }) {
+interface AssetItemProps {
+  readonly asset: Asset;
+  readonly onSelect: (assetId: string) => void;
+}
+
+function AssetGridItem({ asset, onSelect }: AssetItemProps) {
   const preview = assetPreviewUrl(asset);
   return (
     <li className="overflow-hidden rounded-md border border-line bg-surface-raised">
@@ -46,15 +52,18 @@ function AssetGridItem({ asset }: { readonly asset: Asset }) {
         <p className="truncate text-2xs text-content-muted" title={assetStorageLabel(asset)}>
           {assetStorageLabel(asset)}
         </p>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           {isPublishAsset(asset) ? <Badge tone="success">Publish</Badge> : <Badge tone="neutral">Output</Badge>}
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => onSelect(asset.id)}>
+            Details
+          </Button>
         </div>
       </div>
     </li>
   );
 }
 
-function AssetListItem({ asset }: { readonly asset: Asset }) {
+function AssetListItem({ asset, onSelect }: AssetItemProps) {
   const preview = assetPreviewUrl(asset);
   return (
     <li className="flex items-center gap-3 px-4 py-3">
@@ -71,6 +80,9 @@ function AssetListItem({ asset }: { readonly asset: Asset }) {
       <div className="flex shrink-0 items-center gap-2">
         {isPublishAsset(asset) ? <Badge tone="success">Publish</Badge> : <Badge tone="neutral">Output</Badge>}
         <Badge tone={assetTypeTone(asset.type)}>{asset.type}</Badge>
+        <Button variant="ghost" size="sm" onClick={() => onSelect(asset.id)}>
+          Details
+        </Button>
       </div>
     </li>
   );
@@ -80,6 +92,7 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<AssetType | "all">("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const { data, isPending, isError, error, refetch } = useAssetsByProject(projectId);
 
   const filtered = useMemo(
@@ -115,6 +128,7 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
   }
 
   const assets = data ?? [];
+  const selectedAsset = assets.find((asset) => asset.id === selectedAssetId) ?? null;
   return (
     <div className="space-y-4">
       <Card className="p-4">
@@ -191,13 +205,13 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
         ) : viewMode === "grid" ? (
           <ul className="grid grid-cols-2 gap-3 border-t border-line p-4 sm:grid-cols-3 lg:grid-cols-4">
             {filtered.map((asset) => (
-              <AssetGridItem key={asset.id} asset={asset} />
+              <AssetGridItem key={asset.id} asset={asset} onSelect={setSelectedAssetId} />
             ))}
           </ul>
         ) : (
           <ul className="divide-y divide-line border-t border-line">
             {filtered.map((asset) => (
-              <AssetListItem key={asset.id} asset={asset} />
+              <AssetListItem key={asset.id} asset={asset} onSelect={setSelectedAssetId} />
             ))}
           </ul>
         )}
@@ -227,7 +241,7 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
                 </div>
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {group.assets.map((asset) => (
-                    <AssetGridItem key={asset.id} asset={asset} />
+                    <AssetGridItem key={asset.id} asset={asset} onSelect={setSelectedAssetId} />
                   ))}
                 </ul>
               </section>
@@ -235,6 +249,17 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
           </div>
         )}
       </Card>
+
+      {selectedAsset ? (
+        <AssetDetailPanel key={selectedAsset.id} asset={selectedAsset} />
+      ) : (
+        <Card className="p-4">
+          <EmptyState
+            title="No asset selected"
+            description="Choose an asset above to view its details and edit metadata."
+          />
+        </Card>
+      )}
 
       <VersionPanel assets={filtered} />
     </div>
