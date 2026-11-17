@@ -76,8 +76,8 @@ this file is the execution checklist.
 
 ## Phase 4 — First production capability (owner: backend-core + mocks + screens)
 
-- [ ] P4.1 Provider adapters: local ComfyUI + cloud/RunPod adapter interfaces behind
-  one execution contract; simulate locally so UI works without GPU.
+- [x] P4.1 Provider adapters: local ComfyUI + cloud/RunPod adapter interfaces behind
+  one execution contract; simulate locally so UI works without GPU. ✅ 2026-11-17 — `a71390e`
 - [ ] P4.2 Dataset-prep → ai-toolkit YAML → LoRA-train operation chain as real job
   operations with lineage.
 - [ ] P4.3 First/last-frame + video generation operations with LoRA auto-mounting.
@@ -172,3 +172,4 @@ this file is the execution checklist.
 - 2026-11-17 — `fd9cf91` — C11: pinned all five GitHub Actions in `.github/workflows/ci.yml` to full commit SHAs (immutable refs) with version comments, plus explicit `toolchain: stable` for dtolnay; YAML validated, all three jobs intact; frontend lint/test/build (104 tests) and backend pytest (379 passed) green.
 - 2026-11-17 — `4c45a40` — P3.3: reference links with side-effect-free dry-run plan, symlink apply + `.link.txt` fallback, `Resources/.links.json` registry, conflict/traversal guards; never copies weights (`copied_bytes` always 0); 16 new tests green (379 passed).
 - 2026-11-17 — `978689c` — P6.4: Chat gains a capability-gated audio/dialogue panel that enables only when a provider advertises an available TTS/voice operation; script parsing + helper tests.
+- 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
