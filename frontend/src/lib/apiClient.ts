@@ -1,3 +1,4 @@
+import type { ActivityOptions } from "./activity";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
 import type { ConversationStream } from "./conversationStream";
@@ -7,6 +8,7 @@ import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type { SearchOptions } from "./search";
 import type {
+  ActivityFeed,
   Asset,
   AssetUpdate,
   AuditTrail,
@@ -39,6 +41,11 @@ import * as mockApi from "./mock/mockApi";
  */
 export interface ApiClient {
   getHomeSummary(): Promise<HomeSummary>;
+  /**
+   * Newest-first authoritative workspace activity feed (C29). An unknown
+   * `projectId` scope surfaces a normalized 404 `ApiError` on both transports.
+   */
+  getActivity(options?: ActivityOptions): Promise<ActivityFeed>;
   /** Authoritative workspace snapshot derived by the backend `/dashboard` endpoint (C25). */
   getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
   listProjects(): Promise<readonly Project[]>;
@@ -84,6 +91,7 @@ export interface ApiClient {
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
 export const mockApiClient: ApiClient = {
   getHomeSummary: mockApi.fetchHomeSummary,
+  getActivity: mockApi.fetchActivity,
   getDashboard: mockApi.fetchDashboard,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,

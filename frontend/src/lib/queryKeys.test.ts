@@ -7,6 +7,23 @@ describe("queryKeys", () => {
     expect(queryKeys.home.summary()).toEqual(["home", "summary"]);
   });
 
+  it("scopes the workspace activity key by project, kind and limit", () => {
+    expect(queryKeys.activity.feed()).toEqual([
+      "activity",
+      "feed",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.activity.feed({ projectId: "p1", kind: "job", limit: 10 })).toEqual([
+      "activity",
+      "feed",
+      "p1",
+      "job",
+      10,
+    ]);
+  });
+
   it("scopes the dashboard snapshot key by recent_limit", () => {
     expect(queryKeys.dashboard.summary()).toEqual(["dashboard", "summary", "all"]);
     expect(queryKeys.dashboard.summary({ recentLimit: 10 })).toEqual([

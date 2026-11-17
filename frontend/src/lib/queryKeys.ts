@@ -1,3 +1,4 @@
+import type { ActivityOptions } from "./activity";
 import type { AuditQuery } from "./audit";
 import type { DashboardOptions } from "./dashboard";
 import type { SearchOptions } from "./search";
@@ -12,6 +13,16 @@ import type { SearchOptions } from "./search";
 export const queryKeys = {
   home: {
     summary: () => ["home", "summary"] as const,
+  },
+  activity: {
+    feed: (options: ActivityOptions = {}) =>
+      [
+        "activity",
+        "feed",
+        options.projectId ?? "all",
+        options.kind ?? "all",
+        options.limit ?? "all",
+      ] as const,
   },
   dashboard: {
     summary: (options: DashboardOptions = {}) =>

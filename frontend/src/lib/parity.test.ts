@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { ApiError } from "../api/client";
 import { API_PREFIX } from "../types/common";
+import { deriveActivityFeed, validateActivityArgs } from "./activity";
+import type { ActivityOptions } from "./activity";
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
@@ -69,6 +71,35 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
     };
     return filterAuditTrail(trail, query);
+  }
+
+  // Authoritative workspace activity is derived from the same asset/job/comment
+  // stores on every call; reproduce the router's 422 validation, 404 for an
+  // unknown project scope and the repository derivation over the shared seeds.
+  if (path === "/activity") {
+    const projectId = params.get("project_id") ?? undefined;
+    const kindRaw = params.get("kind");
+    const limitRaw = params.get("limit");
+    const options: ActivityOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(kindRaw ? { kind: kindRaw as ActivityOptions["kind"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateActivityArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (options.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+      return NOT_FOUND;
+    }
+    return deriveActivityFeed(ASSETS, JOBS, COMMENTS, options);
   }
 
   // Authoritative cross-domain search is derived from the same document stores
@@ -253,6 +284,9 @@ describe("live vs mock transport parity", () => {
   it("returns identical payloads for every populated query", async () => {
     const cases: Array<[string, (api: ApiClient) => Promise<unknown>]> = [
       ["getHomeSummary", (api) => api.getHomeSummary()],
+      ["getActivity", (api) => api.getActivity()],
+      ["getActivity scoped", (api) => api.getActivity({ projectId: filmId })],
+      ["getActivity filtered", (api) => api.getActivity({ projectId: filmId, kind: "job", limit: 3 })],
       ["getDashboard", (api) => api.getDashboard()],
       ["getDashboard limited", (api) => api.getDashboard({ recentLimit: 3 })],
       ["listProjects", (api) => api.listProjects()],
@@ -302,6 +336,17 @@ describe("live vs mock transport parity", () => {
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
     );
+    expect(await live.getActivity({ projectId: emptyId })).toEqual(
+      await mockApiClient.getActivity({ projectId: emptyId }),
+    );
+    // Both transports 404 identically for an unknown project scope.
+    const missingId = "00000000-0000-4000-8000-000000000000";
+    const [mock404, live404] = await Promise.all([
+      mockApiClient.getActivity({ projectId: missingId }).catch((cause) => cause),
+      live.getActivity({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mock404).toMatchObject({ status: 404, code: "not_found" });
+    expect(live404).toMatchObject({ status: 404, code: "not_found" });
     expect(await live.getProject("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(await mockApiClient.getProject("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(await live.getProjectAudit(emptyId)).toEqual(await mockApiClient.getProjectAudit(emptyId));
@@ -319,6 +364,14 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports reject the same out-of-range activity limit identically.
+    const [mockActivityErr, liveActivityErr] = await Promise.all([
+      mockApiClient.getActivity({ limit: 0 }).catch((cause) => cause),
+      live.getActivity({ limit: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockActivityErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveActivityErr).toMatchObject({ status: 422, code: "validation_error" });
   });
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {
@@ -340,6 +393,7 @@ describe("live vs mock transport parity", () => {
     // Compile-time guard that every query method stays callable with its args.
     const typed: Queries = live as unknown as Queries;
     expect(typeof typed.getHomeSummary).toBe("function");
+    expect(typeof typed.getActivity).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");

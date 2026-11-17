@@ -1,5 +1,7 @@
 import { ApiError } from "../api/client";
 import { parseStreamEvent } from "../api/conversations";
+import { activityQueryParams } from "./activity";
+import type { ActivityOptions } from "./activity";
 import { auditQueryParams } from "./audit";
 import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
@@ -13,6 +15,7 @@ import type { ProjectDetail } from "./projectDetail";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
 import type {
+  ActivityFeed,
   Asset,
   AssetUpdate,
   AuditTrail,
@@ -206,6 +209,11 @@ export function createHttpApiClient(
   }
 
   return {
+    /** The backend derives the feed; the live transport just forwards it. */
+    getActivity(options?: ActivityOptions): Promise<ActivityFeed> {
+      return request<ActivityFeed>("/activity", activityQueryParams(options));
+    },
+
     /** The backend owns the whole snapshot; the live transport just forwards it. */
     getDashboard(options?: DashboardOptions): Promise<DashboardSummary> {
       return request<DashboardSummary>("/dashboard", dashboardQueryParams(options));

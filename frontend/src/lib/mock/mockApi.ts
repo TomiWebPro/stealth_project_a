@@ -1,4 +1,6 @@
 import { ApiError } from "../../api/client";
+import { deriveActivityFeed, validateActivityArgs } from "../activity";
+import type { ActivityOptions } from "../activity";
 import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
@@ -167,6 +169,25 @@ export async function fetchDashboard(options?: DashboardOptions) {
       options,
     ),
   );
+}
+
+/**
+ * Authoritative workspace activity feed (C29) derived from the same asset/job/
+ * comment seeds as the live endpoint. Router-style 422 validation, a 404 for an
+ * unknown project scope and the `"activity"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchActivity(options?: ActivityOptions) {
+  failIfEnabled("activity");
+  validateActivityArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveActivityFeed(ASSETS.map(withAssetOverrides), JOBS, COMMENTS, options));
 }
 
 export async function fetchProjects(): Promise<readonly Project[]> {

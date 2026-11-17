@@ -2,6 +2,7 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
+import type { ActivityOptions } from "../lib/activity";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { DashboardOptions } from "../lib/dashboard";
@@ -9,6 +10,7 @@ import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { SearchOptions } from "../lib/search";
 import type {
+  ActivityFeed,
   Asset,
   AssetUpdate,
   AuditTrail,
@@ -37,6 +39,15 @@ export function useHomeSummary(): UseQueryResult<HomeSummary> {
   return useQuery({
     queryKey: queryKeys.home.summary(),
     queryFn: () => api.getHomeSummary(),
+  });
+}
+
+/** Newest-first authoritative workspace activity feed (C29). */
+export function useActivity(options?: ActivityOptions): UseQueryResult<ActivityFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.activity.feed(options),
+    queryFn: () => api.getActivity(options),
   });
 }
 

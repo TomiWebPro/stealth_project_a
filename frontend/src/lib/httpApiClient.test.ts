@@ -592,6 +592,66 @@ describe("createHttpApiClient project audit", () => {
   });
 });
 
+describe("createHttpApiClient workspace activity (C29)", () => {
+  const feed = {
+    events: [
+      {
+        id: "job-j1",
+        kind: "job",
+        project_id: project.id,
+        actor_id: project.created_by,
+        label: "dataset-prep · running",
+        detail: "Attempt 1",
+        timestamp: "2026-01-05T00:00:00Z",
+        tone: "info",
+      },
+    ],
+    total: 1,
+  };
+
+  it("GETs /activity with filters and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/activity": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getActivity({ projectId: project.id, kind: "job", limit: 5 }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/activity`);
+    expect(url.searchParams.get("project_id")).toBe(project.id);
+    expect(url.searchParams.get("kind")).toBe("job");
+    expect(url.searchParams.get("limit")).toBe("5");
+  });
+
+  it("surfaces normalized 404 and 422 failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "not_found", message: "missing" } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(missing.getActivity({ projectId: project.id })).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+    });
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Bad filter" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getActivity({ limit: 999 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Bad filter",
+    });
+  });
+});
+
 describe("createHttpApiClient dashboard", () => {
   const snapshot = {
     counts: {

@@ -6,6 +6,10 @@
  * that a future contract location change touches one file, not every screen.
  */
 export type {
+  ActivityEvent,
+  ActivityFeed,
+  ActivityKind,
+  ActivityTone,
   Asset,
   AssetProps,
   AssetStatus,

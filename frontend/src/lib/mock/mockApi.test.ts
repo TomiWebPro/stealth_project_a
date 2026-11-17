@@ -4,6 +4,7 @@ import type { StreamEvent } from "../../types";
 import { PROJECTS } from "./data";
 import {
   clearMockFailures,
+  fetchActivity,
   fetchAsset,
   fetchAssets,
   fetchAssetsByProject,
@@ -67,6 +68,53 @@ describe("mock API dashboard", () => {
   it("surfaces the injectable failure state", async () => {
     setMockFailure("dashboard");
     await expect(fetchDashboard()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API workspace activity (C29)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+  const missingId = "00000000-0000-4000-8000-000000000000";
+
+  it("derives a populated, newest-first feed from the authoritative seeds", async () => {
+    const feed = await fetchActivity();
+    expect((feed.events ?? []).length).toBeGreaterThan(0);
+    expect(feed.total).toBeGreaterThanOrEqual(feed.events?.length ?? 0);
+    const timestamps = (feed.events ?? []).map((event) => Date.parse(event.timestamp));
+    expect(timestamps).toEqual([...timestamps].sort((a, b) => b - a));
+    expect(new Set((feed.events ?? []).map((event) => event.kind)).size).toBeGreaterThan(1);
+  });
+
+  it("scopes to a project, filters by kind and caps with limit", async () => {
+    const scoped = await fetchActivity({ projectId: filmId });
+    expect((scoped.events ?? []).every((event) => event.project_id === filmId)).toBe(true);
+
+    const jobsOnly = await fetchActivity({ projectId: filmId, kind: "job", limit: 2 });
+    expect(jobsOnly.events).toHaveLength(2);
+    expect(jobsOnly.events?.every((event) => event.kind === "job")).toBe(true);
+    expect(jobsOnly.total).toBeGreaterThanOrEqual(jobsOnly.events?.length ?? 0);
+  });
+
+  it("returns an empty feed for a project with no activity and 404s for an unknown one", async () => {
+    expect(await fetchActivity({ projectId: emptyId })).toEqual({ events: [], total: 0 });
+    await expect(fetchActivity({ projectId: missingId })).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+    });
+  });
+
+  it("mirrors router validation and surfaces the injected failure state", async () => {
+    await expect(fetchActivity({ kind: "bogus" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchActivity({ limit: 0 })).rejects.toMatchObject({ status: 422 });
+
+    setMockFailure("activity");
+    await expect(fetchActivity()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
