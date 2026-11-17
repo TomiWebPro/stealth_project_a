@@ -6,12 +6,19 @@ import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type {
   Asset,
+  Comment,
   Conversation,
+  Extension,
   Job,
   Message,
   OperationCatalog,
+  Organization,
+  OrchestrationRun,
+  Presence,
   Project,
   Provider,
+  StorageStats,
+  User,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -172,5 +179,72 @@ export function useMessages(
   return useQuery({
     queryKey: queryKeys.messages.byConversation(conversationId, limit),
     queryFn: () => api.listMessages(conversationId, limit),
+  });
+}
+
+export function useCurrentUser(): UseQueryResult<User> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.auth.me(),
+    queryFn: () => api.getCurrentUser(),
+  });
+}
+
+export function useOrganizations(): UseQueryResult<readonly Organization[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.auth.organizations(),
+    queryFn: () => api.listOrganizations(),
+  });
+}
+
+export function useOrchestrationRun(runId: string): UseQueryResult<OrchestrationRun | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.orchestration.run(runId),
+    queryFn: () => api.getOrchestrationRun(runId),
+  });
+}
+
+export function usePresence(projectId: string): UseQueryResult<readonly Presence[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.collaboration.presence(projectId),
+    queryFn: () => api.listPresence(projectId),
+  });
+}
+
+export function useComments(
+  projectId: string,
+  assetId?: string,
+): UseQueryResult<readonly Comment[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.collaboration.comments(projectId, assetId),
+    queryFn: () => api.listComments(projectId, assetId),
+  });
+}
+
+export function useStorageStats(projectId: string): UseQueryResult<StorageStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.storage.stats(projectId),
+    queryFn: () => api.getStorageStats(projectId),
+  });
+}
+
+export function useExtensions(): UseQueryResult<readonly Extension[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.extensions.all(),
+    queryFn: () => api.listExtensions(),
+  });
+}
+
+export function useExtension(extensionId: string): UseQueryResult<Extension | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.extensions.byId(extensionId),
+    queryFn: () => api.getExtension(extensionId),
   });
 }

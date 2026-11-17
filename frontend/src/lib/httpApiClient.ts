@@ -6,12 +6,19 @@ import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type {
   Asset,
+  Comment,
   Conversation,
+  Extension,
   Job,
   Message,
   OperationCatalog,
+  Organization,
+  OrchestrationRun,
+  Presence,
   Project,
   Provider,
+  StorageStats,
+  User,
 } from "./types";
 
 /**
@@ -301,5 +308,29 @@ export function createHttpApiClient(
       const ordered = [...messages].sort((a, b) => a.created_at.localeCompare(b.created_at));
       return limit === undefined ? ordered : ordered.slice(-limit);
     },
+
+    getCurrentUser: () => request<User>("/auth/me"),
+
+    listOrganizations: () => request<Organization[]>("/orgs"),
+
+    getOrchestrationRun: (runId) =>
+      maybe(() => request<OrchestrationRun>(`/orchestration/runs/${runId}`)),
+
+    listPresence: (projectId) =>
+      request<Presence[]>("/collaboration/presence", { project_id: projectId }),
+
+    listComments: (projectId, assetId) =>
+      request<Comment[]>("/collaboration/comments", {
+        project_id: projectId,
+        asset_id: assetId,
+      }),
+
+    getStorageStats: (projectId) =>
+      request<StorageStats>("/storage/stats", { project_id: projectId }),
+
+    listExtensions: () => request<Extension[]>("/extensions"),
+
+    getExtension: (extensionId) =>
+      maybe(() => request<Extension>(`/extensions/${extensionId}`)),
   };
 }

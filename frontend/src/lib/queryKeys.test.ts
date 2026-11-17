@@ -78,6 +78,32 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes auth, orchestration, collaboration, storage and extension keys", () => {
+    expect(queryKeys.auth.me()).toEqual(["auth", "me"]);
+    expect(queryKeys.auth.organizations()).toEqual(["auth", "organizations"]);
+    expect(queryKeys.orchestration.run("r1")).toEqual(["orchestration", "run", "r1"]);
+    expect(queryKeys.collaboration.presence("p1")).toEqual([
+      "collaboration",
+      "presence",
+      "p1",
+    ]);
+    expect(queryKeys.collaboration.comments("p1")).toEqual([
+      "collaboration",
+      "comments",
+      "p1",
+      "all",
+    ]);
+    expect(queryKeys.collaboration.comments("p1", "a1")).toEqual([
+      "collaboration",
+      "comments",
+      "p1",
+      "a1",
+    ]);
+    expect(queryKeys.storage.stats("p1")).toEqual(["storage", "stats", "p1"]);
+    expect(queryKeys.extensions.all()).toEqual(["extensions"]);
+    expect(queryKeys.extensions.byId("e1")).toEqual(["extensions", "by-id", "e1"]);
+  });
+
   it("returns a new array per call so cache keys compare by value", () => {
     expect(queryKeys.providers.all()).toEqual(queryKeys.providers.all());
     expect(queryKeys.providers.all()).not.toBe(queryKeys.providers.all());

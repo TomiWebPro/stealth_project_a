@@ -6,19 +6,27 @@ import {
   fetchAssetsByProject,
   fetchCapabilities,
   fetchConversation,
+  fetchComments,
   fetchConversations,
+  fetchCurrentUser,
+  fetchExtension,
+  fetchExtensions,
   fetchHomeSummary,
   fetchJob,
   fetchJobs,
   fetchJobsByProject,
   fetchMessages,
   fetchOperations,
+  fetchOrganizations,
+  fetchOrchestrationRun,
+  fetchPresence,
   fetchProject,
   fetchProjectDetail,
   fetchProjects,
   fetchProvider,
   fetchProviders,
   fetchRecentAssets,
+  fetchStorageStats,
   fetchWorkflowTemplates,
 } from "./mockApi";
 
@@ -390,5 +398,42 @@ describe("mock API list helpers", () => {
     expect(times).toEqual([...times].sort((a, b) => a - b));
     expect((await fetchMessages(target.id, 1)).length).toBeLessThanOrEqual(1);
     await expect(fetchMessages("00000000-0000-4000-8000-000000000000")).resolves.toEqual([]);
+  });
+
+  it("seeds auth, orchestration, presence, comments, storage and extensions", async () => {
+    const user = await fetchCurrentUser();
+    expect(user.email).toContain("@");
+    expect((await fetchOrganizations()).length).toBeGreaterThan(0);
+
+    const runs = await fetchOrchestrationRun("0b5c1e2a-6000-4000-8000-000000000001");
+    expect(runs?.job_ids?.length).toBeGreaterThan(0);
+    await expect(fetchOrchestrationRun("missing")).resolves.toBeUndefined();
+
+    const projects = await fetchProjects();
+    const film = projects.find((project) => project.name.startsWith("Moonshot"));
+    const empty = projects.find((project) => project.name.startsWith("Blank Slate"));
+    expect(film).toBeDefined();
+    expect(empty).toBeDefined();
+    if (!film || !empty) return;
+
+    expect((await fetchPresence(film.id)).length).toBeGreaterThan(0);
+    await expect(fetchPresence(empty.id)).resolves.toEqual([]);
+    expect((await fetchComments(film.id)).length).toBeGreaterThan(0);
+    await expect(fetchComments(film.id, "missing-asset")).resolves.toEqual([]);
+    await expect(fetchComments(empty.id)).resolves.toEqual([]);
+
+    const stats = await fetchStorageStats(film.id);
+    expect(stats.project_id).toBe(film.id);
+    expect(stats.quota.limit).toBeGreaterThan(0);
+    const emptyStats = await fetchStorageStats(empty.id);
+    expect(emptyStats.object_count).toBe(0);
+
+    const extensions = await fetchExtensions();
+    expect(extensions.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(extensions.map((e) => e.status)).size).toBeGreaterThan(1);
+    await expect(fetchExtension("comfyui-local-adapter")).resolves.toMatchObject({
+      status: "enabled",
+    });
+    await expect(fetchExtension("missing")).resolves.toBeUndefined();
   });
 });

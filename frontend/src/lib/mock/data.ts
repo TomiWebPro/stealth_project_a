@@ -8,12 +8,19 @@
 
 import type {
   Asset,
+  Comment,
   Conversation,
+  Extension,
   Job,
   Message,
   OperationCatalog,
+  Organization,
+  OrchestrationRun,
+  Presence,
   Project,
   Provider,
+  StorageStats,
+  User,
 } from "../types";
 
 /** Fixed reference time so mock data renders deterministically. */
@@ -1140,6 +1147,152 @@ export const MESSAGES: readonly Message[] = [
     content: "Here are 48 angles across three backgrounds; the spec is stored on the dataset asset.",
     status: "complete",
     created_at: isoMinutesAgo(240),
+  },
+];
+
+// --- Orchestration, collaboration and storage (P2.3 / P6.1) ------------------
+
+export const CURRENT_USER: User = {
+  id: CREATOR_ID,
+  email: "director@studio.local",
+  display_name: "Avery Director",
+  avatar_url: null,
+  created_at: isoMinutesAgo(30_000),
+};
+
+export const ORGANIZATIONS: readonly Organization[] = [
+  {
+    id: ORG_ID,
+    name: "Studio Northlight",
+    slug: "studio-northlight",
+    created_at: isoMinutesAgo(31_000),
+  },
+];
+
+export const ORCHESTRATION_RUNS: readonly OrchestrationRun[] = [
+  {
+    run_id: "0b5c1e2a-6000-4000-8000-000000000001",
+    plan_id: "0b5c1e2a-6100-4000-8000-000000000001",
+    stage: "await",
+    job_ids: [
+      "0b5c1e2a-3000-4000-8000-000000000011",
+      "0b5c1e2a-3000-4000-8000-000000000012",
+    ],
+    created_at: isoMinutesAgo(12),
+  },
+  {
+    run_id: "0b5c1e2a-6000-4000-8000-000000000002",
+    plan_id: "0b5c1e2a-6100-4000-8000-000000000002",
+    stage: "done",
+    job_ids: ["0b5c1e2a-3000-4000-8000-000000000017"],
+    created_at: isoMinutesAgo(220),
+  },
+];
+
+export const PRESENCE: readonly Presence[] = [
+  {
+    user_id: CREATOR_ID,
+    project_id: PROJECT_IDS.moonshot,
+    state: "online",
+    last_seen_at: isoMinutesAgo(1),
+  },
+  {
+    user_id: "0b5c1e2a-0000-4000-8000-0000000000bb",
+    project_id: PROJECT_IDS.moonshot,
+    state: "away",
+    last_seen_at: isoMinutesAgo(14),
+  },
+  {
+    user_id: "0b5c1e2a-0000-4000-8000-0000000000cc",
+    project_id: PROJECT_IDS.character,
+    state: "offline",
+    last_seen_at: isoMinutesAgo(180),
+  },
+];
+
+export const COMMENTS: readonly Comment[] = [
+  {
+    id: "0b5c1e2a-6200-4000-8000-000000000001",
+    project_id: PROJECT_IDS.moonshot,
+    asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    author_id: CREATOR_ID,
+    body: "Lock the character silhouette before we expand the dataset.",
+    created_at: isoMinutesAgo(60),
+  },
+  {
+    id: "0b5c1e2a-6200-4000-8000-000000000002",
+    project_id: PROJECT_IDS.moonshot,
+    asset_id: null,
+    author_id: "0b5c1e2a-0000-4000-8000-0000000000bb",
+    body: "s01_c01 publish is approved; sidecar written.",
+    created_at: isoMinutesAgo(25),
+  },
+];
+
+export const STORAGE_STATS: readonly StorageStats[] = [
+  {
+    project_id: PROJECT_IDS.moonshot,
+    quota: { used: 842_000_000, limit: 5_000_000_000, unit: "bytes" },
+    object_count: 148,
+  },
+  {
+    project_id: PROJECT_IDS.empty,
+    quota: { used: 0, limit: 5_000_000_000, unit: "bytes" },
+    object_count: 0,
+  },
+];
+
+// --- Extension registry (P5.1 / P2.5) ---------------------------------------
+
+export const EXTENSIONS: readonly Extension[] = [
+  {
+    manifest: {
+      id: "comfyui-local-adapter",
+      name: "Local ComfyUI adapter",
+      version: "1.2.0",
+      publisher: "Studio Core",
+      type: "provider",
+      requirements: {
+        app_versions: ">=0.1.0",
+        permissions: [{ name: "runtime.local", description: "Launch local generation jobs" }],
+        capabilities: ["text-to-image", "image-to-image"],
+        provider_ids: ["prov_comfy"],
+        runtime: null,
+      },
+    },
+    status: "enabled",
+    installed_at: isoMinutesAgo(9_000),
+    signed: true,
+    verified: true,
+  },
+  {
+    manifest: {
+      id: "publish-audit-sidecar",
+      name: "Publish audit sidecar",
+      version: "0.4.1",
+      publisher: "Studio Core",
+      type: "capability",
+      requirements: {
+        app_versions: ">=0.1.0",
+        permissions: [{ name: "assets.write", description: "Write publish receipts" }],
+      },
+    },
+    status: "installed",
+    installed_at: isoMinutesAgo(4_000),
+  },
+  {
+    manifest: {
+      id: "legacy-exporter",
+      name: "Legacy exporter",
+      version: "0.1.0",
+      publisher: "Community",
+      type: "ui",
+      requirements: { app_versions: ">=0.1.0" },
+    },
+    status: "disabled",
+    installed_at: isoMinutesAgo(12_000),
+    signed: false,
+    verified: false,
   },
 ];
 

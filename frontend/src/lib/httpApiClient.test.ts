@@ -346,3 +346,61 @@ describe("createHttpApiClient discovery and chat queries", () => {
     expect(messageUrl.searchParams.get("limit")).toBe("1");
   });
 });
+
+describe("createHttpApiClient auth, orchestration and extension queries", () => {
+  it("loads session, orgs, runs, presence, comments, storage and extensions", async () => {
+    const run = {
+      run_id: "r1",
+      plan_id: "p1",
+      stage: "await",
+      job_ids: ["j1"],
+      created_at: "2026-01-01T00:00:00Z",
+    };
+    const extension = {
+      manifest: {
+        id: "ext1",
+        name: "Extension",
+        version: "1.0.0",
+        publisher: "Core",
+        type: "capability",
+        requirements: { app_versions: ">=0.1.0" },
+      },
+      status: "enabled",
+    };
+    const fake = router({
+      "/auth/me": { id: "u1", email: "a@b.co", display_name: "A", created_at: "2026-01-01T00:00:00Z" },
+      "/orgs": [{ id: "o1", name: "Org", slug: "org", created_at: "2026-01-01T00:00:00Z" }],
+      "/orchestration/runs/r1": run,
+      "/collaboration/presence": [
+        { user_id: "u1", project_id: project.id, state: "online", last_seen_at: "2026-01-01T00:00:00Z" },
+      ],
+      "/collaboration/comments": [
+        { id: "c1", project_id: project.id, author_id: "u1", body: "hi", created_at: "2026-01-01T00:00:00Z" },
+      ],
+      "/storage/stats": {
+        project_id: project.id,
+        quota: { used: 1, limit: 2, unit: "bytes" },
+        object_count: 3,
+      },
+      "/extensions": [extension],
+      "/extensions/ext1": extension,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl: fake.fetchImpl });
+
+    expect((await api.getCurrentUser()).id).toBe("u1");
+    expect((await api.listOrganizations())[0]).toMatchObject({ id: "o1" });
+    await expect(api.getOrchestrationRun("r1")).resolves.toMatchObject({ run_id: "r1" });
+    await expect(api.getOrchestrationRun("missing")).resolves.toBeUndefined();
+    expect((await api.listPresence(project.id)).length).toBe(1);
+    expect((await api.listComments(project.id, "a1")).length).toBe(1);
+    expect((await api.getStorageStats(project.id)).quota.limit).toBe(2);
+    expect((await api.listExtensions())[0]).toMatchObject({ status: "enabled" });
+    await expect(api.getExtension("ext1")).resolves.toMatchObject({ status: "enabled" });
+    await expect(api.getExtension("missing")).resolves.toBeUndefined();
+
+    const commentCall = fake.calls.find((call) => call.includes("/collaboration/comments"));
+    expect(commentCall).toBeDefined();
+    const commentUrl = new URL(commentCall ?? "");
+    expect(commentUrl.searchParams.get("asset_id")).toBe("a1");
+  });
+});

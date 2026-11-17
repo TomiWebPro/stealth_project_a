@@ -3,12 +3,19 @@ import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type {
   Asset,
+  Comment,
   Conversation,
+  Extension,
   Job,
   Message,
   OperationCatalog,
+  Organization,
+  OrchestrationRun,
+  Presence,
   Project,
   Provider,
+  StorageStats,
+  User,
 } from "./types";
 import * as mockApi from "./mock/mockApi";
 
@@ -42,6 +49,14 @@ export interface ApiClient {
   listConversations(projectId: string): Promise<readonly Conversation[]>;
   getConversation(conversationId: string): Promise<Conversation | undefined>;
   listMessages(conversationId: string, limit?: number): Promise<readonly Message[]>;
+  getCurrentUser(): Promise<User>;
+  listOrganizations(): Promise<readonly Organization[]>;
+  getOrchestrationRun(runId: string): Promise<OrchestrationRun | undefined>;
+  listPresence(projectId: string): Promise<readonly Presence[]>;
+  listComments(projectId: string, assetId?: string): Promise<readonly Comment[]>;
+  getStorageStats(projectId: string): Promise<StorageStats>;
+  listExtensions(): Promise<readonly Extension[]>;
+  getExtension(extensionId: string): Promise<Extension | undefined>;
 }
 
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
@@ -65,4 +80,12 @@ export const mockApiClient: ApiClient = {
   listConversations: mockApi.fetchConversations,
   getConversation: mockApi.fetchConversation,
   listMessages: mockApi.fetchMessages,
+  getCurrentUser: mockApi.fetchCurrentUser,
+  listOrganizations: mockApi.fetchOrganizations,
+  getOrchestrationRun: mockApi.fetchOrchestrationRun,
+  listPresence: mockApi.fetchPresence,
+  listComments: mockApi.fetchComments,
+  getStorageStats: mockApi.fetchStorageStats,
+  listExtensions: mockApi.fetchExtensions,
+  getExtension: mockApi.fetchExtension,
 };

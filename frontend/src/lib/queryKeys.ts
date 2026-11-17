@@ -48,4 +48,23 @@ export const queryKeys = {
     byConversation: (conversationId: string, limit?: number) =>
       ["messages", "by-conversation", conversationId, limit ?? "all"] as const,
   },
+  auth: {
+    me: () => ["auth", "me"] as const,
+    organizations: () => ["auth", "organizations"] as const,
+  },
+  orchestration: {
+    run: (runId: string) => ["orchestration", "run", runId] as const,
+  },
+  collaboration: {
+    presence: (projectId: string) => ["collaboration", "presence", projectId] as const,
+    comments: (projectId: string, assetId?: string) =>
+      ["collaboration", "comments", projectId, assetId ?? "all"] as const,
+  },
+  storage: {
+    stats: (projectId: string) => ["storage", "stats", projectId] as const,
+  },
+  extensions: {
+    all: () => ["extensions"] as const,
+    byId: (extensionId: string) => ["extensions", "by-id", extensionId] as const,
+  },
 } as const;
