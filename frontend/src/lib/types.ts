@@ -17,6 +17,8 @@ export type {
   AuditTrail,
   Comment,
   Conversation,
+  DashboardCounts,
+  DashboardSummary,
   Extension,
   Job,
   JobStatus,

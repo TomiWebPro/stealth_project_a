@@ -3,6 +3,8 @@ import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
 import type { ConversationStream } from "../conversationStream";
+import { deriveDashboardSummary, validateDashboardArgs } from "../dashboard";
+import type { DashboardOptions } from "../dashboard";
 import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
 import type { ProjectDetail } from "../projectDetail";
@@ -44,6 +46,7 @@ import {
   PRESENCE,
   PROJECTS,
   PROVIDERS,
+  REFERENCE_NOW,
   STORAGE_STATS,
 } from "./data";
 
@@ -140,6 +143,30 @@ function toSummary(): HomeSummary {
 export async function fetchHomeSummary(): Promise<HomeSummary> {
   failIfEnabled("home");
   return delay(toSummary());
+}
+
+/**
+ * Authoritative dashboard snapshot (C25) derived from the same authoritative
+ * seeds as the live `/dashboard` endpoint. Router-style 422 validation and the
+ * `"dashboard"` failure domain keep error and empty states at parity with live.
+ */
+export async function fetchDashboard(options?: DashboardOptions) {
+  failIfEnabled("dashboard");
+  validateDashboardArgs(options?.recentLimit);
+  return delay(
+    deriveDashboardSummary(
+      {
+        projects: PROJECTS,
+        assets: ASSETS.map(withAssetOverrides),
+        conversations: CONVERSATIONS,
+        jobs: JOBS,
+        providers: PROVIDERS,
+        extensions: EXTENSIONS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
 }
 
 export async function fetchProjects(): Promise<readonly Project[]> {

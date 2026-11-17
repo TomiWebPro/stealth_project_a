@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
+import type { DashboardOptions } from "../lib/dashboard";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { SearchOptions } from "../lib/search";
@@ -13,6 +14,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  DashboardSummary,
   Extension,
   Job,
   Message,
@@ -35,6 +37,15 @@ export function useHomeSummary(): UseQueryResult<HomeSummary> {
   return useQuery({
     queryKey: queryKeys.home.summary(),
     queryFn: () => api.getHomeSummary(),
+  });
+}
+
+/** Authoritative workspace snapshot from the backend `/dashboard` endpoint (C25). */
+export function useDashboard(options?: DashboardOptions): UseQueryResult<DashboardSummary> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.dashboard.summary(options),
+    queryFn: () => api.getDashboard(options),
   });
 }
 

@@ -6,6 +6,8 @@ import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
 import type { ConversationStream } from "./conversationStream";
+import { dashboardQueryParams } from "./dashboard";
+import type { DashboardOptions } from "./dashboard";
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import { searchQueryParams } from "./search";
@@ -16,6 +18,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  DashboardSummary,
   Extension,
   Job,
   Message,
@@ -203,6 +206,11 @@ export function createHttpApiClient(
   }
 
   return {
+    /** The backend owns the whole snapshot; the live transport just forwards it. */
+    getDashboard(options?: DashboardOptions): Promise<DashboardSummary> {
+      return request<DashboardSummary>("/dashboard", dashboardQueryParams(options));
+    },
+
     async getHomeSummary(): Promise<HomeSummary> {
       const [projects, assets, jobs, providers] = await Promise.all([
         request<Project[]>("/projects"),

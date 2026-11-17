@@ -7,6 +7,15 @@ describe("queryKeys", () => {
     expect(queryKeys.home.summary()).toEqual(["home", "summary"]);
   });
 
+  it("scopes the dashboard snapshot key by recent_limit", () => {
+    expect(queryKeys.dashboard.summary()).toEqual(["dashboard", "summary", "all"]);
+    expect(queryKeys.dashboard.summary({ recentLimit: 10 })).toEqual([
+      "dashboard",
+      "summary",
+      10,
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

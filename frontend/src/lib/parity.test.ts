@@ -6,6 +6,7 @@ import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
 import type { ApiClient } from "./apiClient";
+import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import {
   ASSETS,
   AUDIT_TRAILS,
@@ -21,6 +22,7 @@ import {
   PRESENCE,
   PROJECTS,
   PROVIDERS,
+  REFERENCE_NOW,
   STORAGE_STATS,
 } from "./mock/data";
 import { createHttpApiClient } from "./httpApiClient";
@@ -92,6 +94,36 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       throw cause;
     }
     return deriveSearchResponse(q, PROJECTS, ASSETS, CONVERSATIONS, options);
+  }
+
+  // Authoritative dashboard summary is derived from the same stores on every
+  // call; reproduce the router's 422 validation and the repository derivation.
+  if (path === "/dashboard") {
+    const limitRaw = params.get("recent_limit");
+    const options = limitRaw !== null ? { recentLimit: Number(limitRaw) } : {};
+    try {
+      validateDashboardArgs(options.recentLimit);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveDashboardSummary(
+      {
+        projects: PROJECTS,
+        assets: ASSETS,
+        conversations: CONVERSATIONS,
+        jobs: JOBS,
+        providers: PROVIDERS,
+        extensions: EXTENSIONS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
   }
 
   if (path === "/projects") return PROJECTS;
@@ -185,6 +217,17 @@ function seedFetch(): typeof fetch {
     if (body === NOT_FOUND) {
       return jsonResponse({ error: { code: "not_found", message: "not found" } }, 404);
     }
+    // Derived endpoints may return an already-built error Response (e.g. the
+    // dashboard/search 422 envelopes); pass it through rather than re-wrapping.
+    if (
+      body &&
+      typeof body === "object" &&
+      "ok" in body &&
+      "status" in body &&
+      "text" in body
+    ) {
+      return body as Response;
+    }
     return jsonResponse(body);
   }) as typeof fetch;
 }
@@ -210,6 +253,8 @@ describe("live vs mock transport parity", () => {
   it("returns identical payloads for every populated query", async () => {
     const cases: Array<[string, (api: ApiClient) => Promise<unknown>]> = [
       ["getHomeSummary", (api) => api.getHomeSummary()],
+      ["getDashboard", (api) => api.getDashboard()],
+      ["getDashboard limited", (api) => api.getDashboard({ recentLimit: 3 })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -267,6 +312,13 @@ describe("live vs mock transport parity", () => {
     expect(await live.search("zzzz-no-such-thing")).toEqual(
       await mockApiClient.search("zzzz-no-such-thing"),
     );
+    // Both transports reject the same out-of-range dashboard limit identically.
+    const [mockErr, liveErr] = await Promise.all([
+      mockApiClient.getDashboard({ recentLimit: 0 }).catch((cause) => cause),
+      live.getDashboard({ recentLimit: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
   });
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {
@@ -288,6 +340,7 @@ describe("live vs mock transport parity", () => {
     // Compile-time guard that every query method stays callable with its args.
     const typed: Queries = live as unknown as Queries;
     expect(typeof typed.getHomeSummary).toBe("function");
+    expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
   });

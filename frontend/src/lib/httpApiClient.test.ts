@@ -592,6 +592,50 @@ describe("createHttpApiClient project audit", () => {
   });
 });
 
+describe("createHttpApiClient dashboard", () => {
+  const snapshot = {
+    counts: {
+      projects: 1,
+      assets: 2,
+      conversations: 0,
+      jobs: 2,
+      providers: 1,
+      enabled_extensions: 0,
+    },
+    generated_at: "2026-01-06T00:00:00Z",
+    jobs_by_status: { queued: 0, running: 1, succeeded: 1, failed: 0, canceled: 0 },
+    assets_by_type: { image: 2 },
+    recent_jobs: [],
+    recent_assets: [],
+  };
+
+  it("GETs /dashboard with recent_limit and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/dashboard": snapshot });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getDashboard({ recentLimit: 10 })).resolves.toEqual(snapshot);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/dashboard`);
+    expect(url.searchParams.get("recent_limit")).toBe("10");
+  });
+
+  it("normalizes a backend validation failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Too many" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getDashboard({ recentLimit: 999 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Too many",
+    });
+  });
+});
+
 describe("createHttpApiClient cross-domain search", () => {
   const response = {
     query: "mara",

@@ -12,6 +12,7 @@ import {
   fetchComments,
   fetchConversations,
   fetchCurrentUser,
+  fetchDashboard,
   fetchExtension,
   fetchExtensions,
   fetchHomeSummary,
@@ -43,6 +44,33 @@ import {
 afterEach(() => {
   resetMockAssets();
   clearMockFailures();
+});
+
+describe("mock API dashboard", () => {
+  it("derives a populated snapshot from the authoritative seeds", async () => {
+    const summary = await fetchDashboard();
+    expect(summary.counts.projects).toBe(PROJECTS.length);
+    expect(summary.counts.assets).toBeGreaterThan(0);
+    expect(summary.recent_assets?.length).toBeGreaterThan(0);
+    expect(summary.generated_at).toBeTruthy();
+  });
+
+  it("honours recent_limit and mirrors router validation", async () => {
+    expect((await fetchDashboard({ recentLimit: 2 })).recent_assets).toHaveLength(2);
+    await expect(fetchDashboard({ recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchDashboard({ recentLimit: 51 })).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("surfaces the injectable failure state", async () => {
+    setMockFailure("dashboard");
+    await expect(fetchDashboard()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
 });
 
 describe("mock API home summary", () => {

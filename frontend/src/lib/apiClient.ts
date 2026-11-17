@@ -2,6 +2,7 @@ import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
+import type { DashboardOptions } from "./dashboard";
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type { SearchOptions } from "./search";
@@ -11,6 +12,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  DashboardSummary,
   Extension,
   Job,
   Message,
@@ -37,6 +39,8 @@ import * as mockApi from "./mock/mockApi";
  */
 export interface ApiClient {
   getHomeSummary(): Promise<HomeSummary>;
+  /** Authoritative workspace snapshot derived by the backend `/dashboard` endpoint (C25). */
+  getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -80,6 +84,7 @@ export interface ApiClient {
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
 export const mockApiClient: ApiClient = {
   getHomeSummary: mockApi.fetchHomeSummary,
+  getDashboard: mockApi.fetchDashboard,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

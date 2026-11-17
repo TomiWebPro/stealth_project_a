@@ -1,4 +1,5 @@
 import type { AuditQuery } from "./audit";
+import type { DashboardOptions } from "./dashboard";
 import type { SearchOptions } from "./search";
 
 /**
@@ -11,6 +12,10 @@ import type { SearchOptions } from "./search";
 export const queryKeys = {
   home: {
     summary: () => ["home", "summary"] as const,
+  },
+  dashboard: {
+    summary: (options: DashboardOptions = {}) =>
+      ["dashboard", "summary", options.recentLimit ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,
