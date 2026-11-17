@@ -239,6 +239,15 @@ this file is the execution checklist.
   snapshot wiring (C25 follow-up) remains blocked on mocks transport.
   ✅ 2026-11-17 — `27907a9`
 
+- [x] C27 (mocks) Wire the authoritative dashboard summary API (C25) end to end:
+  expose `getDashboard` / `useDashboard` atomically across mockApi (seed-derived
+  counts, zero-filled breakdowns, newest-first recency, deleted-asset exclusion,
+  router-style 422 and an injectable `dashboard` failure), the stable `ApiClient`
+  facade, live `httpApiClient` (`GET /dashboard?recent_limit=`), `queryKeys` and
+  `useQueries`, with shared `lib/dashboard` derivation + populated/empty/error
+  tests; the live-vs-mock parity guard is extended to cover both transports.
+  ✅ 2026-11-17 — `b0f0fd7`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -305,3 +314,4 @@ this file is the execution checklist.
 - 2026-11-17 — `941a8ec` — C24 (CI): added a `live-smoke` job that boots the real ASGI server (`uvicorn`, in-memory store) and probes the exact `/api/v1` URLs the `VITE_API_MODE=live` frontend client uses (health + request-id, projects, providers, capabilities, search) plus the shared 422 error envelope; 10-min timeout, pinned Actions, `if: always()` teardown. Verified locally (all 9 probes OK) and with pinned actionlint; all suites green (lint, 189 FE tests, build, 521 BE tests).
 - 2026-11-17 — `26d6e99` — C25 (backend): added authoritative `GET /api/v1/dashboard` deriving entity counts, zero-filled job-status/asset-type breakdowns and newest jobs/assets from the stores (deleted assets excluded); `recent_limit` bounds + shared 422 envelope, `DashboardCounts`/`DashboardSummary` mirrored in TS, 5 tests × 2 backends green (531 passed, 98% coverage). Mocks/screens wiring of the snapshot is a follow-up.
 - 2026-11-17 — `27907a9` — C26 (screens): quick finder now renders ranked `useSearch` cross-domain results alongside screens, deep-linking projects/assets/conversations with hint/searching/error/empty/populated states; display + navigation mapping derived in tested `quickFinderHelpers`; lint/test (200)/build green. C25 `useDashboard` wiring deferred to mocks transport.
+- 2026-11-17 — `b0f0fd7` — C27 (mocks): wired the authoritative dashboard snapshot end to end — `ApiClient.getDashboard`/`useDashboard` across mockApi (seed-derived counts, zero-filled breakdowns, newest-first recency, deleted-asset exclusion, router-style 422 + injectable `dashboard` failure), the stable facade, live `httpApiClient` (`GET /dashboard?recent_limit=`), `queryKeys` and `useQueries`, with a shared `lib/dashboard` derivation helper and populated/empty/error tests; fixed the parity harness to pass derived 422 envelopes through unwrapped and extended parity to both dashboard queries; lint/test (212)/build green. Screens `useDashboard` rendering remains a screens follow-up.
