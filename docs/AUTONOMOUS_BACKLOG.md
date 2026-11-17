@@ -148,7 +148,7 @@ this file is the execution checklist.
 - [x] C9 Harden CI workflow: read-only `contents` permission + per-ref concurrency with `cancel-in-progress` (owner: CI) — 2026-11-17, f531ea8.
 - [x] C10 Add per-job `timeout-minutes` (frontend 20, backend 15, tauri 30) to bound runner usage (owner: CI) — 2026-11-17, 9def03b.
 - [x] C11 Pin GitHub Actions to immutable commit SHAs (checkout/setup-node/setup-python/dtolnay rust-toolchain/rust-cache) to prevent tag-mutation supply-chain drift; add explicit `toolchain: stable` for the SHA-pinned rust toolchain (owner: CI). ✅ 2026-11-17 — `fd9cf91`
-- [x] C12 (screens) Complete C2 display-state coverage for the remaining features
+- [x] C13 (screens) Complete C2 display-state coverage for the remaining features
   (asset search/filter, project timestamps, workflow templates, lineage stages) and
   fix Design assets leaking into the lineage "Other" stage.
   ✅ 2026-11-17 — `777ba82` — empty/populated helper tests for assets, projects,
@@ -201,4 +201,4 @@ this file is the execution checklist.
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
 - 2026-11-17 — `eca98f8` — P4.3: shot pipeline (first/last-frame -> flf2v, else image-to-video) with automatic LoRA slot mounting, frame/asset lineage and slot filtering; 18 new tests green (460 passed).
 - 2026-11-17 — `5ea7d51` — P4.4: splat pipeline (footage -> COLMAP model3d -> splat-train) with sampled camera-path bridge, scene/lineage assets and CPU smoke mode by default; 17 new tests green (477 passed).
-- 2026-11-17 — `777ba82` — C12 (screens): completed C2 state-derivation coverage for assets/projects/workspaces/lineage (empty/populated/error-safe cases) and fixed buildLineageStages duplicating Design assets into Other; lint/test (137 tests)/build green.
+- 2026-11-17 — `777ba82` — C13 (screens): completed C2 state-derivation coverage for assets/projects/workspaces/lineage (empty/populated/error-safe cases) and fixed buildLineageStages duplicating Design assets into Other; lint/test (137 tests)/build green.
