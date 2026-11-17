@@ -1,3 +1,4 @@
+import { ApiError } from "../../api/client";
 import type { CapabilityMatch } from "../catalog";
 import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
@@ -51,6 +52,31 @@ function delay<T>(value: T): Promise<T> {
   });
 }
 
+/**
+ * Error-state fakes. Tests and screens can switch a domain into a failing
+ * state so mock mode exercises the same error paths as live mode; `"*"` fails
+ * every guarded query. Always reset with {@link clearMockFailures} afterwards.
+ */
+const activeFailures = new Set<string>();
+
+export function setMockFailure(domain: string, enabled = true): void {
+  if (enabled) activeFailures.add(domain);
+  else activeFailures.delete(domain);
+}
+
+export function clearMockFailures(): void {
+  activeFailures.clear();
+}
+
+function failIfEnabled(domain: string): void {
+  if (!activeFailures.has(domain) && !activeFailures.has("*")) return;
+  throw new ApiError({
+    status: 503,
+    code: "mock_failure",
+    message: `Mock ${domain} query is configured to fail.`,
+  });
+}
+
 function toSummary(): HomeSummary {
   return {
     projects: PROJECTS.filter((project) => !project.archived).map((project) => ({
@@ -76,10 +102,12 @@ function toSummary(): HomeSummary {
 }
 
 export async function fetchHomeSummary(): Promise<HomeSummary> {
+  failIfEnabled("home");
   return delay(toSummary());
 }
 
 export async function fetchProjects(): Promise<readonly Project[]> {
+  failIfEnabled("projects");
   return delay(PROJECTS);
 }
 
@@ -107,6 +135,7 @@ export async function fetchJobs(
   projectId?: string,
   status?: Job["status"],
 ): Promise<readonly Job[]> {
+  failIfEnabled("jobs");
   const jobs = JOBS.filter((job) => {
     if (projectId && job.project_id !== projectId) return false;
     if (status && job.status !== status) return false;
@@ -136,10 +165,12 @@ export async function fetchProjectDetail(projectId: string): Promise<ProjectDeta
 }
 
 export async function fetchProviders(): Promise<readonly Provider[]> {
+  failIfEnabled("providers");
   return delay(PROVIDERS);
 }
 
 export async function fetchAssets(): Promise<readonly Asset[]> {
+  failIfEnabled("assets");
   const assets = [...ASSETS].sort((a, b) => b.created_at.localeCompare(a.created_at));
   return delay(assets);
 }
@@ -194,6 +225,7 @@ export async function fetchCapabilities(operationId?: string): Promise<readonly 
 
 /** Conversations for a project, newest activity first. */
 export async function fetchConversations(projectId: string): Promise<readonly Conversation[]> {
+  failIfEnabled("conversations");
   const conversations = CONVERSATIONS.filter(
     (conversation) => conversation.project_id === projectId,
   ).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
@@ -231,6 +263,7 @@ export async function fetchOrganizations(): Promise<readonly Organization[]> {
 export async function fetchOrchestrationRun(
   runId: string,
 ): Promise<OrchestrationRun | undefined> {
+  failIfEnabled("orchestration");
   return delay(ORCHESTRATION_RUNS.find((run) => run.run_id === runId));
 }
 
