@@ -37,6 +37,7 @@ class Collections:
     EXTENSION_REGISTRY = "extension_registry"
     EXTENSIONS = "extensions"
     TRAINING_CHAINS = "training_chains"
+    SHOT_CHAINS = "shot_chains"
 
 
 Document = dict[str, Any]
