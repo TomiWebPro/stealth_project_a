@@ -1,5 +1,6 @@
 import { ApiProvider } from "./app/ApiProvider";
 import { AssetsBrowserScreen } from "./features/assets/AssetsBrowserScreen";
+import { ChatScreen } from "./features/chat/ChatScreen";
 import { HomeScreen } from "./features/home/HomeScreen";
 import { JobsScreen } from "./features/jobs/JobsScreen";
 import { PlaceholderScreen } from "./features/placeholder/PlaceholderScreen";
@@ -22,14 +23,7 @@ function CurrentScreen() {
     case "home":
       return <HomeScreen />;
     case "chat":
-      return (
-        <PlaceholderScreen
-          route="chat"
-          title="Chat"
-          description="Conversational workspace for prompting and orchestration."
-          note="Phase 1b is frontend-mock only; chat interactions are not wired yet."
-        />
-      );
+      return <ChatScreen />;
     case "projects":
       return <ProjectsScreen />;
     case "assets":
