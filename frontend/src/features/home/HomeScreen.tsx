@@ -8,6 +8,7 @@ import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
+import { DashboardPanel } from "./DashboardPanel";
 import {
   assetTypeTone,
   formatRelative,
@@ -135,21 +136,24 @@ export function HomeScreen() {
         }
       />
 
-      {isPending ? <HomeSkeleton /> : null}
+      <div className="space-y-6">
+        <DashboardPanel />
 
-      {isError ? (
-        <Card className="p-6">
-          <EmptyState
-            title="Could not load your studio"
-            description={errorMessage(error)}
-            action={
-              <Button variant="primary" size="sm" onClick={() => void refetch()}>
-                Try again
-              </Button>
-            }
-          />
-        </Card>
-      ) : null}
+        {isPending ? <HomeSkeleton /> : null}
+
+        {isError ? (
+          <Card className="p-6">
+            <EmptyState
+              title="Could not load your studio"
+              description={errorMessage(error)}
+              action={
+                <Button variant="primary" size="sm" onClick={() => void refetch()}>
+                  Try again
+                </Button>
+              }
+            />
+          </Card>
+        ) : null}
 
       {data ? (
         <div className="space-y-6">
@@ -243,6 +247,7 @@ export function HomeScreen() {
           </Card>
         </div>
       ) : null}
+      </div>
     </div>
   );
 }
