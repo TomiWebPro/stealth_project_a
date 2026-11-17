@@ -36,10 +36,10 @@ this file is the execution checklist.
 
 ## Phase 2 — Backend hookup (OPEN — owner: backend-core, mocks, screens)
 
-- [ ] P2.1 Operations/jobs API: `GET /operations` catalog + `GET/POST /jobs`,
+- [x] P2.1 Operations/jobs API: `GET /operations` catalog + `GET/POST /jobs`,
   `GET /jobs/{id}`, `POST /jobs/{id}/cancel`, `POST /jobs/{id}/retry` backed by a
   repository + in-memory/SQLite store; respect `JobListQuery`, `JobError`,
-  `JobEvent`. Add backend tests.
+  `JobEvent`. Add backend tests. ✅ 2026-11-17 — `76df39d`
 - [ ] P2.2 Providers + capability query API: `GET /providers`, `GET /providers/{id}`,
   `GET /capabilities` using existing schemas; add tests.
 - [ ] P2.3 Orchestration API: plan/run endpoints, presence, comments, storage stats
@@ -111,5 +111,6 @@ this file is the execution checklist.
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
+- 2026-11-17 — P2.1 shipped (`76df39d`): static operation catalog, job submit/list/get/cancel/retry, recoverable event stream; 40 new tests green on memory+sqlite.
 - 2026-11-17 — P2.8: added ApiClient contract smoke test covering mock + live transports (5c9436c); screens already consume hooks only, no mode-specific code.
 - 2026-11-17 — b282dba — C4b: added Linux Tauri shell CI job (`npx tauri build --no-bundle`) with `Swatinem/rust-cache` target cache + WebKit/GTK deps; README CI section synced; frontend lint/test/build and backend pytest verified green.
