@@ -147,6 +147,49 @@ jobs:
           sbody = search.json() if search.status_code == 200 else {}
           check("search 200 query/results", search.status_code == 200 and "query" in sbody and "results" in sbody, search.text)
 
+          # Dashboard snapshot (C25/C27) is another /api/v1 URL the live client
+          # calls on the home screen; probe its shape and its 422 bound guard.
+          dashboard = httpx.get(f"{base}/dashboard", timeout=5)
+          dbody = dashboard.json() if dashboard.status_code == 200 else {}
+          check("dashboard 200 snapshot",
+                dashboard.status_code == 200 and all(
+                    k in dbody for k in ("counts", "generated_at", "jobs_by_status",
+                                         "assets_by_type", "recent_jobs", "recent_assets")),
+                dashboard.text)
+          check("dashboard counts shape",
+                isinstance(dbody.get("counts"), dict) and all(
+                    k in dbody["counts"] for k in ("projects", "assets", "conversations",
+                                                  "jobs", "providers", "enabled_extensions")),
+                dashboard.text)
+          limited = httpx.get(f"{base}/dashboard", params={"recent_limit": 1}, timeout=5)
+          lbody = limited.json() if limited.status_code == 200 else {}
+          check("dashboard recent_limit=1 200",
+                limited.status_code == 200 and len(lbody.get("recent_jobs", [])) <= 1
+                and len(lbody.get("recent_assets", [])) <= 1, limited.text)
+          bad_limit = httpx.get(f"{base}/dashboard", params={"recent_limit": 0}, timeout=5)
+          blbody = bad_limit.json() if bad_limit.status_code == 422 else {}
+          check("dashboard 422 validation envelope",
+                bad_limit.status_code == 422
+                and blbody.get("error", {}).get("code") == "validation_error"
+                and bool(blbody.get("error", {}).get("request_id")), bad_limit.text)
+
+          # Project audit trail (C18/C20) is consumed live on project detail.
+          # The in-memory store starts empty, so create a project when needed.
+          seeded = projects.json() if projects.status_code == 200 else []
+          if isinstance(seeded, list) and seeded:
+              project_id = seeded[0]["id"]
+          else:
+              created = httpx.post(f"{base}/projects", json={"name": "CI smoke audit"}, timeout=5)
+              project_id = created.json().get("id") if created.status_code == 201 else None
+          if project_id:
+              audit = httpx.get(f"{base}/projects/{project_id}/audit", timeout=5)
+              abody = audit.json() if audit.status_code == 200 else {}
+              check("project audit 200 trail",
+                    audit.status_code == 200 and abody.get("project_id") == project_id
+                    and isinstance(abody.get("events"), list), audit.text)
+          else:
+              check("project audit setup", False, "could not obtain a project id")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
