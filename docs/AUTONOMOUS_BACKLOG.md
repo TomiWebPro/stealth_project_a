@@ -159,6 +159,9 @@ this file is the execution checklist.
   UI-only provisional convention (P6.5 follow-up).
   ✅ 2026-11-17 — `6ddb5bd` — `GET /projects/{id}/exports` + `/assets/{id}/exports`,
   same slug/path strings as the frontend helper, plus `source_exists`; 10 new tests green (486 passed).
+- [x] C15 (backend) Docs accuracy pass for `backend/README.md`: document all
+  mounted routers, env vars (incl. `STUDIO_ROOT`/quota) and current boundaries.
+  ✅ 2026-11-17 — `c7ce5bc` (C6 remains open for repo-wide docs owned by other agents).
 
 ## Log (append one line per completed item)
 
@@ -209,3 +212,4 @@ this file is the execution checklist.
 - 2026-11-17 — `5ea7d51` — P4.4: splat pipeline (footage -> COLMAP model3d -> splat-train) with sampled camera-path bridge, scene/lineage assets and CPU smoke mode by default; 17 new tests green (477 passed).
 - 2026-11-17 — `777ba82` — C13 (screens): completed C2 state-derivation coverage for assets/projects/workspaces/lineage (empty/populated/error-safe cases) and fixed buildLineageStages duplicating Design assets into Other; lint/test (137 tests)/build green.
 - 2026-11-17 — `3c1488a`/`6ddb5bd` — P5.1/C14: marked extension manifest+registry item delivered by the P2.5 registry commit; added authoritative backend UE/Blender export endpoints matching the UI path convention (486 passed).
+- 2026-11-17 — `c7ce5bc` — C15: backend README now lists every mounted router, all env vars and honest Phase 4 boundaries (simulated adapters, SSE + polling, dev-local auth).
