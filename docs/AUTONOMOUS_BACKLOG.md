@@ -248,6 +248,14 @@ this file is the execution checklist.
   tests; the live-vs-mock parity guard is extended to cover both transports.
   ✅ 2026-11-17 — `b0f0fd7`
 
+- [x] C28 (CI) Extend the live-mode HTTP smoke job with the newly live-wired
+  authoritative endpoints from C25/C27 (`GET /dashboard` snapshot shape,
+  `recent_limit` bound + shared 422 envelope) and C18/C20
+  (`GET /projects/{id}/audit`, creating a project when the in-memory store is
+  empty), keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows.
+  ✅ 2026-11-17 — `c177c6b`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -315,3 +323,4 @@ this file is the execution checklist.
 - 2026-11-17 — `26d6e99` — C25 (backend): added authoritative `GET /api/v1/dashboard` deriving entity counts, zero-filled job-status/asset-type breakdowns and newest jobs/assets from the stores (deleted assets excluded); `recent_limit` bounds + shared 422 envelope, `DashboardCounts`/`DashboardSummary` mirrored in TS, 5 tests × 2 backends green (531 passed, 98% coverage). Mocks/screens wiring of the snapshot is a follow-up.
 - 2026-11-17 — `27907a9` — C26 (screens): quick finder now renders ranked `useSearch` cross-domain results alongside screens, deep-linking projects/assets/conversations with hint/searching/error/empty/populated states; display + navigation mapping derived in tested `quickFinderHelpers`; lint/test (200)/build green. C25 `useDashboard` wiring deferred to mocks transport.
 - 2026-11-17 — `b0f0fd7` — C27 (mocks): wired the authoritative dashboard snapshot end to end — `ApiClient.getDashboard`/`useDashboard` across mockApi (seed-derived counts, zero-filled breakdowns, newest-first recency, deleted-asset exclusion, router-style 422 + injectable `dashboard` failure), the stable facade, live `httpApiClient` (`GET /dashboard?recent_limit=`), `queryKeys` and `useQueries`, with a shared `lib/dashboard` derivation helper and populated/empty/error tests; fixed the parity harness to pass derived 422 envelopes through unwrapped and extended parity to both dashboard queries; lint/test (212)/build green. Screens `useDashboard` rendering remains a screens follow-up.
+- 2026-11-17 — `c177c6b` — C28 (CI): extended the live-mode HTTP smoke job to probe the newly live-wired endpoints the `VITE_API_MODE=live` client calls — `GET /dashboard` (snapshot + counts shape, `recent_limit=1`, `recent_limit=0` 422 envelope) and `GET /projects/{id}/audit` (with on-demand project creation since the in-memory store starts empty). Verified locally against a real `uvicorn` server (all 14 probes OK) and with pinned actionlint; frontend lint/test (212)/build and backend pytest (531) green.
