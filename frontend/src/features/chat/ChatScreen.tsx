@@ -13,6 +13,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { AudioPanel } from "../audio/AudioPanel";
 import { formatRelative } from "../home/format";
 import {
   buildConversationRows,
@@ -335,6 +336,7 @@ export function ChatScreen() {
           )}
         </div>
       ) : null}
+      <AudioPanel />
     </div>
   );
 }
