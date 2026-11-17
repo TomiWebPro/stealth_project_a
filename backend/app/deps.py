@@ -11,6 +11,7 @@ from .config import Settings
 from .repositories import Repositories
 from .repositories.assets import AssetRepository
 from .repositories.conversations import ConversationRepository
+from .repositories.jobs import JobRepository
 from .repositories.projects import ProjectRepository
 from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
@@ -52,6 +53,12 @@ def get_upload_repository(
     return repositories.uploads
 
 
+def get_job_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> JobRepository:
+    return repositories.jobs
+
+
 def get_current_user_id(
     settings: Annotated[Settings, Depends(get_settings)],
     x_user_id: Annotated[UUID | None, Header(alias="X-User-Id")] = None,
@@ -76,6 +83,7 @@ __all__ = [
     "get_conversation_repository",
     "get_current_org_id",
     "get_current_user_id",
+    "get_job_repository",
     "get_project_repository",
     "get_repositories",
     "get_settings",

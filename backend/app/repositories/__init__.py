@@ -9,6 +9,7 @@ from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
 from .assets import AssetRepository
 from .conversations import ConversationRepository
+from .jobs import JobRepository
 from .projects import ProjectRepository
 from .uploads import UploadRepository
 
@@ -19,6 +20,7 @@ class Repositories:
     assets: AssetRepository
     conversations: ConversationRepository
     uploads: UploadRepository
+    jobs: JobRepository
 
     @classmethod
     def build(
@@ -33,11 +35,13 @@ class Repositories:
         uploads = UploadRepository(
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
+        jobs = JobRepository(store, projects, clock=clock)
         return cls(
             projects=projects,
             assets=assets,
             conversations=conversations,
             uploads=uploads,
+            jobs=jobs,
         )
 
 

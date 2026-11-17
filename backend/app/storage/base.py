@@ -22,6 +22,9 @@ class Collections:
     ASSET_VERSIONS = "asset_versions"
     ASSET_RELATIONSHIPS = "asset_relationships"
     UPLOADS = "uploads"
+    JOBS = "jobs"
+    JOB_EVENTS = "job_events"
+    JOB_RETRIES = "job_retries"
 
 
 Document = dict[str, Any]

@@ -19,7 +19,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .config import APP_VERSION, Settings
 from .errors import ApiError
 from .repositories import Repositories
-from .routers import assets, conversations, health, projects, uploads
+from .routers import assets, conversations, health, jobs, projects, uploads
 from .schemas.common import API_PREFIX, ErrorBody, ErrorDetail, ErrorResponse, HealthResponse
 from .storage import create_store
 
@@ -180,6 +180,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(conversations.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
+    app.include_router(jobs.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.
     @app.get("/health", response_model=HealthResponse, include_in_schema=False)
