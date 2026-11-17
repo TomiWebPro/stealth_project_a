@@ -52,8 +52,9 @@ this file is the execution checklist.
   with a graceful polling fallback; document the contract.
 - [ ] P2.7 Live-mode transport: finish `frontend/src/lib/httpApiClient.ts` against the
   new routers; make `VITE_API_MODE=live` work end-to-end without screen rewrites.
-- [ ] P2.8 Wire screens to live mode behind the existing `ApiClient` interface; keep
+- [x] P2.8 Wire screens to live mode behind the existing `ApiClient` interface; keep
   mock mode working. Add a contract/integration smoke test for both modes.
+  (2026-11-17, 5c9436c)
 
 ## Phase 3 — Asset management (owner: backend-core + screens)
 
@@ -101,8 +102,8 @@ this file is the execution checklist.
 - [ ] C2 Expand frontend tests for loading/error/empty/populated states on every
   screen and for live-vs-mock parity.
 - [ ] C3 Accessibility pass: keyboard navigation, focus rings, ARIA labels, contrast.
-- [ ] C4 Replace single-glyph navigation icons with a real icon set; add Tauri build
-  job to CI with cached Rust target.
+- [ ] C4a Replace single-glyph navigation icons with a real icon set (owner: screens).
+- [x] C4b Add Tauri build job to CI with cached Rust target (owner: CI) — 2026-11-17, b282dba.
 - [ ] C5 Add a real router ( History API deep links) without changing `RouteId`.
 - [ ] C6 Docs accuracy pass: keep README, API.md, architecture docs and this backlog
   in sync with what is actually shipped.
@@ -110,3 +111,4 @@ this file is the execution checklist.
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
+- 2026-11-17 — b282dba — C4b: added Linux Tauri shell CI job (`npx tauri build --no-bundle`) with `Swatinem/rust-cache` target cache + WebKit/GTK deps; README CI section synced; frontend lint/test/build and backend pytest verified green.
