@@ -154,6 +154,11 @@ this file is the execution checklist.
   ✅ 2026-11-17 — `777ba82` — empty/populated helper tests for assets, projects,
   workspaces and lineage; buildLineageStages no longer duplicates Design assets.
 - [x] C12 Global Cmd/Ctrl+K quick switcher (owner: screens) — filterable route palette with keyboard nav, header trigger, no route changes. ✅ 2026-11-17 — `777ba82`
+- [x] C13 App-level error boundary + reduced-motion support (owner: screens) — render failures show a retry card without losing the shell. ✅ 2026-11-17 — `0ee0fae`
+- [x] C14 (backend) Authoritative UE/Blender export path endpoint replacing the
+  UI-only provisional convention (P6.5 follow-up).
+  ✅ 2026-11-17 — `6ddb5bd` — `GET /projects/{id}/exports` + `/assets/{id}/exports`,
+  same slug/path strings as the frontend helper, plus `source_exists`; 10 new tests green (486 passed).
 
 ## Log (append one line per completed item)
 
@@ -202,3 +207,4 @@ this file is the execution checklist.
 - 2026-11-17 — `eca98f8` — P4.3: shot pipeline (first/last-frame -> flf2v, else image-to-video) with automatic LoRA slot mounting, frame/asset lineage and slot filtering; 18 new tests green (460 passed).
 - 2026-11-17 — `5ea7d51` — P4.4: splat pipeline (footage -> COLMAP model3d -> splat-train) with sampled camera-path bridge, scene/lineage assets and CPU smoke mode by default; 17 new tests green (477 passed).
 - 2026-11-17 — `777ba82` — C13 (screens): completed C2 state-derivation coverage for assets/projects/workspaces/lineage (empty/populated/error-safe cases) and fixed buildLineageStages duplicating Design assets into Other; lint/test (137 tests)/build green.
+- 2026-11-17 — `3c1488a`/`6ddb5bd` — P5.1/C14: marked extension manifest+registry item delivered by the P2.5 registry commit; added authoritative backend UE/Blender export endpoints matching the UI path convention (486 passed).
