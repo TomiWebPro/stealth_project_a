@@ -319,11 +319,13 @@ export function createHttpApiClient(
     listPresence: (projectId) =>
       request<Presence[]>("/collaboration/presence", { project_id: projectId }),
 
-    listComments: (projectId, assetId) =>
-      request<Comment[]>("/collaboration/comments", {
+    async listComments(projectId, assetId): Promise<readonly Comment[]> {
+      const comments = await request<Comment[]>("/collaboration/comments", {
         project_id: projectId,
         asset_id: assetId,
-      }),
+      });
+      return newestFirst(comments);
+    },
 
     getStorageStats: (projectId) =>
       request<StorageStats>("/storage/stats", { project_id: projectId }),

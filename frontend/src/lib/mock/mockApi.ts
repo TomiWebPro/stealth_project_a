@@ -65,7 +65,7 @@ function toSummary(): HomeSummary {
       .slice(0, 6),
     activeJobs: JOBS.filter(
       (candidate) => candidate.status === "queued" || candidate.status === "running",
-    ),
+    ).sort((a, b) => b.created_at.localeCompare(a.created_at)),
     providers: PROVIDERS.map((provider) => ({
       id: provider.id,
       name: provider.name,
