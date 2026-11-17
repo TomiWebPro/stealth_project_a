@@ -41,8 +41,8 @@ this file is the execution checklist.
   `GET /jobs/{id}`, `POST /jobs/{id}/cancel`, `POST /jobs/{id}/retry` backed by a
   repository + in-memory/SQLite store; respect `JobListQuery`, `JobError`,
   `JobEvent`. Add backend tests. ✅ 2026-11-17 — `76df39d`
-- [ ] P2.2 Providers + capability query API: `GET /providers`, `GET /providers/{id}`,
-  `GET /capabilities` using existing schemas; add tests.
+- [x] P2.2 Providers + capability query API: `GET /providers`, `GET /providers/{id}`,
+  `GET /capabilities` using existing schemas; add tests. ✅ 2026-11-17 — `e055870`
 - [ ] P2.3 Orchestration API: plan/run endpoints, presence, comments, storage stats
   using existing `orchestration` schemas; add tests.
 - [ ] P2.4 Auth/session API: login/refresh/session, organizations and members using
@@ -114,6 +114,7 @@ this file is the execution checklist.
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
 - 2026-11-17 — P2.1 shipped (`76df39d`): static operation catalog, job submit/list/get/cancel/retry, recoverable event stream; 40 new tests green on memory+sqlite.
+- 2026-11-17 — P2.2 shipped (`e055870`): seeded local/studio/cloud provider registry, GET /providers, /providers/{id}, /capabilities filtered by operation+location; 18 new tests green.
 - 2026-11-17 — P2.8: added ApiClient contract smoke test covering mock + live transports (5c9436c); screens already consume hooks only, no mode-specific code.
 - 2026-11-17 — b282dba — C4b: added Linux Tauri shell CI job (`npx tauri build --no-bundle`) with `Swatinem/rust-cache` target cache + WebKit/GTK deps; README CI section synced; frontend lint/test/build and backend pytest verified green.
 - 2026-11-17 — d1d7d9d — C7: added `pytest-cov` dev dep, `[coverage:*]` config in pytest.ini, and a CI coverage gate (`--cov=app --cov-fail-under=90`, currently 96%) to guard C1's router-coverage goal; plain `python3 -m pytest -q` still green (188 passed).
