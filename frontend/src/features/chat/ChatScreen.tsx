@@ -9,6 +9,7 @@ import {
 import { errorMessage } from "../../lib/errors";
 import type { Message, StreamEvent } from "../../lib/types";
 import { PageHeader } from "../../layout/AppLayout";
+import { useUiStore } from "../../stores/uiStore";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
@@ -268,7 +269,8 @@ function MessageThread({ conversationId }: { readonly conversationId: string }) 
 export function ChatScreen() {
   const projectsQuery = useProjects();
   const [projectId, setProjectId] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const conversationId = useUiStore((state) => state.selectedConversationId);
+  const selectConversation = useUiStore((state) => state.selectConversation);
   const projects = projectsQuery.data ?? [];
   const selectedProjectId = projectId ?? projects[0]?.id ?? null;
 
@@ -285,7 +287,7 @@ export function ChatScreen() {
                 value={selectedProjectId ?? ""}
                 onChange={(event) => {
                   setProjectId(event.target.value || null);
-                  setConversationId(null);
+                  selectConversation(null);
                 }}
                 className="h-8 rounded-md border border-line bg-surface px-2 text-xs text-content"
               >
@@ -322,7 +324,7 @@ export function ChatScreen() {
           <ConversationList
             projectId={selectedProjectId}
             selectedId={conversationId}
-            onSelect={setConversationId}
+            onSelect={selectConversation}
           />
           {conversationId ? (
             <MessageThread key={conversationId} conversationId={conversationId} />

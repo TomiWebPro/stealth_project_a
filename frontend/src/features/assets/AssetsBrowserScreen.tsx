@@ -92,7 +92,8 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<AssetType | "all">("all");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const selectedAssetId = useUiStore((state) => state.selectedAssetId);
+  const setSelectedAssetId = useUiStore((state) => state.selectAsset);
   const { data, isPending, isError, error, refetch } = useAssetsByProject(projectId);
 
   const filtered = useMemo(

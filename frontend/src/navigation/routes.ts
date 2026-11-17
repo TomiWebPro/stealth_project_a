@@ -80,9 +80,48 @@ export function routeToPath(route: RouteId): string {
   return route === DEFAULT_ROUTE ? "/" : `/${route}`;
 }
 
+/** Route plus any entity id encoded as a path segment (History API deep links). */
+export interface RouteLocation {
+  readonly route: RouteId;
+  readonly projectId?: string;
+  readonly assetId?: string;
+  readonly conversationId?: string;
+}
+
+/** Resolves a URL path into a route and optional entity id without a router lib.
+ * Unknown routes and extra segments degrade safely to the default route. */
+export function parseRoutePath(pathname: string): RouteLocation {
+  const segments = pathname.split("/").filter((segment) => segment.length > 0);
+  const head = segments[0];
+  const route: RouteId = head && isRouteId(head) ? head : DEFAULT_ROUTE;
+  const id = segments[1];
+  switch (route) {
+    case "projects":
+      return id ? { route, projectId: id } : { route };
+    case "assets":
+      return id ? { route, assetId: id } : { route };
+    case "chat":
+      return id ? { route, conversationId: id } : { route };
+    default:
+      return { route };
+  }
+}
+
+/** Builds a canonical URL for a route, appending its entity id when present. */
+export function buildRoutePath(route: RouteId, location: Omit<RouteLocation, "route"> = {}): string {
+  const base = routeToPath(route);
+  const id =
+    route === "projects"
+      ? location.projectId
+      : route === "assets"
+        ? location.assetId
+        : route === "chat"
+          ? location.conversationId
+          : undefined;
+  return id ? `${base.replace(/\/$/, "")}/${id}` : base;
+}
+
 /** Resolves the current browser path back to a known route, defaulting safely. */
 export function pathToRoute(pathname: string): RouteId {
-  const segment = pathname.replace(/^\/+|\/+$/g, "");
-  if (segment === "") return DEFAULT_ROUTE;
-  return isRouteId(segment) ? segment : DEFAULT_ROUTE;
+  return parseRoutePath(pathname).route;
 }
