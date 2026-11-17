@@ -132,6 +132,7 @@ this file is the execution checklist.
 - [x] C8 Add Vitest V8 coverage tooling (`npm run test:coverage`) + informational CI report to support C2 (owner: CI) — 2026-11-17, 08f10c8.
 - [x] C9 Harden CI workflow: read-only `contents` permission + per-ref concurrency with `cancel-in-progress` (owner: CI) — 2026-11-17, f531ea8.
 - [x] C10 Add per-job `timeout-minutes` (frontend 20, backend 15, tauri 30) to bound runner usage (owner: CI) — 2026-11-17, 9def03b.
+- [x] C11 Pin GitHub Actions to immutable commit SHAs (checkout/setup-node/setup-python/dtolnay rust-toolchain/rust-cache) to prevent tag-mutation supply-chain drift; add explicit `toolchain: stable` for the SHA-pinned rust toolchain (owner: CI). ✅ 2026-11-17 — `fd9cf91`
 
 ## Log (append one line per completed item)
 
@@ -166,4 +167,5 @@ this file is the execution checklist.
 - 2026-11-17 — `b48f4e2` — P4.7 screens follow-up: Chat composer uses `useSendMessage` with pending/error states and renders streamed assistant replies from `useConversationStream`; removed the temporary optimistic chat store.
 - 2026-11-17 — `15accbb` — P4.7 (mocks transport): added `sendMessage` mutation + resumable `openConversationStream` to `ApiClient`/mock/live transports, `useSendMessage` + `useConversationStream` hooks, deterministic ordered stream events, seeded sent-message store, `messages.all` key, and error-state guards; 4 new tests across mock/live/key suites; lint/test (101 passed)/build green. Screens composer wiring is a screens-agent follow-up.
 - 2026-11-17 — `1fa8f81` — P3.2: publish ceremony — Ver_NNN↔AssetVersion mapping, immutable `Publish/` copies with `_vNNN` suffix, JSON receipt sidecars + registry metadata, idempotent replay and byte-change conflict guard; 17 new tests green (363 passed).
+- 2026-11-17 — `fd9cf91` — C11: pinned all five GitHub Actions in `.github/workflows/ci.yml` to full commit SHAs (immutable refs) with version comments, plus explicit `toolchain: stable` for dtolnay; YAML validated, all three jobs intact; frontend lint/test/build (104 tests) and backend pytest (379 passed) green.
 - 2026-11-17 — `4c45a40` — P3.3: reference links with side-effect-free dry-run plan, symlink apply + `.link.txt` fallback, `Resources/.links.json` registry, conflict/traversal guards; never copies weights (`copied_bytes` always 0); 16 new tests green (379 passed).
