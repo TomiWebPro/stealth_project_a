@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Job } from "../../lib/types";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
@@ -25,6 +26,7 @@ interface JobsPanelProps {
 function JobCard({ job }: { readonly job: Job }) {
   const retryable = canRetryJob(job);
   const error = jobErrorMessage(job);
+  const [retryRequested, setRetryRequested] = useState(false);
   return (
     <li className="rounded-md border border-line bg-surface-raised p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -58,12 +60,16 @@ function JobCard({ job }: { readonly job: Job }) {
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => {
-              window.alert(`Retry requested for ${job.operation_id} (mock).`);
-            }}
+            onClick={() => setRetryRequested(true)}
+            disabled={retryRequested}
           >
-            Retry job
+            {retryRequested ? "Retry requested" : "Retry job"}
           </Button>
+          {retryRequested ? (
+            <span className="text-xs text-content-muted" role="status">
+              Retry staged locally; the jobs retry mutation is not wired yet.
+            </span>
+          ) : null}
         </div>
       ) : null}
     </li>
