@@ -178,6 +178,12 @@ this file is the execution checklist.
 - [x] C16 Add Dependabot weekly dependency updates for npm/pip/cargo/GitHub
   Actions (owner: CI) — 2026-11-17 — `464e712` — re-pins the SHA-pinned actions
   from C11 and bumps lockfiles on a weekly cadence; complements the frozen refs.
+- [x] C18 (backend) Authoritative project audit-trail API (P6.3 follow-up):
+  `GET /projects/{id}/audit` derives asset/publish/job events from the
+  authoritative stores, with kind + inclusive time bounds + limit, shared 404/422
+  envelopes; contracts mirrored in `frontend/src/types/audit.ts`.
+  ✅ 2026-11-17 — `9f74936` — 14 new tests green on memory+sqlite (507 passed).
+  Screens/mocks wiring of the new query is a follow-up for those agents.
 
 ## Log (append one line per completed item)
 
@@ -235,3 +241,4 @@ this file is the execution checklist.
 - 2026-11-17 — `32f0053` — P3.6 (mocks): added `updateAsset` mutation atomically across mockApi (overlay store + not-found/deleted/null-name errors), the stable `ApiClient` facade, live `httpApiClient` (PATCH), `queryKeys.assetWriteRoots()` and `useUpdateAsset`; 8 new tests, parity surface guard extended; lint/test (144 passed)/build green.
 - 2026-11-17 — `464e712` — C16: added `.github/dependabot.yml` with weekly updates for npm (frontend), pip (backend), Cargo (frontend/src-tauri) and GitHub Actions (re-pins C11 SHAs); validated both CI YAML files; frontend lint/test/build (144 tests) and backend pytest (490 passed) green.
 - 2026-11-17 — `f9d255d` — C17: OpenAPI guard locks the API surface (68 paths, 87 ops) — prefix, unique operationIds, uniform error envelope; 3 tests green (493 passed).
+- 2026-11-17 — `9f74936` — C18: authoritative `GET /projects/{id}/audit` feed (asset/publish/job events derived from authoritative stores; kind + time bounds + limit; mirrored TS contracts), 14 new tests green on memory+sqlite (507 passed).
