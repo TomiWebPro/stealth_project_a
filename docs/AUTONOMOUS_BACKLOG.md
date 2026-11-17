@@ -81,7 +81,7 @@ this file is the execution checklist.
 - [x] P4.2 Dataset-prep → ai-toolkit YAML → LoRA-train operation chain as real job
   operations with lineage. ✅ 2026-11-17 — `657ed3a`
 - [x] P4.3 First/last-frame + video generation operations with LoRA auto-mounting. ✅ 2026-11-17 — `eca98f8`
-- [ ] P4.4 Splat/COLMAP + camera-path bridge operations (CPU smoke mode by default).
+- [x] P4.4 Splat/COLMAP + camera-path bridge operations (CPU smoke mode by default). ✅ 2026-11-17 — `5ea7d51`
 - [ ] P4.5 GPU validation harness: scripted end-to-end smoke run targeting
   `ssh gpu-reach` box; record real numbers, replace provisional mock values.
 - [x] P4.6 Chat screen: connect conversations API to a real orchestration loop with
@@ -191,3 +191,4 @@ this file is the execution checklist.
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
 - 2026-11-17 — `eca98f8` — P4.3: shot pipeline (first/last-frame -> flf2v, else image-to-video) with automatic LoRA slot mounting, frame/asset lineage and slot filtering; 18 new tests green (460 passed).
+- 2026-11-17 — `5ea7d51` — P4.4: splat pipeline (footage -> COLMAP model3d -> splat-train) with sampled camera-path bridge, scene/lineage assets and CPU smoke mode by default; 17 new tests green (477 passed).
