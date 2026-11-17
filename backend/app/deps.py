@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import Depends, Header, Request
 
+from .adapters import AdapterRegistry
 from .config import Settings
 from .errors import ApiError
 from .links import ReferenceLinkService
@@ -31,6 +32,10 @@ def get_settings(request: Request) -> Settings:
 
 def get_store(request: Request) -> DocumentStore:
     return request.app.state.store
+
+
+def get_adapter_registry() -> AdapterRegistry:
+    return AdapterRegistry()
 
 
 def get_project_tree(settings: Annotated[Settings, Depends(get_settings)]) -> ProjectTree:
@@ -146,6 +151,7 @@ def get_current_org_id(
 
 
 __all__ = [
+    "get_adapter_registry",
     "get_asset_repository",
     "get_auth_repository",
     "get_bearer_token",

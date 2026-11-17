@@ -164,6 +164,61 @@ class JobRepository(BaseRepository):
         )
         return updated
 
+    # --- Execution transitions ----------------------------------------------
+
+    def start(self, job_id: UUID) -> Job:
+        """Mark a queued job as running (idempotent if already running)."""
+        job = self.get_or_raise(job_id)
+        if job.status == "running":
+            return job
+        if job.status != "queued":
+            raise ConflictError(
+                f"Job '{job_id}' cannot start from status '{job.status}'.",
+                code="job_not_startable",
+            )
+        document = job.model_dump(mode="json")
+        document["status"] = "running"
+        document["started_at"] = self.clock().isoformat()
+        updated = Job.model_validate(document)
+        self._save(Collections.JOBS, str(job_id), updated)
+        self._append_event(job_id, "status", status="running", message="Job started.")
+        return updated
+
+    def complete(self, job_id: UUID, result) -> Job:
+        """Finish a running job with a result."""
+        job = self.get_or_raise(job_id)
+        if job.status != "running":
+            raise ConflictError(
+                f"Job '{job_id}' is not running.", code="job_not_running"
+            )
+        document = job.model_dump(mode="json")
+        document["status"] = "succeeded"
+        document["progress"] = 1.0
+        document["result"] = result.model_dump(mode="json")
+        document["finished_at"] = self.clock().isoformat()
+        updated = Job.model_validate(document)
+        self._save(Collections.JOBS, str(job_id), updated)
+        self._append_event(job_id, "result", status="succeeded", progress=1.0)
+        return updated
+
+    def fail(self, job_id: UUID, error) -> Job:
+        """Finish a running job with a retryable error."""
+        job = self.get_or_raise(job_id)
+        if job.status != "running":
+            raise ConflictError(
+                f"Job '{job_id}' is not running.", code="job_not_running"
+            )
+        document = job.model_dump(mode="json")
+        document["status"] = "failed"
+        document["error"] = error.model_dump(mode="json")
+        document["finished_at"] = self.clock().isoformat()
+        updated = Job.model_validate(document)
+        self._save(Collections.JOBS, str(job_id), updated)
+        self._append_event(
+            job_id, "error", status="failed", message=error.message
+        )
+        return updated
+
     # --- Events -------------------------------------------------------------
 
     def event_frame(self, job_id: UUID, *, since: int = 0) -> JobEventFrame:
