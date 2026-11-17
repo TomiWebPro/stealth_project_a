@@ -186,6 +186,7 @@ this file is the execution checklist.
 - 2026-11-17 — `aa72e04` — P6.5: Project detail now shows Unreal/Blender export paths for published assets with target filters, provisional path convention and tests.
 - 2026-11-17 — `647ac19` — C5: History API deep links for `/projects/{id}`, `/assets/{id}`, `/chat/{id}` via pure parse/build helpers; UI store restores selections on load/back-forward and mirrors in-screen selection changes with replaceState.
 - 2026-11-17 — `2e4c084` — C4a: sidebar now renders a dependency-free inline SVG icon set (one named icon per RouteId) instead of single-character glyphs.
+- 2026-11-17 — `85a7aee` — C2: added empty/populated/error display-derivation tests for jobs, version chains and provider helpers; live-vs-mock parity remains covered by the mocks-owned parity guard.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
