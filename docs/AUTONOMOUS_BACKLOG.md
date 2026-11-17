@@ -200,6 +200,12 @@ this file is the execution checklist.
   `...@v1.7.12`) lints all `.github/workflows/*.yml` on every push/PR so future CI
   config edits are checked automatically, bounded by a 10-minute timeout.
   ✅ 2026-11-17 — `3f960e4`
+- [x] C22 (backend) Authoritative cross-domain search API: `GET /api/v1/search?q=`
+  ranks matches across projects/assets/conversations derived from the authoritative
+  stores (no second index), with `kind`/`limit` filters, shared 404-free/422 envelopes,
+  `SearchResult`/`SearchResponse`/`SearchResultKind` mirrored in TS, and success +
+  failure tests on memory+sqlite. ✅ 2026-11-17 — `3b9c6d1`
+  Wire-up in mocks/screens (`getSearch`/`useSearch`, quick-finder) is a follow-up for those agents.
 
 ## Log (append one line per completed item)
 
@@ -261,3 +267,4 @@ this file is the execution checklist.
 - 2026-11-17 — `7a6cd7d` — C19: added a project storage card on detail (useStorageStats hook, loading/error/empty/populated states, storageHelpers format/usage derivation + 9 unit tests); lint/test (152)/build green. Added C20 for mocks+screens to wire the C18 audit API end to end.
 - 2026-11-17 — `5b7a2d4` — C20 (mocks): added `getProjectAudit`/`useProjectAudit` atomically across mockApi, ApiClient, live httpApiClient (404→undefined, other errors normalized), queryKeys and useQueries; shared audit derivation/filter helper + asset/job-derived seeds keep mock/live parity with populated/empty/error states; 5 new audit-helper + mock + live + key tests and parity guard extended; lint/test (165)/build green. Screen feed rendering split to C20b.
 - 2026-11-17 — `3f960e4` — C21: added a `Validate workflows` CI job running pinned actionlint (`go run .../actionlint@v1.7.12`) over `.github/workflows/*.yml` on every push/PR (10-min timeout); validated the edited workflow with installed actionlint and the exact pinned command. Frontend lint/test (165)/build and backend pytest (507) green.
+- 2026-11-17 — `3b9c6d1` — C22: added authoritative `GET /api/v1/search` (cross-domain project/asset/conversation ranking derived from the document stores, `kind`/`limit` filters, shared 422 validation envelope, blank-query/no-match handling, deleted-asset skipping, stable tie-breaks), contracts mirrored in `frontend/src/types/search.ts`, and 7 tests × 2 storage backends; backend pytest 521 passed (contract parity green). Mocks/screens transport wiring is a follow-up.
