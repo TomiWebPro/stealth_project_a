@@ -9,6 +9,7 @@ from fastapi import Depends, Header, Request
 
 from .config import Settings
 from .errors import ApiError
+from .links import ReferenceLinkService
 from .publish import PublishService
 from .repositories import Repositories
 from .repositories.auth import AuthRepository
@@ -43,6 +44,12 @@ def get_publish_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> PublishService:
     return PublishService(assets, projects, tree, settings.upload_dir)
+
+
+def get_link_service(
+    tree: Annotated[ProjectTree, Depends(get_project_tree)],
+) -> ReferenceLinkService:
+    return ReferenceLinkService(tree)
 
 
 def get_repositories(request: Request) -> Repositories:
@@ -147,6 +154,7 @@ __all__ = [
     "get_current_org_id",
     "get_current_user_id",
     "get_job_repository",
+    "get_link_service",
     "get_orchestration_repository",
     "get_project_repository",
     "get_project_tree",
