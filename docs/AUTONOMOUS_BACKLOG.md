@@ -87,8 +87,9 @@ this file is the execution checklist.
 - [x] P4.6 Chat screen: connect conversations API to a real orchestration loop with
   streaming events. (2026-11-17, 51146fd) — conversation/message hooks wired, streaming
   statuses surfaced; composer optimistic pending send mutation + stream (P4.7).
-- [ ] P4.7 (mocks/backend) Add `sendMessage` mutation + conversation stream events to
+- [x] P4.7 (mocks/backend) Add `sendMessage` mutation + conversation stream events to
   `ApiClient`/`useQueries` so the P4.6 composer can send and stream for real.
+  ✅ 2026-11-17 — `15accbb` (mocks transport; screens composer wiring follows)
 
 ## Phase 5 — Extension platform (owner: backend-core + screens)
 
@@ -159,3 +160,4 @@ this file is the execution checklist.
 - 2026-11-17 — `15accbb` — P2.7 follow-up: aligned live presence/comments paths with the mounted backend routers (`/presence`, `/comments` instead of `/collaboration/*`) in both `lib/httpApiClient` and typed `api/orchestration`, updated parity/live tests, and re-exported `PresenceState`; lint/test (97 passed)/build green.
 - 2026-11-17 — `f5bdfa9` — P3.1: canonical on-disk project tree materialization/verification (`/projects/{id}/tree`), dir-only Default template, studio-root config, name/kind/version helpers; 12 new tests green (346 passed).
 - 2026-11-17 — `0093a77` — P6.2: Providers screen now shows a health summary, per-location runtime groups, location/status filters, and degraded/unavailable guidance, with helper tests.
+- 2026-11-17 — `15accbb` — P4.7 (mocks transport): added `sendMessage` mutation + resumable `openConversationStream` to `ApiClient`/mock/live transports, `useSendMessage` + `useConversationStream` hooks, deterministic ordered stream events, seeded sent-message store, `messages.all` key, and error-state guards; 4 new tests across mock/live/key suites; lint/test (101 passed)/build green. Screens composer wiring is a screens-agent follow-up.
