@@ -5,6 +5,7 @@ import { JobsScreen } from "./features/jobs/JobsScreen";
 import { PlaceholderScreen } from "./features/placeholder/PlaceholderScreen";
 import { ProjectsScreen } from "./features/projects/ProjectsScreen";
 import { ProvidersScreen } from "./features/providers/ProvidersScreen";
+import { SettingsScreen } from "./features/settings/SettingsScreen";
 import { WorkspacesScreen } from "./features/workspaces/WorkspacesScreen";
 import { AppHeader } from "./layout/AppHeader";
 import { AppLayout } from "./layout/AppLayout";
@@ -49,14 +50,7 @@ function CurrentScreen() {
     case "providers":
       return <ProvidersScreen />;
     case "settings":
-      return (
-        <PlaceholderScreen
-          route="settings"
-          title="Settings"
-          description="Preferences, connections, and backend configuration."
-          note="Settings editing is not available in the mock-only phase."
-        />
-      );
+      return <SettingsScreen />;
     default: {
       const exhaustive: never = activeRoute;
       return <PlaceholderScreen route="home" title="Unknown" description={`Unknown route: ${String(exhaustive)}`} />;
