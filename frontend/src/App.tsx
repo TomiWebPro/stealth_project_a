@@ -12,6 +12,7 @@ import { WorkspacesScreen } from "./features/workspaces/WorkspacesScreen";
 import { AppHeader } from "./layout/AppHeader";
 import { AppLayout } from "./layout/AppLayout";
 import { AppSidebar } from "./layout/AppSidebar";
+import { CommandPalette } from "./ui/CommandPalette";
 import { resolveApiClient } from "./lib/createApiClient";
 import { useUiStore } from "./stores/uiStore";
 
@@ -56,6 +57,7 @@ export function App() {
       <AppLayout header={<AppHeader />} sidebar={<AppSidebar />}>
         <CurrentScreen />
       </AppLayout>
+      <CommandPalette />
     </ApiProvider>
   );
 }

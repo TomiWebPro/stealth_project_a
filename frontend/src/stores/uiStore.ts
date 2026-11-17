@@ -19,6 +19,9 @@ interface UiState {
   readonly selectedConversationId: string | null;
   /** Selected asset for the assets detail panel (deep-linkable). */
   readonly selectedAssetId: string | null;
+  /** Whether the Cmd/Ctrl+K quick switcher is open. */
+  readonly commandPaletteOpen: boolean;
+  readonly setCommandPaletteOpen: (open: boolean) => void;
   /** Navigates to a route, pushing a history entry and updating the URL. */
   readonly navigate: (route: RouteId, params?: RouteParams) => void;
   /** Reflects a browser-driven (back/forward) path change without pushing. */
@@ -56,6 +59,8 @@ export const useUiStore = create<UiState>((set, get) => {
     assetsProjectId: null,
     selectedConversationId: initial.conversationId ?? null,
     selectedAssetId: initial.assetId ?? null,
+    commandPaletteOpen: false,
+    setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
     navigate: (route, params) => {
       if (route === get().activeRoute && !params) return;
       set({

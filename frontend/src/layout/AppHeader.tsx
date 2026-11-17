@@ -48,6 +48,15 @@ export function AppHeader({ actions }: AppHeaderProps) {
       </nav>
 
       <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => useUiStore.getState().setCommandPaletteOpen(true)}
+          aria-label="Open quick switcher"
+          title="Quick switcher (Ctrl/⌘ K)"
+          className="hidden items-center gap-1 rounded-md border border-line bg-surface-raised px-2 py-1 text-2xs text-content-muted hover:text-content sm:inline-flex"
+        >
+          <span aria-hidden="true">⌕</span> Quick switch <kbd className="text-content-subtle">⌘K</kbd>
+        </button>
         {env.apiMode === "mock" ? <Badge tone="accent">Mock data</Badge> : null}
         {actions}
       </div>

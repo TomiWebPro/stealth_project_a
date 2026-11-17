@@ -33,6 +33,7 @@ export function buildLineageStages(assets: readonly Asset[]): readonly LineageSt
   if (video.length > 0) stages.push({ key: "video", label: "Video", assets: video });
 
   const design = assets.filter((a) => a.type === "image" && !used.has(a.id));
+  design.forEach((a) => used.add(a.id));
   if (design.length > 0) stages.unshift({ key: "design", label: "Design", assets: design });
 
   const remaining = assets.filter((a) => !used.has(a.id));
