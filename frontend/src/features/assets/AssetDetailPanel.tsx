@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useUpdateAsset } from "../../hooks/useQueries";
+import { errorMessage } from "../../lib/errors";
 import type { Asset } from "../../lib/types";
 import { useAssetEditStore } from "../../stores/assetEditStore";
 import { Badge } from "../../ui/Badge";
@@ -25,14 +27,15 @@ interface AssetDetailPanelProps {
 }
 
 /**
- * Asset detail + metadata editor. Edits persist to a session-scoped store via
- * local-optimistic updates because the screens-facing ApiClient has no update
- * method yet (see backlog: expose PATCH /assets/{id} through useQueries).
+ * Asset detail + metadata editor. Edits persist through `useUpdateAsset`
+ * (PATCH /assets/{id}) and are also cached in a session store so the form keeps
+ * its values while other asset queries refetch.
  */
 export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
   const edit = useAssetEditStore((state) => state.edits[asset.id]);
   const setEdit = useAssetEditStore((state) => state.setEdit);
   const clearEdit = useAssetEditStore((state) => state.clearEdit);
+  const updateAsset = useUpdateAsset();
 
   const original = draftFromAsset(asset);
   const effective = applyAssetEdit(asset, edit);
@@ -51,8 +54,18 @@ export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
   const dirty = draftHasChanges(currentDraft, original);
 
   function handleSave() {
-    setEdit(asset.id, currentDraft);
-    setSaved(true);
+    updateAsset.mutate(
+      {
+        assetId: asset.id,
+        body: { name: currentDraft.name, tags: [...currentDraft.tags], metadata: currentDraft.metadata },
+      },
+      {
+        onSuccess: () => {
+          setEdit(asset.id, currentDraft);
+          setSaved(true);
+        },
+      },
+    );
   }
 
   function handleReset() {
@@ -72,7 +85,7 @@ export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
       <div className="p-4">
         <SectionHeader
           title="Asset details"
-          description="View provenance and edit name, tags, and metadata (saved locally this session)."
+          description="View provenance and edit name, tags, and metadata through the assets API."
         />
       </div>
       <div className="grid gap-6 border-t border-line p-4 lg:grid-cols-2">
@@ -149,21 +162,25 @@ export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
             />
           </label>
           <div className="flex items-center gap-2">
-            <Button type="submit" variant="primary" size="sm" disabled={!dirty}>
-              Save locally
+            <Button type="submit" variant="primary" size="sm" disabled={!dirty || updateAsset.isPending}>
+              {updateAsset.isPending ? "Saving…" : "Save changes"}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={handleReset} disabled={!dirty && !edit}>
               Discard
             </Button>
             {saved && !dirty ? (
               <span className="text-xs text-success" role="status">
-                Saved this session
+                Saved
               </span>
             ) : null}
           </div>
+          {updateAsset.isError ? (
+            <p className="text-xs text-danger" role="alert">
+              {errorMessage(updateAsset.error)}
+            </p>
+          ) : null}
           <p className="text-2xs leading-relaxed text-content-subtle">
-            Metadata edits update the local view model only. Persistence through the assets
-            update endpoint is pending a screens-facing query hook.
+            Changes are persisted with PATCH /assets/{`{id}`} and reflected across all asset views.
           </p>
         </form>
       </div>

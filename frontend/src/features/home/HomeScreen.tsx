@@ -168,11 +168,17 @@ export function HomeScreen() {
                   description="Production work currently in progress."
                 />
               </div>
-              <ul className="divide-y divide-line border-t border-line">
-                {data.projects.map((project) => (
-                  <ProjectRow key={project.id} project={project} />
-                ))}
-              </ul>
+              {data.projects.length === 0 ? (
+                <div className="border-t border-line p-4">
+                  <EmptyState title="No projects" description="Create a project to start organizing production work." />
+                </div>
+              ) : (
+                <ul className="divide-y divide-line border-t border-line">
+                  {data.projects.map((project) => (
+                    <ProjectRow key={project.id} project={project} />
+                  ))}
+                </ul>
+              )}
             </Card>
 
             <Card>
@@ -203,11 +209,17 @@ export function HomeScreen() {
                 description="Latest generated and imported items across projects."
               />
             </div>
-            <ul className="grid grid-cols-2 gap-3 border-t border-line p-4 sm:grid-cols-3 md:grid-cols-6">
-              {data.recentAssets.map((asset) => (
-                <AssetTile key={asset.id} asset={asset} />
-              ))}
-            </ul>
+            {data.recentAssets.length === 0 ? (
+              <div className="border-t border-line p-4">
+                <EmptyState title="No recent assets" description="Generated and imported assets will appear here." />
+              </div>
+            ) : (
+              <ul className="grid grid-cols-2 gap-3 border-t border-line p-4 sm:grid-cols-3 md:grid-cols-6">
+                {data.recentAssets.map((asset) => (
+                  <AssetTile key={asset.id} asset={asset} />
+                ))}
+              </ul>
+            )}
           </Card>
 
           <Card>
@@ -217,11 +229,17 @@ export function HomeScreen() {
                 description="Execution backends available to your studio."
               />
             </div>
-            <ul className="divide-y divide-line border-t border-line">
-              {data.providers.map((provider) => (
-                <ProviderRow key={provider.id} provider={provider} />
-              ))}
-            </ul>
+            {data.providers.length === 0 ? (
+              <div className="border-t border-line p-4">
+                <EmptyState title="No providers" description="Connect a local or cloud provider to enable generation." />
+              </div>
+            ) : (
+              <ul className="divide-y divide-line border-t border-line">
+                {data.providers.map((provider) => (
+                  <ProviderRow key={provider.id} provider={provider} />
+                ))}
+              </ul>
+            )}
           </Card>
         </div>
       ) : null}
