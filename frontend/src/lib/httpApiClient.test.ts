@@ -591,3 +591,48 @@ describe("createHttpApiClient project audit", () => {
     });
   });
 });
+
+describe("createHttpApiClient cross-domain search", () => {
+  const response = {
+    query: "mara",
+    results: [
+      {
+        kind: "conversation",
+        id: "c1",
+        title: "Mara identity — dataset review",
+        subtitle: "Sable — Character Study",
+        project_id: project.id,
+        score: 1,
+      },
+    ],
+  };
+
+  it("GETs /search with the query and optional filters", async () => {
+    const { fetchImpl, calls } = router({ "/search": response });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.search("mara", { kind: "conversation", limit: 5 })).resolves.toEqual(response);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/search`);
+    expect(url.searchParams.get("q")).toBe("mara");
+    expect(url.searchParams.get("kind")).toBe("conversation");
+    expect(url.searchParams.get("limit")).toBe("5");
+  });
+
+  it("normalizes a backend validation failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Empty query" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+
+    await expect(failing.search("")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Empty query",
+    });
+  });
+});

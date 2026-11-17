@@ -4,6 +4,7 @@ import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
+import type { SearchOptions } from "./search";
 import type {
   Asset,
   AssetUpdate,
@@ -20,6 +21,7 @@ import type {
   Presence,
   Project,
   Provider,
+  SearchResponse,
   StorageStats,
   User,
 } from "./types";
@@ -71,6 +73,8 @@ export interface ApiClient {
   getStorageStats(projectId: string): Promise<StorageStats>;
   listExtensions(): Promise<readonly Extension[]>;
   getExtension(extensionId: string): Promise<Extension | undefined>;
+  /** Ranked cross-domain (project/asset/conversation) matches (C22). */
+  search(query: string, options?: SearchOptions): Promise<SearchResponse>;
 }
 
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
@@ -106,4 +110,5 @@ export const mockApiClient: ApiClient = {
   getStorageStats: mockApi.fetchStorageStats,
   listExtensions: mockApi.fetchExtensions,
   getExtension: mockApi.fetchExtension,
+  search: mockApi.fetchSearch,
 };

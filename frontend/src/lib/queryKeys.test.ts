@@ -130,6 +130,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the cross-domain search key by query and filters", () => {
+    expect(queryKeys.search.results("mara")).toEqual([
+      "search",
+      "results",
+      "mara",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.search.results("mara", { kind: "asset", limit: 5 })).toEqual([
+      "search",
+      "results",
+      "mara",
+      "asset",
+      5,
+    ]);
+  });
+
   it("returns a new array per call so cache keys compare by value", () => {
     expect(queryKeys.providers.all()).toEqual(queryKeys.providers.all());
     expect(queryKeys.providers.all()).not.toBe(queryKeys.providers.all());

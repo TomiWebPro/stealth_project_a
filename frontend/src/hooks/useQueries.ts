@@ -6,6 +6,7 @@ import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
+import type { SearchOptions } from "../lib/search";
 import type {
   Asset,
   AssetUpdate,
@@ -22,6 +23,7 @@ import type {
   Presence,
   Project,
   Provider,
+  SearchResponse,
   StorageStats,
   StreamEvent,
   User,
@@ -325,5 +327,18 @@ export function useExtension(extensionId: string): UseQueryResult<Extension | un
   return useQuery({
     queryKey: queryKeys.extensions.byId(extensionId),
     queryFn: () => api.getExtension(extensionId),
+  });
+}
+
+/** Ranked cross-domain matches; disabled until the query has non-space text. */
+export function useSearch(
+  query: string,
+  options?: SearchOptions,
+): UseQueryResult<SearchResponse> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.search.results(query, options),
+    queryFn: () => api.search(query, options),
+    enabled: query.trim().length > 0,
   });
 }

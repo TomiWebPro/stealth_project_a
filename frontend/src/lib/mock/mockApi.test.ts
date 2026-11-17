@@ -33,6 +33,7 @@ import {
   fetchProvider,
   fetchProviders,
   fetchRecentAssets,
+  fetchSearch,
   fetchStorageStats,
   fetchWorkflowTemplates,
   resetMockAssets,
@@ -663,6 +664,45 @@ describe("mock API project audit (C20)", () => {
   it("surfaces the injected failure state as a normalized ApiError", async () => {
     setMockFailure("audit");
     await expect(fetchProjectAudit(filmId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API cross-domain search (C22)", () => {
+  it("returns ranked matches derived from the seeded stores", async () => {
+    const response = await fetchSearch("moon");
+    expect(response.query).toBe("moon");
+    expect((response.results ?? []).length).toBeGreaterThan(1);
+    expect(response.results?.some((result) => result.kind === "project")).toBe(true);
+    expect(response.results?.some((result) => result.kind === "asset")).toBe(true);
+    // Highest-scoring match is the prefix project name.
+    expect(response.results?.[0]).toMatchObject({ kind: "project", score: 1 });
+  });
+
+  it("filters by kind and caps results with limit", async () => {
+    const assetsOnly = await fetchSearch("moon", { kind: "asset" });
+    expect(assetsOnly.results?.length).toBeGreaterThan(0);
+    expect(assetsOnly.results?.every((result) => result.kind === "asset")).toBe(true);
+
+    const capped = await fetchSearch("moon", { limit: 2 });
+    expect(capped.results).toHaveLength(2);
+  });
+
+  it("returns an empty feed for a query with no matches", async () => {
+    expect(await fetchSearch("zzzz-no-such-thing")).toEqual({
+      query: "zzzz-no-such-thing",
+      results: [],
+    });
+  });
+
+  it("mirrors router validation and the injectable failure state", async () => {
+    await expect(fetchSearch("")).rejects.toMatchObject({ status: 422, code: "validation_error" });
+    await expect(fetchSearch("ok", { limit: 500 })).rejects.toMatchObject({ status: 422 });
+
+    setMockFailure("search");
+    await expect(fetchSearch("moon")).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

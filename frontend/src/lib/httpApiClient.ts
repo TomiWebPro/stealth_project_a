@@ -8,6 +8,8 @@ import type { CapabilityMatch } from "./catalog";
 import type { ConversationStream } from "./conversationStream";
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
+import { searchQueryParams } from "./search";
+import type { SearchOptions } from "./search";
 import type {
   Asset,
   AssetUpdate,
@@ -24,6 +26,7 @@ import type {
   Presence,
   Project,
   Provider,
+  SearchResponse,
   StorageStats,
   User,
 } from "./types";
@@ -419,5 +422,9 @@ export function createHttpApiClient(
 
     getExtension: (extensionId) =>
       maybe(() => request<Extension>(`/extensions/${extensionId}`)),
+
+    search(query: string, options?: SearchOptions): Promise<SearchResponse> {
+      return request<SearchResponse>("/search", searchQueryParams(query, options));
+    },
   };
 }

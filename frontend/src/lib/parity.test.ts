@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ApiError } from "../api/client";
 import { API_PREFIX } from "../types/common";
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
@@ -23,6 +24,8 @@ import {
   STORAGE_STATS,
 } from "./mock/data";
 import { createHttpApiClient } from "./httpApiClient";
+import { deriveSearchResponse, validateSearchArgs } from "./search";
+import type { SearchOptions } from "./search";
 
 /**
  * C2 parity guard: the live and mock transports must return identical payloads
@@ -64,6 +67,31 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
     };
     return filterAuditTrail(trail, query);
+  }
+
+  // Authoritative cross-domain search is derived from the same document stores
+  // on every call; reproduce the router's 422 validation and the repository's
+  // ranking over the shared seeds so live and mock agree exactly.
+  if (path === "/search") {
+    const q = params.get("q") ?? "";
+    const kindRaw = params.get("kind");
+    const limitRaw = params.get("limit");
+    const options: SearchOptions = {
+      ...(kindRaw ? { kind: kindRaw as SearchOptions["kind"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateSearchArgs(q, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveSearchResponse(q, PROJECTS, ASSETS, CONVERSATIONS, options);
   }
 
   if (path === "/projects") return PROJECTS;
@@ -209,6 +237,8 @@ describe("live vs mock transport parity", () => {
       ["getStorageStats", (api) => api.getStorageStats(filmId)],
       ["listExtensions", (api) => api.listExtensions()],
       ["getExtension", (api) => api.getExtension(extensionId)],
+      ["search", (api) => api.search("moon")],
+      ["search filtered", (api) => api.search("moon", { kind: "asset", limit: 3 })],
     ];
 
     for (const [name, run] of cases) {
@@ -234,6 +264,9 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getProjectAudit("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    expect(await live.search("zzzz-no-such-thing")).toEqual(
+      await mockApiClient.search("zzzz-no-such-thing"),
+    );
   });
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {
@@ -256,5 +289,6 @@ describe("live vs mock transport parity", () => {
     const typed: Queries = live as unknown as Queries;
     expect(typeof typed.getHomeSummary).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
+    expect(typeof typed.search).toBe("function");
   });
 });

@@ -6,6 +6,8 @@ import type { ConversationStream } from "../conversationStream";
 import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
 import type { ProjectDetail } from "../projectDetail";
+import { deriveSearchResponse, validateSearchArgs } from "../search";
+import type { SearchOptions } from "../search";
 import type {
   Asset,
   AssetUpdate,
@@ -22,6 +24,7 @@ import type {
   Presence,
   Project,
   Provider,
+  SearchResponse,
   StorageStats,
   StreamEvent,
   User,
@@ -467,4 +470,26 @@ export async function fetchExtensions(): Promise<readonly Extension[]> {
 
 export async function fetchExtension(extensionId: string): Promise<Extension | undefined> {
   return delay(EXTENSIONS.find((extension) => extension.manifest.id === extensionId));
+}
+
+/**
+ * Cross-domain search (C22) derived from the same authoritative seeds as the
+ * live endpoint. Router-style 422 validation and the `"search"` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchSearch(
+  query: string,
+  options?: SearchOptions,
+): Promise<SearchResponse> {
+  failIfEnabled("search");
+  validateSearchArgs(query, options);
+  return delay(
+    deriveSearchResponse(
+      query,
+      PROJECTS,
+      ASSETS.map(withAssetOverrides),
+      CONVERSATIONS,
+      options,
+    ),
+  );
 }

@@ -1,4 +1,5 @@
 import type { AuditQuery } from "./audit";
+import type { SearchOptions } from "./search";
 
 /**
  * Centralised TanStack Query keys.
@@ -84,5 +85,9 @@ export const queryKeys = {
   extensions: {
     all: () => ["extensions"] as const,
     byId: (extensionId: string) => ["extensions", "by-id", extensionId] as const,
+  },
+  search: {
+    results: (query: string, options: SearchOptions = {}) =>
+      ["search", "results", query, options.kind ?? "all", options.limit ?? "all"] as const,
   },
 } as const;
