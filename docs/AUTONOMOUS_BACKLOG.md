@@ -80,7 +80,7 @@ this file is the execution checklist.
   one execution contract; simulate locally so UI works without GPU. ✅ 2026-11-17 — `a71390e`
 - [x] P4.2 Dataset-prep → ai-toolkit YAML → LoRA-train operation chain as real job
   operations with lineage. ✅ 2026-11-17 — `657ed3a`
-- [ ] P4.3 First/last-frame + video generation operations with LoRA auto-mounting.
+- [x] P4.3 First/last-frame + video generation operations with LoRA auto-mounting. ✅ 2026-11-17 — `eca98f8`
 - [ ] P4.4 Splat/COLMAP + camera-path bridge operations (CPU smoke mode by default).
 - [ ] P4.5 GPU validation harness: scripted end-to-end smoke run targeting
   `ssh gpu-reach` box; record real numbers, replace provisional mock values.
@@ -126,8 +126,10 @@ this file is the execution checklist.
 
 - [x] C1 Expand backend tests for error envelopes, auth failures, pagination and
   concurrency; keep ≥90% coverage of routers. ✅ 2026-11-17 — `e052792`
-- [ ] C2 Expand frontend tests for loading/error/empty/populated states on every
+- [x] C2 Expand frontend tests for loading/error/empty/populated states on every
   screen and for live-vs-mock parity.
+  ✅ 2026-11-17 — `85a7aee` — added empty/populated/error display-state tests for jobs,
+  version chains and providers (parity guard owned by mocks/CI).
 - [x] C3 Accessibility pass: keyboard navigation, focus rings, ARIA labels, contrast.
   ✅ 2026-11-17 — `92edce5` — skip link + focusable main, Up/Down roving focus in sidebar,
   subtle-text contrast raised to >=4.5:1 (existing focus-visible ring retained).
@@ -187,3 +189,4 @@ this file is the execution checklist.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
+- 2026-11-17 — `eca98f8` — P4.3: shot pipeline (first/last-frame -> flf2v, else image-to-video) with automatic LoRA slot mounting, frame/asset lineage and slot filtering; 18 new tests green (460 passed).
