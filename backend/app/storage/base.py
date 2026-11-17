@@ -26,6 +26,10 @@ class Collections:
     JOB_EVENTS = "job_events"
     JOB_RETRIES = "job_retries"
     PROVIDERS = "providers"
+    ORCHESTRATION_PLANS = "orchestration_plans"
+    ORCHESTRATION_RUNS = "orchestration_runs"
+    PRESENCE = "presence"
+    COMMENTS = "comments"
 
 
 Document = dict[str, Any]

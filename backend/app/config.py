@@ -80,6 +80,7 @@ class Settings:
     default_org_id: UUID = DEFAULT_ORG_ID
     default_user_id: UUID = DEFAULT_USER_ID
     max_upload_bytes: int = 512 * 1024 * 1024
+    storage_quota_bytes: int = 10 * 1024 * 1024 * 1024
     cors_origins: tuple[str, ...] = field(default_factory=lambda: DEFAULT_CORS_ORIGINS)
     allow_cors_credentials: bool = False
 
@@ -98,6 +99,9 @@ class Settings:
             default_org_id=_env_uuid("STUDIO_DEFAULT_ORG_ID", DEFAULT_ORG_ID),
             default_user_id=_env_uuid("STUDIO_DEFAULT_USER_ID", DEFAULT_USER_ID),
             max_upload_bytes=_env_int("STUDIO_MAX_UPLOAD_BYTES", 512 * 1024 * 1024),
+            storage_quota_bytes=_env_int(
+                "STUDIO_STORAGE_QUOTA_BYTES", 10 * 1024 * 1024 * 1024
+            ),
             cors_origins=tuple(
                 origin.strip()
                 for origin in os.getenv(

@@ -12,6 +12,7 @@ from .repositories import Repositories
 from .repositories.assets import AssetRepository
 from .repositories.conversations import ConversationRepository
 from .repositories.jobs import JobRepository
+from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
 from .repositories.providers import ProviderRepository
 from .repositories.uploads import UploadRepository
@@ -66,6 +67,12 @@ def get_provider_repository(
     return repositories.providers
 
 
+def get_orchestration_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> OrchestrationRepository:
+    return repositories.orchestration
+
+
 def get_current_user_id(
     settings: Annotated[Settings, Depends(get_settings)],
     x_user_id: Annotated[UUID | None, Header(alias="X-User-Id")] = None,
@@ -91,6 +98,7 @@ __all__ = [
     "get_current_org_id",
     "get_current_user_id",
     "get_job_repository",
+    "get_orchestration_repository",
     "get_project_repository",
     "get_provider_repository",
     "get_repositories",

@@ -10,6 +10,7 @@ from ..storage.base import DocumentStore
 from .assets import AssetRepository
 from .conversations import ConversationRepository
 from .jobs import JobRepository
+from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
 from .providers import ProviderRepository
 from .uploads import UploadRepository
@@ -23,6 +24,7 @@ class Repositories:
     uploads: UploadRepository
     jobs: JobRepository
     providers: ProviderRepository
+    orchestration: OrchestrationRepository
 
     @classmethod
     def build(
@@ -39,6 +41,13 @@ class Repositories:
         )
         jobs = JobRepository(store, projects, clock=clock)
         providers = ProviderRepository(store, clock=clock)
+        orchestration = OrchestrationRepository(
+            store,
+            projects,
+            assets,
+            storage_quota_bytes=settings.storage_quota_bytes,
+            clock=clock,
+        )
         return cls(
             projects=projects,
             assets=assets,
@@ -46,6 +55,7 @@ class Repositories:
             uploads=uploads,
             jobs=jobs,
             providers=providers,
+            orchestration=orchestration,
         )
 
 
