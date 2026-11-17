@@ -10,6 +10,7 @@ from fastapi import Depends, Header, Request
 from .adapters import AdapterRegistry
 from .config import Settings
 from .errors import ApiError
+from .exports import ExportService
 from .links import ReferenceLinkService
 from .publish import PublishService
 from .repositories import Repositories
@@ -58,6 +59,13 @@ def get_link_service(
     tree: Annotated[ProjectTree, Depends(get_project_tree)],
 ) -> ReferenceLinkService:
     return ReferenceLinkService(tree)
+
+
+def get_export_service(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+    tree: Annotated[ProjectTree, Depends(get_project_tree)],
+) -> ExportService:
+    return ExportService(repositories.assets, repositories.projects, tree)
 
 
 def get_training_service(
@@ -197,6 +205,7 @@ __all__ = [
     "get_conversation_repository",
     "get_extension_repository",
     "get_current_org_id",
+    "get_export_service",
     "get_current_user_id",
     "get_job_repository",
     "get_link_service",
