@@ -25,13 +25,15 @@
 
 Mock scope and builder rules: see `docs/FRONTEND_MOCK_SCOPE.md`.
 
-## Phase 2 — Core services (backend hookup, gated)
+## Phase 2 — Core services (backend hookup — OPEN 2026-11-17)
 
 Auth, projects, conversations, asset metadata, real API integration, real-time
 job state. Frontend swaps mock transport for HTTP against the same
-`ApiClient` interface — no screen rewrites.
+`ApiClient` interface — no screen rewrites. The backend agent is active and
+works the ordered checklist in `docs/AUTONOMOUS_BACKLOG.md`; no human gate
+remains. Phases 3–6 are likewise open and queued in the same backlog.
 
-## GPU validation gate (blocks Phase 4 claims, not Phase 1b UI)
+## GPU validation gate (blocks Phase 4 quality claims, not UI work)
 
 One 2–6 h real GPU end-to-end run required before claiming: real Wan/LTX
 frames → COLMAP stability, frame-filter thresholds on AI video, real splat

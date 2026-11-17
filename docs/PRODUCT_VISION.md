@@ -188,10 +188,16 @@ Not yet verified (needs GPU):
 - Real splat training quality.
 - Full LTX-2.5 flow (needs ~96 GB-class GPU: RTX Pro 96 GB / H100).
 
+Now shipped (2026-11): desktop shell + Phase 1b mock-backed screens (Home,
+Projects, Assets, Jobs, Providers, Workspaces, lineage and version UI) and the
+FastAPI service scaffold. Work is continuous via scheduled agents — see
+`docs/AUTONOMOUS_BACKLOG.md`.
+
 Not started:
 
-- UI/UX (in design), formal packaging, docs site, brand name.
+- Formal packaging/release, docs site, brand name.
 - Business plan, team contracts, full audio integration.
+- Live backend hookup and real GPU validation (queued, in progress).
 
 Biggest blocker: **one 2–6 hour real GPU end-to-end validation.** Until that
 runs, downstream demo tuning, filter thresholds, and real splat quality are

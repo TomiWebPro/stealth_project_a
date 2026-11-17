@@ -6,9 +6,13 @@ This repository is the grand platform implementation (not the legacy Backlot MVP
 
 ## Status
 
-Phase 1 frontend shell implemented: reusable layout (header/sidebar/main), design
-tokens, mock API client (TanStack Query + Zustand), and a Home screen wired to
-mock data. Backend and remaining phases in progress.
+Phase 1b is shipped: reusable desktop shell (Tauri 2 + React + TS), design
+tokens, full mock data layer, and mock-backed Home / Projects / Assets / Jobs /
+Providers / Workspaces screens (lineage, version chains, shot grouping, workflow
+templates). Phase 2 backend hookup is **open and actively developed** by
+scheduled agents; all remaining work is tracked in `docs/AUTONOMOUS_BACKLOG.md`.
+The frontend still defaults to mock mode until `VITE_API_MODE=live` is switched
+on. CI, lint, frontend tests (46) and backend tests (148) are green.
 
 ## Stack (target)
 
