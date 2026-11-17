@@ -95,7 +95,11 @@ this file is the execution checklist.
 ## Phase 5 — Extension platform (owner: backend-core + screens)
 
 - [ ] P5.1 Manifest/schema + registration, install/remove, enable/disable.
-- [ ] P5.2 Permission enforcement and isolation boundary for extensions.
+- [x] P5.2 Permission enforcement and isolation boundary for extensions.
+  ✅ 2026-11-17 — `d2e04cb` — runtime permission guard over installed extensions:
+  authorize permission/capability within declared+accepted scope (403 on undeclared
+  or disabled), plus an effective isolation-scope view (providers/UI contributions);
+  12 new tests green on memory+sqlite (440 passed).
 - [x] P5.3 SDK + connector examples; replace the Extensions placeholder screen.
   ✅ 2026-11-17 — `746f7a0` — registry from `useExtensions`, permission/capability/trust cards,
   SDK examples; loading/error/empty/populated states + helper unit tests.
@@ -180,3 +184,4 @@ this file is the execution checklist.
 - 2026-11-17 — `647ac19` — C5: History API deep links for `/projects/{id}`, `/assets/{id}`, `/chat/{id}` via pure parse/build helpers; UI store restores selections on load/back-forward and mirrors in-screen selection changes with replaceState.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
+- 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
