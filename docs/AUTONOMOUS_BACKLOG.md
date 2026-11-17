@@ -210,6 +210,14 @@ this file is the execution checklist.
   `SearchResult`/`SearchResponse`/`SearchResultKind` mirrored in TS, and success +
   failure tests on memory+sqlite. ✅ 2026-11-17 — `3b9c6d1`
   Wire-up in mocks/screens (`getSearch`/`useSearch`, quick-finder) is a follow-up for those agents.
+- [x] C23 (mocks) Wire the authoritative cross-domain search API (C22) end to
+  end: add `search` to `ApiClient` + a `useSearch` hook (the C22 `getSearch`
+  follow-up) atomically across mockApi (seed-derived ranking + router-style 422
+  validation + injectable failure), the stable facade, live httpApiClient
+  (`GET /search?q=&kind=&limit=`), queryKeys and useQueries (blank-query gated),
+  with a shared `lib/search` derivation helper, populated/empty/error seeds and
+  tests; parity guard extended. ✅ 2026-11-17 — `f51189e`
+  Screens quick-finder rendering via `useSearch` remains a screens follow-up.
 
 ## Log (append one line per completed item)
 
@@ -273,3 +281,4 @@ this file is the execution checklist.
 - 2026-11-17 — `3f960e4` — C21: added a `Validate workflows` CI job running pinned actionlint (`go run .../actionlint@v1.7.12`) over `.github/workflows/*.yml` on every push/PR (10-min timeout); validated the edited workflow with installed actionlint and the exact pinned command. Frontend lint/test (165)/build and backend pytest (507) green.
 - 2026-11-17 — `3b9c6d1` — C22: added authoritative `GET /api/v1/search` (cross-domain project/asset/conversation ranking derived from the document stores, `kind`/`limit` filters, shared 422 validation envelope, blank-query/no-match handling, deleted-asset skipping, stable tie-breaks), contracts mirrored in `frontend/src/types/search.ts`, and 7 tests × 2 storage backends; backend pytest 521 passed (contract parity green). Mocks/screens transport wiring is a follow-up.
 - 2026-11-17 — `4988d27` — C20b: replaced the derived-only audit card on project detail with a `useProjectAudit`-backed `AuditFeedPanel` (kind filters, loading/error/missing/empty/populated states, tone/relative-time rows derived in `auditFeedHelpers`); `LineageGraph` is now graph-only and the retired derived audit helpers/tests were removed; lint/test (170)/build green.
+- 2026-11-17 — `f51189e` — C23 (mocks): wired authoritative cross-domain search end to end — `ApiClient.search`/`useSearch` across mockApi (seed-derived ranking + router-style 422 + injectable failure), live `httpApiClient` (`GET /search?q=&kind=&limit=`), `queryKeys` and `useQueries` (blank-query gated), with a shared `lib/search` derivation helper and populated/empty/error seeds; 19 new tests across derivation/mock/live/key suites and the parity guard extended; lint/test (189)/build green. Screens quick-finder `useSearch` wiring remains a screens follow-up.
