@@ -232,6 +232,13 @@ this file is the execution checklist.
   storage backends green (531 passed, 98% coverage). Screens/mocks wiring of the
   snapshot is a follow-up for those agents. ✅ 2026-11-17 — `26d6e99`
 
+- [x] C26 (screens) Wire the authoritative cross-domain search (C22/C23) into the
+  Cmd/Ctrl+K quick finder: ranked project/asset/conversation results navigate to
+  entity deep links, with hint/searching/error/empty/populated states; display and
+  navigation mapping derived in `quickFinderHelpers` with unit tests. `useDashboard`
+  snapshot wiring (C25 follow-up) remains blocked on mocks transport.
+  ✅ 2026-11-17 — `27907a9`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -297,3 +304,4 @@ this file is the execution checklist.
 - 2026-11-17 — `f51189e` — C23 (mocks): wired authoritative cross-domain search end to end — `ApiClient.search`/`useSearch` across mockApi (seed-derived ranking + router-style 422 + injectable failure), live `httpApiClient` (`GET /search?q=&kind=&limit=`), `queryKeys` and `useQueries` (blank-query gated), with a shared `lib/search` derivation helper and populated/empty/error seeds; 19 new tests across derivation/mock/live/key suites and the parity guard extended; lint/test (189)/build green. Screens quick-finder `useSearch` wiring remains a screens follow-up.
 - 2026-11-17 — `941a8ec` — C24 (CI): added a `live-smoke` job that boots the real ASGI server (`uvicorn`, in-memory store) and probes the exact `/api/v1` URLs the `VITE_API_MODE=live` frontend client uses (health + request-id, projects, providers, capabilities, search) plus the shared 422 error envelope; 10-min timeout, pinned Actions, `if: always()` teardown. Verified locally (all 9 probes OK) and with pinned actionlint; all suites green (lint, 189 FE tests, build, 521 BE tests).
 - 2026-11-17 — `26d6e99` — C25 (backend): added authoritative `GET /api/v1/dashboard` deriving entity counts, zero-filled job-status/asset-type breakdowns and newest jobs/assets from the stores (deleted assets excluded); `recent_limit` bounds + shared 422 envelope, `DashboardCounts`/`DashboardSummary` mirrored in TS, 5 tests × 2 backends green (531 passed, 98% coverage). Mocks/screens wiring of the snapshot is a follow-up.
+- 2026-11-17 — `27907a9` — C26 (screens): quick finder now renders ranked `useSearch` cross-domain results alongside screens, deep-linking projects/assets/conversations with hint/searching/error/empty/populated states; display + navigation mapping derived in tested `quickFinderHelpers`; lint/test (200)/build green. C25 `useDashboard` wiring deferred to mocks transport.
