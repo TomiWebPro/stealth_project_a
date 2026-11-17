@@ -219,6 +219,12 @@ this file is the execution checklist.
   tests; parity guard extended. ✅ 2026-11-17 — `f51189e`
   Screens quick-finder rendering via `useSearch` remains a screens follow-up.
 
+- [x] C24 (CI) Add a live-mode HTTP smoke job: boots the real ASGI server
+  (`uvicorn`, in-memory store) and exercises the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client depends on (health/projects/providers/capabilities/search)
+  plus the shared 422 error envelope + request-id, bounded by a 10-minute timeout.
+  ✅ 2026-11-17 — `941a8ec`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -282,3 +288,4 @@ this file is the execution checklist.
 - 2026-11-17 — `3b9c6d1` — C22: added authoritative `GET /api/v1/search` (cross-domain project/asset/conversation ranking derived from the document stores, `kind`/`limit` filters, shared 422 validation envelope, blank-query/no-match handling, deleted-asset skipping, stable tie-breaks), contracts mirrored in `frontend/src/types/search.ts`, and 7 tests × 2 storage backends; backend pytest 521 passed (contract parity green). Mocks/screens transport wiring is a follow-up.
 - 2026-11-17 — `4988d27` — C20b: replaced the derived-only audit card on project detail with a `useProjectAudit`-backed `AuditFeedPanel` (kind filters, loading/error/missing/empty/populated states, tone/relative-time rows derived in `auditFeedHelpers`); `LineageGraph` is now graph-only and the retired derived audit helpers/tests were removed; lint/test (170)/build green.
 - 2026-11-17 — `f51189e` — C23 (mocks): wired authoritative cross-domain search end to end — `ApiClient.search`/`useSearch` across mockApi (seed-derived ranking + router-style 422 + injectable failure), live `httpApiClient` (`GET /search?q=&kind=&limit=`), `queryKeys` and `useQueries` (blank-query gated), with a shared `lib/search` derivation helper and populated/empty/error seeds; 19 new tests across derivation/mock/live/key suites and the parity guard extended; lint/test (189)/build green. Screens quick-finder `useSearch` wiring remains a screens follow-up.
+- 2026-11-17 — `941a8ec` — C24 (CI): added a `live-smoke` job that boots the real ASGI server (`uvicorn`, in-memory store) and probes the exact `/api/v1` URLs the `VITE_API_MODE=live` frontend client uses (health + request-id, projects, providers, capabilities, search) plus the shared 422 error envelope; 10-min timeout, pinned Actions, `if: always()` teardown. Verified locally (all 9 probes OK) and with pinned actionlint; all suites green (lint, 189 FE tests, build, 521 BE tests).
