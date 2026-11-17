@@ -30,6 +30,7 @@ from .routers import (
     orchestration,
     projects,
     providers,
+    tree,
     uploads,
 )
 from .schemas.common import API_PREFIX, ErrorBody, ErrorDetail, ErrorResponse, HealthResponse
@@ -198,6 +199,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(events.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     app.include_router(extensions.router, prefix=API_PREFIX)
+    app.include_router(tree.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.
     @app.get("/health", response_model=HealthResponse, include_in_schema=False)

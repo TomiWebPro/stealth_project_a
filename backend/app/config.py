@@ -77,6 +77,7 @@ class Settings:
     storage: StorageKind = "memory"
     sqlite_path: Path = Path("data/studio.db")
     upload_dir: Path = Path("data/uploads")
+    studio_root: Path = Path("data/studio")
     default_org_id: UUID = DEFAULT_ORG_ID
     default_user_id: UUID = DEFAULT_USER_ID
     max_upload_bytes: int = 512 * 1024 * 1024
@@ -96,6 +97,7 @@ class Settings:
             storage=storage,  # type: ignore[arg-type]
             sqlite_path=Path(os.getenv("STUDIO_SQLITE_PATH", "data/studio.db")),
             upload_dir=Path(os.getenv("STUDIO_UPLOAD_DIR", "data/uploads")),
+            studio_root=Path(os.getenv("STUDIO_ROOT", "data/studio")),
             default_org_id=_env_uuid("STUDIO_DEFAULT_ORG_ID", DEFAULT_ORG_ID),
             default_user_id=_env_uuid("STUDIO_DEFAULT_USER_ID", DEFAULT_USER_ID),
             max_upload_bytes=_env_int("STUDIO_MAX_UPLOAD_BYTES", 512 * 1024 * 1024),

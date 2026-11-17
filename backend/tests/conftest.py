@@ -18,6 +18,7 @@ def settings(request: pytest.FixtureRequest, tmp_path) -> Settings:
     test_settings = Settings(
         storage=request.param,  # type: ignore[arg-type]
         upload_dir=tmp_path / "uploads",
+        studio_root=tmp_path / "studio",
     )
     if request.param == "sqlite":
         test_settings.sqlite_path = tmp_path / "studio.db"

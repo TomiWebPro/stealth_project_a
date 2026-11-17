@@ -20,6 +20,7 @@ from .repositories.projects import ProjectRepository
 from .repositories.providers import ProviderRepository
 from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
+from .tree import ProjectTree
 
 
 def get_settings(request: Request) -> Settings:
@@ -28,6 +29,10 @@ def get_settings(request: Request) -> Settings:
 
 def get_store(request: Request) -> DocumentStore:
     return request.app.state.store
+
+
+def get_project_tree(settings: Annotated[Settings, Depends(get_settings)]) -> ProjectTree:
+    return ProjectTree(settings.studio_root)
 
 
 def get_repositories(request: Request) -> Repositories:
@@ -134,6 +139,7 @@ __all__ = [
     "get_job_repository",
     "get_orchestration_repository",
     "get_project_repository",
+    "get_project_tree",
     "get_provider_repository",
     "get_repositories",
     "get_settings",
