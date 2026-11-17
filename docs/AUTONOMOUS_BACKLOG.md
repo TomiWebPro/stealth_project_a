@@ -45,8 +45,8 @@ this file is the execution checklist.
   `GET /capabilities` using existing schemas; add tests. ✅ 2026-11-17 — `e055870`
 - [x] P2.3 Orchestration API: plan/run endpoints, presence, comments, storage stats
   using existing `orchestration` schemas; add tests. ✅ 2026-11-17 — `93a56fd`
-- [ ] P2.4 Auth/session API: login/refresh/session, organizations and members using
-  existing `auth` schemas; dev-local auth adapter, no external IdP required yet.
+- [x] P2.4 Auth/session API: login/refresh/session, organizations and members using
+  existing `auth` schemas; dev-local auth adapter, no external IdP required yet. ✅ 2026-11-17 — `d338f11`
 - [ ] P2.5 Workspaces/extension registry API: list/install/enable/disable extensions
   with permission checks; a stub registry is fine as long as contracts hold.
 - [x] P2.6 Real-time job state: WebSocket or SSE stream for job events/presence,
@@ -149,3 +149,4 @@ this file is the execution checklist.
 - 2026-11-17 — `93a56fd` — P2.3 rescued from an interrupted concurrent run: deterministic local planner, plan/run reads, presence upsert, comments, storage stats; 32 new tests green on memory+sqlite (276 passed).
 - 2026-11-17 — `746f7a0` — P5.3: replaced Extensions placeholder with a registry screen (useExtensions hook; permission/capability/trust cards; loading/error/empty/populated states) plus SDK/connector examples shipped as data and helper unit tests; lint/test (86 passed)/build green.
 - 2026-11-17 — `92edce5` — C3: skip link with focusable main, Up/Down roving focus across sidebar nav links, and subtle-text contrast raised from ~3.5:1 to >=4.5:1 on surfaces; lint/test/build green.
+- 2026-11-17 — `d338f11` — P2.4: dev-local bearer auth adapter (login/refresh with rotation, /auth/session, /auth/me), orgs + member invites with unique-slug/duplicate guards; 38 new tests green on memory+sqlite (314 passed).
