@@ -30,7 +30,8 @@ dispatches, with three Linux jobs:
 - **Frontend** — `npm ci`, `npm run lint`, `npm test` (Vitest), `npm run build`.
 - **Backend** — installs `requirements.txt` + `requirements-dev.txt`, runs
   `python -m pytest -q` on Python 3.12 (includes the frontend/backend contract
-  parity tests, so it needs the full repo checkout).
+  parity tests, so it needs the full repo checkout), then runs a `pytest-cov`
+  coverage gate requiring >=90% total coverage across `app/`.
 - **Tauri shell** — installs WebKit/GTK build dependencies, builds the frontend,
   then compiles the Rust shell with `npx tauri build --no-bundle` on stable Rust.
 
