@@ -63,8 +63,8 @@ this file is the execution checklist.
 - [x] P3.1 Materialize the project folder tree (`docs/PROJECT_FOLDERS.md`) on disk:
   `Pipeline/`, `Projects/Default/`, `Assets/Char|Prop|Env`, `Shots/s01_c01`,
   `Output/` vs `Publish/`. ✅ 2026-11-17 — `f5bdfa9`
-- [ ] P3.2 `Ver_NNN` ↔ `AssetVersion` mapping with immutable Publish copies and
-  publish receipt sidecars.
+- [x] P3.2 `Ver_NNN` ↔ `AssetVersion` mapping with immutable Publish copies and
+  publish receipt sidecars. ✅ 2026-11-17 — `1fa8f81`
 - [ ] P3.3 Reference links (`.link.txt` fallback + `.links.json`) with dry-run plan
   mode; never copy weights.
 - [x] P3.4 Asset search/filter, previews and metadata editing in the UI.
@@ -161,3 +161,4 @@ this file is the execution checklist.
 - 2026-11-17 — `f5bdfa9` — P3.1: canonical on-disk project tree materialization/verification (`/projects/{id}/tree`), dir-only Default template, studio-root config, name/kind/version helpers; 12 new tests green (346 passed).
 - 2026-11-17 — `0093a77` — P6.2: Providers screen now shows a health summary, per-location runtime groups, location/status filters, and degraded/unavailable guidance, with helper tests.
 - 2026-11-17 — `15accbb` — P4.7 (mocks transport): added `sendMessage` mutation + resumable `openConversationStream` to `ApiClient`/mock/live transports, `useSendMessage` + `useConversationStream` hooks, deterministic ordered stream events, seeded sent-message store, `messages.all` key, and error-state guards; 4 new tests across mock/live/key suites; lint/test (101 passed)/build green. Screens composer wiring is a screens-agent follow-up.
+- 2026-11-17 — `1fa8f81` — P3.2: publish ceremony — Ver_NNN↔AssetVersion mapping, immutable `Publish/` copies with `_vNNN` suffix, JSON receipt sidecars + registry metadata, idempotent replay and byte-change conflict guard; 17 new tests green (363 passed).
