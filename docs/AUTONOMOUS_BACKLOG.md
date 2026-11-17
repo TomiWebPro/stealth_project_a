@@ -84,8 +84,11 @@ this file is the execution checklist.
 - [ ] P4.4 Splat/COLMAP + camera-path bridge operations (CPU smoke mode by default).
 - [ ] P4.5 GPU validation harness: scripted end-to-end smoke run targeting
   `ssh gpu-reach` box; record real numbers, replace provisional mock values.
-- [ ] P4.6 Chat screen: connect conversations API to a real orchestration loop with
-  streaming events.
+- [x] P4.6 Chat screen: connect conversations API to a real orchestration loop with
+  streaming events. (2026-11-17, 51146fd) — conversation/message hooks wired, streaming
+  statuses surfaced; composer optimistic pending send mutation + stream (P4.7).
+- [ ] P4.7 (mocks/backend) Add `sendMessage` mutation + conversation stream events to
+  `ApiClient`/`useQueries` so the P4.6 composer can send and stream for real.
 
 ## Phase 5 — Extension platform (owner: backend-core + screens)
 
@@ -103,8 +106,8 @@ this file is the execution checklist.
 
 ## Never-empty well (pick these when your column is otherwise done)
 
-- [ ] C1 Expand backend tests for error envelopes, auth failures, pagination and
-  concurrency; keep ≥90% coverage of routers.
+- [x] C1 Expand backend tests for error envelopes, auth failures, pagination and
+  concurrency; keep ≥90% coverage of routers. ✅ 2026-11-17 — `e052792`
 - [ ] C2 Expand frontend tests for loading/error/empty/populated states on every
   screen and for live-vs-mock parity.
 - [ ] C3 Accessibility pass: keyboard navigation, focus rings, ARIA labels, contrast.
@@ -128,6 +131,7 @@ this file is the execution checklist.
 - 2026-11-17 — d1d7d9d — C7: added `pytest-cov` dev dep, `[coverage:*]` config in pytest.ini, and a CI coverage gate (`--cov=app --cov-fail-under=90`, currently 96%) to guard C1's router-coverage goal; plain `python3 -m pytest -q` still green (188 passed).
 - 2026-11-17 — P3.4 shipped (`cc7a398`): asset detail panel with provenance/storage, editable name/tags/metadata (local-optimistic), selectable grid/list/shot items, helper unit tests; added P3.6 for mocks/backend to expose `updateAsset`.
 - 2026-11-17 — P3.5 shipped (`d7f1c3c`): Settings screen replacing placeholder — active vs draft API mode/base URL with validation, provider connections with enable toggles, live connection test via provider refetch.
+- 2026-11-17 — P4.6 shipped (`51146fd`): Chat screen on useConversations/useMessages/useProjects hooks with conversation + message threads, streaming-status indicators, optimistic composer; added P4.7 for mocks/backend write+stream API.
 - 2026-11-17 — `9e817d6` — P2.7: rewrote live `httpApiClient` to mount under `/api/v1` exactly once, normalize `ApiError`, inject bearer tokens, assemble home/detail view models client-side, and degrade optional jobs/providers routers; 9 transport tests green.
 - 2026-11-17 — `9e817d6` — P4 mocks-facing: added operation-catalog, capability-discovery, conversation and message queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeds and 12 mock+live+key tests; lint/test/build green.
 - 2026-11-17 — 08f10c8 — C8: added `@vitest/coverage-v8` dev dep, `test:coverage` script, V8 coverage config in vite.config.ts and an informational CI coverage step (baseline ~29% statements, no gate); ignored coverage/ artifacts; README CI section synced.
