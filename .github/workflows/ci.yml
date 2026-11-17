@@ -14,6 +14,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validate-workflows:
+    name: Validate workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Lint workflow definitions (actionlint)
+        # Pinned Go module version (immutable in the Go module proxy) keeps this
+        # self-check reproducible without adding an unpinned third-party Action.
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 -color .github/workflows/*.yml
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
