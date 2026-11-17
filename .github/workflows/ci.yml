@@ -190,6 +190,34 @@ jobs:
           else:
               check("project audit setup", False, "could not obtain a project id")
 
+          # Workspace activity feed (C29/C31) is the cross-project complement to
+          # the per-project audit above and another /api/v1 URL the live client
+          # calls. Probe its shape, filters and shared error envelopes.
+          activity = httpx.get(f"{base}/activity", timeout=5)
+          actbody = activity.json() if activity.status_code == 200 else {}
+          check("activity 200 feed shape",
+                activity.status_code == 200 and isinstance(actbody.get("events"), list)
+                and isinstance(actbody.get("total"), int), activity.text)
+          act_filtered = httpx.get(f"{base}/activity", params={"kind": "job", "limit": 1}, timeout=5)
+          actfbody = act_filtered.json() if act_filtered.status_code == 200 else {}
+          check("activity filters 200",
+                act_filtered.status_code == 200 and isinstance(actfbody.get("events"), list),
+                act_filtered.text)
+          act_bad = httpx.get(f"{base}/activity", params={"limit": 0}, timeout=5)
+          actbadbody = act_bad.json() if act_bad.status_code == 422 else {}
+          check("activity 422 validation envelope",
+                act_bad.status_code == 422
+                and actbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(actbadbody.get("error", {}).get("request_id")), act_bad.text)
+          act_missing = httpx.get(
+              f"{base}/activity",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          act404body = act_missing.json() if act_missing.status_code == 404 else {}
+          check("activity 404 shared envelope",
+                act_missing.status_code == 404
+                and act404body.get("error", {}).get("code") == "project_not_found"
+                and bool(act404body.get("error", {}).get("request_id")), act_missing.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
