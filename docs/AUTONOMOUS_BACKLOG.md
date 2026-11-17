@@ -224,6 +224,13 @@ this file is the execution checklist.
   `VITE_API_MODE=live` client depends on (health/projects/providers/capabilities/search)
   plus the shared 422 error envelope + request-id, bounded by a 10-minute timeout.
   ✅ 2026-11-17 — `941a8ec`
+- [x] C25 (backend) Authoritative dashboard summary API: `GET /api/v1/dashboard`
+  derives workspace counts, zero-filled job-status/asset-type breakdowns and the
+  newest jobs/assets from the authoritative stores (deleted assets excluded),
+  with `recent_limit` bounds + shared 422 envelope; `DashboardCounts`/
+  `DashboardSummary` mirrored in `frontend/src/types/dashboard.ts`, 5 tests × 2
+  storage backends green (531 passed, 98% coverage). Screens/mocks wiring of the
+  snapshot is a follow-up for those agents. ✅ 2026-11-17 — `26d6e99`
 
 ## Log (append one line per completed item)
 
@@ -289,3 +296,4 @@ this file is the execution checklist.
 - 2026-11-17 — `4988d27` — C20b: replaced the derived-only audit card on project detail with a `useProjectAudit`-backed `AuditFeedPanel` (kind filters, loading/error/missing/empty/populated states, tone/relative-time rows derived in `auditFeedHelpers`); `LineageGraph` is now graph-only and the retired derived audit helpers/tests were removed; lint/test (170)/build green.
 - 2026-11-17 — `f51189e` — C23 (mocks): wired authoritative cross-domain search end to end — `ApiClient.search`/`useSearch` across mockApi (seed-derived ranking + router-style 422 + injectable failure), live `httpApiClient` (`GET /search?q=&kind=&limit=`), `queryKeys` and `useQueries` (blank-query gated), with a shared `lib/search` derivation helper and populated/empty/error seeds; 19 new tests across derivation/mock/live/key suites and the parity guard extended; lint/test (189)/build green. Screens quick-finder `useSearch` wiring remains a screens follow-up.
 - 2026-11-17 — `941a8ec` — C24 (CI): added a `live-smoke` job that boots the real ASGI server (`uvicorn`, in-memory store) and probes the exact `/api/v1` URLs the `VITE_API_MODE=live` frontend client uses (health + request-id, projects, providers, capabilities, search) plus the shared 422 error envelope; 10-min timeout, pinned Actions, `if: always()` teardown. Verified locally (all 9 probes OK) and with pinned actionlint; all suites green (lint, 189 FE tests, build, 521 BE tests).
+- 2026-11-17 — `26d6e99` — C25 (backend): added authoritative `GET /api/v1/dashboard` deriving entity counts, zero-filled job-status/asset-type breakdowns and newest jobs/assets from the stores (deleted assets excluded); `recent_limit` bounds + shared 422 envelope, `DashboardCounts`/`DashboardSummary` mirrored in TS, 5 tests × 2 backends green (531 passed, 98% coverage). Mocks/screens wiring of the snapshot is a follow-up.
