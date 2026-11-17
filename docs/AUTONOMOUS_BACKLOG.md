@@ -60,9 +60,9 @@ this file is the execution checklist.
 
 ## Phase 3 — Asset management (owner: backend-core + screens)
 
-- [ ] P3.1 Materialize the project folder tree (`docs/PROJECT_FOLDERS.md`) on disk:
+- [x] P3.1 Materialize the project folder tree (`docs/PROJECT_FOLDERS.md`) on disk:
   `Pipeline/`, `Projects/Default/`, `Assets/Char|Prop|Env`, `Shots/s01_c01`,
-  `Output/` vs `Publish/`.
+  `Output/` vs `Publish/`. ✅ 2026-11-17 — `f5bdfa9`
 - [ ] P3.2 `Ver_NNN` ↔ `AssetVersion` mapping with immutable Publish copies and
   publish receipt sidecars.
 - [ ] P3.3 Reference links (`.link.txt` fallback + `.links.json`) with dry-run plan
@@ -155,3 +155,4 @@ this file is the execution checklist.
 - 2026-11-17 — `3c1488a` — P2.5: seeded stub extension registry, permission-gated install (rejects unaccepted permissions), enable/disable/uninstall lifecycle with idempotency; 20 new tests green on memory+sqlite (334 passed).
 - 2026-11-17 — `a152ae8` — P6.1: Workspaces screen now shows organization/session identity, derived collaboration roles (owner/member/viewer), live presence and project comments from hooks, with all UI states and helper tests.
 - 2026-11-17 — `15accbb` — P2.7 follow-up: aligned live presence/comments paths with the mounted backend routers (`/presence`, `/comments` instead of `/collaboration/*`) in both `lib/httpApiClient` and typed `api/orchestration`, updated parity/live tests, and re-exported `PresenceState`; lint/test (97 passed)/build green.
+- 2026-11-17 — `f5bdfa9` — P3.1: canonical on-disk project tree materialization/verification (`/projects/{id}/tree`), dir-only Default template, studio-root config, name/kind/version helpers; 12 new tests green (346 passed).
