@@ -125,6 +125,11 @@ from .provider import (
     ProviderLocation,
     ProviderStatus,
 )
+from .search import (
+    SearchResponse,
+    SearchResult,
+    SearchResultKind,
+)
 
 __all__ = [
     "API_PREFIX",
@@ -240,4 +245,8 @@ __all__ = [
     "ProviderCapability",
     "ProviderLocation",
     "ProviderStatus",
+    # search
+    "SearchResponse",
+    "SearchResult",
+    "SearchResultKind",
 ]

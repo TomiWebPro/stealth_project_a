@@ -16,6 +16,7 @@ from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
 from .providers import ProviderRepository
+from .search import SearchRepository
 from .uploads import UploadRepository
 
 
@@ -31,6 +32,7 @@ class Repositories:
     auth: AuthRepository
     extensions: ExtensionRepository
     audit: AuditRepository
+    search: SearchRepository
 
     @classmethod
     def build(
@@ -62,6 +64,7 @@ class Repositories:
         )
         extensions = ExtensionRepository(store, clock=clock)
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
+        search = SearchRepository(store, clock=clock)
         return cls(
             projects=projects,
             assets=assets,
@@ -73,6 +76,7 @@ class Repositories:
             auth=auth,
             extensions=extensions,
             audit=audit,
+            search=search,
         )
 
 

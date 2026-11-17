@@ -14,3 +14,4 @@ export * from "./asset";
 export * from "./operation";
 export * from "./provider";
 export * from "./orchestration";
+export * from "./search";

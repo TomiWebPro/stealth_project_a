@@ -23,6 +23,7 @@ from .repositories.jobs import JobRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
 from .repositories.providers import ProviderRepository
+from .repositories.search import SearchRepository
 from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
 from .tree import ProjectTree
@@ -169,6 +170,12 @@ def get_extension_repository(
     return repositories.extensions
 
 
+def get_search_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> SearchRepository:
+    return repositories.search
+
+
 def get_bearer_token(
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ) -> str:
@@ -226,6 +233,7 @@ __all__ = [
     "get_settings",
     "get_shot_service",
     "get_splat_service",
+    "get_search_repository",
     "get_store",
     "get_training_service",
     "get_upload_repository",
