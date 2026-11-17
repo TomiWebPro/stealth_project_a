@@ -155,6 +155,7 @@ this file is the execution checklist.
   workspaces and lineage; buildLineageStages no longer duplicates Design assets.
 - [x] C12 Global Cmd/Ctrl+K quick switcher (owner: screens) — filterable route palette with keyboard nav, header trigger, no route changes. ✅ 2026-11-17 — `777ba82`
 - [x] C13 App-level error boundary + reduced-motion support (owner: screens) — render failures show a retry card without losing the shell. ✅ 2026-11-17 — `0ee0fae`
+- [x] C14 Non-blocking job-retry feedback (owner: screens) — replace `window.alert` with inline staged-retry status. ✅ 2026-11-17 — `67c1ece`
 - [x] C14 (backend) Authoritative UE/Blender export path endpoint replacing the
   UI-only provisional convention (P6.5 follow-up).
   ✅ 2026-11-17 — `6ddb5bd` — `GET /projects/{id}/exports` + `/assets/{id}/exports`,
@@ -205,6 +206,7 @@ this file is the execution checklist.
 - 2026-11-17 — `85a7aee` — C2: added empty/populated/error display-derivation tests for jobs, version chains and provider helpers; live-vs-mock parity remains covered by the mocks-owned parity guard.
 - 2026-11-17 — `777ba82` — C12: added a global Cmd/Ctrl+K quick switcher (searchable route palette, arrow/enter keyboard nav, header trigger) that navigates through the UI store without changing RouteId.
 - 2026-11-17 — `0ee0fae` — C13: wrapped the active screen in an error boundary with a retry action and added a global prefers-reduced-motion rule.
+- 2026-11-17 — `67c1ece` — C14: job retry no longer opens a blocking browser alert; it shows an inline, accessible staged-retry status instead.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
