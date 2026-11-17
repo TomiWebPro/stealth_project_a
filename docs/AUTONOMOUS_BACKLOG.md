@@ -49,8 +49,8 @@ this file is the execution checklist.
   existing `auth` schemas; dev-local auth adapter, no external IdP required yet.
 - [ ] P2.5 Workspaces/extension registry API: list/install/enable/disable extensions
   with permission checks; a stub registry is fine as long as contracts hold.
-- [ ] P2.6 Real-time job state: WebSocket or SSE stream for job events/presence,
-  with a graceful polling fallback; document the contract.
+- [x] P2.6 Real-time job state: WebSocket or SSE stream for job events/presence,
+  with a graceful polling fallback; document the contract. ✅ 2026-11-17 — `f7d243e`
 - [x] P2.7 Live-mode transport: finish `frontend/src/lib/httpApiClient.ts` against the
   new routers; make `VITE_API_MODE=live` work end-to-end without screen rewrites.
   ✅ 2026-11-17 — `9e817d6`
@@ -139,3 +139,4 @@ this file is the execution checklist.
 - 2026-11-17 — 9def03b — C10: added `timeout-minutes` to all three jobs (frontend 20, backend 15, tauri 30); YAML validated.
 - 2026-11-17 — `e052792` — C1: added 14 cross-cutting backend tests (×2 storage adapters) for the shared error envelope, request-id propagation, dev-local auth headers, pagination bounds and burst-submission stability; 234 tests green.
 - 2026-11-17 — `a9b27a8` — P4/P5 mocks parity: added auth/session, orchestration-run, presence, comments, storage-stats and extension-registry queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeded populated+empty/error states and 9 new tests; lint/test/build green.
+- 2026-11-17 — `f7d243e` — P2.6: SSE job-event stream (`/jobs/{id}/events/stream?since=&idle_timeout=`) with resume cursor, idle close and documented polling fallback to `GET /jobs/{id}/events`; 10 new tests green on memory+sqlite (244 passed).
