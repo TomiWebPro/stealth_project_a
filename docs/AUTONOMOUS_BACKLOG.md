@@ -78,8 +78,8 @@ this file is the execution checklist.
 
 - [x] P4.1 Provider adapters: local ComfyUI + cloud/RunPod adapter interfaces behind
   one execution contract; simulate locally so UI works without GPU. ✅ 2026-11-17 — `a71390e`
-- [ ] P4.2 Dataset-prep → ai-toolkit YAML → LoRA-train operation chain as real job
-  operations with lineage.
+- [x] P4.2 Dataset-prep → ai-toolkit YAML → LoRA-train operation chain as real job
+  operations with lineage. ✅ 2026-11-17 — `657ed3a`
 - [ ] P4.3 First/last-frame + video generation operations with LoRA auto-mounting.
 - [ ] P4.4 Splat/COLMAP + camera-path bridge operations (CPU smoke mode by default).
 - [ ] P4.5 GPU validation harness: scripted end-to-end smoke run targeting
@@ -129,7 +129,9 @@ this file is the execution checklist.
   subtle-text contrast raised to >=4.5:1 (existing focus-visible ring retained).
 - [ ] C4a Replace single-glyph navigation icons with a real icon set (owner: screens).
 - [x] C4b Add Tauri build job to CI with cached Rust target (owner: CI) — 2026-11-17, b282dba.
-- [ ] C5 Add a real router ( History API deep links) without changing `RouteId`.
+- [x] C5 Add a real router ( History API deep links) without changing `RouteId`.
+  ✅ 2026-11-17 — `647ac19` — `parseRoutePath`/`buildRoutePath` with entity segments,
+  store selection sync + replaceState, deep-linked project/asset/chat screens.
 - [ ] C6 Docs accuracy pass: keep README, API.md, architecture docs and this backlog
   in sync with what is actually shipped.
 - [x] C7 Add `pytest-cov` coverage tooling + CI >=90% gate to support C1 (owner: CI) — 2026-11-17, d1d7d9d.
@@ -175,4 +177,5 @@ this file is the execution checklist.
 - 2026-11-17 — `4c45a40` — P3.3: reference links with side-effect-free dry-run plan, symlink apply + `.link.txt` fallback, `Resources/.links.json` registry, conflict/traversal guards; never copies weights (`copied_bytes` always 0); 16 new tests green (379 passed).
 - 2026-11-17 — `978689c` — P6.4: Chat gains a capability-gated audio/dialogue panel that enables only when a provider advertises an available TTS/voice operation; script parsing + helper tests.
 - 2026-11-17 — `aa72e04` — P6.5: Project detail now shows Unreal/Blender export paths for published assets with target filters, provisional path convention and tests.
+- 2026-11-17 — `647ac19` — C5: History API deep links for `/projects/{id}`, `/assets/{id}`, `/chat/{id}` via pure parse/build helpers; UI store restores selections on load/back-forward and mirrors in-screen selection changes with replaceState.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
