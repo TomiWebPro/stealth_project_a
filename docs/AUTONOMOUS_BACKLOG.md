@@ -137,3 +137,5 @@ this file is the execution checklist.
 - 2026-11-17 — 08f10c8 — C8: added `@vitest/coverage-v8` dev dep, `test:coverage` script, V8 coverage config in vite.config.ts and an informational CI coverage step (baseline ~29% statements, no gate); ignored coverage/ artifacts; README CI section synced.
 - 2026-11-17 — f531ea8 — C9: workflow-level `permissions: contents: read` and `concurrency` group keyed by `github.ref` with `cancel-in-progress: true`; YAML validated, all three jobs intact.
 - 2026-11-17 — 9def03b — C10: added `timeout-minutes` to all three jobs (frontend 20, backend 15, tauri 30); YAML validated.
+- 2026-11-17 — `e052792` — C1: added 14 cross-cutting backend tests (×2 storage adapters) for the shared error envelope, request-id propagation, dev-local auth headers, pagination bounds and burst-submission stability; 234 tests green.
+- 2026-11-17 — `a9b27a8` — P4/P5 mocks parity: added auth/session, orchestration-run, presence, comments, storage-stats and extension-registry queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeded populated+empty/error states and 9 new tests; lint/test/build green.
