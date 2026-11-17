@@ -73,6 +73,9 @@ All paths are prefixed with `/api/v1`.
 - **Pipelines:** `GET|POST /pipelines/lora`, `/pipelines/shot`, `/pipelines/splat`
   (each with `GET /pipelines/<kind>/{id}`)
 - **Exports:** `GET /projects/{id}/exports`, `GET /assets/{id}/exports`
+- **Search:** `GET /search?q=&kind=&limit=` — ranked, best-first project/asset/
+  conversation matches derived from the authoritative stores (no second index);
+  blank queries and no-match queries return an empty `results` list
 
 All non-2xx responses use the shared `ErrorResponse` envelope with an
 `X-Request-ID` header. Bearer tokens from `POST /auth/login` authenticate
