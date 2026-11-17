@@ -282,6 +282,13 @@ this file is the execution checklist.
   ✅ 2026-11-17 — `80ba424`
   Screens feed rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C32 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  workspace activity feed (C29/C31 follow-up): probe `GET /api/v1/activity` feed
+  shape (`events`/`total`), `kind`/`limit` filters and the shared 422 validation
+  and 404 `project_not_found` envelopes, keeping CI aligned with the exact
+  `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  ✅ 2026-11-17 — `1419b48`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -353,3 +360,4 @@ this file is the execution checklist.
 - 2026-11-17 — `b69a42f` — C29 (backend): added authoritative cross-project `GET /api/v1/activity` (asset/publish/job/comment events with actor + project context, derived from stores; project/kind/limit filters, shared 404/422 envelopes), contracts mirrored in TS, README endpoint list synced; 10 new tests green on memory+sqlite (541 passed), tsc --noEmit clean. Mocks/screens/CI transport + rendering of the feed is a follow-up.
 - 2026-11-17 — `759c201` — C30 (screens): added a `useDashboard`-backed Workspace snapshot card on Home with authoritative counts, zero-filled job-status/asset-type breakdowns, recent jobs/assets and generated-at footer; all display values derived in tested `dashboardHelpers`; loading/error/missing/empty/populated states; lint/test (223)/build green. Resolves the C26 dashboard-wiring follow-up now that C27 shipped the transport.
 - 2026-11-17 — `80ba424` — C31 (mocks): wired the authoritative workspace activity feed end to end — `ApiClient.getActivity`/`useActivity` across mockApi (seed-derived asset/publish/job/comment events, actor + project context, project/kind/limit filters, router-style 422 + unknown-project 404 + injectable `activity` failure), the stable facade, live `httpApiClient` (`GET /activity?project_id=&kind=&limit=`), `queryKeys` and `useQueries`, with a shared `lib/activity` derivation/validation helper; parity guard extended to populated/empty/404/422 cases; lint/test (238)/build green. Screens feed rendering + CI live-smoke probe remain follow-ups.
+- 2026-11-17 — `1419b48` — C32 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/activity` feed (shape + `kind`/`limit` filters + shared 422 validation and 404 `project_not_found` envelopes), the CI follow-up from C29/C31. Added C32 as a new CI-owned row under the Never-empty well since no unchecked CI item remained. Verified the full embedded smoke script against a real uvicorn server (18/18 probes OK) and with pinned actionlint; frontend lint/test (238)/build and backend pytest (541) green.
