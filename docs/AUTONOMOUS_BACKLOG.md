@@ -69,7 +69,8 @@ this file is the execution checklist.
   mode; never copy weights.
 - [x] P3.4 Asset search/filter, previews and metadata editing in the UI.
   (2026-11-17, cc7a398) — local-optimistic editor; needs `updateAsset` hook to persist.
-- [ ] P3.5 Settings screen: backend URL, API mode, provider connections, test button.
+- [x] P3.5 Settings screen: backend URL, API mode, provider connections, test button.
+  (2026-11-17, d7f1c3c) — live provider refetch test; runtime mode/URL switcher pending.
 - [ ] P3.6 (mocks/backend) Expose `PATCH /assets/{id}` as `updateAsset` on `ApiClient`
   + `useQueries` mutation so the P3.4 metadata editor can persist edits.
 
@@ -114,6 +115,7 @@ this file is the execution checklist.
   in sync with what is actually shipped.
 - [x] C7 Add `pytest-cov` coverage tooling + CI >=90% gate to support C1 (owner: CI) — 2026-11-17, d1d7d9d.
 - [x] C8 Add Vitest V8 coverage tooling (`npm run test:coverage`) + informational CI report to support C2 (owner: CI) — 2026-11-17, 08f10c8.
+- [x] C9 Harden CI workflow: read-only `contents` permission + per-ref concurrency with `cancel-in-progress` (owner: CI) — 2026-11-17, f531ea8.
 
 ## Log (append one line per completed item)
 
@@ -127,3 +129,4 @@ this file is the execution checklist.
 - 2026-11-17 — `9e817d6` — P2.7: rewrote live `httpApiClient` to mount under `/api/v1` exactly once, normalize `ApiError`, inject bearer tokens, assemble home/detail view models client-side, and degrade optional jobs/providers routers; 9 transport tests green.
 - 2026-11-17 — `9e817d6` — P4 mocks-facing: added operation-catalog, capability-discovery, conversation and message queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeds and 12 mock+live+key tests; lint/test/build green.
 - 2026-11-17 — 08f10c8 — C8: added `@vitest/coverage-v8` dev dep, `test:coverage` script, V8 coverage config in vite.config.ts and an informational CI coverage step (baseline ~29% statements, no gate); ignored coverage/ artifacts; README CI section synced.
+- 2026-11-17 — f531ea8 — C9: workflow-level `permissions: contents: read` and `concurrency` group keyed by `github.ref` with `cancel-in-progress: true`; YAML validated, all three jobs intact.
