@@ -25,16 +25,19 @@ on. CI, lint, frontend tests (46) and backend tests (148) are green.
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on pushes to `main`, pull requests, and manual
-dispatches, with two Linux jobs:
+dispatches, with three Linux jobs:
 
 - **Frontend** — `npm ci`, `npm run lint`, `npm test` (Vitest), `npm run build`.
 - **Backend** — installs `requirements.txt` + `requirements-dev.txt`, runs
   `python -m pytest -q` on Python 3.12 (includes the frontend/backend contract
   parity tests, so it needs the full repo checkout).
+- **Tauri shell** — installs WebKit/GTK build dependencies, builds the frontend,
+  then compiles the Rust shell with `npx tauri build --no-bundle` on stable Rust.
 
 Caching: `actions/setup-node` caches `~/.npm` keyed by
 `frontend/package-lock.json`; `actions/setup-python` caches pip downloads keyed
-by both requirements files.
+by both requirements files; `Swatinem/rust-cache` caches the Cargo registry and
+`frontend/src-tauri/target` keyed by the Cargo manifests/lockfile.
 
 Reproduce locally from the repository root:
 
@@ -43,8 +46,9 @@ cd frontend && npm ci && npm run lint && npm test && npm run build
 cd ../backend && python3 -m pytest -q
 ```
 
-The Tauri/Rust shell is not built in CI yet; a Rust job will need the Linux
-WebKit/GTK packages plus a `src-tauri/target` cache.
+The Tauri/Rust shell is compiled in CI by the **Tauri shell** job (Webkit/GTK
+packages are installed via `apt`); it uses `--no-bundle` so CI verifies the
+Rust build without producing installers.
 
 ## Getting started
 
