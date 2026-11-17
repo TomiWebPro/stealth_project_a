@@ -6,6 +6,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ExportPanel } from "../export/ExportPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
 import { LineageView } from "../lineage/LineageView";
@@ -153,6 +154,7 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
       <VersionPanel assets={assets} />
       <LineageView assets={assets} />
       <LineageGraph assets={assets} jobs={jobs} />
+      <ExportPanel assets={assets} project={project} />
     </div>
   );
 }
