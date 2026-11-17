@@ -171,6 +171,9 @@ this file is the execution checklist.
 - [x] C15 (backend) Docs accuracy pass for `backend/README.md`: document all
   mounted routers, env vars (incl. `STUDIO_ROOT`/quota) and current boundaries.
   ✅ 2026-11-17 — `c7ce5bc` (C6 remains open for repo-wide docs owned by other agents).
+- [x] C16 Add Dependabot weekly dependency updates for npm/pip/cargo/GitHub
+  Actions (owner: CI) — 2026-11-17 — `464e712` — re-pins the SHA-pinned actions
+  from C11 and bumps lockfiles on a weekly cadence; complements the frozen refs.
 
 ## Log (append one line per completed item)
 
@@ -226,3 +229,4 @@ this file is the execution checklist.
 - 2026-11-17 — `c7ce5bc` — C15: backend README now lists every mounted router, all env vars and honest Phase 4 boundaries (simulated adapters, SSE + polling, dev-local auth).
 - 2026-11-17 — `bba1718` — P4.5: harness ran a real CUDA probe on `ssh gpu-resource` (Tesla M60, 1.856 TFLOP/s FP32, 0.0926 s for 10×2048² matmuls); measurements recorded in gitignored `backend/data/gpu-smoke.json` and in this log; 4 harness tests green (490 passed).
 - 2026-11-17 — `32f0053` — P3.6 (mocks): added `updateAsset` mutation atomically across mockApi (overlay store + not-found/deleted/null-name errors), the stable `ApiClient` facade, live `httpApiClient` (PATCH), `queryKeys.assetWriteRoots()` and `useUpdateAsset`; 8 new tests, parity surface guard extended; lint/test (144 passed)/build green.
+- 2026-11-17 — `464e712` — C16: added `.github/dependabot.yml` with weekly updates for npm (frontend), pip (backend), Cargo (frontend/src-tauri) and GitHub Actions (re-pins C11 SHAs); validated both CI YAML files; frontend lint/test/build (144 tests) and backend pytest (490 passed) green.
