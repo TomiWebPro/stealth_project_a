@@ -112,7 +112,9 @@ this file is the execution checklist.
   concurrency; keep ≥90% coverage of routers. ✅ 2026-11-17 — `e052792`
 - [ ] C2 Expand frontend tests for loading/error/empty/populated states on every
   screen and for live-vs-mock parity.
-- [ ] C3 Accessibility pass: keyboard navigation, focus rings, ARIA labels, contrast.
+- [x] C3 Accessibility pass: keyboard navigation, focus rings, ARIA labels, contrast.
+  ✅ 2026-11-17 — `92edce5` — skip link + focusable main, Up/Down roving focus in sidebar,
+  subtle-text contrast raised to >=4.5:1 (existing focus-visible ring retained).
 - [ ] C4a Replace single-glyph navigation icons with a real icon set (owner: screens).
 - [x] C4b Add Tauri build job to CI with cached Rust target (owner: CI) — 2026-11-17, b282dba.
 - [ ] C5 Add a real router ( History API deep links) without changing `RouteId`.
@@ -145,3 +147,4 @@ this file is the execution checklist.
 - 2026-11-17 — `f7d243e` — P2.6: SSE job-event stream (`/jobs/{id}/events/stream?since=&idle_timeout=`) with resume cursor, idle close and documented polling fallback to `GET /jobs/{id}/events`; 10 new tests green on memory+sqlite (244 passed).
 - 2026-11-17 — `93a56fd` — P2.3 rescued from an interrupted concurrent run: deterministic local planner, plan/run reads, presence upsert, comments, storage stats; 32 new tests green on memory+sqlite (276 passed).
 - 2026-11-17 — `746f7a0` — P5.3: replaced Extensions placeholder with a registry screen (useExtensions hook; permission/capability/trust cards; loading/error/empty/populated states) plus SDK/connector examples shipped as data and helper unit tests; lint/test (86 passed)/build green.
+- 2026-11-17 — `92edce5` — C3: skip link with focusable main, Up/Down roving focus across sidebar nav links, and subtle-text contrast raised from ~3.5:1 to >=4.5:1 on surfaces; lint/test/build green.
