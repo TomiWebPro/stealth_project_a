@@ -43,8 +43,8 @@ this file is the execution checklist.
   `JobEvent`. Add backend tests. ✅ 2026-11-17 — `76df39d`
 - [x] P2.2 Providers + capability query API: `GET /providers`, `GET /providers/{id}`,
   `GET /capabilities` using existing schemas; add tests. ✅ 2026-11-17 — `e055870`
-- [ ] P2.3 Orchestration API: plan/run endpoints, presence, comments, storage stats
-  using existing `orchestration` schemas; add tests.
+- [x] P2.3 Orchestration API: plan/run endpoints, presence, comments, storage stats
+  using existing `orchestration` schemas; add tests. ✅ 2026-11-17 — `93a56fd`
 - [ ] P2.4 Auth/session API: login/refresh/session, organizations and members using
   existing `auth` schemas; dev-local auth adapter, no external IdP required yet.
 - [ ] P2.5 Workspaces/extension registry API: list/install/enable/disable extensions
@@ -94,7 +94,8 @@ this file is the execution checklist.
 
 - [ ] P5.1 Manifest/schema + registration, install/remove, enable/disable.
 - [ ] P5.2 Permission enforcement and isolation boundary for extensions.
-- [ ] P5.3 SDK + connector examples; replace the Extensions placeholder screen.
+- [x] P5.3 SDK + connector examples; replace the Extensions placeholder screen.
+  (2026-11-17, pending) — registry from `useExtensions`, permission/capability cards, SDK examples.
 
 ## Phase 6 — Professional capabilities (owner: all)
 
@@ -140,3 +141,4 @@ this file is the execution checklist.
 - 2026-11-17 — `e052792` — C1: added 14 cross-cutting backend tests (×2 storage adapters) for the shared error envelope, request-id propagation, dev-local auth headers, pagination bounds and burst-submission stability; 234 tests green.
 - 2026-11-17 — `a9b27a8` — P4/P5 mocks parity: added auth/session, orchestration-run, presence, comments, storage-stats and extension-registry queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeded populated+empty/error states and 9 new tests; lint/test/build green.
 - 2026-11-17 — `f7d243e` — P2.6: SSE job-event stream (`/jobs/{id}/events/stream?since=&idle_timeout=`) with resume cursor, idle close and documented polling fallback to `GET /jobs/{id}/events`; 10 new tests green on memory+sqlite (244 passed).
+- 2026-11-17 — `93a56fd` — P2.3 rescued from an interrupted concurrent run: deterministic local planner, plan/run reads, presence upsert, comments, storage stats; 32 new tests green on memory+sqlite (276 passed).
