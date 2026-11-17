@@ -35,6 +35,7 @@ from .routers import (
     providers,
     publish,
     shots,
+    splat,
     tree,
     uploads,
 )
@@ -210,6 +211,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(links.router, prefix=API_PREFIX)
     app.include_router(pipelines.router, prefix=API_PREFIX)
     app.include_router(shots.router, prefix=API_PREFIX)
+    app.include_router(splat.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.
     @app.get("/health", response_model=HealthResponse, include_in_schema=False)

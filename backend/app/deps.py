@@ -25,6 +25,7 @@ from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
 from .tree import ProjectTree
 from .shots import ShotPipelineService
+from .splat import SplatPipelineService
 from .training import TrainingChainService
 
 
@@ -76,6 +77,18 @@ def get_shot_service(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ShotPipelineService:
     return ShotPipelineService(
+        store,
+        repositories.projects,
+        repositories.assets,
+        repositories.jobs,
+    )
+
+
+def get_splat_service(
+    store: Annotated[DocumentStore, Depends(get_store)],
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> SplatPipelineService:
+    return SplatPipelineService(
         store,
         repositories.projects,
         repositories.assets,
@@ -195,6 +208,7 @@ __all__ = [
     "get_repositories",
     "get_settings",
     "get_shot_service",
+    "get_splat_service",
     "get_store",
     "get_training_service",
     "get_upload_repository",
