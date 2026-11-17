@@ -1,9 +1,18 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { useApiClient } from "../app/apiContext";
+import type { CapabilityMatch } from "../lib/catalog";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
-import type { Asset, Job, Project, Provider } from "../lib/types";
+import type {
+  Asset,
+  Conversation,
+  Job,
+  Message,
+  OperationCatalog,
+  Project,
+  Provider,
+} from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
 
 export function useHomeSummary(): UseQueryResult<HomeSummary> {
@@ -120,5 +129,48 @@ export function useWorkflowTemplates(projectId?: string): UseQueryResult<readonl
   return useQuery({
     queryKey: queryKeys.assets.workflowTemplates(projectId),
     queryFn: () => api.listWorkflowTemplates(projectId),
+  });
+}
+
+export function useOperations(): UseQueryResult<OperationCatalog> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.operations.catalog(),
+    queryFn: () => api.getOperations(),
+  });
+}
+
+export function useCapabilities(operationId?: string): UseQueryResult<readonly CapabilityMatch[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.capabilities.list(operationId),
+    queryFn: () => api.listCapabilities(operationId),
+  });
+}
+
+export function useConversations(projectId: string): UseQueryResult<readonly Conversation[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.conversations.byProject(projectId),
+    queryFn: () => api.listConversations(projectId),
+  });
+}
+
+export function useConversation(conversationId: string): UseQueryResult<Conversation | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.conversations.byId(conversationId),
+    queryFn: () => api.getConversation(conversationId),
+  });
+}
+
+export function useMessages(
+  conversationId: string,
+  limit?: number,
+): UseQueryResult<readonly Message[]> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.messages.byConversation(conversationId, limit),
+    queryFn: () => api.listMessages(conversationId, limit),
   });
 }

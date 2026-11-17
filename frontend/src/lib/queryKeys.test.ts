@@ -50,6 +50,34 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the new catalog, conversation and message keys", () => {
+    expect(queryKeys.operations.catalog()).toEqual(["operations", "catalog"]);
+    expect(queryKeys.capabilities.list()).toEqual(["capabilities", "list", "all"]);
+    expect(queryKeys.capabilities.list("lora-train")).toEqual([
+      "capabilities",
+      "list",
+      "lora-train",
+    ]);
+    expect(queryKeys.conversations.byProject("p1")).toEqual([
+      "conversations",
+      "by-project",
+      "p1",
+    ]);
+    expect(queryKeys.conversations.byId("c1")).toEqual(["conversations", "by-id", "c1"]);
+    expect(queryKeys.messages.byConversation("c1")).toEqual([
+      "messages",
+      "by-conversation",
+      "c1",
+      "all",
+    ]);
+    expect(queryKeys.messages.byConversation("c1", 10)).toEqual([
+      "messages",
+      "by-conversation",
+      "c1",
+      10,
+    ]);
+  });
+
   it("returns a new array per call so cache keys compare by value", () => {
     expect(queryKeys.providers.all()).toEqual(queryKeys.providers.all());
     expect(queryKeys.providers.all()).not.toBe(queryKeys.providers.all());

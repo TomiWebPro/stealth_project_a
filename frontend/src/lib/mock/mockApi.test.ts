@@ -4,10 +4,15 @@ import {
   fetchAsset,
   fetchAssets,
   fetchAssetsByProject,
+  fetchCapabilities,
+  fetchConversation,
+  fetchConversations,
   fetchHomeSummary,
   fetchJob,
   fetchJobs,
   fetchJobsByProject,
+  fetchMessages,
+  fetchOperations,
   fetchProject,
   fetchProjectDetail,
   fetchProjects,
@@ -330,5 +335,60 @@ describe("mock API list helpers", () => {
       location: "cloud",
     });
     await expect(fetchProvider("ffffffff-0000-4000-8000-000000000000")).resolves.toBeUndefined();
+  });
+
+  it("exposes a pipeline operation catalog with stable ids", async () => {
+    const catalog = await fetchOperations();
+    const ids = new Set((catalog.operations ?? []).map((operation) => operation.id));
+    for (const id of [
+      "text-to-image",
+      "dataset-prep",
+      "lora-train",
+      "image-to-video",
+      "flf2v",
+      "upscale",
+      "3d-reconstruction",
+      "splat-train",
+    ]) {
+      expect(ids.has(id)).toBe(true);
+    }
+    expect(catalog.version).toBe("v1");
+  });
+
+  it("flattens provider capabilities and filters by operation", async () => {
+    const all = await fetchCapabilities();
+    expect(all.length).toBeGreaterThan(0);
+    expect(all.every((row) => typeof row.provider_id === "string")).toBe(true);
+    const train = await fetchCapabilities("lora-train");
+    expect(train.length).toBeGreaterThan(0);
+    expect(train.every((row) => row.operation_id === "lora-train")).toBe(true);
+    await expect(fetchCapabilities("no-such-operation")).resolves.toEqual([]);
+  });
+
+  it("lists conversations by project and their messages in transcript order", async () => {
+    const projects = await fetchProjects();
+    const film = projects.find((project) => project.name.startsWith("Moonshot"));
+    expect(film).toBeDefined();
+    if (!film) return;
+
+    const conversations = await fetchConversations(film.id);
+    expect(conversations.length).toBeGreaterThan(0);
+    expect(conversations.every((c) => c.project_id === film.id)).toBe(true);
+    await expect(fetchConversations("00000000-0000-4000-8000-000000000000")).resolves.toEqual([]);
+
+    const target = conversations[0];
+    expect(target).toBeDefined();
+    if (!target) return;
+    await expect(fetchConversation(target.id)).resolves.toMatchObject({ id: target.id });
+    await expect(
+      fetchConversation("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+
+    const messages = await fetchMessages(target.id);
+    expect(messages.length).toBeGreaterThan(0);
+    const times = messages.map((message) => Date.parse(message.created_at));
+    expect(times).toEqual([...times].sort((a, b) => a - b));
+    expect((await fetchMessages(target.id, 1)).length).toBeLessThanOrEqual(1);
+    await expect(fetchMessages("00000000-0000-4000-8000-000000000000")).resolves.toEqual([]);
   });
 });

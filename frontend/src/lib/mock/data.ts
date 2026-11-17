@@ -6,7 +6,15 @@
  * the live API is enabled.
  */
 
-import type { Asset, Job, Project, Provider } from "../types";
+import type {
+  Asset,
+  Conversation,
+  Job,
+  Message,
+  OperationCatalog,
+  Project,
+  Provider,
+} from "../types";
 
 /** Fixed reference time so mock data renders deterministically. */
 export const REFERENCE_NOW = "2026-03-18T10:30:00.000Z";
@@ -939,4 +947,199 @@ export const PROVIDERS: readonly Provider[] = [
 export const ARCHIVED_PROJECTS: readonly Project[] = PROJECTS.filter(
   (project) => project.archived,
 );
+
+// --- Operation catalog (P4 pipeline capability discovery) --------------------
+
+/**
+ * Static catalog mirroring docs/PRODUCTION_PIPELINE.md stages 1-9. Operation
+ * ids are the stable contract; providers in {@link PROVIDERS} advertise which
+ * ones they can execute through their `capabilities`.
+ */
+export const OPERATION_CATALOG: OperationCatalog = {
+  version: "v1",
+  operations: [
+    {
+      id: "text-to-image",
+      title: "Text to image",
+      description: "Generate concept/design frames from a prompt.",
+      schema_version: "v1",
+      streaming: false,
+      input: { asset_types: [] },
+      output: { asset_types: ["image"] },
+      settings: [
+        { key: "width", label: "Width", type: "integer", default: 1024 },
+        { key: "height", label: "Height", type: "integer", default: 1024 },
+      ],
+    },
+    {
+      id: "image-to-image",
+      title: "Image to image",
+      description: "Edit or restyle a reference frame.",
+      schema_version: "v1",
+      input: { asset_types: ["image"], required: true },
+      output: { asset_types: ["image"] },
+    },
+    {
+      id: "dataset-prep",
+      title: "Dataset preparation",
+      description: "Expand concept frames into a multi-pose training dataset.",
+      schema_version: "v1",
+      input: { asset_types: ["image"], required: true, multiple: true },
+      output: { asset_types: ["dataset"] },
+      settings: [
+        { key: "angles", label: "Angles", type: "integer", default: 12 },
+        { key: "seeds", label: "Seed count", type: "integer", default: 48 },
+      ],
+    },
+    {
+      id: "lora-train",
+      title: "LoRA training",
+      description: "Train a sequence identity LoRA from a prepared dataset.",
+      schema_version: "v1",
+      input: { asset_types: ["dataset"], required: true },
+      output: { asset_types: ["lora"] },
+      settings: [
+        { key: "steps", label: "Steps", type: "integer", default: 1200 },
+        { key: "learning_rate", label: "Learning rate", type: "number", default: 0.0001 },
+      ],
+    },
+    {
+      id: "image-to-video",
+      title: "Image to video",
+      description: "Animate a first frame into a shot clip.",
+      schema_version: "v1",
+      streaming: true,
+      input: { asset_types: ["image"], required: true },
+      output: { asset_types: ["video"] },
+      settings: [
+        { key: "duration_ms", label: "Duration (ms)", type: "integer", default: 5000 },
+        { key: "fps", label: "FPS", type: "integer", default: 24 },
+      ],
+    },
+    {
+      id: "flf2v",
+      title: "First/last frame to video",
+      description: "Interpolate a shot between first and last frames.",
+      schema_version: "v1",
+      streaming: true,
+      input: { asset_types: ["image"], required: true, multiple: true },
+      output: { asset_types: ["video"] },
+    },
+    {
+      id: "text-to-video",
+      title: "Text to video",
+      description: "Generate a shot clip directly from a prompt.",
+      schema_version: "v1",
+      streaming: true,
+      output: { asset_types: ["video"] },
+    },
+    {
+      id: "upscale",
+      title: "Upscale",
+      description: "Increase resolution of an existing frame or clip.",
+      schema_version: "v1",
+      input: { asset_types: ["image", "video"], required: true },
+      output: { asset_types: ["image", "video"] },
+    },
+    {
+      id: "3d-reconstruction",
+      title: "3D reconstruction",
+      description: "Estimate camera poses with COLMAP before splat training.",
+      schema_version: "v1",
+      input: { asset_types: ["image", "video"], required: true, multiple: true },
+      output: { asset_types: ["splat", "scene"] },
+    },
+    {
+      id: "splat-train",
+      title: "Splat training",
+      description: "Train a flyable Gaussian-splat environment.",
+      schema_version: "v1",
+      input: { asset_types: ["splat"], required: false },
+      output: { asset_types: ["splat", "scene"] },
+    },
+  ],
+};
+
+// --- Conversations (P4.6 chat / orchestration loop) ---------------------------
+
+const CONVERSATION_IDS = {
+  moonshot: "0b5c1e2a-5000-4000-8000-000000000001",
+  character: "0b5c1e2a-5000-4000-8000-000000000002",
+  empty: "0b5c1e2a-5000-4000-8000-000000000003",
+} as const;
+
+export const CONVERSATIONS: readonly Conversation[] = [
+  {
+    id: CONVERSATION_IDS.moonshot,
+    project_id: PROJECT_IDS.moonshot,
+    title: "s01 sequence plan",
+    created_by: CREATOR_ID,
+    created_at: isoMinutesAgo(180),
+    updated_at: isoMinutesAgo(8),
+    message_count: 3,
+  },
+  {
+    id: CONVERSATION_IDS.character,
+    project_id: PROJECT_IDS.character,
+    title: "Mara identity — dataset review",
+    created_by: CREATOR_ID,
+    created_at: isoMinutesAgo(720),
+    updated_at: isoMinutesAgo(240),
+    message_count: 2,
+  },
+  {
+    id: CONVERSATION_IDS.empty,
+    project_id: PROJECT_IDS.empty,
+    title: "Blank slate",
+    created_by: CREATOR_ID,
+    created_at: isoMinutesAgo(30),
+    updated_at: isoMinutesAgo(30),
+    message_count: 0,
+  },
+];
+
+export const MESSAGES: readonly Message[] = [
+  {
+    id: "0b5c1e2a-5100-4000-8000-000000000001",
+    conversation_id: CONVERSATION_IDS.moonshot,
+    role: "user",
+    content: "Plan the dataset → LoRA chain for sequence s01.",
+    status: "complete",
+    created_at: isoMinutesAgo(40),
+  },
+  {
+    id: "0b5c1e2a-5100-4000-8000-000000000002",
+    conversation_id: CONVERSATION_IDS.moonshot,
+    role: "assistant",
+    content: "I'll prepare character, prop and environment datasets first, then queue three LoRA jobs.",
+    status: "complete",
+    operation_id: "dataset-prep",
+    created_at: isoMinutesAgo(39),
+  },
+  {
+    id: "0b5c1e2a-5100-4000-8000-000000000003",
+    conversation_id: CONVERSATION_IDS.moonshot,
+    role: "assistant",
+    content: "Dataset prep is 45% complete; LoRA training is queued behind it.",
+    status: "streaming",
+    operation_id: "lora-train",
+    created_at: isoMinutesAgo(8),
+  },
+  {
+    id: "0b5c1e2a-5100-4000-8000-000000000004",
+    conversation_id: CONVERSATION_IDS.character,
+    role: "user",
+    content: "Show me the multi-angle frames before training.",
+    status: "complete",
+    created_at: isoMinutesAgo(260),
+  },
+  {
+    id: "0b5c1e2a-5100-4000-8000-000000000005",
+    conversation_id: CONVERSATION_IDS.character,
+    role: "assistant",
+    content: "Here are 48 angles across three backgrounds; the spec is stored on the dataset asset.",
+    status: "complete",
+    created_at: isoMinutesAgo(240),
+  },
+];
 

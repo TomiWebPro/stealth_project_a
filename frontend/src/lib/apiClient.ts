@@ -1,6 +1,15 @@
+import type { CapabilityMatch } from "./catalog";
 import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
-import type { Asset, Job, Project, Provider } from "./types";
+import type {
+  Asset,
+  Conversation,
+  Job,
+  Message,
+  OperationCatalog,
+  Project,
+  Provider,
+} from "./types";
 import * as mockApi from "./mock/mockApi";
 
 /**
@@ -26,6 +35,13 @@ export interface ApiClient {
   listProviders(): Promise<readonly Provider[]>;
   getProvider(providerId: string): Promise<Provider | undefined>;
   listWorkflowTemplates(projectId?: string): Promise<readonly Asset[]>;
+  /** Static operation catalog (pipeline stages 1-9). */
+  getOperations(): Promise<OperationCatalog>;
+  /** Flattened provider capability rows, optionally filtered by operation id. */
+  listCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]>;
+  listConversations(projectId: string): Promise<readonly Conversation[]>;
+  getConversation(conversationId: string): Promise<Conversation | undefined>;
+  listMessages(conversationId: string, limit?: number): Promise<readonly Message[]>;
 }
 
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
@@ -44,4 +60,9 @@ export const mockApiClient: ApiClient = {
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,
   listWorkflowTemplates: mockApi.fetchWorkflowTemplates,
+  getOperations: mockApi.fetchOperations,
+  listCapabilities: mockApi.fetchCapabilities,
+  listConversations: mockApi.fetchConversations,
+  getConversation: mockApi.fetchConversation,
+  listMessages: mockApi.fetchMessages,
 };

@@ -33,4 +33,19 @@ export const queryKeys = {
     all: () => ["providers"] as const,
     byId: (id: string) => ["providers", "by-id", id] as const,
   },
+  operations: {
+    catalog: () => ["operations", "catalog"] as const,
+  },
+  capabilities: {
+    list: (operationId?: string) =>
+      ["capabilities", "list", operationId ?? "all"] as const,
+  },
+  conversations: {
+    byProject: (projectId: string) => ["conversations", "by-project", projectId] as const,
+    byId: (id: string) => ["conversations", "by-id", id] as const,
+  },
+  messages: {
+    byConversation: (conversationId: string, limit?: number) =>
+      ["messages", "by-conversation", conversationId, limit ?? "all"] as const,
+  },
 } as const;

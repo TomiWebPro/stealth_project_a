@@ -1,8 +1,25 @@
+import type { CapabilityMatch } from "../catalog";
 import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
 import type { ProjectDetail } from "../projectDetail";
-import type { Asset, Job, Project, Provider } from "../types";
-import { ASSETS, JOBS, PROJECTS, PROVIDERS } from "./data";
+import type {
+  Asset,
+  Conversation,
+  Job,
+  Message,
+  OperationCatalog,
+  Project,
+  Provider,
+} from "../types";
+import {
+  ASSETS,
+  CONVERSATIONS,
+  JOBS,
+  MESSAGES,
+  OPERATION_CATALOG,
+  PROJECTS,
+  PROVIDERS,
+} from "./data";
 
 /**
  * Mock API transport.
@@ -135,4 +152,54 @@ export async function fetchWorkflowTemplates(projectId?: string): Promise<readon
     return true;
   }).sort((a, b) => a.name.localeCompare(b.name));
   return delay(templates);
+}
+
+/** Static operation catalog (pipeline stages 1-9). */
+export async function fetchOperations(): Promise<OperationCatalog> {
+  return delay(OPERATION_CATALOG);
+}
+
+/** Flattened capability rows, optionally filtered to one operation id. */
+export async function fetchCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]> {
+  const matches: CapabilityMatch[] = [];
+  for (const provider of PROVIDERS) {
+    for (const capability of provider.capabilities ?? []) {
+      if (operationId && capability.operation_id !== operationId) continue;
+      matches.push({
+        provider_id: provider.id,
+        provider_name: provider.name,
+        location: provider.location,
+        status: provider.status,
+        operation_id: capability.operation_id,
+        schema_versions: capability.schema_versions ?? [],
+      });
+    }
+  }
+  return delay(matches);
+}
+
+/** Conversations for a project, newest activity first. */
+export async function fetchConversations(projectId: string): Promise<readonly Conversation[]> {
+  const conversations = CONVERSATIONS.filter(
+    (conversation) => conversation.project_id === projectId,
+  ).sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  return delay(conversations);
+}
+
+export async function fetchConversation(
+  conversationId: string,
+): Promise<Conversation | undefined> {
+  return delay(CONVERSATIONS.find((conversation) => conversation.id === conversationId));
+}
+
+/** Messages in a conversation, oldest first so a chat transcript reads naturally. */
+export async function fetchMessages(
+  conversationId: string,
+  limit?: number,
+): Promise<readonly Message[]> {
+  let messages = MESSAGES.filter((message) => message.conversation_id === conversationId).sort(
+    (a, b) => a.created_at.localeCompare(b.created_at),
+  );
+  if (limit !== undefined) messages = messages.slice(-limit);
+  return delay(messages);
 }
