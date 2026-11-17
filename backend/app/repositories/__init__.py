@@ -8,6 +8,7 @@ from ..config import Settings
 from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
 from .assets import AssetRepository
+from .audit import AuditRepository
 from .auth import AuthRepository
 from .conversations import ConversationRepository
 from .extensions import ExtensionRepository
@@ -29,6 +30,7 @@ class Repositories:
     orchestration: OrchestrationRepository
     auth: AuthRepository
     extensions: ExtensionRepository
+    audit: AuditRepository
 
     @classmethod
     def build(
@@ -59,6 +61,7 @@ class Repositories:
             clock=clock,
         )
         extensions = ExtensionRepository(store, clock=clock)
+        audit = AuditRepository(store, projects, assets, jobs, clock=clock)
         return cls(
             projects=projects,
             assets=assets,
@@ -69,6 +72,7 @@ class Repositories:
             orchestration=orchestration,
             auth=auth,
             extensions=extensions,
+            audit=audit,
         )
 
 

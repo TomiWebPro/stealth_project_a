@@ -4,6 +4,12 @@ Every module here mirrors a file in frontend/src/types. Parity is verified by
 tests/test_contract_parity.py — do not change one side without the other.
 """
 
+from .audit import (
+    AuditEvent,
+    AuditEventKind,
+    AuditTone,
+    AuditTrail,
+)
 from .asset import (
     Asset,
     AssetLineage,
@@ -123,6 +129,11 @@ from .provider import (
 __all__ = [
     "API_PREFIX",
     "API_VERSION",
+    # audit
+    "AuditEvent",
+    "AuditEventKind",
+    "AuditTone",
+    "AuditTrail",
     # asset
     "Asset",
     "AssetLineage",

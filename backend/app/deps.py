@@ -16,6 +16,7 @@ from .publish import PublishService
 from .repositories import Repositories
 from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
+from .repositories.audit import AuditRepository
 from .repositories.conversations import ConversationRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.jobs import JobRepository
@@ -156,6 +157,12 @@ def get_auth_repository(
     return repositories.auth
 
 
+def get_audit_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> AuditRepository:
+    return repositories.audit
+
+
 def get_extension_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ExtensionRepository:
@@ -200,6 +207,7 @@ def get_current_org_id(
 __all__ = [
     "get_adapter_registry",
     "get_asset_repository",
+    "get_audit_repository",
     "get_auth_repository",
     "get_bearer_token",
     "get_conversation_repository",

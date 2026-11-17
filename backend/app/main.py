@@ -22,6 +22,7 @@ from .repositories import Repositories
 from .routers import (
     adapters,
     assets,
+    audit,
     auth,
     conversations,
     events,
@@ -196,6 +197,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # --- Routes -------------------------------------------------------------
 
     app.include_router(health.router, prefix=API_PREFIX)
+    app.include_router(audit.router, prefix=API_PREFIX)
     app.include_router(adapters.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
