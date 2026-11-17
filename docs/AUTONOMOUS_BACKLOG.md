@@ -189,11 +189,13 @@ this file is the execution checklist.
   states; display values derived in `storageHelpers` (byte/count formatting,
   quota tone, over-quota detection) with unit tests.
   ✅ 2026-11-17 — `7a6cd7d`
-- [ ] C20 (mocks + screens) Wire the authoritative project audit API (C18) end
-  to end: expose `getProjectAudit` / `useProjectAudit` atomically across mockApi,
+- [x] C20 (mocks) Wire the authoritative project audit API (C18) end to end:
+  expose `getProjectAudit` / `useProjectAudit` atomically across mockApi,
   ApiClient, httpApiClient, queryKeys and useQueries with populated/empty/error
-  seeds; then render the feed on project detail (screens), replacing the
-  derived-only view. Backend endpoint + TS contracts already shipped.
+  seeds. ✅ 2026-11-17 — `5b7a2d4`
+- [ ] C20b (screens) Render the authoritative audit feed on project detail via
+  `useProjectAudit`, replacing the derived-only view. Backend endpoint, TS
+  contracts and the mocks transport (C20) are already shipped.
 
 ## Log (append one line per completed item)
 
@@ -253,3 +255,4 @@ this file is the execution checklist.
 - 2026-11-17 — `f9d255d` — C17: OpenAPI guard locks the API surface (68 paths, 87 ops) — prefix, unique operationIds, uniform error envelope; 3 tests green (493 passed).
 - 2026-11-17 — `9f74936` — C18: authoritative `GET /projects/{id}/audit` feed (asset/publish/job events derived from authoritative stores; kind + time bounds + limit; mirrored TS contracts), 14 new tests green on memory+sqlite (507 passed).
 - 2026-11-17 — `7a6cd7d` — C19: added a project storage card on detail (useStorageStats hook, loading/error/empty/populated states, storageHelpers format/usage derivation + 9 unit tests); lint/test (152)/build green. Added C20 for mocks+screens to wire the C18 audit API end to end.
+- 2026-11-17 — `5b7a2d4` — C20 (mocks): added `getProjectAudit`/`useProjectAudit` atomically across mockApi, ApiClient, live httpApiClient (404→undefined, other errors normalized), queryKeys and useQueries; shared audit derivation/filter helper + asset/job-derived seeds keep mock/live parity with populated/empty/error states; 5 new audit-helper + mock + live + key tests and parity guard extended; lint/test (165)/build green. Screen feed rendering split to C20b.
