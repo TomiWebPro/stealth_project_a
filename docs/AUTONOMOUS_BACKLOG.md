@@ -131,7 +131,8 @@ this file is the execution checklist.
 - [x] C3 Accessibility pass: keyboard navigation, focus rings, ARIA labels, contrast.
   ✅ 2026-11-17 — `92edce5` — skip link + focusable main, Up/Down roving focus in sidebar,
   subtle-text contrast raised to >=4.5:1 (existing focus-visible ring retained).
-- [ ] C4a Replace single-glyph navigation icons with a real icon set (owner: screens).
+- [x] C4a Replace single-glyph navigation icons with a real icon set (owner: screens).
+  ✅ 2026-11-17 — `2e4c084` — dependency-free inline SVG icon set on all nav items; text glyph kept as fallback.
 - [x] C4b Add Tauri build job to CI with cached Rust target (owner: CI) — 2026-11-17, b282dba.
 - [x] C5 Add a real router ( History API deep links) without changing `RouteId`.
   ✅ 2026-11-17 — `647ac19` — `parseRoutePath`/`buildRoutePath` with entity segments,
@@ -182,6 +183,7 @@ this file is the execution checklist.
 - 2026-11-17 — `978689c` — P6.4: Chat gains a capability-gated audio/dialogue panel that enables only when a provider advertises an available TTS/voice operation; script parsing + helper tests.
 - 2026-11-17 — `aa72e04` — P6.5: Project detail now shows Unreal/Blender export paths for published assets with target filters, provisional path convention and tests.
 - 2026-11-17 — `647ac19` — C5: History API deep links for `/projects/{id}`, `/assets/{id}`, `/chat/{id}` via pure parse/build helpers; UI store restores selections on load/back-forward and mirrors in-screen selection changes with replaceState.
+- 2026-11-17 — `2e4c084` — C4a: sidebar now renders a dependency-free inline SVG icon set (one named icon per RouteId) instead of single-character glyphs.
 - 2026-11-17 — `a71390e` — P4.1: one `ExecutionAdapter` contract with simulated local-ComfyUI/cloud-RunPod runtimes, adapter inventory + health endpoints and `POST /jobs/{id}/run` wired to job start/progress/result transitions; 20 new tests green (399 passed).
 - 2026-11-17 — `657ed3a` — P4.2: real dataset-prep + lora-train job chain, deterministic ai-toolkit YAML with config hash, dataset/config/LoRA assets linked by `derived_from` lineage; 15 new tests green (414 passed).
 - 2026-11-17 — `d2e04cb` — P5.2: runtime extension permission guard (authorize declared+accepted permission/capability, 403 on undeclared/disabled) plus isolation-scope view; 12 new tests green (440 passed).
