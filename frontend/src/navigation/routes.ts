@@ -17,12 +17,16 @@ export type RouteId =
   | "providers"
   | "settings";
 
+import type { IconName } from "../ui/Icon";
+
 export interface NavItem {
   readonly id: RouteId;
   readonly label: string;
   readonly description: string;
-  /** Single-character glyph used until an icon set is adopted. */
+  /** Single-character glyph kept as a text fallback. */
   readonly glyph: string;
+  /** Named SVG icon rendered by the sidebar. */
+  readonly icon: IconName;
 }
 
 export interface NavGroup {
@@ -38,21 +42,21 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     id: "workspace",
     label: "Workspace",
     items: [
-      { id: "home", label: "Home", description: "Overview of your studio", glyph: "⌂" },
-      { id: "chat", label: "Chat", description: "Conversational workspace", glyph: "✦" },
-      { id: "projects", label: "Projects", description: "Organize production work", glyph: "▤" },
-      { id: "assets", label: "Assets", description: "Library and lineage", glyph: "◈" },
-      { id: "jobs", label: "Jobs", description: "Tasks and pipeline runs", glyph: "◷" },
+      { id: "home", label: "Home", description: "Overview of your studio", glyph: "⌂", icon: "home" },
+      { id: "chat", label: "Chat", description: "Conversational workspace", glyph: "✦", icon: "chat" },
+      { id: "projects", label: "Projects", description: "Organize production work", glyph: "▤", icon: "projects" },
+      { id: "assets", label: "Assets", description: "Library and lineage", glyph: "◈", icon: "assets" },
+      { id: "jobs", label: "Jobs", description: "Tasks and pipeline runs", glyph: "◷", icon: "jobs" },
     ],
   },
   {
     id: "platform",
     label: "Platform",
     items: [
-      { id: "workspaces", label: "Workspaces", description: "Shared team spaces", glyph: "⬡" },
-      { id: "extensions", label: "Extensions", description: "Connectors and add-ons", glyph: "⌘" },
-      { id: "providers", label: "Providers", description: "Local and cloud capabilities", glyph: "☁" },
-      { id: "settings", label: "Settings", description: "Preferences and connections", glyph: "⚙" },
+      { id: "workspaces", label: "Workspaces", description: "Shared team spaces", glyph: "⬡", icon: "workspaces" },
+      { id: "extensions", label: "Extensions", description: "Connectors and add-ons", glyph: "⌘", icon: "extensions" },
+      { id: "providers", label: "Providers", description: "Local and cloud capabilities", glyph: "☁", icon: "providers" },
+      { id: "settings", label: "Settings", description: "Preferences and connections", glyph: "⚙", icon: "settings" },
     ],
   },
 ];

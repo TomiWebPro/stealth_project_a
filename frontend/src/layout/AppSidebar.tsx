@@ -2,18 +2,19 @@ import type { KeyboardEvent, MouseEvent } from "react";
 import { NAV_GROUPS, routeToPath, type RouteId } from "../navigation/routes";
 import { useUiStore } from "../stores/uiStore";
 import { cn } from "../ui/cn";
+import { Icon, type IconName } from "../ui/Icon";
 
 interface SidebarItemProps {
   readonly id: RouteId;
   readonly label: string;
-  readonly glyph: string;
+  readonly icon: IconName;
   readonly active: boolean;
   readonly collapsed: boolean;
   readonly onSelect: () => void;
   readonly onArrow: (element: HTMLAnchorElement, direction: -1 | 1) => void;
 }
 
-function SidebarItem({ id, label, glyph, active, collapsed, onSelect, onArrow }: SidebarItemProps) {
+function SidebarItem({ id, label, icon, active, collapsed, onSelect, onArrow }: SidebarItemProps) {
   // Render a real link for semantics (focusable, openable in a new tab), but
   // intercept plain left-clicks so in-app navigation goes through the store.
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
@@ -45,8 +46,8 @@ function SidebarItem({ id, label, glyph, active, collapsed, onSelect, onArrow }:
         collapsed && "justify-center px-0",
       )}
     >
-      <span aria-hidden="true" className="w-4 shrink-0 text-center text-base leading-none">
-        {glyph}
+      <span aria-hidden="true" className="w-4 shrink-0 text-center leading-none">
+        <Icon name={icon} />
       </span>
       {collapsed ? null : <span className="truncate">{label}</span>}
     </a>
@@ -93,7 +94,7 @@ export function AppSidebar() {
               key={item.id}
               id={item.id}
               label={item.label}
-              glyph={item.glyph}
+              icon={item.icon}
               collapsed={collapsed}
               active={activeRoute === item.id}
               onSelect={() => navigate(item.id)}
