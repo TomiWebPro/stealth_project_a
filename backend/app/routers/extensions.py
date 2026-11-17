@@ -6,17 +6,48 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from ..deps import get_extension_repository
+from ..permissions import ExtensionPermissionGuard
 from ..repositories.extensions import ExtensionRepository
 from ..schemas.provider import (
     Extension,
     ExtensionInstallRequest,
     ExtensionInstallResult,
     ExtensionManifest,
+    ExtensionStatus,
 )
 
 router = APIRouter(tags=["extensions"])
+
+
+# Response/request models are local to this router (not wire contracts in
+# `app.schemas`), matching the pattern used by the adapters router.
+class ExtensionScopeView(BaseModel):
+    extension_id: UUID
+    status: ExtensionStatus
+    enabled: bool
+    permissions: list[str]
+    capabilities: list[str]
+    provider_ids: list[str]
+    ui_contributions: list[str]
+    signed: bool
+    verified: bool
+
+
+class AuthorizationRequest(BaseModel):
+    permission: str | None = None
+    capability: str | None = None
+
+
+class AuthorizationView(BaseModel):
+    extension_id: UUID
+    allowed: bool
+    permission: str | None = None
+    capability: str | None = None
+    reason: str
+    scope: ExtensionScopeView
 
 
 @router.get("/extensions/registry", response_model=list[ExtensionManifest])
@@ -76,6 +107,40 @@ def uninstall_extension(
     extensions: Annotated[ExtensionRepository, Depends(get_extension_repository)],
 ):
     extensions.uninstall(extension_id)
+
+
+# --- Permission enforcement / isolation boundary -----------------------------
+
+
+def _guard(
+    extensions: Annotated[ExtensionRepository, Depends(get_extension_repository)],
+) -> ExtensionPermissionGuard:
+    return ExtensionPermissionGuard(extensions)
+
+
+@router.get("/extensions/{extension_id}/permissions", response_model=ExtensionScopeView)
+def extension_permissions(
+    extension_id: UUID,
+    guard: Annotated[ExtensionPermissionGuard, Depends(_guard)],
+) -> ExtensionScopeView:
+    """Effective isolation scope: declared permissions/capabilities and targets."""
+    return ExtensionScopeView(**guard.scope(extension_id))
+
+
+@router.post("/extensions/{extension_id}/authorize", response_model=AuthorizationView)
+def authorize_extension(
+    extension_id: UUID,
+    payload: AuthorizationRequest,
+    guard: Annotated[ExtensionPermissionGuard, Depends(_guard)],
+) -> AuthorizationView:
+    """Authorize a permission or capability within the extension's live scope."""
+    return AuthorizationView(
+        **guard.authorize(
+            extension_id,
+            permission=payload.permission,
+            capability=payload.capability,
+        )
+    )
 
 
 __all__ = ["router"]
