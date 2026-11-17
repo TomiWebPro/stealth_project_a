@@ -7,6 +7,7 @@
  */
 
 export * from "./common";
+export * from "./activity";
 export * from "./audit";
 export * from "./auth";
 export * from "./conversation";

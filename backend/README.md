@@ -43,6 +43,9 @@ Other environment variables:
 All paths are prefixed with `/api/v1`.
 
 - **Core:** `GET /health`, `GET /version`
+- **Activity:** `GET /activity?project_id=&kind=&limit=` — newest-first workspace
+  activity (asset/publish/job/comment events with actor and project context)
+  derived from the authoritative stores; scoped by `project_id` or workspace-wide
 - **Dashboard:** `GET /dashboard?recent_limit=` — authoritative workspace snapshot
   (entity counts, zero-filled job-status/asset-type breakdowns and the newest
   jobs/assets) derived from the stores; deleted assets are excluded

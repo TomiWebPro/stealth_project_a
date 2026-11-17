@@ -14,6 +14,7 @@ from .exports import ExportService
 from .links import ReferenceLinkService
 from .publish import PublishService
 from .repositories import Repositories
+from .repositories.activity import ActivityRepository
 from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
 from .repositories.audit import AuditRepository
@@ -165,6 +166,12 @@ def get_audit_repository(
     return repositories.audit
 
 
+def get_activity_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ActivityRepository:
+    return repositories.activity
+
+
 def get_extension_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ExtensionRepository:
@@ -219,6 +226,7 @@ def get_current_org_id(
 
 
 __all__ = [
+    "get_activity_repository",
     "get_adapter_registry",
     "get_asset_repository",
     "get_audit_repository",

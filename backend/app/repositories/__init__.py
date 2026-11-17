@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from ..config import Settings
 from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
+from .activity import ActivityRepository
 from .assets import AssetRepository
 from .audit import AuditRepository
 from .auth import AuthRepository
@@ -23,6 +24,7 @@ from .uploads import UploadRepository
 
 @dataclass(slots=True)
 class Repositories:
+    activity: ActivityRepository
     projects: ProjectRepository
     assets: AssetRepository
     conversations: ConversationRepository
@@ -68,7 +70,9 @@ class Repositories:
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
         search = SearchRepository(store, clock=clock)
         dashboard = DashboardRepository(store, clock=clock)
+        activity = ActivityRepository(store, projects, clock=clock)
         return cls(
+            activity=activity,
             projects=projects,
             assets=assets,
             conversations=conversations,

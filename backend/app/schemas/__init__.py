@@ -4,6 +4,12 @@ Every module here mirrors a file in frontend/src/types. Parity is verified by
 tests/test_contract_parity.py — do not change one side without the other.
 """
 
+from .activity import (
+    ActivityEvent,
+    ActivityFeed,
+    ActivityKind,
+    ActivityTone,
+)
 from .audit import (
     AuditEvent,
     AuditEventKind,
@@ -138,6 +144,11 @@ from .search import (
 __all__ = [
     "API_PREFIX",
     "API_VERSION",
+    # activity
+    "ActivityEvent",
+    "ActivityFeed",
+    "ActivityKind",
+    "ActivityTone",
     # dashboard
     "DashboardCounts",
     "DashboardSummary",

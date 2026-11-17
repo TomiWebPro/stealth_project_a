@@ -20,6 +20,7 @@ from .config import APP_VERSION, Settings
 from .errors import ApiError
 from .repositories import Repositories
 from .routers import (
+    activity,
     adapters,
     assets,
     audit,
@@ -199,6 +200,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # --- Routes -------------------------------------------------------------
 
     app.include_router(health.router, prefix=API_PREFIX)
+    app.include_router(activity.router, prefix=API_PREFIX)
     app.include_router(audit.router, prefix=API_PREFIX)
     app.include_router(adapters.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
