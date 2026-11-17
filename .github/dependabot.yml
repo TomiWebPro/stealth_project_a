@@ -1,0 +1,37 @@
+# Automated dependency updates across all four ecosystems in the repo.
+# Complements C11 (SHA-pinned Actions): Dependabot re-pins action SHAs and bumps
+# npm / pip / Cargo dependencies on a predictable weekly cadence, so the pinned
+# references and lockfiles do not silently drift far behind upstream fixes.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(frontend)"
+
+  - package-ecosystem: pip
+    directory: "/backend"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(backend)"
+
+  - package-ecosystem: cargo
+    directory: "/frontend/src-tauri"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(tauri)"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(actions)"
