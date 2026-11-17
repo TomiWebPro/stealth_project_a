@@ -21,6 +21,7 @@ from .errors import ApiError
 from .repositories import Repositories
 from .routers import (
     assets,
+    auth,
     conversations,
     events,
     health,
@@ -194,6 +195,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(providers.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
+    app.include_router(auth.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.
     @app.get("/health", response_model=HealthResponse, include_in_schema=False)

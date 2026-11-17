@@ -8,6 +8,7 @@ from ..config import Settings
 from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
 from .assets import AssetRepository
+from .auth import AuthRepository
 from .conversations import ConversationRepository
 from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
@@ -25,6 +26,7 @@ class Repositories:
     jobs: JobRepository
     providers: ProviderRepository
     orchestration: OrchestrationRepository
+    auth: AuthRepository
 
     @classmethod
     def build(
@@ -48,6 +50,12 @@ class Repositories:
             storage_quota_bytes=settings.storage_quota_bytes,
             clock=clock,
         )
+        auth = AuthRepository(
+            store,
+            default_user_id=settings.default_user_id,
+            default_org_id=settings.default_org_id,
+            clock=clock,
+        )
         return cls(
             projects=projects,
             assets=assets,
@@ -56,6 +64,7 @@ class Repositories:
             jobs=jobs,
             providers=providers,
             orchestration=orchestration,
+            auth=auth,
         )
 
 

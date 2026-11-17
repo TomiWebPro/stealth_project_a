@@ -30,6 +30,10 @@ class Collections:
     ORCHESTRATION_RUNS = "orchestration_runs"
     PRESENCE = "presence"
     COMMENTS = "comments"
+    USERS = "users"
+    ORGANIZATIONS = "organizations"
+    MEMBERS = "members"
+    AUTH_TOKENS = "auth_tokens"
 
 
 Document = dict[str, Any]

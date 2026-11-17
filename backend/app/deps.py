@@ -8,7 +8,9 @@ from uuid import UUID
 from fastapi import Depends, Header, Request
 
 from .config import Settings
+from .errors import ApiError
 from .repositories import Repositories
+from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
 from .repositories.conversations import ConversationRepository
 from .repositories.jobs import JobRepository
@@ -73,6 +75,28 @@ def get_orchestration_repository(
     return repositories.orchestration
 
 
+def get_auth_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> AuthRepository:
+    return repositories.auth
+
+
+def get_bearer_token(
+    authorization: Annotated[str | None, Header(alias="Authorization")] = None,
+) -> str:
+    """Extract an access token from ``Authorization: Bearer <token>``."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise ApiError(
+            "A bearer access token is required.",
+            status_code=401,
+            code="unauthorized",
+        )
+    token = authorization.split(None, 1)[1].strip()
+    if not token:
+        raise ApiError("A bearer access token is required.", status_code=401, code="unauthorized")
+    return token
+
+
 def get_current_user_id(
     settings: Annotated[Settings, Depends(get_settings)],
     x_user_id: Annotated[UUID | None, Header(alias="X-User-Id")] = None,
@@ -94,6 +118,8 @@ def get_current_org_id(
 
 __all__ = [
     "get_asset_repository",
+    "get_auth_repository",
+    "get_bearer_token",
     "get_conversation_repository",
     "get_current_org_id",
     "get_current_user_id",
