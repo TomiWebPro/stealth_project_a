@@ -112,6 +112,7 @@ this file is the execution checklist.
 - [ ] C6 Docs accuracy pass: keep README, API.md, architecture docs and this backlog
   in sync with what is actually shipped.
 - [x] C7 Add `pytest-cov` coverage tooling + CI >=90% gate to support C1 (owner: CI) — 2026-11-17, d1d7d9d.
+- [x] C8 Add Vitest V8 coverage tooling (`npm run test:coverage`) + informational CI report to support C2 (owner: CI) — 2026-11-17, 08f10c8.
 
 ## Log (append one line per completed item)
 
@@ -122,3 +123,4 @@ this file is the execution checklist.
 - 2026-11-17 — b282dba — C4b: added Linux Tauri shell CI job (`npx tauri build --no-bundle`) with `Swatinem/rust-cache` target cache + WebKit/GTK deps; README CI section synced; frontend lint/test/build and backend pytest verified green.
 - 2026-11-17 — d1d7d9d — C7: added `pytest-cov` dev dep, `[coverage:*]` config in pytest.ini, and a CI coverage gate (`--cov=app --cov-fail-under=90`, currently 96%) to guard C1's router-coverage goal; plain `python3 -m pytest -q` still green (188 passed).
 - 2026-11-17 — P3.4 shipped (`cc7a398`): asset detail panel with provenance/storage, editable name/tags/metadata (local-optimistic), selectable grid/list/shot items, helper unit tests; added P3.6 for mocks/backend to expose `updateAsset`.
+- 2026-11-17 — 08f10c8 — C8: added `@vitest/coverage-v8` dev dep, `test:coverage` script, V8 coverage config in vite.config.ts and an informational CI coverage step (baseline ~29% statements, no gate); ignored coverage/ artifacts; README CI section synced.
