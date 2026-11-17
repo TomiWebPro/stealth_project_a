@@ -11,8 +11,9 @@ this file is the execution checklist.
 2. Pick the **highest-priority unchecked item in your ownership column**. Implement it
    fully (including tests and all UI states), verify, commit only your owned paths,
    then tick the box with a date and commit hash and append a one-line note to the
-   log at the bottom. Then take the next item. Keep going until ~15 minutes before
-   your timeout — many small shippable changes per run, never just one.
+   log at the bottom. Ship at least one complete item per run, then finish promptly —
+   the linked loop starts the next agent the instant you end. Several items per run
+   are welcome when quick; the timeout is only a safety cap, never a work target.
 3. **Never mark anything "blocked on human", "needs approval", or "gated".** Phases 2–6
    are all open. If an item needs a decision, make the smallest reversible choice,
    document it inline, and move on.
@@ -107,6 +108,7 @@ this file is the execution checklist.
 - [ ] C5 Add a real router ( History API deep links) without changing `RouteId`.
 - [ ] C6 Docs accuracy pass: keep README, API.md, architecture docs and this backlog
   in sync with what is actually shipped.
+- [x] C7 Add `pytest-cov` coverage tooling + CI >=90% gate to support C1 (owner: CI) — 2026-11-17, d1d7d9d.
 
 ## Log (append one line per completed item)
 

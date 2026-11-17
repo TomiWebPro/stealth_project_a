@@ -9,21 +9,31 @@ Rules: delegate only when useful; communicate via docs/contracts; no silent shar
 ## Scheduled workforce (opencode-scheduler, `studio-p1-*`)
 
 Four active jobs share this repo; each prompt is self-contained (agents have no
-memory). Cadence is intentionally sparse (every 2h, staggered) with big per-run
-batches: orientation is overhead, so each run ships item after item until ~15
-min before its timeout instead of doing one thing and exiting. All three builder
-jobs chain to `studio-p1-ci`, which verifies their combined output.
+memory). They run as a **completion-driven relay loop**, not on a fixed cron
+cadence:
+
+```
+studio-p1-backend-core -> studio-p1-screens -> studio-p1-mocks -> studio-p1-ci
+        ^                                                                |
+        +-------------------------(ALWAYS)--------------------------------+
+```
+
+Each job is `@once`; the scheduler re-arms the next job the instant the current
+one finishes (`--on ALWAYS`, so a failure never stalls the loop). Only the root
+job starts on setup; there is no wait time between agents. The timeout is a
+safety cap only — agents finish promptly once a complete batch ships, then hand
+off. The loop needs no human input and never idles.
 
 The authoritative execution queue is `docs/AUTONOMOUS_BACKLOG.md`. Phases 2–6
 are all open; no job waits on a human decision. Agents make small reversible
 choices, document them, and keep shipping.
 
-| Job | Cadence | Owns (may write) | Never touches |
-|-----|---------|------------------|---------------|
-| `studio-p1-screens` | `10 */2 * * *`, 90 min | `frontend/src/app,layout,navigation,stores,ui,features,styles`, `App.tsx`, `main.tsx`, `index.css`, backlog (screens rows) | `frontend/src/{types,api,lib,hooks}`, `backend/`, `.github/` |
-| `studio-p1-backend-core` | `25 */2 * * *`, 90 min | `backend/**`, `frontend/src/types/**`, backlog (backend rows) | other frontend dirs |
-| `studio-p1-mocks` | `40 */2 * * *`, 90 min | `frontend/src/lib`, `frontend/src/hooks`, `frontend/src/api` (incl. `lib/mock`), backlog (mocks rows) | `frontend/src/types`, `backend/`, UI dirs |
-| `studio-p1-ci` | `55 */2 * * *`, 45 min | `.github/`, repo config, tooling, backlog (CI rows) | product code (reports failures with owner instead) |
+| Job | Loop position | Owns (may write) | Never touches |
+|-----|---------------|------------------|---------------|
+| `studio-p1-backend-core` | root → screens | `backend/**`, `frontend/src/types/**`, backlog (backend rows) | other frontend dirs |
+| `studio-p1-screens` | after backend → mocks | `frontend/src/app,layout,navigation,stores,ui,features,styles`, `App.tsx`, `main.tsx`, `index.css`, backlog (screens rows) | `frontend/src/{types,api,lib,hooks}`, `backend/`, `.github/` |
+| `studio-p1-mocks` | after screens → ci | `frontend/src/lib`, `frontend/src/hooks`, `frontend/src/api` (incl. `lib/mock`), backlog (mocks rows) | `frontend/src/types`, `backend/`, UI dirs |
+| `studio-p1-ci` | after mocks → backend | `.github/`, repo config, tooling, backlog (CI rows) | product code (reports failures with owner instead) |
 
 Rules for scheduled agents:
 
