@@ -24,6 +24,7 @@ from .repositories.providers import ProviderRepository
 from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
 from .tree import ProjectTree
+from .training import TrainingChainService
 
 
 def get_settings(request: Request) -> Settings:
@@ -55,6 +56,18 @@ def get_link_service(
     tree: Annotated[ProjectTree, Depends(get_project_tree)],
 ) -> ReferenceLinkService:
     return ReferenceLinkService(tree)
+
+
+def get_training_service(
+    store: Annotated[DocumentStore, Depends(get_store)],
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> TrainingChainService:
+    return TrainingChainService(
+        store,
+        repositories.projects,
+        repositories.assets,
+        repositories.jobs,
+    )
 
 
 def get_repositories(request: Request) -> Repositories:
@@ -169,5 +182,6 @@ __all__ = [
     "get_repositories",
     "get_settings",
     "get_store",
+    "get_training_service",
     "get_upload_repository",
 ]
