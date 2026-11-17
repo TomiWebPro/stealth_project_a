@@ -227,5 +227,6 @@ describe("live vs mock transport parity", () => {
     // Compile-time guard that every query method stays callable with its args.
     const typed: Queries = live as unknown as Queries;
     expect(typeof typed.getHomeSummary).toBe("function");
+    expect(typeof typed.updateAsset).toBe("function");
   });
 });

@@ -9,6 +9,7 @@ export type {
   Asset,
   AssetProps,
   AssetStatus,
+  AssetUpdate,
   AssetType,
   Comment,
   Conversation,

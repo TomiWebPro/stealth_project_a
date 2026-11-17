@@ -30,6 +30,10 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("exposes the cache roots invalidated after an asset write", () => {
+    expect(queryKeys.assetWriteRoots()).toEqual([["assets"], ["home"], ["projects"]]);
+  });
+
   it("scopes job list and detail keys", () => {
     expect(queryKeys.jobs.all()).toEqual(["jobs"]);
     expect(queryKeys.jobs.byId("j1")).toEqual(["jobs", "by-id", "j1"]);

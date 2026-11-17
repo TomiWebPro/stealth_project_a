@@ -7,6 +7,7 @@ import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type {
   Asset,
+  AssetUpdate,
   Comment,
   Conversation,
   Extension,
@@ -70,6 +71,28 @@ export function useAsset(assetId: string): UseQueryResult<Asset | undefined> {
   return useQuery({
     queryKey: queryKeys.assets.byId(assetId),
     queryFn: () => api.getAsset(assetId),
+  });
+}
+
+export interface UpdateAssetVariables {
+  readonly assetId: string;
+  readonly body: AssetUpdate;
+}
+
+/**
+ * Persist an asset metadata patch through the active transport, then refresh
+ * every derived asset view (list, detail, recent, project detail, home summary).
+ */
+export function useUpdateAsset(): UseMutationResult<Asset, Error, UpdateAssetVariables> {
+  const api = useApiClient();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ assetId, body }: UpdateAssetVariables) => api.updateAsset(assetId, body),
+    onSuccess: () => {
+      for (const queryKey of queryKeys.assetWriteRoots()) {
+        void queryClient.invalidateQueries({ queryKey });
+      }
+    },
   });
 }
 

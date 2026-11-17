@@ -6,6 +6,7 @@ import type { HomeSummary } from "../homeSummary";
 import type { ProjectDetail } from "../projectDetail";
 import type {
   Asset,
+  AssetUpdate,
   Comment,
   Conversation,
   Extension,
@@ -88,16 +89,33 @@ function failIfEnabled(domain: string): void {
 const sentMessages: Message[] = [];
 let nextMessageSeq = 1;
 
+/**
+ * Asset patches are kept in an overlay instead of mutating the exported seeds
+ * so every read (and the live-vs-mock parity guard) sees a pristine baseline.
+ * Reads consult the overlay first; write tests reset it with `resetMockAssets`.
+ */
+const assetOverrides = new Map<string, Asset>();
+
+function withAssetOverrides(asset: Asset): Asset {
+  return assetOverrides.get(asset.id) ?? asset;
+}
+
+/** Clear mock asset writes, restoring the deterministic seed fixtures. */
+export function resetMockAssets(): void {
+  assetOverrides.clear();
+}
+
 function toSummary(): HomeSummary {
+  const assets = ASSETS.map(withAssetOverrides);
   return {
     projects: PROJECTS.filter((project) => !project.archived).map((project) => ({
       id: project.id,
       name: project.name,
       description: project.description ?? "",
-      assetCount: ASSETS.filter((asset) => asset.project_id === project.id).length,
+      assetCount: assets.filter((asset) => asset.project_id === project.id).length,
       updatedAt: project.updated_at,
     })),
-    recentAssets: [...ASSETS]
+    recentAssets: [...assets]
       .sort((a, b) => b.created_at.localeCompare(a.created_at))
       .slice(0, 6),
     activeJobs: JOBS.filter(
@@ -129,16 +147,16 @@ export async function fetchProject(projectId: string): Promise<Project | undefin
 export async function fetchRecentAssets(
   limit = 6,
 ): Promise<readonly Asset[]> {
-  const assets = [...ASSETS]
+  const assets = ASSETS.map(withAssetOverrides)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, limit);
   return delay(assets);
 }
 
 export async function fetchAssetsByProject(projectId: string): Promise<readonly Asset[]> {
-  const assets = ASSETS.filter((asset) => asset.project_id === projectId).sort((a, b) =>
-    b.created_at.localeCompare(a.created_at),
-  );
+  const assets = ASSETS.map(withAssetOverrides)
+    .filter((asset) => asset.project_id === projectId)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
   return delay(assets);
 }
 
@@ -166,9 +184,9 @@ export async function fetchProjectDetail(projectId: string): Promise<ProjectDeta
   }
   return delay({
     project,
-    assets: ASSETS.filter((asset) => asset.project_id === projectId).sort((a, b) =>
-      b.created_at.localeCompare(a.created_at),
-    ),
+    assets: ASSETS.map(withAssetOverrides)
+      .filter((asset) => asset.project_id === projectId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at)),
     jobs: JOBS.filter((job) => job.project_id === projectId).sort((a, b) =>
       b.created_at.localeCompare(a.created_at),
     ),
@@ -182,12 +200,57 @@ export async function fetchProviders(): Promise<readonly Provider[]> {
 
 export async function fetchAssets(): Promise<readonly Asset[]> {
   failIfEnabled("assets");
-  const assets = [...ASSETS].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const assets = ASSETS.map(withAssetOverrides).sort((a, b) =>
+    b.created_at.localeCompare(a.created_at),
+  );
   return delay(assets);
 }
 
 export async function fetchAsset(assetId: string): Promise<Asset | undefined> {
-  return delay(ASSETS.find((asset) => asset.id === assetId));
+  const asset = ASSETS.find((candidate) => candidate.id === assetId);
+  return delay(asset ? withAssetOverrides(asset) : undefined);
+}
+
+/**
+ * Persist an asset metadata patch, mirroring `PATCH /assets/{id}` on the live
+ * router. `null` tags/metadata mean "leave unchanged" and a null name is
+ * rejected exactly as the backend repository does; unknown ids yield a 404 and
+ * deleted assets a 400, so screens can exercise both error paths in mock mode.
+ */
+export async function updateAsset(assetId: string, body: AssetUpdate): Promise<Asset> {
+  failIfEnabled("assets");
+  const current = assetOverrides.get(assetId) ?? ASSETS.find((asset) => asset.id === assetId);
+  if (!current) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Asset '${assetId}' not found.`,
+    });
+  }
+  if (current.status === "deleted") {
+    throw new ApiError({
+      status: 400,
+      code: "asset_deleted",
+      message: `Asset '${assetId}' is deleted and cannot be updated.`,
+    });
+  }
+  if (body.name === null) {
+    throw new ApiError({
+      status: 400,
+      code: "invalid_request",
+      message: "Asset name cannot be null.",
+      details: [{ field: "name", message: "name is required and cannot be null" }],
+    });
+  }
+  const updated: Asset = {
+    ...current,
+    ...(body.name !== undefined ? { name: body.name } : {}),
+    ...(body.tags != null ? { tags: body.tags } : {}),
+    ...(body.metadata != null ? { metadata: body.metadata } : {}),
+    updated_at: new Date().toISOString(),
+  };
+  assetOverrides.set(assetId, updated);
+  return delay(updated);
 }
 
 export async function fetchJob(jobId: string): Promise<Job | undefined> {
@@ -200,7 +263,7 @@ export async function fetchProvider(providerId: string): Promise<Provider | unde
 
 
 export async function fetchWorkflowTemplates(projectId?: string): Promise<readonly Asset[]> {
-  const templates = ASSETS.filter((asset) => {
+  const templates = ASSETS.map(withAssetOverrides).filter((asset) => {
     if (asset.type !== "resource") return false;
     const meta = asset.metadata ?? {};
     if (meta["template"] !== true) return false;

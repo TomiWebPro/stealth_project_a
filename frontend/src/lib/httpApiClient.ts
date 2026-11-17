@@ -8,6 +8,7 @@ import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type {
   Asset,
+  AssetUpdate,
   Comment,
   Conversation,
   Extension,
@@ -138,7 +139,7 @@ export function createHttpApiClient(
   async function request<T>(
     path: string,
     query?: Record<string, QueryValue>,
-    options?: { method?: "GET" | "POST"; body?: unknown },
+    options?: { method?: "GET" | "POST" | "PATCH"; body?: unknown },
   ): Promise<T> {
     const headers: Record<string, string> = { Accept: "application/json" };
     const token = getAccessToken();
@@ -233,6 +234,13 @@ export function createHttpApiClient(
     listAssets,
 
     getAsset: (assetId) => maybe(() => request<Asset>(`/assets/${assetId}`)),
+
+    updateAsset(assetId: string, body: AssetUpdate): Promise<Asset> {
+      return request<Asset>(`/assets/${encodeURIComponent(assetId)}`, undefined, {
+        method: "PATCH",
+        body,
+      });
+    },
 
     async listRecentAssets(limit = 6): Promise<readonly Asset[]> {
       return newestFirst(await request<Asset[]>("/assets", { limit })).slice(0, limit);

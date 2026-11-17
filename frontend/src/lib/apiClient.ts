@@ -5,6 +5,7 @@ import type { HomeSummary } from "./homeSummary";
 import type { ProjectDetail } from "./projectDetail";
 import type {
   Asset,
+  AssetUpdate,
   Comment,
   Conversation,
   Extension,
@@ -36,6 +37,8 @@ export interface ApiClient {
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
   getAsset(assetId: string): Promise<Asset | undefined>;
+  /** Persist an asset metadata patch through `PATCH /assets/{id}`. */
+  updateAsset(assetId: string, body: AssetUpdate): Promise<Asset>;
   listRecentAssets(limit?: number): Promise<readonly Asset[]>;
   listAssetsByProject(projectId: string): Promise<readonly Asset[]>;
   listJobs(projectId?: string, status?: Job["status"]): Promise<readonly Job[]>;
@@ -73,6 +76,7 @@ export const mockApiClient: ApiClient = {
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,
   getAsset: mockApi.fetchAsset,
+  updateAsset: mockApi.updateAsset,
   listRecentAssets: mockApi.fetchRecentAssets,
   listAssetsByProject: mockApi.fetchAssetsByProject,
   listJobs: mockApi.fetchJobs,

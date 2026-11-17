@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
 import {
@@ -33,7 +33,14 @@ import {
   fetchRecentAssets,
   fetchStorageStats,
   fetchWorkflowTemplates,
+  resetMockAssets,
+  updateAsset,
 } from "./mockApi";
+
+afterEach(() => {
+  resetMockAssets();
+  clearMockFailures();
+});
 
 describe("mock API home summary", () => {
   it("includes only active (non-archived) projects", async () => {
@@ -525,5 +532,99 @@ describe("mock chat writes and streams", () => {
 
     await expect(fetchHomeSummary()).resolves.toBeDefined();
     await expect(fetchProjects()).resolves.toBeDefined();
+  });
+});
+
+describe("mock API asset writes", () => {
+  const MISSING_ID = "00000000-0000-4000-8000-000000000000";
+
+  it("persists a name/tags/metadata patch and surfaces it on every read", async () => {
+    const assets = await fetchAssets();
+    const target = assets[0];
+    expect(target).toBeDefined();
+    if (!target) return;
+
+    const updated = await updateAsset(target.id, {
+      name: "Renamed frame",
+      tags: ["reviewed", "ready"],
+      metadata: { review_note: "looks good" },
+    });
+
+    expect(updated).toMatchObject({
+      id: target.id,
+      name: "Renamed frame",
+      tags: ["reviewed", "ready"],
+      metadata: { review_note: "looks good" },
+    });
+    expect(Date.parse(updated.updated_at)).toBeGreaterThan(Date.parse(target.updated_at));
+    await expect(fetchAsset(target.id)).resolves.toMatchObject({ name: "Renamed frame" });
+    expect((await fetchAssets()).find((asset) => asset.id === target.id)?.name).toBe(
+      "Renamed frame",
+    );
+    expect(
+      (await fetchAssetsByProject(target.project_id)).find((asset) => asset.id === target.id)
+        ?.name,
+    ).toBe("Renamed frame");
+    const detail = await fetchProjectDetail(target.project_id);
+    expect(detail?.assets.find((asset) => asset.id === target.id)?.name).toBe("Renamed frame");
+    expect((await fetchRecentAssets(20)).find((asset) => asset.id === target.id)?.name).toBe(
+      "Renamed frame",
+    );
+    expect((await fetchHomeSummary()).recentAssets.find((asset) => asset.id === target.id)?.name).toBe(
+      "Renamed frame",
+    );
+  });
+
+  it("treats null tags/metadata as no-change, matching the backend repository", async () => {
+    const assets = await fetchAssets();
+    const target = assets.find((asset) => (asset.tags ?? []).length > 0);
+    expect(target).toBeDefined();
+    if (!target) return;
+
+    const updated = await updateAsset(target.id, {
+      name: target.name,
+      tags: null,
+      metadata: null,
+    });
+
+    expect(updated.tags).toEqual(target.tags);
+    expect(updated.metadata).toEqual(target.metadata);
+  });
+
+  it("rejects a null name, unknown ids and injected failure states", async () => {
+    const assets = await fetchAssets();
+    const target = assets[0];
+    expect(target).toBeDefined();
+    if (!target) return;
+
+    await expect(updateAsset(target.id, { name: null })).rejects.toMatchObject({
+      status: 400,
+      code: "invalid_request",
+      details: [{ field: "name", message: "name is required and cannot be null" }],
+    });
+    await expect(updateAsset(MISSING_ID, { name: "x" })).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+    });
+    expect((await fetchAsset(target.id))?.name).toBe(target.name);
+
+    setMockFailure("assets");
+    await expect(updateAsset(target.id, { name: "x" })).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+
+  it("keeps seed fixtures pristine after a write is reset", async () => {
+    const before = await fetchAssets();
+    const target = before[0];
+    expect(target).toBeDefined();
+    if (!target) return;
+
+    await updateAsset(target.id, { name: "Temporary" });
+    expect((await fetchAsset(target.id))?.name).toBe("Temporary");
+
+    resetMockAssets();
+    expect((await fetchAsset(target.id))?.name).toBe(target.name);
   });
 });

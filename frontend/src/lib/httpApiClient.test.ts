@@ -499,3 +499,42 @@ describe("createHttpApiClient chat writes and streams", () => {
     expect(listeners.get("message")).toHaveLength(0);
   });
 });
+
+describe("createHttpApiClient asset writes", () => {
+  it("PATCHes an asset patch with a JSON body and returns the updated asset", async () => {
+    const updated = { ...assets[0], name: "Renamed frame", tags: ["reviewed"] };
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+      seen.push({ url: String(input), init });
+      return jsonResponse(updated);
+    }) as typeof fetch;
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.updateAsset("a1", { name: "Renamed frame", tags: ["reviewed"] }),
+    ).resolves.toMatchObject({ id: "a1", name: "Renamed frame", tags: ["reviewed"] });
+
+    expect(seen[0]?.init?.method).toBe("PATCH");
+    expect(JSON.parse(String(seen[0]?.init?.body))).toEqual({
+      name: "Renamed frame",
+      tags: ["reviewed"],
+    });
+    expect(new URL(seen[0]?.url ?? "").pathname).toBe(`${API_PREFIX}/assets/a1`);
+  });
+
+  it("normalizes a failed PATCH into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "invalid_request", message: "name cannot be null" } },
+          { status: 400 },
+        )) as typeof fetch,
+    });
+
+    await expect(failing.updateAsset("a1", { name: null })).rejects.toMatchObject({
+      status: 400,
+      code: "invalid_request",
+      message: "name cannot be null",
+    });
+  });
+});

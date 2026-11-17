@@ -22,6 +22,9 @@ export const queryKeys = {
     workflowTemplates: (projectId?: string) =>
       ["assets", "workflow-templates", projectId ?? "all"] as const,
   },
+  /** Cache roots refreshed after an asset write; TanStack matches by prefix. */
+  assetWriteRoots: () =>
+    [["assets"], ["home"], ["projects"]] as const,
   jobs: {
     all: () => ["jobs"] as const,
     byId: (id: string) => ["jobs", "by-id", id] as const,
