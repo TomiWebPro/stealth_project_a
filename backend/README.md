@@ -43,6 +43,9 @@ Other environment variables:
 All paths are prefixed with `/api/v1`.
 
 - **Core:** `GET /health`, `GET /version`
+- **Dashboard:** `GET /dashboard?recent_limit=` — authoritative workspace snapshot
+  (entity counts, zero-filled job-status/asset-type breakdowns and the newest
+  jobs/assets) derived from the stores; deleted assets are excluded
 - **Projects:** `GET|POST /projects`, `GET|PATCH|DELETE /projects/{id}`
 - **Project tree:** `GET|POST /projects/{id}/tree`,
   `POST /projects/{id}/links/{plan|apply}`, `GET /projects/{id}/links`

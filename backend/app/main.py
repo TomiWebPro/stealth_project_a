@@ -25,6 +25,7 @@ from .routers import (
     audit,
     auth,
     conversations,
+    dashboard,
     events,
     exports,
     extensions,
@@ -218,6 +219,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(splat.router, prefix=API_PREFIX)
     app.include_router(exports.router, prefix=API_PREFIX)
     app.include_router(search.router, prefix=API_PREFIX)
+    app.include_router(dashboard.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.
     @app.get("/health", response_model=HealthResponse, include_in_schema=False)

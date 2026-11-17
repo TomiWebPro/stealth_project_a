@@ -48,6 +48,10 @@ from .auth import (
     TokenPair,
     User,
 )
+from .dashboard import (
+    DashboardCounts,
+    DashboardSummary,
+)
 from .common import (
     API_PREFIX,
     API_VERSION,
@@ -134,6 +138,9 @@ from .search import (
 __all__ = [
     "API_PREFIX",
     "API_VERSION",
+    # dashboard
+    "DashboardCounts",
+    "DashboardSummary",
     # audit
     "AuditEvent",
     "AuditEventKind",

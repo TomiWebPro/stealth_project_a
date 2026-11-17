@@ -11,6 +11,7 @@ from .assets import AssetRepository
 from .audit import AuditRepository
 from .auth import AuthRepository
 from .conversations import ConversationRepository
+from .dashboard import DashboardRepository
 from .extensions import ExtensionRepository
 from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
@@ -33,6 +34,7 @@ class Repositories:
     extensions: ExtensionRepository
     audit: AuditRepository
     search: SearchRepository
+    dashboard: DashboardRepository
 
     @classmethod
     def build(
@@ -65,6 +67,7 @@ class Repositories:
         extensions = ExtensionRepository(store, clock=clock)
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
         search = SearchRepository(store, clock=clock)
+        dashboard = DashboardRepository(store, clock=clock)
         return cls(
             projects=projects,
             assets=assets,
@@ -77,6 +80,7 @@ class Repositories:
             extensions=extensions,
             audit=audit,
             search=search,
+            dashboard=dashboard,
         )
 
 
