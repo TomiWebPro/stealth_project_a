@@ -82,6 +82,9 @@ All paths are prefixed with `/api/v1`.
 - **Search:** `GET /search?q=&kind=&limit=` — ranked, best-first project/asset/
   conversation matches derived from the authoritative stores (no second index);
   blank queries and no-match queries return an empty `results` list
+- **Tags:** `GET /tags?project_id=&prefix=&limit=` — most-used-first asset tag
+  facets (count of non-deleted assets per tag) derived from the authoritative
+  store; optional case-insensitive prefix filter for autocomplete
 
 All non-2xx responses use the shared `ErrorResponse` envelope with an
 `X-Request-ID` header. Bearer tokens from `POST /auth/login` authenticate

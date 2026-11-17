@@ -26,6 +26,7 @@ from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
 from .repositories.providers import ProviderRepository
 from .repositories.search import SearchRepository
+from .repositories.tags import TagRepository
 from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
 from .tree import ProjectTree
@@ -190,6 +191,12 @@ def get_dashboard_repository(
     return repositories.dashboard
 
 
+def get_tag_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> TagRepository:
+    return repositories.tags
+
+
 def get_bearer_token(
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ) -> str:
@@ -250,6 +257,7 @@ __all__ = [
     "get_shot_service",
     "get_splat_service",
     "get_search_repository",
+    "get_tag_repository",
     "get_store",
     "get_training_service",
     "get_upload_repository",

@@ -17,3 +17,4 @@ export * from "./provider";
 export * from "./orchestration";
 export * from "./search";
 export * from "./dashboard";
+export * from "./tags";

@@ -140,6 +140,10 @@ from .search import (
     SearchResult,
     SearchResultKind,
 )
+from .tags import (
+    TagFacet,
+    TagIndex,
+)
 
 __all__ = [
     "API_PREFIX",
@@ -267,4 +271,7 @@ __all__ = [
     "SearchResponse",
     "SearchResult",
     "SearchResultKind",
+    # tags
+    "TagFacet",
+    "TagIndex",
 ]

@@ -19,6 +19,7 @@ from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
 from .providers import ProviderRepository
 from .search import SearchRepository
+from .tags import TagRepository
 from .uploads import UploadRepository
 
 
@@ -37,6 +38,7 @@ class Repositories:
     audit: AuditRepository
     search: SearchRepository
     dashboard: DashboardRepository
+    tags: TagRepository
 
     @classmethod
     def build(
@@ -71,6 +73,7 @@ class Repositories:
         search = SearchRepository(store, clock=clock)
         dashboard = DashboardRepository(store, clock=clock)
         activity = ActivityRepository(store, projects, clock=clock)
+        tags = TagRepository(store, projects, clock=clock)
         return cls(
             activity=activity,
             projects=projects,
@@ -85,6 +88,7 @@ class Repositories:
             audit=audit,
             search=search,
             dashboard=dashboard,
+            tags=tags,
         )
 
 
