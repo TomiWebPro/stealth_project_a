@@ -184,6 +184,16 @@ this file is the execution checklist.
   envelopes; contracts mirrored in `frontend/src/types/audit.ts`.
   ✅ 2026-11-17 — `9f74936` — 14 new tests green on memory+sqlite (507 passed).
   Screens/mocks wiring of the new query is a follow-up for those agents.
+- [x] C19 (screens) Project detail storage panel: wired the existing
+  `useStorageStats` hook into a Storage card with loading/error/empty/populated
+  states; display values derived in `storageHelpers` (byte/count formatting,
+  quota tone, over-quota detection) with unit tests.
+  ✅ 2026-11-17 — `7a6cd7d`
+- [ ] C20 (mocks + screens) Wire the authoritative project audit API (C18) end
+  to end: expose `getProjectAudit` / `useProjectAudit` atomically across mockApi,
+  ApiClient, httpApiClient, queryKeys and useQueries with populated/empty/error
+  seeds; then render the feed on project detail (screens), replacing the
+  derived-only view. Backend endpoint + TS contracts already shipped.
 
 ## Log (append one line per completed item)
 
@@ -242,3 +252,4 @@ this file is the execution checklist.
 - 2026-11-17 — `464e712` — C16: added `.github/dependabot.yml` with weekly updates for npm (frontend), pip (backend), Cargo (frontend/src-tauri) and GitHub Actions (re-pins C11 SHAs); validated both CI YAML files; frontend lint/test/build (144 tests) and backend pytest (490 passed) green.
 - 2026-11-17 — `f9d255d` — C17: OpenAPI guard locks the API surface (68 paths, 87 ops) — prefix, unique operationIds, uniform error envelope; 3 tests green (493 passed).
 - 2026-11-17 — `9f74936` — C18: authoritative `GET /projects/{id}/audit` feed (asset/publish/job events derived from authoritative stores; kind + time bounds + limit; mirrored TS contracts), 14 new tests green on memory+sqlite (507 passed).
+- 2026-11-17 — `7a6cd7d` — C19: added a project storage card on detail (useStorageStats hook, loading/error/empty/populated states, storageHelpers format/usage derivation + 9 unit tests); lint/test (152)/build green. Added C20 for mocks+screens to wire the C18 audit API end to end.
