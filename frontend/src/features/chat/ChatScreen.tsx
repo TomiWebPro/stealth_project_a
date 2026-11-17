@@ -1,12 +1,14 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState, type FormEvent } from "react";
 import {
+  useConversationStream,
   useConversations,
   useMessages,
   useProjects,
+  useSendMessage,
 } from "../../hooks/useQueries";
 import { errorMessage } from "../../lib/errors";
+import type { Message, StreamEvent } from "../../lib/types";
 import { PageHeader } from "../../layout/AppLayout";
-import { useChatStore } from "../../stores/chatStore";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
@@ -102,31 +104,77 @@ function ConversationList({
   );
 }
 
+interface StreamDraft {
+  readonly content: string;
+  readonly status: Message["status"];
+  readonly createdAt: string;
+  readonly error?: string;
+}
+
 function MessageThread({ conversationId }: { readonly conversationId: string }) {
   const messagesQuery = useMessages(conversationId);
-  const optimistic = useChatStore((state) => state.optimistic[conversationId] ?? []);
-  const appendMessage = useChatStore((state) => state.appendMessage);
+  const sendMessage = useSendMessage();
   const [draft, setDraft] = useState("");
+  const [streamDrafts, setStreamDrafts] = useState<Readonly<Record<string, StreamDraft>>>({});
+
+  const handleStreamEvent = useCallback((event: StreamEvent) => {
+    setStreamDrafts((current) => {
+      const existing = current[event.message_id] ?? {
+        content: "",
+        status: "streaming" as const,
+        createdAt: new Date().toISOString(),
+      };
+      switch (event.type) {
+        case "message_start":
+          return { ...current, [event.message_id]: { ...existing, status: "streaming" } };
+        case "delta":
+          return {
+            ...current,
+            [event.message_id]: { ...existing, content: existing.content + (event.delta ?? "") },
+          };
+        case "message_complete":
+          return { ...current, [event.message_id]: { ...existing, status: "complete" } };
+        case "error":
+          return {
+            ...current,
+            [event.message_id]: {
+              ...existing,
+              status: "error",
+              error: event.error ?? "Stream error",
+            },
+          };
+      }
+    });
+  }, []);
+  useConversationStream(conversationId, handleStreamEvent);
+
+  const streamedMessages = useMemo<readonly Message[]>(
+    () =>
+      Object.entries(streamDrafts).map(([id, stream]) => ({
+        id,
+        conversation_id: conversationId,
+        role: "assistant",
+        content: stream.content || (stream.status === "streaming" ? "…" : ""),
+        status: stream.status,
+        created_at: stream.createdAt,
+      })),
+    [streamDrafts, conversationId],
+  );
 
   const messages = useMemo(
-    () => mergeMessages(messagesQuery.data ?? [], optimistic),
-    [messagesQuery.data, optimistic],
+    () => mergeMessages(messagesQuery.data ?? [], streamedMessages),
+    [messagesQuery.data, streamedMessages],
   );
   const rows = useMemo(() => buildMessageRows(messages), [messages]);
 
   function handleSend(event: FormEvent) {
     event.preventDefault();
     const content = draft.trim();
-    if (content.length === 0) return;
-    appendMessage(conversationId, {
-      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      conversation_id: conversationId,
-      role: "user",
-      content,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    });
-    setDraft("");
+    if (content.length === 0 || sendMessage.isPending) return;
+    sendMessage.mutate(
+      { conversationId, body: { content } },
+      { onSuccess: () => setDraft("") },
+    );
   }
 
   return (
@@ -196,13 +244,21 @@ function MessageThread({ conversationId }: { readonly conversationId: string }) 
             className="w-full resize-none rounded-md border border-line bg-surface px-3 py-2 text-sm text-content placeholder:text-content-subtle"
           />
         </label>
-        <Button type="submit" variant="primary" disabled={draft.trim().length === 0}>
-          Send
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={draft.trim().length === 0 || sendMessage.isPending}
+        >
+          {sendMessage.isPending ? "Sending…" : "Send"}
         </Button>
       </form>
+      {sendMessage.isError ? (
+        <p className="border-t border-line px-3 py-2 text-xs text-danger" role="alert">
+          {errorMessage(sendMessage.error)}
+        </p>
+      ) : null}
       <p className="border-t border-line px-3 py-2 text-2xs text-content-subtle">
-        Prompts are staged locally. Streaming orchestration and send mutation land with the
-        conversations write API (tracked in the backlog).
+        Messages persist through the conversations API; assistant replies stream in live.
       </p>
     </Card>
   );
