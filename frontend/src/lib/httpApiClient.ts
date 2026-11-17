@@ -1,5 +1,7 @@
 import { ApiError } from "../api/client";
 import { parseStreamEvent } from "../api/conversations";
+import { auditQueryParams } from "./audit";
+import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
@@ -9,6 +11,7 @@ import type { ProjectDetail } from "./projectDetail";
 import type {
   Asset,
   AssetUpdate,
+  AuditTrail,
   Comment,
   Conversation,
   Extension,
@@ -263,6 +266,23 @@ export function createHttpApiClient(
         optional(() => listJobs({ project_id: projectId }), [] as readonly Job[]),
       ]);
       return { project, assets, jobs };
+    },
+
+    async getProjectAudit(
+      projectId: string,
+      query?: AuditQuery,
+    ): Promise<AuditTrail | undefined> {
+      try {
+        return await request<AuditTrail>(
+          `/projects/${encodeURIComponent(projectId)}/audit`,
+          auditQueryParams(query),
+        );
+      } catch (cause) {
+        // The authoritative endpoint 404s on unknown projects; detail lookups
+        // resolve to undefined, but every other failure is surfaced to the hook.
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     listProviders: () => request<Provider[]>("/providers"),

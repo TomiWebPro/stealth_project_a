@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../types";
 import { API_PREFIX } from "../types/common";
-import type { Asset, Job, Project, Provider } from "./types";
+import type { Asset, AuditTrail, Job, Project, Provider } from "./types";
 import { createHttpApiClient } from "./httpApiClient";
 
 interface FakeResponseInit {
@@ -535,6 +535,59 @@ describe("createHttpApiClient asset writes", () => {
       status: 400,
       code: "invalid_request",
       message: "name cannot be null",
+    });
+  });
+});
+
+describe("createHttpApiClient project audit", () => {
+  const trail: AuditTrail = {
+    project_id: project.id,
+    events: [
+      {
+        id: "job-j1",
+        kind: "job",
+        label: "dataset-prep · running",
+        detail: "Attempt 1",
+        timestamp: "2026-01-05T00:00:00Z",
+        tone: "info",
+      },
+    ],
+  };
+
+  it("GETs the audit path with filters and returns the trail", async () => {
+    const { fetchImpl, calls } = router({
+      [`/projects/${project.id}/audit`]: trail,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getProjectAudit(project.id, { kind: "job", limit: 5 }),
+    ).resolves.toEqual(trail);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/projects/${project.id}/audit`);
+    expect(url.searchParams.get("kind")).toBe("job");
+    expect(url.searchParams.get("limit")).toBe("5");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getProjectAudit(project.id)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getProjectAudit(project.id)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
     });
   });
 });

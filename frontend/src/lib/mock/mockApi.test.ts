@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
+import { PROJECTS } from "./data";
 import {
   clearMockFailures,
   fetchAsset,
@@ -26,6 +27,7 @@ import {
   fetchOrchestrationRun,
   fetchPresence,
   fetchProject,
+  fetchProjectAudit,
   fetchProjectDetail,
   fetchProjects,
   fetchProvider,
@@ -626,5 +628,43 @@ describe("mock API asset writes", () => {
 
     resetMockAssets();
     expect((await fetchAsset(target.id))?.name).toBe(target.name);
+  });
+});
+
+describe("mock API project audit (C20)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+  const missingId = "00000000-0000-4000-8000-000000000000";
+
+  it("returns a populated, newest-first feed for a production project", async () => {
+    const trail = await fetchProjectAudit(filmId);
+    expect(trail?.project_id).toBe(filmId);
+    expect(trail?.events?.length ?? 0).toBeGreaterThan(0);
+    const timestamps = (trail?.events ?? []).map((event) => Date.parse(event.timestamp));
+    expect(timestamps).toEqual([...timestamps].sort((a, b) => b - a));
+  });
+
+  it("returns an empty feed for a project with no assets or jobs", async () => {
+    expect(await fetchProjectAudit(emptyId)).toEqual({ project_id: emptyId, events: [] });
+  });
+
+  it("resolves unknown projects to undefined", async () => {
+    expect(await fetchProjectAudit(missingId)).toBeUndefined();
+  });
+
+  it("supports kind and limit filters", async () => {
+    const full = await fetchProjectAudit(filmId);
+    const jobsOnly = await fetchProjectAudit(filmId, { kind: "job", limit: 2 });
+    expect(jobsOnly?.events).toHaveLength(2);
+    expect(jobsOnly?.events?.every((event) => event.kind === "job")).toBe(true);
+    expect(full?.events?.length ?? 0).toBeGreaterThan(jobsOnly?.events?.length ?? 0);
+  });
+
+  it("surfaces the injected failure state as a normalized ApiError", async () => {
+    setMockFailure("audit");
+    await expect(fetchProjectAudit(filmId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
   });
 });

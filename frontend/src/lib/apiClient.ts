@@ -1,3 +1,4 @@
+import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
@@ -6,6 +7,7 @@ import type { ProjectDetail } from "./projectDetail";
 import type {
   Asset,
   AssetUpdate,
+  AuditTrail,
   Comment,
   Conversation,
   Extension,
@@ -45,6 +47,8 @@ export interface ApiClient {
   listJobsByProject(projectId: string): Promise<readonly Job[]>;
   getJob(jobId: string): Promise<Job | undefined>;
   getProjectDetail(projectId: string): Promise<ProjectDetail | undefined>;
+  /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
+  getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
   getProvider(providerId: string): Promise<Provider | undefined>;
   listWorkflowTemplates(projectId?: string): Promise<readonly Asset[]>;
@@ -83,6 +87,7 @@ export const mockApiClient: ApiClient = {
   listJobsByProject: mockApi.fetchJobsByProject,
   getJob: mockApi.fetchJob,
   getProjectDetail: mockApi.fetchProjectDetail,
+  getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,
   listWorkflowTemplates: mockApi.fetchWorkflowTemplates,

@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { API_PREFIX } from "../types/common";
+import { filterAuditTrail } from "./audit";
+import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
 import type { ApiClient } from "./apiClient";
 import {
   ASSETS,
+  AUDIT_TRAILS,
   COMMENTS,
   CONVERSATIONS,
   CURRENT_USER,
@@ -43,6 +46,25 @@ function jsonResponse(body: unknown, status = 200): Response {
 function resolveSeed(path: string, params: URLSearchParams): unknown {
   const pathParts = path.split("/");
   const id = pathParts[pathParts.length - 1];
+
+  // The authoritative audit feed is derived by the backend, not a raw seed;
+  // emulate that derivation over the same asset/job-derived trail seeds.
+  if (/^\/projects\/[^/]+\/audit$/.test(path)) {
+    const projectId = pathParts[2] ?? "";
+    const trail = AUDIT_TRAILS.find((entry) => entry.project_id === projectId);
+    if (!trail) return NOT_FOUND;
+    const kind = params.get("kind");
+    const since = params.get("since");
+    const until = params.get("until");
+    const limitRaw = params.get("limit");
+    const query: AuditQuery = {
+      ...(kind ? { kind: kind as AuditQuery["kind"] } : {}),
+      ...(since ? { since } : {}),
+      ...(until ? { until } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    return filterAuditTrail(trail, query);
+  }
 
   if (path === "/projects") return PROJECTS;
   if (path.startsWith("/projects/")) return PROJECTS.find((p) => p.id === id) ?? NOT_FOUND;
@@ -170,6 +192,7 @@ describe("live vs mock transport parity", () => {
       ["listJobsByProject", (api) => api.listJobsByProject(filmId)],
       ["getJob", (api) => api.getJob(failedJobId)],
       ["getProjectDetail", (api) => api.getProjectDetail(filmId)],
+      ["getProjectAudit", (api) => api.getProjectAudit(filmId)],
       ["listProviders", (api) => api.listProviders()],
       ["getProvider", (api) => api.getProvider("prov_local")],
       ["listWorkflowTemplates", (api) => api.listWorkflowTemplates()],
@@ -206,6 +229,11 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getProject("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(await mockApiClient.getProject("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(await live.getProjectAudit(emptyId)).toEqual(await mockApiClient.getProjectAudit(emptyId));
+    expect(await live.getProjectAudit("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getProjectAudit("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
   });
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {

@@ -2,12 +2,14 @@ import type { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
+import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type {
   Asset,
   AssetUpdate,
+  AuditTrail,
   Comment,
   Conversation,
   Extension,
@@ -55,6 +57,18 @@ export function useProjectDetail(projectId: string): UseQueryResult<ProjectDetai
   return useQuery({
     queryKey: queryKeys.projects.detail(projectId),
     queryFn: () => api.getProjectDetail(projectId),
+  });
+}
+
+/** Newest-first authoritative audit feed (C20) for one project. */
+export function useProjectAudit(
+  projectId: string,
+  query?: AuditQuery,
+): UseQueryResult<AuditTrail | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.audit.trail(projectId, query),
+    queryFn: () => api.getProjectAudit(projectId, query),
   });
 }
 

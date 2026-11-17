@@ -109,6 +109,27 @@ describe("queryKeys", () => {
     expect(queryKeys.extensions.byId("e1")).toEqual(["extensions", "by-id", "e1"]);
   });
 
+  it("scopes the audit trail key by project and every filter", () => {
+    expect(queryKeys.audit.trail("p1")).toEqual([
+      "audit",
+      "trail",
+      "p1",
+      "all",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.audit.trail("p1", { kind: "job", limit: 10 })).toEqual([
+      "audit",
+      "trail",
+      "p1",
+      "job",
+      "all",
+      "all",
+      10,
+    ]);
+  });
+
   it("returns a new array per call so cache keys compare by value", () => {
     expect(queryKeys.providers.all()).toEqual(queryKeys.providers.all());
     expect(queryKeys.providers.all()).not.toBe(queryKeys.providers.all());

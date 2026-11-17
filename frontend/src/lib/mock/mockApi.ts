@@ -1,4 +1,6 @@
 import { ApiError } from "../../api/client";
+import { filterAuditTrail } from "../audit";
+import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
 import type { ConversationStream } from "../conversationStream";
 import { env } from "../env";
@@ -7,6 +9,7 @@ import type { ProjectDetail } from "../projectDetail";
 import type {
   Asset,
   AssetUpdate,
+  AuditTrail,
   Comment,
   Conversation,
   Extension,
@@ -25,6 +28,7 @@ import type {
 } from "../types";
 import {
   ASSETS,
+  AUDIT_TRAILS,
   COMMENTS,
   CONVERSATIONS,
   CURRENT_USER,
@@ -191,6 +195,20 @@ export async function fetchProjectDetail(projectId: string): Promise<ProjectDeta
       b.created_at.localeCompare(a.created_at),
     ),
   });
+}
+
+/**
+ * Newest-first authoritative audit feed (C18/C20). Unknown projects resolve to
+ * `undefined` (mirroring the live endpoint's 404-to-undefined mapping); the
+ * `"audit"` failure domain surfaces the same normalized `ApiError` as live.
+ */
+export async function fetchProjectAudit(
+  projectId: string,
+  query?: AuditQuery,
+): Promise<AuditTrail | undefined> {
+  failIfEnabled("audit");
+  const trail = AUDIT_TRAILS.find((entry) => entry.project_id === projectId);
+  return delay(filterAuditTrail(trail, query));
 }
 
 export async function fetchProviders(): Promise<readonly Provider[]> {

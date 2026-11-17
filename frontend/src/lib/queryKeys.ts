@@ -1,3 +1,5 @@
+import type { AuditQuery } from "./audit";
+
 /**
  * Centralised TanStack Query keys.
  *
@@ -66,6 +68,18 @@ export const queryKeys = {
   },
   storage: {
     stats: (projectId: string) => ["storage", "stats", projectId] as const,
+  },
+  audit: {
+    trail: (projectId: string, query: AuditQuery = {}) =>
+      [
+        "audit",
+        "trail",
+        projectId,
+        query.kind ?? "all",
+        query.since ?? "all",
+        query.until ?? "all",
+        query.limit ?? "all",
+      ] as const,
   },
   extensions: {
     all: () => ["extensions"] as const,

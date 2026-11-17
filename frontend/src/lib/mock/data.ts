@@ -6,8 +6,10 @@
  * the live API is enabled.
  */
 
+import { buildAuditTrail } from "../audit";
 import type {
   Asset,
+  AuditTrail,
   Comment,
   Conversation,
   Extension,
@@ -1295,4 +1297,13 @@ export const EXTENSIONS: readonly Extension[] = [
     verified: false,
   },
 ];
+
+// --- Project audit trails (C18 / C20) ---------------------------------------
+// Derived from the same authoritative asset/job seeds the backend repository
+// uses, so mock mode stays in lockstep with the live audit endpoint. Projects
+// with no assets/jobs (e.g. "Blank Slate") naturally yield an empty feed.
+
+export const AUDIT_TRAILS: readonly AuditTrail[] = PROJECTS.map((project) =>
+  buildAuditTrail(project.id, ASSETS, JOBS),
+);
 
