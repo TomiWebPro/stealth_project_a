@@ -9,6 +9,7 @@ from fastapi import Depends, Header, Request
 
 from .config import Settings
 from .errors import ApiError
+from .publish import PublishService
 from .repositories import Repositories
 from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
@@ -33,6 +34,15 @@ def get_store(request: Request) -> DocumentStore:
 
 def get_project_tree(settings: Annotated[Settings, Depends(get_settings)]) -> ProjectTree:
     return ProjectTree(settings.studio_root)
+
+
+def get_publish_service(
+    assets: Annotated[AssetRepository, Depends(get_asset_repository)],
+    projects: Annotated[ProjectRepository, Depends(get_project_repository)],
+    tree: Annotated[ProjectTree, Depends(get_project_tree)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> PublishService:
+    return PublishService(assets, projects, tree, settings.upload_dir)
 
 
 def get_repositories(request: Request) -> Repositories:
@@ -141,6 +151,7 @@ __all__ = [
     "get_project_repository",
     "get_project_tree",
     "get_provider_repository",
+    "get_publish_service",
     "get_repositories",
     "get_settings",
     "get_store",

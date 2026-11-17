@@ -67,6 +67,18 @@ def published_name(name: str, version: int) -> str:
     return f"{base}.{suffix}" if suffix else base
 
 
+def parse_version_folder(name: str) -> int | None:
+    """``Ver_007`` -> 7; anything else -> ``None``."""
+    match = re.fullmatch(r"Ver_(\d{3,})", name)
+    return int(match.group(1)) if match else None
+
+
+def parse_published_version(name: str) -> int | None:
+    """Read the ``_vNNN`` suffix from a published file name."""
+    match = re.search(r"_v(\d{3,})(?:\.|$)", name)
+    return int(match.group(1)) if match else None
+
+
 def _workflow_dirs(parent: str, kinds) -> list[str]:
     return [f"{parent}/{workflow}" for workflow in kinds]
 
@@ -173,6 +185,8 @@ __all__ = [
     "TEMPLATE_VERSION",
     "ProjectTree",
     "normalize_kind",
+    "parse_published_version",
+    "parse_version_folder",
     "project_template_dirs",
     "published_name",
     "sanitize_name",
