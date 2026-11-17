@@ -34,6 +34,8 @@ class Collections:
     ORGANIZATIONS = "organizations"
     MEMBERS = "members"
     AUTH_TOKENS = "auth_tokens"
+    EXTENSION_REGISTRY = "extension_registry"
+    EXTENSIONS = "extensions"
 
 
 Document = dict[str, Any]

@@ -10,6 +10,7 @@ from ..storage.base import DocumentStore
 from .assets import AssetRepository
 from .auth import AuthRepository
 from .conversations import ConversationRepository
+from .extensions import ExtensionRepository
 from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
@@ -27,6 +28,7 @@ class Repositories:
     providers: ProviderRepository
     orchestration: OrchestrationRepository
     auth: AuthRepository
+    extensions: ExtensionRepository
 
     @classmethod
     def build(
@@ -56,6 +58,7 @@ class Repositories:
             default_org_id=settings.default_org_id,
             clock=clock,
         )
+        extensions = ExtensionRepository(store, clock=clock)
         return cls(
             projects=projects,
             assets=assets,
@@ -65,6 +68,7 @@ class Repositories:
             providers=providers,
             orchestration=orchestration,
             auth=auth,
+            extensions=extensions,
         )
 
 
