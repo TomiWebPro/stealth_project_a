@@ -51,8 +51,9 @@ this file is the execution checklist.
   with permission checks; a stub registry is fine as long as contracts hold.
 - [ ] P2.6 Real-time job state: WebSocket or SSE stream for job events/presence,
   with a graceful polling fallback; document the contract.
-- [ ] P2.7 Live-mode transport: finish `frontend/src/lib/httpApiClient.ts` against the
+- [x] P2.7 Live-mode transport: finish `frontend/src/lib/httpApiClient.ts` against the
   new routers; make `VITE_API_MODE=live` work end-to-end without screen rewrites.
+  ✅ 2026-11-17 — `9e817d6`
 - [x] P2.8 Wire screens to live mode behind the existing `ApiClient` interface; keep
   mock mode working. Add a contract/integration smoke test for both modes.
   (2026-11-17, 5c9436c)
@@ -123,4 +124,6 @@ this file is the execution checklist.
 - 2026-11-17 — b282dba — C4b: added Linux Tauri shell CI job (`npx tauri build --no-bundle`) with `Swatinem/rust-cache` target cache + WebKit/GTK deps; README CI section synced; frontend lint/test/build and backend pytest verified green.
 - 2026-11-17 — d1d7d9d — C7: added `pytest-cov` dev dep, `[coverage:*]` config in pytest.ini, and a CI coverage gate (`--cov=app --cov-fail-under=90`, currently 96%) to guard C1's router-coverage goal; plain `python3 -m pytest -q` still green (188 passed).
 - 2026-11-17 — P3.4 shipped (`cc7a398`): asset detail panel with provenance/storage, editable name/tags/metadata (local-optimistic), selectable grid/list/shot items, helper unit tests; added P3.6 for mocks/backend to expose `updateAsset`.
+- 2026-11-17 — `9e817d6` — P2.7: rewrote live `httpApiClient` to mount under `/api/v1` exactly once, normalize `ApiError`, inject bearer tokens, assemble home/detail view models client-side, and degrade optional jobs/providers routers; 9 transport tests green.
+- 2026-11-17 — `9e817d6` — P4 mocks-facing: added operation-catalog, capability-discovery, conversation and message queries atomically across mockApi/ApiClient/httpApiClient/queryKeys/hooks with seeds and 12 mock+live+key tests; lint/test/build green.
 - 2026-11-17 — 08f10c8 — C8: added `@vitest/coverage-v8` dev dep, `test:coverage` script, V8 coverage config in vite.config.ts and an informational CI coverage step (baseline ~29% statements, no gate); ignored coverage/ artifacts; README CI section synced.
