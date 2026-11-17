@@ -100,7 +100,9 @@ this file is the execution checklist.
 
 ## Phase 6 — Professional capabilities (owner: all)
 
-- [ ] P6.1 Workspaces with collaboration roles and presence.
+- [x] P6.1 Workspaces with collaboration roles and presence.
+  ✅ 2026-11-17 — `a152ae8` — organizations/session, derived owner/member/viewer roles,
+  presence and comments panels with loading/error/empty/populated states.
 - [ ] P6.2 Multiple providers/local runtimes with health/degraded states.
 - [ ] P6.3 Advanced lineage graph UI + audit trail.
 - [ ] P6.4 Audio integration (TTS/dialogue hooks) behind capability flags.
@@ -151,3 +153,4 @@ this file is the execution checklist.
 - 2026-11-17 — `92edce5` — C3: skip link with focusable main, Up/Down roving focus across sidebar nav links, and subtle-text contrast raised from ~3.5:1 to >=4.5:1 on surfaces; lint/test/build green.
 - 2026-11-17 — `d338f11` — P2.4: dev-local bearer auth adapter (login/refresh with rotation, /auth/session, /auth/me), orgs + member invites with unique-slug/duplicate guards; 38 new tests green on memory+sqlite (314 passed).
 - 2026-11-17 — `3c1488a` — P2.5: seeded stub extension registry, permission-gated install (rejects unaccepted permissions), enable/disable/uninstall lifecycle with idempotency; 20 new tests green on memory+sqlite (334 passed).
+- 2026-11-17 — `a152ae8` — P6.1: Workspaces screen now shows organization/session identity, derived collaboration roles (owner/member/viewer), live presence and project comments from hooks, with all UI states and helper tests.
