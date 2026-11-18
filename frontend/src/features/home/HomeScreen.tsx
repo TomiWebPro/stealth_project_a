@@ -8,6 +8,7 @@ import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
+import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { DashboardPanel } from "./DashboardPanel";
 import {
   assetTypeTone,
@@ -138,6 +139,7 @@ export function HomeScreen() {
 
       <div className="space-y-6">
         <DashboardPanel />
+        <ActivityFeedPanel />
 
         {isPending ? <HomeSkeleton /> : null}
 
