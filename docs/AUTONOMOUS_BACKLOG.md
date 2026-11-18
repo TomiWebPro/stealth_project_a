@@ -297,6 +297,16 @@ this file is the execution checklist.
   6 tests × 2 storage backends green (553 passed, 98% coverage). Mocks/screens/CI wiring
   of the index is a follow-up for those agents. ✅ 2026-11-17 — `7be2a4f`
 
+- [x] C34 (backend) Authoritative downstream asset impact API:
+  `GET /api/v1/assets/{asset_id}/impact?max_depth=` derives every asset transitively
+  derived from a root from the authoritative relationship store — a downstream
+  complement to the existing upstream `/assets/{id}/lineage` endpoint, with BFS
+  depth labeling, cycle safety, deleted-asset exclusion, deterministic cross-backend
+  ordering and shared 404/422 envelopes. `AssetImpact`/`ImpactNode` mirrored in
+  `frontend/src/types/impact.ts`; 6 tests × 2 storage backends green (565 passed).
+  Mocks/screens/CI wiring of the endpoint is a follow-up for those agents.
+  ✅ 2026-11-19 — `4f2f6d9`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -370,3 +380,4 @@ this file is the execution checklist.
 - 2026-11-17 — `80ba424` — C31 (mocks): wired the authoritative workspace activity feed end to end — `ApiClient.getActivity`/`useActivity` across mockApi (seed-derived asset/publish/job/comment events, actor + project context, project/kind/limit filters, router-style 422 + unknown-project 404 + injectable `activity` failure), the stable facade, live `httpApiClient` (`GET /activity?project_id=&kind=&limit=`), `queryKeys` and `useQueries`, with a shared `lib/activity` derivation/validation helper; parity guard extended to populated/empty/404/422 cases; lint/test (238)/build green. Screens feed rendering + CI live-smoke probe remain follow-ups.
 - 2026-11-17 — `1419b48` — C32 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/activity` feed (shape + `kind`/`limit` filters + shared 422 validation and 404 `project_not_found` envelopes), the CI follow-up from C29/C31. Added C32 as a new CI-owned row under the Never-empty well since no unchecked CI item remained. Verified the full embedded smoke script against a real uvicorn server (18/18 probes OK) and with pinned actionlint; frontend lint/test (238)/build and backend pytest (541) green.
 - 2026-11-17 — `7be2a4f` — C33 (backend): added authoritative `GET /api/v1/tags` — a most-used-first, deduplicated asset tag facet index (count of non-deleted assets per tag) derived from the asset store with no second index; `project_id` scoping, case-insensitive `prefix` autocomplete filter and `limit` bounds with shared 404/422 envelopes and deterministic cross-backend ordering. `TagFacet`/`TagIndex` mirrored in `frontend/src/types/tags.ts`; 6 tests × 2 backends green (553 passed), backend README endpoint list synced, tsc --noEmit clean. Mocks/screens/CI wiring of the index is a follow-up for those agents.
+- 2026-11-19 — `4f2f6d9` — C34 (backend): added authoritative `GET /api/v1/assets/{id}/impact` downstream impact API — BFS transitive descendants from the relationship store with depth labels, cycle safety, deleted-asset exclusion, max_depth bounds (1..20), shared 404/422 envelopes and deterministic cross-backend order; `AssetImpact`/`ImpactNode` mirrored in TS; 6 tests × 2 backends green (565 passed), tsc --noEmit clean. Mocks/screens/CI transport/rendering/smoke wiring of the endpoint is a follow-up for those agents.
