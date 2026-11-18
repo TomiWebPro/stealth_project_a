@@ -21,6 +21,7 @@ from .repositories.audit import AuditRepository
 from .repositories.conversations import ConversationRepository
 from .repositories.dashboard import DashboardRepository
 from .repositories.extensions import ExtensionRepository
+from .repositories.impact import ImpactRepository
 from .repositories.jobs import JobRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
@@ -197,6 +198,12 @@ def get_tag_repository(
     return repositories.tags
 
 
+def get_impact_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ImpactRepository:
+    return repositories.impact
+
+
 def get_bearer_token(
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ) -> str:
@@ -242,6 +249,7 @@ __all__ = [
     "get_conversation_repository",
     "get_dashboard_repository",
     "get_extension_repository",
+    "get_impact_repository",
     "get_current_org_id",
     "get_export_service",
     "get_current_user_id",

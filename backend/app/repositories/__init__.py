@@ -14,6 +14,7 @@ from .auth import AuthRepository
 from .conversations import ConversationRepository
 from .dashboard import DashboardRepository
 from .extensions import ExtensionRepository
+from .impact import ImpactRepository
 from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
@@ -39,6 +40,7 @@ class Repositories:
     search: SearchRepository
     dashboard: DashboardRepository
     tags: TagRepository
+    impact: ImpactRepository
 
     @classmethod
     def build(
@@ -74,6 +76,7 @@ class Repositories:
         dashboard = DashboardRepository(store, clock=clock)
         activity = ActivityRepository(store, projects, clock=clock)
         tags = TagRepository(store, projects, clock=clock)
+        impact = ImpactRepository(store, assets, clock=clock)
         return cls(
             activity=activity,
             projects=projects,
@@ -89,6 +92,7 @@ class Repositories:
             search=search,
             dashboard=dashboard,
             tags=tags,
+            impact=impact,
         )
 
 

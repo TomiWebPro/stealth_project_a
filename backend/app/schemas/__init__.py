@@ -58,6 +58,10 @@ from .dashboard import (
     DashboardCounts,
     DashboardSummary,
 )
+from .impact import (
+    AssetImpact,
+    ImpactNode,
+)
 from .common import (
     API_PREFIX,
     API_VERSION,
@@ -156,6 +160,9 @@ __all__ = [
     # dashboard
     "DashboardCounts",
     "DashboardSummary",
+    # impact
+    "AssetImpact",
+    "ImpactNode",
     # audit
     "AuditEvent",
     "AuditEventKind",

@@ -31,6 +31,7 @@ from .routers import (
     exports,
     extensions,
     health,
+    impact,
     jobs,
     links,
     orchestration,
@@ -224,6 +225,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(search.router, prefix=API_PREFIX)
     app.include_router(dashboard.router, prefix=API_PREFIX)
     app.include_router(tags.router, prefix=API_PREFIX)
+    app.include_router(impact.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.
     @app.get("/health", response_model=HealthResponse, include_in_schema=False)
