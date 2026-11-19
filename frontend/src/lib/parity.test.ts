@@ -10,6 +10,7 @@ import { mockApiClient } from "./apiClient";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
+import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import type { ImpactOptions } from "./impact";
 import {
   ASSETS,
@@ -228,6 +229,27 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   }
   if (path.startsWith("/assets/")) return ASSETS.find((a) => a.id === id) ?? NOT_FOUND;
 
+  // Authoritative job execution stats are derived from the job store on every
+  // call; reproduce the router's 422 validation, unknown-project 404 and the
+  // repository derivation over the shared seeds so live and mock agree exactly.
+  if (path === "/jobs/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateJobStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveJobStats(JOBS, REFERENCE_NOW, options);
+  }
+
   if (path === "/jobs") {
     let jobs = [...JOBS];
     const projectId = params.get("project_id");
@@ -345,6 +367,8 @@ describe("live vs mock transport parity", () => {
       ["getActivity filtered", (api) => api.getActivity({ projectId: filmId, kind: "job", limit: 3 })],
       ["getDashboard", (api) => api.getDashboard()],
       ["getDashboard limited", (api) => api.getDashboard({ recentLimit: 3 })],
+      ["getJobStats", (api) => api.getJobStats()],
+      ["getJobStats scoped", (api) => api.getJobStats({ projectId: filmId })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -394,6 +418,10 @@ describe("live vs mock transport parity", () => {
     expect(await live.listJobsByProject(emptyId)).toEqual(
       await mockApiClient.listJobsByProject(emptyId),
     );
+    // An empty (but valid) project scope yields the same zero-filled snapshot.
+    expect(await live.getJobStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getJobStats({ projectId: emptyId }),
+    );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
     );
@@ -442,6 +470,21 @@ describe("live vs mock transport parity", () => {
     expect(mockTags404).toMatchObject({ status: 404, code: "not_found" });
     expect(liveTags404).toMatchObject({ status: 404, code: "not_found" });
 
+    // Both transports 404 identically for an unknown job-stats project scope
+    // and reject a malformed project id with the same 422 envelope.
+    const [mockStats404, liveStats404] = await Promise.all([
+      mockApiClient.getJobStats({ projectId: missingId }).catch((cause) => cause),
+      live.getJobStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockStats404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveStats404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockStats422, liveStats422] = await Promise.all([
+      mockApiClient.getJobStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getJobStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both resolve an unknown impact root to undefined.
     expect(await live.getAssetImpact(missingId)).toEqual(
       await mockApiClient.getAssetImpact(missingId),
@@ -483,6 +526,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getHomeSummary).toBe("function");
     expect(typeof typed.getActivity).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
+    expect(typeof typed.getJobStats).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getTags).toBe("function");

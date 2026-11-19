@@ -13,6 +13,8 @@ import type { DashboardOptions } from "./dashboard";
 import type { HomeSummary } from "./homeSummary";
 import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
+import { jobStatsQueryParams } from "./jobStats";
+import type { JobStatsOptions } from "./jobStats";
 import type { ProjectDetail } from "./projectDetail";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
@@ -29,6 +31,7 @@ import type {
   DashboardSummary,
   Extension,
   Job,
+  JobStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -223,6 +226,11 @@ export function createHttpApiClient(
     /** The backend owns the whole snapshot; the live transport just forwards it. */
     getDashboard(options?: DashboardOptions): Promise<DashboardSummary> {
       return request<DashboardSummary>("/dashboard", dashboardQueryParams(options));
+    },
+
+    /** Authoritative job execution metrics derived by the backend `/jobs/stats`. */
+    getJobStats(options?: JobStatsOptions): Promise<JobStats> {
+      return request<JobStats>("/jobs/stats", jobStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

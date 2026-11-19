@@ -55,3 +55,7 @@ export type {
   User,
   Uuid,
 } from "../types";
+
+// Job-statistics contracts are not (yet) re-exported from the canonical types
+// index; source them directly from their parity-checked module.
+export type { JobStats, JobStatusCount, OperationJobStat } from "../types/jobStats";

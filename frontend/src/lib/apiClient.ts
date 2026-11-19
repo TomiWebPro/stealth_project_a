@@ -6,6 +6,7 @@ export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
+import type { JobStatsOptions } from "./jobStats";
 import type { ProjectDetail } from "./projectDetail";
 import type { SearchOptions } from "./search";
 import type { TagOptions } from "./tags";
@@ -20,6 +21,7 @@ import type {
   DashboardSummary,
   Extension,
   Job,
+  JobStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -52,6 +54,8 @@ export interface ApiClient {
   getActivity(options?: ActivityOptions): Promise<ActivityFeed>;
   /** Authoritative workspace snapshot derived by the backend `/dashboard` endpoint (C25). */
   getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
+  /** Authoritative job execution metrics derived by `/jobs/stats`, optionally project-scoped (C40). */
+  getJobStats(options?: JobStatsOptions): Promise<JobStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -101,6 +105,7 @@ export const mockApiClient: ApiClient = {
   getHomeSummary: mockApi.fetchHomeSummary,
   getActivity: mockApi.fetchActivity,
   getDashboard: mockApi.fetchDashboard,
+  getJobStats: mockApi.fetchJobStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

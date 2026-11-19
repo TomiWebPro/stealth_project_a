@@ -8,6 +8,7 @@ import type { CapabilityMatch } from "../lib/catalog";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
+import type { JobStatsOptions } from "../lib/jobStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { SearchOptions } from "../lib/search";
 import type { TagOptions } from "../lib/tags";
@@ -22,6 +23,7 @@ import type {
   DashboardSummary,
   Extension,
   Job,
+  JobStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -61,6 +63,15 @@ export function useDashboard(options?: DashboardOptions): UseQueryResult<Dashboa
   return useQuery({
     queryKey: queryKeys.dashboard.summary(options),
     queryFn: () => api.getDashboard(options),
+  });
+}
+
+/** Authoritative job execution metrics from `/jobs/stats`, optionally project-scoped (C40). */
+export function useJobStats(options?: JobStatsOptions): UseQueryResult<JobStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.jobStats.summary(options),
+    queryFn: () => api.getJobStats(options),
   });
 }
 

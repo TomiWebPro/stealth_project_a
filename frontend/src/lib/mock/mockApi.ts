@@ -11,6 +11,8 @@ import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
 import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
+import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
+import type { JobStatsOptions } from "../jobStats";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
 import type { SearchOptions } from "../search";
@@ -25,6 +27,7 @@ import type {
   Conversation,
   Extension,
   Job,
+  JobStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -77,7 +80,7 @@ function delay<T>(value: T): Promise<T> {
 /**
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
- * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
+ * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
  * `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
@@ -180,6 +183,27 @@ export async function fetchDashboard(options?: DashboardOptions) {
       options,
     ),
   );
+}
+
+/**
+ * Authoritative job execution metrics (C40) derived from the same job seeds as
+ * the live `/jobs/stats` endpoint. Router-style 422 validation, a 404 for an
+ * unknown project scope and the `"jobStats"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchJobStats(
+  options?: JobStatsOptions,
+): Promise<JobStats> {
+  failIfEnabled("jobStats");
+  validateJobStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveJobStats(JOBS, REFERENCE_NOW, options));
 }
 
 /**
