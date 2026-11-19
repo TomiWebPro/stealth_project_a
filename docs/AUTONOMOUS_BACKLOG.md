@@ -1812,6 +1812,22 @@ this file is the execution checklist.
   so C154 was added under the Never-empty well.
   ✅ 2026-11-19 — `e762137`
 
+- [x] C155 (mocks) Wire the authoritative asset version feed API (C153
+  follow-up) end to end: expose `getVersionFeed` / `useVersionFeed` atomically
+  across mockApi (seed-derived newest-first `(created_at, asset_id, version)`
+  derivation over the version/asset/project stores with joined project names and
+  an "Unknown project" fallback, soft-deleted/unknown-asset exclusion, optional
+  `project_id` scope, whole-scope `total` before the `limit` page, router-style
+  422 for a malformed project id / out-of-range limit + unknown-project 404 +
+  injectable `versionFeed` failure), the stable `ApiClient` facade, live
+  `httpApiClient` (`GET /versions/feed?project_id=&limit=`), `queryKeys` and
+  `useQueries`, with a shared `lib/versionFeed` derivation/validation helper,
+  enriched version seeds and populated/empty/error tests; parity guard extended
+  to both transports. My owned column had no unchecked rows (only the repo-wide
+  C6 docs pass remains, owned by other agents), so C155 was added under the
+  Never-empty well. ✅ 2026-11-19 — `907fef2`
+  Screens version-feed rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2005,3 +2021,4 @@ this file is the execution checklist.
 - 2026-11-19 — `be78a8b` — C152 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/comments/feed?project_id=&limit=` comment feed (the C149/C151 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined project name + optional asset id / author id / body / created timestamp, newest-first `(created_at, comment_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, `limit` page bound, optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — adding one comment to the on-demand project so the derived feed is non-empty. No unchecked CI row remained, so C152 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (234 probes OK, dynamically chosen free port) with YAML parse; frontend lint/test (1011)/build green and backend pytest (955) green. Screens comment-feed rendering remains a screens follow-up.
 - 2026-11-19 — `ab8e865` — C153 (backend): added authoritative `GET /api/v1/versions/feed?project_id=&limit=` — a newest-first workspace asset version feed derived fresh from the authoritative `ASSET_VERSIONS` store (no second index) with asset/project identity + joined project name, asset name/type, version number, creator and creation time, a deterministic `(created_at, asset_id, version)` tie-break and a whole-scope `total` before the `limit` page; soft-deleted/unknown-asset versions excluded (matching `/versions/stats`), optional `project_id` scope with shared 404 `project_not_found` / 422 `validation_error` envelopes; `VersionFeed`/`VersionFeedItem` mirrored in `frontend/src/types/versionFeed.ts` + exported from the types index, README endpoint list synced, 10 tests × 2 storage backends green (975 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C153 was added under the Never-empty well.
 - 2026-11-19 — `e762137` — C154 (screens): rendered the authoritative comment feed (C149/C151/C152 follow-up) via `useCommentFeed` — a reusable `CommentFeedPanel` on Home (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first rows showing a whitespace-normalized body preview, joined project name, author badge, optional asset-reference badge and comment recency, deep links to project detail and to the referenced asset (scoping the assets browser first), and all five UI states — every display value derived in tested `commentFeedHelpers` (9 new tests). Resolves the C152 screens follow-up; lint clean, 1020 tests, build green. My owned column had no unchecked rows, so C154 was added under the Never-empty well.
+- 2026-11-19 — `907fef2` — C155 (mocks): wired the authoritative asset version feed (C153 follow-up) end to end — `getVersionFeed`/`useVersionFeed` atomically across mockApi (seed-derived newest-first `(created_at, asset_id, version)` derivation over version/asset/project seeds with joined project names + "Unknown project" fallback, soft-deleted/unknown-asset exclusion, optional `project_id` scope, whole-scope `total` before the `limit` page, router-style 422 for a malformed project id / out-of-range limit + unknown-project 404 + injectable `versionFeed` failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /versions/feed?project_id=&limit=`), `queryKeys` and `useQueries`, with a shared `lib/versionFeed` derivation/validation helper and enriched version seeds; parity guard extended to both transports (populated/scoped/limited/empty/404/422 + surface guard). Lint clean, 1029 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C155 was added under the Never-empty well. Screens version-feed rendering + CI live-smoke probe remain follow-ups.
