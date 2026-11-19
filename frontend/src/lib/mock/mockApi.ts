@@ -36,6 +36,8 @@ import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
 import { deriveJobLogs, validateJobLogsArgs } from "../jobLogs";
 import type { JobLogsOptions } from "../jobLogs";
+import { deriveJobQueue, validateJobQueueArgs } from "../jobQueue";
+import type { JobQueueOptions } from "../jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
 import { deriveOperationStats } from "../operationStats";
@@ -89,6 +91,7 @@ import type {
   ExtensionStats,
   Job,
   JobLogFrame,
+  JobQueueView,
   JobStats,
   LineageStats,
   Message,
@@ -170,7 +173,8 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
- * `lineageStats`, `collaborationStats`, `orchestrationStats` and `jobLogs`.
+ * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs` and
+ * `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -700,6 +704,25 @@ export async function fetchJobLogs(
   validateJobLogsArgs(jobId, options);
   if (!JOBS.some((job) => job.id === jobId)) return delay(undefined);
   return delay(deriveJobLogs(jobId, JOB_EVENTS.filter((event) => event.job_id === jobId), options));
+}
+
+/**
+ * Authoritative dispatch queue (C121) derived from the same job seeds as the
+ * live `/jobs/queue` endpoint. Router-style 422 validation, a 404 for an unknown
+ * project scope and the `"jobQueue"` failure domain keep error and empty states
+ * at parity with live mode.
+ */
+export async function fetchJobQueue(options?: JobQueueOptions): Promise<JobQueueView> {
+  failIfEnabled("jobQueue");
+  validateJobQueueArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveJobQueue(JOBS, REFERENCE_NOW, options));
 }
 
 export async function fetchProvider(providerId: string): Promise<Provider | undefined> {

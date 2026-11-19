@@ -743,6 +743,62 @@ describe("createHttpApiClient job stats", () => {
   });
 });
 
+describe("createHttpApiClient job dispatch queue (C121)", () => {
+  const view = {
+    total: 2,
+    waiting: 1,
+    running: 1,
+    entries: [
+      {
+        position: 1,
+        job_id: "0b5c1e2a-3000-4000-8000-000000000001",
+        operation_id: "dataset-prep",
+        status: "running",
+        project_id: project.id,
+        created_at: "2026-01-05T00:00:00Z",
+      },
+      {
+        position: 2,
+        job_id: "0b5c1e2a-3000-4000-8000-000000000003",
+        operation_id: "upscale",
+        status: "queued",
+        project_id: project.id,
+        created_at: "2026-01-07T00:00:00Z",
+      },
+    ],
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /jobs/queue with the project scope and page limit, forwarding the view untouched", async () => {
+    const { fetchImpl, calls } = router({ "/jobs/queue": view });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getJobQueue({ projectId: project.id, limit: 2 })).resolves.toEqual(view);
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/jobs/queue`);
+    expect(url.searchParams.get("project_id")).toBe(project.id);
+    expect(url.searchParams.get("limit")).toBe("2");
+
+    await expect(api.getJobQueue()).resolves.toEqual(view);
+    expect(new URL(calls[1] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "not_found", message: "Project not found" } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getJobQueue()).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+      message: "Project not found",
+    });
+  });
+});
+
 describe("createHttpApiClient per-job execution log (C117)", () => {
   const jobId = "33333333-3333-4333-8333-333333333333";
   const frame = {

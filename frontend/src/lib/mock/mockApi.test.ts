@@ -45,6 +45,7 @@ import {
   fetchHomeSummary,
   fetchJob,
   fetchJobLogs,
+  fetchJobQueue,
   fetchJobs,
   fetchJobsByProject,
   fetchLineageStats,
@@ -1636,6 +1637,62 @@ describe("mock API per-job execution log (C117 follow-up)", () => {
 
     setMockFailure("jobLogs");
     await expect(fetchJobLogs(failedJobId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API job dispatch queue (C121 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives the active FIFO queue with whole-queue counters from the job seeds", async () => {
+    const view = await fetchJobQueue();
+    const expected = JOBS.filter(
+      (job) => job.status === "queued" || job.status === "running",
+    ).sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+
+    expect(view.total).toBe(expected.length);
+    expect(view.waiting).toBe(expected.filter((job) => job.status === "queued").length);
+    expect(view.running).toBe(expected.filter((job) => job.status === "running").length);
+    expect(view.generated_at).toBe(REFERENCE_NOW);
+    expect((view.entries ?? []).map((entry) => entry.job_id)).toEqual(expected.map((job) => job.id));
+    expect((view.entries ?? [])[0]?.position).toBe(1);
+    expect((view.entries ?? []).at(-1)?.position).toBe(expected.length);
+  });
+
+  it("bounds the page, scopes to one project and returns an empty view for an idle project", async () => {
+    const full = await fetchJobQueue();
+    const paged = await fetchJobQueue({ limit: 2 });
+    expect(paged.total).toBe(full.total);
+    expect((paged.entries ?? []).map((entry) => entry.position)).toEqual([1, 2]);
+
+    const scoped = await fetchJobQueue({ projectId: filmId });
+    expect((scoped.entries ?? []).length).toBeGreaterThan(0);
+    expect((scoped.entries ?? []).every((entry) => entry.project_id === filmId)).toBe(true);
+
+    const empty = await fetchJobQueue({ projectId: emptyId });
+    expect(empty).toMatchObject({ total: 0, waiting: 0, running: 0, entries: [] });
+  });
+
+  it("mirrors router validation, 404s unknown projects and surfaces the injected failure", async () => {
+    await expect(fetchJobQueue({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    for (const limit of [0, 201]) {
+      await expect(fetchJobQueue({ limit })).rejects.toMatchObject({
+        status: 422,
+        code: "validation_error",
+      });
+    }
+    await expect(
+      fetchJobQueue({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("jobQueue");
+    await expect(fetchJobQueue()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

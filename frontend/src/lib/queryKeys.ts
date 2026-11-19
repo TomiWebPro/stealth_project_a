@@ -9,6 +9,7 @@ import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
 import type { JobLogsOptions } from "./jobLogs";
+import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
@@ -135,6 +136,10 @@ export const queryKeys = {
         options.sinceSeq ?? 0,
         options.limit ?? 50,
       ] as const,
+  },
+  jobQueue: {
+    view: (options: JobQueueOptions = {}) =>
+      ["job-queue", "view", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   providers: {
     all: () => ["providers"] as const,

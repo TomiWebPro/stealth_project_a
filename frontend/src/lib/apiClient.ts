@@ -13,6 +13,7 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
 import type { JobLogsOptions } from "./jobLogs";
+import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
@@ -46,6 +47,7 @@ import type {
   ExtensionStats,
   Job,
   JobLogFrame,
+  JobQueueView,
   JobStats,
   LineageStats,
   Message,
@@ -132,6 +134,11 @@ export interface ApiClient {
    * the live 404-to-undefined detail-lookup mapping.
    */
   getJobLogs(jobId: string, options?: JobLogsOptions): Promise<JobLogFrame | undefined>;
+  /**
+   * Authoritative active (queued + running) dispatch queue in FIFO order with
+   * whole-queue counters and a bounded, position-labelled page (C121).
+   */
+  getJobQueue(options?: JobQueueOptions): Promise<JobQueueView>;
   getProjectDetail(projectId: string): Promise<ProjectDetail | undefined>;
   /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
@@ -207,6 +214,7 @@ export const mockApiClient: ApiClient = {
   listJobsByProject: mockApi.fetchJobsByProject,
   getJob: mockApi.fetchJob,
   getJobLogs: mockApi.fetchJobLogs,
+  getJobQueue: mockApi.fetchJobQueue,
   getProjectDetail: mockApi.fetchProjectDetail,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,

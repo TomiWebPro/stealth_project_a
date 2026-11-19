@@ -22,6 +22,8 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobLogs, validateJobLogsArgs } from "./jobLogs";
 import type { JobLogsOptions } from "./jobLogs";
+import { deriveJobQueue, validateJobQueueArgs } from "./jobQueue";
+import type { JobQueueOptions } from "./jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationStats } from "./operationStats";
@@ -459,6 +461,32 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
 
   if (path.startsWith("/assets/")) return ASSETS.find((a) => a.id === id) ?? NOT_FOUND;
 
+  // Authoritative dispatch queue is derived from the job store on every call;
+  // reproduce the router's 422 validation, unknown-project 404 and FIFO
+  // derivation over the shared seeds so live and mock agree exactly. This must
+  // precede the dynamic `/jobs/...` lookups below.
+  if (path === "/jobs/queue") {
+    const projectId = params.get("project_id") ?? undefined;
+    const limitRaw = params.get("limit");
+    const options: JobQueueOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateJobQueueArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveJobQueue(JOBS, REFERENCE_NOW, options);
+  }
+
   // Authoritative job execution stats are derived from the job store on every
   // call; reproduce the router's 422 validation, unknown-project 404 and the
   // repository derivation over the shared seeds so live and mock agree exactly.
@@ -832,6 +860,10 @@ describe("live vs mock transport parity", () => {
       ["getDashboard limited", (api) => api.getDashboard({ recentLimit: 3 })],
       ["getJobStats", (api) => api.getJobStats()],
       ["getJobStats scoped", (api) => api.getJobStats({ projectId: filmId })],
+      ["getJobQueue", (api) => api.getJobQueue()],
+      ["getJobQueue scoped", (api) => api.getJobQueue({ projectId: filmId })],
+      ["getJobQueue limited", (api) => api.getJobQueue({ limit: 3 })],
+      ["getJobQueue scoped and limited", (api) => api.getJobQueue({ projectId: filmId, limit: 2 })],
       ["getAssetStats", (api) => api.getAssetStats()],
       ["getAssetStats scoped", (api) => api.getAssetStats({ projectId: filmId })],
       ["getConversationStats", (api) => api.getConversationStats()],
@@ -924,6 +956,9 @@ describe("live vs mock transport parity", () => {
     expect(await live.getJobStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getJobStats({ projectId: emptyId }),
     );
+    expect(await live.getJobQueue({ projectId: emptyId })).toEqual(
+      await mockApiClient.getJobQueue({ projectId: emptyId }),
+    );
     expect(await live.getAssetStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getAssetStats({ projectId: emptyId }),
     );
@@ -1000,6 +1035,23 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockLogId422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveLogId422).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown dispatch-queue project
+    // scope and reject a malformed id / out-of-range limit with the same 422.
+    const [mockQueue404, liveQueue404] = await Promise.all([
+      mockApiClient.getJobQueue({ projectId: missingId }).catch((cause) => cause),
+      live.getJobQueue({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockQueue404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveQueue404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }]) {
+      const [mockQueue422, liveQueue422] = await Promise.all([
+        mockApiClient.getJobQueue(bad).catch((cause) => cause),
+        live.getJobQueue(bad).catch((cause) => cause),
+      ]);
+      expect(mockQueue422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveQueue422).toMatchObject({ status: 422, code: "validation_error" });
+    }
     expect(await live.search("zzzz-no-such-thing")).toEqual(
       await mockApiClient.search("zzzz-no-such-thing"),
     );
@@ -1329,6 +1381,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.getJobStats).toBe("function");
     expect(typeof typed.getJobLogs).toBe("function");
+    expect(typeof typed.getJobQueue).toBe("function");
     expect(typeof typed.getAssetStats).toBe("function");
     expect(typeof typed.getConversationStats).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");

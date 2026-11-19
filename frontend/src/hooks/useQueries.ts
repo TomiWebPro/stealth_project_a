@@ -15,6 +15,7 @@ import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobLogsOptions } from "../lib/jobLogs";
+import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
@@ -48,6 +49,7 @@ import type {
   ExtensionStats,
   Job,
   JobLogFrame,
+  JobQueueView,
   JobStats,
   LineageStats,
   Message,
@@ -355,6 +357,15 @@ export function useJobLogs(
     queryKey: queryKeys.jobLogs.frame(jobId, options),
     queryFn: () => api.getJobLogs(jobId, options),
     enabled: Boolean(jobId),
+  });
+}
+
+/** Authoritative active dispatch queue from `/jobs/queue`, optionally project-scoped (C121). */
+export function useJobQueue(options?: JobQueueOptions): UseQueryResult<JobQueueView> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.jobQueue.view(options),
+    queryFn: () => api.getJobQueue(options),
   });
 }
 

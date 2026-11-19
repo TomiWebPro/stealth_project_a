@@ -27,6 +27,8 @@ import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
 import { jobLogsQueryParams } from "./jobLogs";
 import type { JobLogsOptions } from "./jobLogs";
+import { jobQueueQueryParams } from "./jobQueue";
+import type { JobQueueOptions } from "./jobQueue";
 import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
 import { lineageStatsQueryParams } from "./lineageStats";
@@ -74,6 +76,7 @@ import type {
   ExtensionStats,
   Job,
   JobLogFrame,
+  JobQueueView,
   JobStats,
   LineageStats,
   Message,
@@ -291,6 +294,11 @@ export function createHttpApiClient(
     /** Authoritative job execution metrics derived by the backend `/jobs/stats`. */
     getJobStats(options?: JobStatsOptions): Promise<JobStats> {
       return request<JobStats>("/jobs/stats", jobStatsQueryParams(options));
+    },
+
+    /** Authoritative active dispatch queue derived by the backend `/jobs/queue` (C121). */
+    getJobQueue(options?: JobQueueOptions): Promise<JobQueueView> {
+      return request<JobQueueView>("/jobs/queue", jobQueueQueryParams(options));
     },
 
     /** Authoritative asset inventory metrics derived by the backend `/assets/stats`. */

@@ -61,6 +61,16 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the job queue key by project and page size", () => {
+    expect(queryKeys.jobQueue.view()).toEqual(["job-queue", "view", "all", "all"]);
+    expect(queryKeys.jobQueue.view({ projectId: "p1", limit: 10 })).toEqual([
+      "job-queue",
+      "view",
+      "p1",
+      10,
+    ]);
+  });
+
   it("scopes the asset stats key by project", () => {
     expect(queryKeys.assetStats.summary()).toEqual(["asset-stats", "summary", "all"]);
     expect(queryKeys.assetStats.summary({ projectId: "p1" })).toEqual([

@@ -49,6 +49,8 @@ export type {
   JobEventType,
   JobLogEntry,
   JobLogFrame,
+  JobQueueEntry,
+  JobQueueView,
   JobStatus,
   LineageProjectCount,
   LogLevel,
