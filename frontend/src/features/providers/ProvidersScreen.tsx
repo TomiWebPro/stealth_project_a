@@ -19,6 +19,7 @@ import {
   providerOperationIds,
   providerStatusTone,
 } from "./helpers";
+import { ProviderFeedPanel } from "./ProviderFeedPanel";
 import { ProviderStatsPanel } from "./ProviderStatsPanel";
 
 function HealthOverview({ providers }: { readonly providers: readonly Provider[] }) {
@@ -143,6 +144,13 @@ export function ProvidersScreen() {
           <ProviderStatsPanel
             location={location === "all" ? undefined : location}
             status={status === "all" ? undefined : status}
+          />
+
+          <ProviderFeedPanel
+            location={location === "all" ? undefined : location}
+            status={status === "all" ? undefined : status}
+            onLocationChange={(value) => setLocation(value ?? "all")}
+            onStatusChange={(value) => setStatus(value ?? "all")}
           />
 
           <Card>
