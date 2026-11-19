@@ -31,6 +31,7 @@ import {
   fetchProjects,
   fetchProvider,
   fetchProviders,
+  fetchProviderStats,
   fetchRecentAssets,
   fetchStorageStats,
   fetchTags,
@@ -67,6 +68,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchAssetStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchProviderStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
@@ -132,6 +134,18 @@ describe("mock error-state fakes", () => {
     await expect(fetchProjectStats()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the provider stats domain", async () => {
+    setMockFailure("providerStats");
+
+    await expect(fetchProviderStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchProviderStats()).resolves.toBeDefined();
+  });
+
   it("exposes injectable failures for the tags and impact domains", async () => {
     const assetId = "0b5c1e2a-2000-4000-8000-000000000011";
     setMockFailure("tags");
@@ -170,6 +184,7 @@ describe("mock error-state fakes", () => {
         ["assets", () => fetchWorkflowTemplates()],
         ["jobs", () => fetchJob(jobId)],
         ["providers", () => fetchProvider(providerId)],
+        ["providerStats", () => fetchProviderStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],
         ["conversations", () => fetchConversation(conversationId)],

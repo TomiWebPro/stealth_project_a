@@ -927,3 +927,71 @@ describe("createHttpApiClient project stats", () => {
     });
   });
 });
+
+describe("createHttpApiClient provider stats", () => {
+  const stats = {
+    total: 2,
+    by_status: [
+      { status: "available", count: 1 },
+      { status: "unavailable", count: 0 },
+      { status: "degraded", count: 1 },
+    ],
+    by_location: [
+      { location: "local", count: 0 },
+      { location: "studio", count: 0 },
+      { location: "cloud", count: 2 },
+    ],
+    available: 1,
+    degraded: 1,
+    unavailable: 0,
+    total_capabilities: 5,
+    unique_operations: 3,
+    by_operation: [
+      { operation_id: "image-to-video", providers: 2, available: 1 },
+      { operation_id: "splat-train", providers: 1, available: 0 },
+      { operation_id: "text-to-video", providers: 1, available: 0 },
+    ],
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /providers/stats with both filters and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/providers/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getProviderStats({ location: "cloud", status: "degraded" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/providers/stats`);
+    expect(url.searchParams.get("location")).toBe("cloud");
+    expect(url.searchParams.get("status")).toBe("degraded");
+  });
+
+  it("omits the filters when no options are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/providers/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getProviderStats()).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/providers/stats`);
+    expect(url.searchParams.has("location")).toBe(false);
+    expect(url.searchParams.has("status")).toBe(false);
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Invalid provider location." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getProviderStats({ location: "moon" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Invalid provider location.",
+    });
+  });
+});

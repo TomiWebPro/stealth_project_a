@@ -73,6 +73,27 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the provider stats key by location and status", () => {
+    expect(queryKeys.providerStats.summary()).toEqual([
+      "provider-stats",
+      "summary",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.providerStats.summary({ location: "cloud" })).toEqual([
+      "provider-stats",
+      "summary",
+      "cloud",
+      "all",
+    ]);
+    expect(queryKeys.providerStats.summary({ location: "cloud", status: "degraded" })).toEqual([
+      "provider-stats",
+      "summary",
+      "cloud",
+      "degraded",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

@@ -13,6 +13,7 @@ import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
+import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { SearchOptions } from "../lib/search";
 import type { TagOptions } from "../lib/tags";
 import type {
@@ -38,6 +39,7 @@ import type {
   Project,
   ProjectStats,
   Provider,
+  ProviderStats,
   SearchResponse,
   StorageStats,
   StreamEvent,
@@ -107,6 +109,15 @@ export function useProjectStats(options?: ProjectStatsOptions): UseQueryResult<P
   return useQuery({
     queryKey: queryKeys.projectStats.summary(options),
     queryFn: () => api.getProjectStats(options),
+  });
+}
+
+/** Authoritative provider fleet metrics from `/providers/stats`, optionally filtered (C57). */
+export function useProviderStats(options?: ProviderStatsOptions): UseQueryResult<ProviderStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.providerStats.summary(options),
+    queryFn: () => api.getProviderStats(options),
   });
 }
 

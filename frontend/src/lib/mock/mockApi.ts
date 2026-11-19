@@ -23,6 +23,8 @@ import type { JobStatsOptions } from "../jobStats";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
+import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
+import type { ProviderStatsOptions } from "../providerStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
 import type { SearchOptions } from "../search";
 import { deriveTagIndex, validateTagArgs } from "../tags";
@@ -48,6 +50,7 @@ import type {
   Project,
   ProjectStats,
   Provider,
+  ProviderStats,
   SearchResponse,
   StorageStats,
   StreamEvent,
@@ -93,7 +96,7 @@ function delay<T>(value: T): Promise<T> {
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
- * `assetStats`, `conversationStats`, `projectStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `conversationStats`, `projectStats`, `providerStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -283,6 +286,20 @@ export async function fetchProjectStats(
       options,
     ),
   );
+}
+
+/**
+ * Authoritative provider fleet metrics (C57) derived from the same provider
+ * seeds as the live `/providers/stats` endpoint. Router-style 422 validation for
+ * an invalid location/status filter and the `"providerStats"` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchProviderStats(
+  options?: ProviderStatsOptions,
+): Promise<ProviderStats> {
+  failIfEnabled("providerStats");
+  validateProviderStatsArgs(options);
+  return delay(deriveProviderStats(PROVIDERS, REFERENCE_NOW, options));
 }
 
 /**

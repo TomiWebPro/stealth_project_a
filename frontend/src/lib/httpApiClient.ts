@@ -22,6 +22,8 @@ import type { JobStatsOptions } from "./jobStats";
 import type { ProjectDetail } from "./projectDetail";
 import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
+import { providerStatsQueryParams } from "./providerStats";
+import type { ProviderStatsOptions } from "./providerStats";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
 import { tagQueryParams } from "./tags";
@@ -49,6 +51,7 @@ import type {
   Project,
   ProjectStats,
   Provider,
+  ProviderStats,
   SearchResponse,
   StorageStats,
   TagIndex,
@@ -258,6 +261,11 @@ export function createHttpApiClient(
     /** Authoritative project portfolio metrics derived by the backend `/projects/stats`. */
     getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats> {
       return request<ProjectStats>("/projects/stats", projectStatsQueryParams(options));
+    },
+
+    /** Authoritative provider fleet metrics derived by the backend `/providers/stats`. */
+    getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats> {
+      return request<ProviderStats>("/providers/stats", providerStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

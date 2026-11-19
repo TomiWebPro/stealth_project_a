@@ -15,6 +15,7 @@ import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import type { ImpactOptions } from "./impact";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
+import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import {
   ASSETS,
   AUDIT_TRAILS,
@@ -305,6 +306,31 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   }
   if (path.startsWith("/jobs/")) return JOBS.find((j) => j.id === id) ?? NOT_FOUND;
 
+  // Authoritative provider fleet stats are derived from the provider store on
+  // every call; reproduce the router's 422 validation and repository derivation
+  // over the shared seeds so live and mock agree. This must precede the dynamic
+  // /providers/{id} detail branch below.
+  if (path === "/providers/stats") {
+    const locationRaw = params.get("location");
+    const statusRaw = params.get("status");
+    const options = {
+      ...(locationRaw !== null ? { location: locationRaw as "local" | "studio" | "cloud" } : {}),
+      ...(statusRaw !== null ? { status: statusRaw as "available" | "unavailable" | "degraded" } : {}),
+    };
+    try {
+      validateProviderStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveProviderStats(PROVIDERS, REFERENCE_NOW, options);
+  }
+
   if (path === "/providers") return PROVIDERS;
   if (path.startsWith("/providers/")) return PROVIDERS.find((p) => p.id === id) ?? NOT_FOUND;
   if (path === "/capabilities") {
@@ -443,6 +469,9 @@ describe("live vs mock transport parity", () => {
       ["getConversationStats scoped", (api) => api.getConversationStats({ projectId: filmId })],
       ["getProjectStats", (api) => api.getProjectStats()],
       ["getProjectStats scoped", (api) => api.getProjectStats({ orgId })],
+      ["getProviderStats", (api) => api.getProviderStats()],
+      ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
+      ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -607,6 +636,18 @@ describe("live vs mock transport parity", () => {
     expect(mockProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both zero-fill an empty provider-stats filter and reject invalid filters
+    // with the same 422 envelope.
+    expect(await live.getProviderStats({ location: "studio" })).toEqual(
+      await mockApiClient.getProviderStats({ location: "studio" }),
+    );
+    const [mockProviderStats422, liveProviderStats422] = await Promise.all([
+      mockApiClient.getProviderStats({ status: "busy" as never }).catch((cause) => cause),
+      live.getProviderStats({ status: "busy" as never }).catch((cause) => cause),
+    ]);
+    expect(mockProviderStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveProviderStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both resolve an unknown impact root to undefined.
     expect(await live.getAssetImpact(missingId)).toEqual(
       await mockApiClient.getAssetImpact(missingId),
@@ -656,5 +697,6 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");
+    expect(typeof typed.getProviderStats).toBe("function");
   });
 });

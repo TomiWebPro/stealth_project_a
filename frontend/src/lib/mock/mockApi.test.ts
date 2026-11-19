@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
-import { ASSETS, CONVERSATIONS, PROJECTS, REFERENCE_NOW } from "./data";
+import { ASSETS, CONVERSATIONS, PROJECTS, PROVIDERS, REFERENCE_NOW } from "./data";
 import {
   clearMockFailures,
   fetchActivity,
@@ -37,6 +37,7 @@ import {
   fetchProjects,
   fetchProvider,
   fetchProviders,
+  fetchProviderStats,
   fetchRecentAssets,
   fetchSearch,
   fetchStorageStats,
@@ -266,6 +267,60 @@ describe("mock API project stats (C53 follow-up)", () => {
 
     setMockFailure("projectStats");
     await expect(fetchProjectStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API provider stats (C57 follow-up)", () => {
+  it("derives a populated snapshot from the authoritative provider seeds", async () => {
+    const stats = await fetchProviderStats();
+    expect(stats.total).toBe(PROVIDERS.length);
+    expect(stats.available + stats.degraded + stats.unavailable).toBe(PROVIDERS.length);
+    expect(stats.by_status).toEqual([
+      { status: "available", count: stats.available },
+      { status: "unavailable", count: stats.unavailable },
+      { status: "degraded", count: stats.degraded },
+    ]);
+    expect(stats.by_location ?? []).toHaveLength(3);
+    expect(stats.total_capabilities).toBeGreaterThan(0);
+    expect(stats.unique_operations).toBeGreaterThan(0);
+    expect(stats.by_operation ?? []).toHaveLength(stats.unique_operations);
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("narrows the snapshot to one location/status and zero-fills an empty slice", async () => {
+    const cloud = await fetchProviderStats({ location: "cloud" });
+    expect(cloud.total).toBe(PROVIDERS.filter((provider) => provider.location === "cloud").length);
+    expect(cloud.by_location).toEqual([
+      { location: "local", count: 0 },
+      { location: "studio", count: 0 },
+      { location: "cloud", count: cloud.total },
+    ]);
+
+    const degraded = await fetchProviderStats({ status: "degraded" });
+    expect(degraded.total).toBe(PROVIDERS.filter((provider) => provider.status === "degraded").length);
+    expect(degraded.available).toBe(0);
+    expect(degraded.degraded).toBe(degraded.total);
+
+    const empty = await fetchProviderStats({ location: "studio", status: "unavailable" });
+    expect(empty.total).toBe(0);
+    expect(empty.by_operation).toEqual([]);
+  });
+
+  it("mirrors router validation and surfaces the injected failure", async () => {
+    await expect(fetchProviderStats({ location: "moon" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchProviderStats({ status: "busy" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("providerStats");
+    await expect(fetchProviderStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
