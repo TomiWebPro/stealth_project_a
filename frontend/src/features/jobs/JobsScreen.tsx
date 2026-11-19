@@ -16,6 +16,7 @@ import { JobsPanel } from "./JobsPanel";
 import { OrchestrationFeedPanel } from "./OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
 import { RetryStatsPanel } from "./RetryStatsPanel";
+import { OperationFeedPanel } from "../operations/OperationFeedPanel";
 import { OperationStatsPanel } from "../operations/OperationStatsPanel";
 
 /**
@@ -70,6 +71,11 @@ export function JobsScreen() {
       />
 
       <OperationStatsPanel />
+
+      <OperationFeedPanel
+        title="Global operation catalog feed"
+        description="Operations from the authoritative catalog, ordered by title, with streaming and provider filters."
+      />
 
       <OrchestrationStatsPanel
         title="Global orchestration stats"
