@@ -30,6 +30,8 @@ export type {
   CollaborationStats,
   Comment,
   Conversation,
+  ConversationFeed,
+  ConversationFeedItem,
   ConversationStats,
   DashboardCounts,
   DashboardSummary,

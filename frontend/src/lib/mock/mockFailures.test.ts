@@ -16,6 +16,7 @@ import {
   fetchConversation,
   fetchConversations,
   fetchConversationStats,
+  fetchConversationFeed,
   fetchCurrentUser,
   fetchEventStats,
   fetchExtension,
@@ -90,6 +91,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchVersionStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchConversationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobs()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobLogs(JOBS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobQueue()).rejects.toBeInstanceOf(ApiError);
@@ -325,6 +327,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchUploadFeed()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the conversation feed domain", async () => {
+    setMockFailure("conversationFeed");
+
+    await expect(fetchConversationFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchConversationFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the event stats domain", async () => {

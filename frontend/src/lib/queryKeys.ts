@@ -3,6 +3,7 @@ import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CollaborationStatsOptions } from "./collaborationStats";
+import type { ConversationFeedOptions } from "./conversationFeed";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { EventStatsOptions } from "./eventStats";
@@ -67,6 +68,10 @@ export const queryKeys = {
   conversationStats: {
     summary: (options: ConversationStatsOptions = {}) =>
       ["conversation-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  conversationFeed: {
+    feed: (options: ConversationFeedOptions = {}) =>
+      ["conversation-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   projectStats: {
     summary: (options: ProjectStatsOptions = {}) =>

@@ -8,6 +8,7 @@ import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
+import type { ConversationFeedOptions } from "../lib/conversationFeed";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { EventStatsOptions } from "../lib/eventStats";
@@ -44,6 +45,7 @@ import type {
   CollaborationStats,
   Comment,
   Conversation,
+  ConversationFeed,
   ConversationStats,
   DashboardSummary,
   EventStats,
@@ -146,6 +148,15 @@ export function useConversationStats(
   return useQuery({
     queryKey: queryKeys.conversationStats.summary(options),
     queryFn: () => api.getConversationStats(options),
+  });
+}
+
+/** Newest-first authoritative conversation feed from `/conversations/feed`, optionally project-scoped (C133). */
+export function useConversationFeed(options?: ConversationFeedOptions): UseQueryResult<ConversationFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.conversationFeed.feed(options),
+    queryFn: () => api.getConversationFeed(options),
   });
 }
 

@@ -1834,6 +1834,63 @@ describe("createHttpApiClient operation stats", () => {
   });
 });
 
+describe("createHttpApiClient conversation feed", () => {
+  const feed = {
+    items: [
+      {
+        conversation_id: "0b5c1e2a-5000-4000-8000-000000000001",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        project_name: "Moonshot",
+        title: "s01 sequence plan",
+        message_count: 3,
+        last_message_role: "assistant",
+        last_message_excerpt: "Dataset prep is 45% complete.",
+        created_at: "2026-01-05T00:00:00Z",
+        updated_at: "2026-01-06T00:00:00Z",
+      },
+    ],
+    total: 4,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /conversations/feed with the scope and page and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/conversations/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getConversationFeed({ projectId: "11111111-1111-4111-8111-111111111111", limit: 2 }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/conversations/feed`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no scope or page is supplied", async () => {
+    const { fetchImpl, calls } = router({ "/conversations/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getConversationFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getConversationFeed({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient publish feed", () => {
   const feed = {
     items: [

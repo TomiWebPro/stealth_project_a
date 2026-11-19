@@ -14,6 +14,11 @@ import {
 } from "../collaborationStats";
 import type { CollaborationStatsOptions } from "../collaborationStats";
 import {
+  deriveConversationFeed,
+  validateConversationFeedArgs,
+} from "../conversationFeed";
+import type { ConversationFeedOptions } from "../conversationFeed";
+import {
   deriveConversationStats,
   validateConversationStatsArgs,
 } from "../conversationStats";
@@ -89,6 +94,7 @@ import type {
   CollaborationStats,
   Comment,
   Conversation,
+  ConversationFeed,
   ConversationStats,
   EventStats,
   Extension,
@@ -176,7 +182,7 @@ function delay<T>(value: T): Promise<T> {
  * `activityStats`, `jobStats`,
  * `assetStats`, `conversationStats`, `projectStats`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
- * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
+ * `conversations`, `conversationFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs` and
@@ -343,6 +349,29 @@ export async function fetchConversationStats(
     });
   }
   return delay(deriveConversationStats(CONVERSATIONS, MESSAGES, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative conversation feed (C133) derived from the same conversation and
+ * message stores as the live `/conversations/feed` endpoint. Router-style 422
+ * validation, a normalized 404 for an unknown project scope and the
+ * `"conversationFeed"` failure domain keep error and empty states at parity.
+ */
+export async function fetchConversationFeed(
+  options?: ConversationFeedOptions,
+): Promise<ConversationFeed> {
+  failIfEnabled("conversationFeed");
+  validateConversationFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveConversationFeed(CONVERSATIONS, MESSAGES, PROJECTS, REFERENCE_NOW, options),
+  );
 }
 
 /**

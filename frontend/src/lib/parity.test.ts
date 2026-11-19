@@ -13,6 +13,8 @@ import {
   validateCollaborationStatsArgs,
 } from "./collaborationStats";
 import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
+import { deriveConversationFeed, validateConversationFeedArgs } from "./conversationFeed";
+import type { ConversationFeedOptions } from "./conversationFeed";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
@@ -656,6 +658,33 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveOperationStats(OPERATION_CATALOG.operations ?? [], REFERENCE_NOW);
   }
 
+  // Authoritative conversation feed derives the same newest-first view as the
+  // `/conversations/feed` endpoint from the shared conversation/message seeds;
+  // mirror its 422 validation, unknown-project 404, page bound and repository
+  // derivation so live and mock agree exactly. This must precede the
+  // /conversations/stats and dynamic /conversations/{id} branches below.
+  if (path === "/conversations/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const limitRaw = params.get("limit");
+    const options: ConversationFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateConversationFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveConversationFeed(CONVERSATIONS, MESSAGES, PROJECTS, REFERENCE_NOW, options);
+  }
+
   // Authoritative conversation/message stats are derived from the conversation
   // and message stores on every call; reproduce the router's 422 validation,
   // unknown-project 404 and repository derivation over the shared seeds. This
@@ -888,6 +917,8 @@ const orgId = PROJECTS[0]?.org_id ?? "";
 const emptyId = PROJECTS.find((p) => p.name.startsWith("Blank Slate"))?.id ?? "";
 const failedJobId = JOBS.find((j) => j.status === "failed")?.id ?? "";
 const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ?? "";
+/** A project with no seeded conversations, so the feed scope is genuinely empty. */
+const noConversationsId = PROJECTS.find((p) => p.name.startsWith("Northlight"))?.id ?? "";
 const runId = ORCHESTRATION_RUNS[0]?.run_id ?? "";
 const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
 /** Moonshot concept asset whose descendants exercise the full impact chain. */
@@ -924,6 +955,13 @@ describe("live vs mock transport parity", () => {
       ["getAssetStats scoped", (api) => api.getAssetStats({ projectId: filmId })],
       ["getConversationStats", (api) => api.getConversationStats()],
       ["getConversationStats scoped", (api) => api.getConversationStats({ projectId: filmId })],
+      ["getConversationFeed", (api) => api.getConversationFeed()],
+      ["getConversationFeed scoped", (api) => api.getConversationFeed({ projectId: filmId })],
+      ["getConversationFeed limited", (api) => api.getConversationFeed({ limit: 2 })],
+      [
+        "getConversationFeed scoped and limited",
+        (api) => api.getConversationFeed({ projectId: filmId, limit: 1 }),
+      ],
       ["getProjectStats", (api) => api.getProjectStats()],
       ["getProjectStats scoped", (api) => api.getProjectStats({ orgId })],
       ["getProviderStats", (api) => api.getProviderStats()],
@@ -1049,6 +1087,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
+    );
+    expect(await live.getConversationFeed({ projectId: noConversationsId })).toEqual(
+      await mockApiClient.getConversationFeed({ projectId: noConversationsId }),
     );
     expect(await live.getActivity({ projectId: emptyId })).toEqual(
       await mockApiClient.getActivity({ projectId: emptyId }),
@@ -1207,6 +1248,23 @@ describe("live vs mock transport parity", () => {
       ]);
       expect(mockUploadFeed422).toMatchObject({ status: 422, code: "validation_error" });
       expect(liveUploadFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
+    // Both transports 404 identically for an unknown conversation-feed project
+    // scope and reject a malformed id / out-of-range limit with the same 422.
+    const [mockConversationFeed404, liveConversationFeed404] = await Promise.all([
+      mockApiClient.getConversationFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getConversationFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockConversationFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveConversationFeed404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }]) {
+      const [mockConversationFeed422, liveConversationFeed422] = await Promise.all([
+        mockApiClient.getConversationFeed(bad).catch((cause) => cause),
+        live.getConversationFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockConversationFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveConversationFeed422).toMatchObject({ status: 422, code: "validation_error" });
     }
 
     // Both transports 404 identically for an unknown event-stats project scope
@@ -1494,6 +1552,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getJobQueue).toBe("function");
     expect(typeof typed.getAssetStats).toBe("function");
     expect(typeof typed.getConversationStats).toBe("function");
+    expect(typeof typed.getConversationFeed).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getSearchStats).toBe("function");
