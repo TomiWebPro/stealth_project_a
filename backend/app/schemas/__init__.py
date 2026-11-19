@@ -87,6 +87,10 @@ from .impact import (
     AssetImpact,
     ImpactNode,
 )
+from .lineage_feed import (
+    LineageFeed,
+    LineageFeedItem,
+)
 from .lineage_stats import (
     LineageProjectCount,
     LineageStats,
@@ -314,6 +318,9 @@ __all__ = [
     # impact
     "AssetImpact",
     "ImpactNode",
+    # lineage feed
+    "LineageFeed",
+    "LineageFeedItem",
     # lineage stats
     "LineageProjectCount",
     "LineageStats",

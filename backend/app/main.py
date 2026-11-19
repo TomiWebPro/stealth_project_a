@@ -46,6 +46,7 @@ from .routers import (
     job_queue,
     job_stats,
     jobs,
+    lineage_feed,
     lineage_stats,
     links,
     operation_stats,
@@ -334,6 +335,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(dashboard.router, prefix=API_PREFIX)
     app.include_router(tags.router, prefix=API_PREFIX)
     app.include_router(impact.router, prefix=API_PREFIX)
+    # "/lineage/feed" and "/lineage/stats" are literal paths with no templated
+    # sibling; register them directly to keep both lineage paths explicit.
+    app.include_router(lineage_feed.router, prefix=API_PREFIX)
     app.include_router(lineage_stats.router, prefix=API_PREFIX)
     # "/versions/feed" and "/versions/stats" are literal paths with no templated
     # sibling; register them directly to keep both version paths explicit.

@@ -89,6 +89,11 @@ All paths are prefixed with `/api/v1`.
   relationship-type breakdown, per-project link counts, distinct live-asset count
   and newest-link recency) derived from the asset relationship store; links from
   soft-deleted/unknown source assets are excluded
+  `GET /lineage/feed?project_id=&limit=` — newest-first asset lineage feed (typed
+  relationship with both endpoint asset names and joined project name; whole-scope
+  `total` before the `limit` page) derived from the relationship store with a
+  deterministic `(created_at, id)` tie-break; links from soft-deleted/unknown
+  source assets are excluded
   `GET /versions/stats?project_id=` — authoritative version metrics (total version
   records, distinct versioned assets, revision count, by-version distribution,
   per-project activity and newest-version recency) derived from the asset version
