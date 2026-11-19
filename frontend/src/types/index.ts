@@ -23,6 +23,7 @@ export * from "./asset";
 export * from "./assetFeed";
 export * from "./assetStats";
 export * from "./operation";
+export * from "./operationFeed";
 export * from "./provider";
 export * from "./orchestration";
 export * from "./orchestrationFeed";

@@ -122,6 +122,11 @@ All paths are prefixed with `/api/v1`.
   totals and newest-ticket recency) derived from the upload store; optional
   project scope with shared 404/422 envelopes
 - **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
+  `GET /operations/feed?streaming=&provider_id=&limit=` — deterministic operation
+  catalog feed (identity/display, asset types, settings count, streaming flag and
+  sorted/deduplicated provider bindings; whole-scope `total` before the bounded
+  page) projected fresh from the authoritative catalog, with optional
+  `streaming`/`provider_id` filters;
   `GET /operations/stats` — authoritative catalog metrics (total/streaming/
   provider coverage, setting counts and zero-free asset-type breakdowns) derived
   from the operation catalog

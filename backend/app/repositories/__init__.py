@@ -34,6 +34,7 @@ from .job_feed import JobFeedRepository
 from .job_logs import JobLogsRepository
 from .job_queue import JobQueueRepository
 from .jobs import JobRepository
+from .operation_feed import OperationFeedRepository
 from .operation_stats import OperationStatsRepository
 from .pipeline_stats import PipelineStatsRepository
 from .pipeline_feed import PipelineFeedRepository
@@ -87,6 +88,7 @@ class Repositories:
     job_queue: JobQueueRepository
     lineage_feed: LineageFeedRepository
     lineage_stats: LineageStatsRepository
+    operation_feed: OperationFeedRepository
     operation_stats: OperationStatsRepository
     pipeline_stats: PipelineStatsRepository
     pipeline_feed: PipelineFeedRepository
@@ -147,6 +149,7 @@ class Repositories:
         job_queue = JobQueueRepository(store, projects, clock=clock)
         lineage_feed = LineageFeedRepository(store, projects, clock=clock)
         lineage_stats = LineageStatsRepository(store, projects, clock=clock)
+        operation_feed = OperationFeedRepository(store, clock=clock)
         operation_stats = OperationStatsRepository(store, clock=clock)
         pipeline_stats = PipelineStatsRepository(store, projects, clock=clock)
         pipeline_feed = PipelineFeedRepository(store, projects, clock=clock)
@@ -213,6 +216,7 @@ class Repositories:
             job_queue=job_queue,
             lineage_feed=lineage_feed,
             lineage_stats=lineage_stats,
+            operation_feed=operation_feed,
             operation_stats=operation_stats,
             pipeline_stats=pipeline_stats,
             pipeline_feed=pipeline_feed,

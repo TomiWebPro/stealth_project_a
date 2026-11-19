@@ -195,6 +195,10 @@ from .operation import (
     OperationSpec,
     SettingType,
 )
+from .operation_feed import (
+    OperationFeed,
+    OperationFeedItem,
+)
 from .operation_stats import (
     OperationStats,
     OperationTypeCount,
@@ -510,6 +514,9 @@ __all__ = [
     "OperationSetting",
     "OperationSpec",
     "SettingType",
+    # operation feed
+    "OperationFeed",
+    "OperationFeedItem",
     # operation stats
     "OperationStats",
     "OperationTypeCount",
