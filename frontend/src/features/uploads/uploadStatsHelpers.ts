@@ -61,6 +61,11 @@ const STATUS_TONE: Readonly<Record<UploadStatus, BadgeTone>> = {
   complete: "success",
 };
 
+/** Badge tone for a canonical upload ticket status (shared by stats + feed). */
+export function uploadStatusTone(status: UploadStatus): BadgeTone {
+  return STATUS_TONE[status] ?? "neutral";
+}
+
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(1, Math.max(0, value));
@@ -156,7 +161,7 @@ export function uploadStatusRows(stats?: UploadStats): UploadStatusRow[] {
       count,
       fraction,
       percent: Math.round(fraction * 100),
-      tone: STATUS_TONE[status] ?? "neutral",
+      tone: uploadStatusTone(status),
     };
   });
 }

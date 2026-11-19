@@ -17,6 +17,7 @@ import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
+import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
 import { OrganizationStatsPanel } from "../workspaces/OrganizationStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
@@ -185,6 +186,10 @@ export function HomeScreen() {
         <SearchStatsPanel
           title="Workspace search stats"
           description="Authoritative index metrics for projects, assets and conversations in the workspace."
+        />
+        <UploadFeedPanel
+          title="Workspace upload tickets"
+          description="Newest-first upload tickets across every project in the workspace."
         />
         <UploadStatsPanel
           title="Workspace upload stats"
