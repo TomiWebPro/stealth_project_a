@@ -1847,6 +1847,26 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `f37a8ea`
   Screens version-feed rendering remains a screens follow-up.
 
+- [x] C157 (backend) Authoritative asset lineage feed API:
+  `GET /api/v1/lineage/feed?project_id=&limit=` derives a newest-first,
+  workspace-wide feed of typed asset relationships from the authoritative
+  `ASSET_RELATIONSHIPS` store (no second index) — relationship id, source/target
+  asset ids + display names and project id/name joined from the authoritative
+  asset/project stores, canonical relationship type and creation time, with a
+  deterministic `(created_at, id)` newest-first tie-break and a whole-scope
+  `total` counted before the `limit` page; links from soft-deleted/unknown source
+  assets are excluded (matching `/lineage/stats`, so the feed total agrees with
+  the snapshot) while a soft-deleted/unknown target keeps the link with a stable
+  "Unknown asset" name fallback; optional `project_id` scope with shared 404
+  `project_not_found` / 422 `validation_error` envelopes. `LineageFeed`/
+  `LineageFeedItem` mirrored in `frontend/src/types/lineageFeed.ts` + exported
+  from the types index, README endpoint list synced, 11 tests × 2 storage
+  backends green (997 passed, contract parity + route-surface guard + tsc clean).
+  Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had
+  no unchecked items (only the repo-wide C6 docs pass remains, owned by other
+  agents), so C157 was added under the Never-empty well.
+  ✅ 2026-11-19 — `07ae5ed`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2042,3 +2062,4 @@ this file is the execution checklist.
 - 2026-11-19 — `e762137` — C154 (screens): rendered the authoritative comment feed (C149/C151/C152 follow-up) via `useCommentFeed` — a reusable `CommentFeedPanel` on Home (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first rows showing a whitespace-normalized body preview, joined project name, author badge, optional asset-reference badge and comment recency, deep links to project detail and to the referenced asset (scoping the assets browser first), and all five UI states — every display value derived in tested `commentFeedHelpers` (9 new tests). Resolves the C152 screens follow-up; lint clean, 1020 tests, build green. My owned column had no unchecked rows, so C154 was added under the Never-empty well.
 - 2026-11-19 — `907fef2` — C155 (mocks): wired the authoritative asset version feed (C153 follow-up) end to end — `getVersionFeed`/`useVersionFeed` atomically across mockApi (seed-derived newest-first `(created_at, asset_id, version)` derivation over version/asset/project seeds with joined project names + "Unknown project" fallback, soft-deleted/unknown-asset exclusion, optional `project_id` scope, whole-scope `total` before the `limit` page, router-style 422 for a malformed project id / out-of-range limit + unknown-project 404 + injectable `versionFeed` failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /versions/feed?project_id=&limit=`), `queryKeys` and `useQueries`, with a shared `lib/versionFeed` derivation/validation helper and enriched version seeds; parity guard extended to both transports (populated/scoped/limited/empty/404/422 + surface guard). Lint clean, 1029 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C155 was added under the Never-empty well. Screens version-feed rendering + CI live-smoke probe remain follow-ups.
 - 2026-11-19 — `f37a8ea` — C156 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/versions/feed?project_id=&limit=` asset version feed (the C153/C155 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined project name + asset name/type/version/creator/timestamps, newest-first `(created_at, asset_id, version)` ordering with an asset-id/version tie-break, whole-scope `total` before the `limit` page with unchanged counters, optional `project_id` scope (unknown → shared 404 `project_not_found`), and the shared 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — reusing the on-demand registered asset (v1 + appended v2) so the derived feed is non-empty. No unchecked CI row remained, so C156 was added under the Never-empty well; resolves the C155 CI follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (244/244 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1029 tests/build green and backend pytest (975) green. Screens version-feed rendering remains a screens follow-up.
+- 2026-11-19 — `07ae5ed` — C157 (backend): added authoritative `GET /api/v1/lineage/feed?project_id=&limit=` — a newest-first, workspace-wide feed of typed asset relationships derived fresh from the authoritative `ASSET_RELATIONSHIPS` store (no second index) with relationship id, source/target asset ids + joined display names and project id/name, canonical relationship type and creation time, a deterministic `(created_at, id)` tie-break and a whole-scope `total` before the `limit` page; links from soft-deleted/unknown source assets excluded (matching `/lineage/stats`, feed total agrees with the snapshot) while a soft-deleted/unknown target keeps the link with a stable "Unknown asset" fallback; optional `project_id` scope with shared 404 `project_not_found` / 422 `validation_error` envelopes; `LineageFeed`/`LineageFeedItem` mirrored in `frontend/src/types/lineageFeed.ts` + exported from the types index, README endpoint list synced, 11 tests × 2 storage backends green (997 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C157 was added under the Never-empty well.
