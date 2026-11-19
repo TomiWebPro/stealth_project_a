@@ -1384,6 +1384,22 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `bf28a6a`
   Screens queue-view rendering remains a screens follow-up.
 
+- [x] C125 (backend) Authoritative publish-feed API: `GET /api/v1/publishes?project_id=&limit=`
+  derives a newest-first feed of published deliverables from the same authoritative
+  `publish_receipt` records `GET /publishes/stats` reads (no second index) — each
+  item carries asset/project id + display name, asset type, receipt version/byte
+  size and publish time, with project names joined from the authoritative project
+  store and a deterministic `(published_at, asset_id)` newest-first tie-break;
+  soft-deleted/unpublished assets and malformed receipts are excluded, the whole-
+  scope `total` is counted before the `limit` page, and an optional `project_id`
+  scope uses shared 404 `project_not_found` / 422 `validation_error` envelopes.
+  `PublishFeed`/`PublishFeedItem` mirrored in `frontend/src/types/publishFeed.ts`,
+  README endpoint list synced, 9 tests × 2 storage backends green (833 passed,
+  contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of
+  the feed is a follow-up. My owned backend column had no unchecked items (only
+  the repo-wide C6 docs pass remains, owned by other agents), so C125 was added
+  under the Never-empty well. ✅ 2026-11-19 — `3e145eb`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1547,3 +1563,4 @@ this file is the execution checklist.
 - 2026-11-19 — `e8ac977` — C122 (screens): rendered the authoritative per-job execution log (C117/C119/C120 follow-up) via `useJobLogs` — a reusable `JobLogConsole` on the Jobs screen and project detail with a job picker, severity filter chips, page-size select and forward/backward cursor navigation, plus loading/error/missing/empty/populated states; every display value derived in tested `jobLogHelpers` (14 new tests). Resolves the C120 screens follow-up. Lint clean, 821 tests, build green. My owned column had no unchecked rows, so C122 was added under the Never-empty well.
 - 2026-11-19 — `c26c1d9` — C123 (mocks): wired the authoritative job dispatch-queue API (C121 follow-up) end to end — `getJobQueue`/`useJobQueue` atomically across mockApi (FIFO active-job derivation with 1-based positions, whole-queue counters, bounded page, router-style 422 + unknown-project 404 + injectable `jobQueue` failure), the stable ApiClient facade, live `httpApiClient` (`GET /jobs/queue?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/jobQueue` derivation/validation helper; parity guard extended to both transports; lint clean, 836 tests, build green. My owned column had no unchecked rows, so C123 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-19 — `bf28a6a` — C124 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/jobs/queue` (derived snapshot + entry shapes, whole-queue counter invariants and 1-based FIFO positions, reuse of the on-demand submitted job as a derived queued entry, `limit` page bound with unchanged counters, optional `project_id` scope, and shared 404 `project_not_found` / 422 `validation_error` envelopes with request-id) — the CI follow-up from C121/C123. No unchecked CI row remained, so C124 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (156/156 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12 (`-shellcheck=`, since shellcheck integration is pathologically slow on the large heredoc); frontend lint clean/836 tests/build green and backend pytest (815) green. Screens queue-view rendering remains a screens follow-up.
+- 2026-11-19 — `3e145eb` — C125 (backend): added authoritative `GET /api/v1/publishes` newest-first publish feed derived from the same receipts as publishes/stats (no second index) — asset/project id + name, asset type, receipt version/bytes and publish time, project-name join, deterministic recency tie-break, bounded page + whole-scope `total`, optional `project_id` scope with shared 404/422 envelopes; `PublishFeed`/`PublishFeedItem` mirrored in `frontend/src/types/publishFeed.ts`, README endpoint list synced, 9 tests × 2 backends green (833 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up.
