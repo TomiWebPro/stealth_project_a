@@ -9,6 +9,7 @@ import {
   EXTENSIONS,
   JOBS,
   JOB_EVENTS,
+  JOB_RETRIES,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_PLANS,
@@ -66,6 +67,7 @@ import {
   fetchProviders,
   fetchProviderStats,
   fetchRecentAssets,
+  fetchRetryStats,
   fetchSearch,
   fetchSearchStats,
   fetchStorageStats,
@@ -1579,6 +1581,68 @@ describe("mock API event stream statistics (C101 follow-up)", () => {
 
     setMockFailure("eventStats");
     await expect(fetchEventStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API job retry statistics (C105 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives the authoritative snapshot from the retry ledger seeds", async () => {
+    const stats = await fetchRetryStats();
+    const jobIds = new Set(JOBS.map((job) => job.id));
+    const attributed = JOB_RETRIES.filter((entry) => jobIds.has(entry.job_id));
+
+    expect(stats.total_retries).toBe(attributed.length);
+    expect(stats.total_jobs).toBe(new Set(attributed.map((entry) => entry.job_id)).size);
+    expect(stats.by_status?.map((bucket) => bucket.status)).toEqual([
+      "queued",
+      "running",
+      "succeeded",
+      "failed",
+      "canceled",
+    ]);
+    expect(stats.by_status?.reduce((sum, bucket) => sum + bucket.jobs, 0)).toBe(stats.total_jobs);
+    expect(stats.by_project?.reduce((sum, entry) => sum + entry.retries, 0)).toBe(
+      stats.total_retries,
+    );
+    expect(stats.newest_retry_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes retries to one project (skipping orphans) and zero-fills an unseeded project", async () => {
+    const jobProjects = new Map(JOBS.map((job) => [job.id, job.project_id]));
+    const filmRetries = JOB_RETRIES.filter(
+      (entry) => jobProjects.get(entry.job_id) === filmId,
+    ).length;
+
+    const scoped = await fetchRetryStats({ projectId: filmId });
+    expect(scoped.total_retries).toBe(filmRetries);
+    expect(scoped.total_jobs).toBeGreaterThan(0);
+    expect(scoped.by_project?.every((entry) => entry.project_id === filmId)).toBe(true);
+
+    const empty = await fetchRetryStats({ projectId: emptyId });
+    expect(empty.total_retries).toBe(0);
+    expect(empty.total_jobs).toBe(0);
+    expect(empty.by_status?.every((bucket) => bucket.jobs === 0)).toBe(true);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_retry_at).toBeNull();
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchRetryStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchRetryStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("retryStats");
+    await expect(fetchRetryStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

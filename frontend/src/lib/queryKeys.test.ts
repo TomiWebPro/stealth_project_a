@@ -208,6 +208,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the retry stats key by project", () => {
+    expect(queryKeys.retryStats.summary()).toEqual(["retry-stats", "summary", "all"]);
+    expect(queryKeys.retryStats.summary({ projectId: "p1" })).toEqual([
+      "retry-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

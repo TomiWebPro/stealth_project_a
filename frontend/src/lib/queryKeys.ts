@@ -15,6 +15,7 @@ import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderStatsOptions } from "./providerStats";
+import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
@@ -190,6 +191,10 @@ export const queryKeys = {
   eventStats: {
     summary: (options: EventStatsOptions = {}) =>
       ["event-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  retryStats: {
+    summary: (options: RetryStatsOptions = {}) =>
+      ["retry-stats", "summary", options.projectId ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>

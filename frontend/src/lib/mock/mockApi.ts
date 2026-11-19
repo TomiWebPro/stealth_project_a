@@ -57,6 +57,8 @@ import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
 import type { ProviderStatsOptions } from "../providerStats";
+import { deriveRetryStats, validateRetryStatsArgs } from "../retryStats";
+import type { RetryStatsOptions } from "../retryStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
 import type { SearchOptions } from "../search";
 import { deriveSearchStats, validateSearchStatsArgs } from "../searchStats";
@@ -96,6 +98,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  RetryStats,
   SearchResponse,
   SearchStats,
   StorageStats,
@@ -114,6 +117,7 @@ import {
   EXTENSIONS,
   JOBS,
   JOB_EVENTS,
+  JOB_RETRIES,
   MESSAGES,
   OPERATION_CATALOG,
   ORGANIZATIONS,
@@ -155,7 +159,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `eventStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
  * with {@link clearMockFailures} afterwards.
  */
@@ -973,6 +977,25 @@ export async function fetchEventStats(options?: EventStatsOptions): Promise<Even
     });
   }
   return delay(deriveEventStats(JOB_EVENTS, JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative job retry metrics (C105) derived from the same retry ledger as
+ * the live `/retries/stats` endpoint. Router-style 422 validation, a normalized
+ * 404 for an unknown project scope and the `"retryStats"` failure domain keep
+ * error and empty states at parity.
+ */
+export async function fetchRetryStats(options?: RetryStatsOptions): Promise<RetryStats> {
+  failIfEnabled("retryStats");
+  validateRetryStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveRetryStats(JOB_RETRIES, JOBS, REFERENCE_NOW, options));
 }
 
 /**

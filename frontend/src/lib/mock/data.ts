@@ -10,6 +10,7 @@ import { buildAuditTrail } from "../audit";
 import type { AssetRelationshipRecord } from "../lineageStats";
 import type { OrganizationMemberRecord } from "../organizationStats";
 import type { PipelineChainRecord } from "../pipelineStats";
+import type { JobRetryRecord } from "../retryStats";
 import type { UploadRecord } from "../uploadStats";
 import type {
   Asset,
@@ -1714,5 +1715,22 @@ export const JOB_EVENTS: readonly JobEvent[] = [
   jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "result", 2, 150),
   // Orphan (newest event globally, excluded from every project scope).
   jobEvent("0b5c1e2a-3000-4000-8000-0000000000ff", "status", 0, 2),
+];
+
+// --- Authoritative retry ledger (C105 / retry statistics) --------------------
+// Mirrors the backend `JOB_RETRIES` idempotency ledger read by
+// `/retries/stats`: one entry per accepted retry, keyed by an idempotency key
+// (only the bare `job_id` is stored). Duplicates mean a job was retried more
+// than once; the failed lora-train (Job 016) was retried twice. An orphan entry
+// (Job 0fff, not in JOBS) is excluded from every view, matching the backend
+// join to the authoritative job store. The "empty" project has no entries.
+
+export const JOB_RETRIES: readonly JobRetryRecord[] = [
+  { job_id: "0b5c1e2a-3000-4000-8000-000000000001" }, // brand, running
+  { job_id: "0b5c1e2a-3000-4000-8000-000000000014" }, // moonshot, running
+  { job_id: "0b5c1e2a-3000-4000-8000-000000000016" }, // moonshot, failed (retryable)
+  { job_id: "0b5c1e2a-3000-4000-8000-000000000016" }, // same job retried twice
+  { job_id: "0b5c1e2a-3000-4000-8000-000000000017" }, // moonshot, succeeded
+  { job_id: "0b5c1e2a-3000-4000-8000-0000000000ff" }, // orphan, excluded everywhere
 ];
 

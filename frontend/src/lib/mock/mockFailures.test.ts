@@ -42,6 +42,7 @@ import {
   fetchProviders,
   fetchProviderStats,
   fetchRecentAssets,
+  fetchRetryStats,
   fetchSearchStats,
   fetchStorageStats,
   fetchTags,
@@ -78,6 +79,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchSearchStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchUploadStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchRetryStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobs()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchAssetStats()).rejects.toBeInstanceOf(ApiError);
@@ -286,6 +288,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchEventStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the retry stats domain", async () => {
+    setMockFailure("retryStats");
+
+    await expect(fetchRetryStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchRetryStats()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the orchestration stats domain", async () => {

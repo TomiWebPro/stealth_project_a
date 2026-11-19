@@ -22,6 +22,7 @@ import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
+import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
@@ -59,6 +60,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  RetryStats,
   SearchResponse,
   SearchStats,
   StorageStats,
@@ -563,6 +565,17 @@ export function useEventStats(
   return useQuery({
     queryKey: queryKeys.eventStats.summary(options),
     queryFn: () => api.getEventStats(options),
+  });
+}
+
+/** Authoritative job retry metrics from `/retries/stats`, optionally project-scoped (C105). */
+export function useRetryStats(
+  options?: RetryStatsOptions,
+): UseQueryResult<RetryStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.retryStats.summary(options),
+    queryFn: () => api.getRetryStats(options),
   });
 }
 

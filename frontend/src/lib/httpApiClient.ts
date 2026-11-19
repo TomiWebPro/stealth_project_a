@@ -40,6 +40,8 @@ import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import { providerStatsQueryParams } from "./providerStats";
 import type { ProviderStatsOptions } from "./providerStats";
+import { retryStatsQueryParams } from "./retryStats";
+import type { RetryStatsOptions } from "./retryStats";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
 import { searchStatsQueryParams } from "./searchStats";
@@ -81,6 +83,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  RetryStats,
   SearchResponse,
   SearchStats,
   StorageStats,
@@ -580,6 +583,11 @@ export function createHttpApiClient(
     /** Authoritative job event stream metrics derived by the backend `/events/stats`. */
     getEventStats(options?: EventStatsOptions): Promise<EventStats> {
       return request<EventStats>("/events/stats", eventStatsQueryParams(options));
+    },
+
+    /** Authoritative job retry metrics derived by the backend `/retries/stats`. */
+    getRetryStats(options?: RetryStatsOptions): Promise<RetryStats> {
+      return request<RetryStats>("/retries/stats", retryStatsQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

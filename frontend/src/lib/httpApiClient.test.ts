@@ -1317,6 +1317,59 @@ describe("createHttpApiClient event stream statistics", () => {
   });
 });
 
+describe("createHttpApiClient retry statistics", () => {
+  const stats = {
+    total_retries: 4,
+    total_jobs: 3,
+    by_status: [
+      { status: "queued", jobs: 0 },
+      { status: "running", jobs: 1 },
+      { status: "succeeded", jobs: 1 },
+      { status: "failed", jobs: 1 },
+      { status: "canceled", jobs: 0 },
+    ],
+    by_project: [{ project_id: "11111111-1111-4111-8111-111111111111", retries: 4, jobs: 3 }],
+    newest_retry_at: "2026-01-06T00:00:00Z",
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /retries/stats with the project scope and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/retries/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getRetryStats({ projectId: "11111111-1111-4111-8111-111111111111" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/retries/stats`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+  });
+
+  it("omits the project scope and query string when none is supplied", async () => {
+    const { fetchImpl, calls } = router({ "/retries/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getRetryStats()).resolves.toEqual(stats);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getRetryStats({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient orchestration stats", () => {
   const stats = {
     total_plans: 3,
