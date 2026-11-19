@@ -88,6 +88,10 @@ All paths are prefixed with `/api/v1`.
   newest-publish recency) derived from publish receipts in the asset store;
   soft-deleted/unpublished assets and malformed receipts are excluded
 - **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`,
+  `GET /uploads/feed?project_id=&limit=` — newest-first upload-ticket feed (ticket
+  + project identity, filename/content type, lifecycle status, declared/uploaded
+  bytes and creation/expiry times) derived from the upload store, with a whole-scope
+  `total` before the `limit` page and a deterministic `(created_at, upload_id)` tie-break;
   `GET /uploads/stats?project_id=` — authoritative upload-ticket metrics
   (zero-filled pending/complete breakdown, per-project activity, completed byte
   totals and newest-ticket recency) derived from the upload store; optional

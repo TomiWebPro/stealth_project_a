@@ -42,6 +42,7 @@ from .search import SearchRepository
 from .search_stats import SearchStatsRepository
 from .tags import TagRepository
 from .uploads import UploadRepository
+from .upload_feed import UploadFeedRepository
 from .upload_stats import UploadStatsRepository
 from .version_stats import VersionStatsRepository
 
@@ -58,6 +59,7 @@ class Repositories:
     conversation_stats: ConversationStatsRepository
     collaboration_stats: CollaborationStatsRepository
     uploads: UploadRepository
+    upload_feed: UploadFeedRepository
     upload_stats: UploadStatsRepository
     jobs: JobRepository
     job_stats: JobStatsRepository
@@ -103,6 +105,7 @@ class Repositories:
         uploads = UploadRepository(
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
+        upload_feed = UploadFeedRepository(store, projects, clock=clock)
         upload_stats = UploadStatsRepository(store, projects, clock=clock)
         jobs = JobRepository(store, projects, clock=clock)
         job_stats = JobStatsRepository(store, projects, clock=clock)
@@ -154,6 +157,7 @@ class Repositories:
             conversation_stats=conversation_stats,
             collaboration_stats=collaboration_stats,
             uploads=uploads,
+            upload_feed=upload_feed,
             upload_stats=upload_stats,
             jobs=jobs,
             job_stats=job_stats,

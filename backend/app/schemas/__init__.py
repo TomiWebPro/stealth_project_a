@@ -247,6 +247,10 @@ from .tags import (
     TagFacet,
     TagIndex,
 )
+from .upload_feed import (
+    UploadFeed,
+    UploadFeedItem,
+)
 from .upload_stats import (
     UploadProjectCount,
     UploadStats,
@@ -470,6 +474,9 @@ __all__ = [
     # tags
     "TagFacet",
     "TagIndex",
+    # upload feed
+    "UploadFeed",
+    "UploadFeedItem",
     # upload stats
     "UploadStatus",
     "UploadStatusCount",

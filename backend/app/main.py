@@ -64,6 +64,7 @@ from .routers import (
     splat,
     tags,
     tree,
+    upload_feed,
     upload_stats,
     uploads,
     version_stats,
@@ -251,6 +252,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/uploads/stats" must be registered before "/uploads/{id}" so the literal
     # stats path wins over the upload-id-templated one.
     app.include_router(upload_stats.router, prefix=API_PREFIX)
+    # "/uploads/feed" is a literal path; register it before the uploads router so
+    # the feed is never parsed as an upload-id-templated path.
+    app.include_router(upload_feed.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
     # "/jobs/stats" must be registered before "/jobs/{job_id}" so the literal
     # path wins over the UUID-templated one.
