@@ -71,6 +71,7 @@ from .routers import (
     publish,
     publish_feed,
     publish_stats,
+    retry_feed,
     retry_stats,
     search,
     search_stats,
@@ -308,8 +309,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(provider_stats.router, prefix=API_PREFIX)
     app.include_router(provider_feed.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
-    # "/retries/stats" has no templated sibling; register it directly to keep
-    # the stats path explicit.
+    # "/retries/feed" and "/retries/stats" have no templated sibling; register
+    # them directly to keep both retry paths explicit.
+    app.include_router(retry_feed.router, prefix=API_PREFIX)
     app.include_router(retry_stats.router, prefix=API_PREFIX)
     # "/orchestration/feed" and "/orchestration/stats" have no templated sibling
     # at that segment; register them before the orchestration router so both

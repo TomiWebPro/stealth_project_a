@@ -58,6 +58,7 @@ from .repositories.provider_stats import ProviderStatsRepository
 from .repositories.providers import ProviderRepository
 from .repositories.publish_feed import PublishFeedRepository
 from .repositories.publish_stats import PublishStatsRepository
+from .repositories.retry_feed import RetryFeedRepository
 from .repositories.retry_stats import RetryStatsRepository
 from .repositories.search import SearchRepository
 from .repositories.search_stats import SearchStatsRepository
@@ -350,6 +351,12 @@ def get_publish_stats_repository(
     return repositories.publish_stats
 
 
+def get_retry_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> RetryFeedRepository:
+    return repositories.retry_feed
+
+
 def get_retry_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> RetryStatsRepository:
@@ -557,6 +564,7 @@ __all__ = [
     "get_provider_stats_repository",
     "get_publish_feed_repository",
     "get_publish_stats_repository",
+    "get_retry_feed_repository",
     "get_retry_stats_repository",
     "get_publish_service",
     "get_repositories",

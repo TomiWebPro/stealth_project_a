@@ -157,6 +157,11 @@ All paths are prefixed with `/api/v1`.
   authoritative `JOB_RETRIES` idempotency ledger joined to jobs; orphaned
   entries are excluded and an optional project scope uses shared 404/422
   envelopes
+  `GET /retries/feed?project_id=&limit=` — authoritative newest-first feed of
+  retried jobs derived from the same `JOB_RETRIES` ledger joined to jobs/projects
+  (operation/lifecycle fields, accepted-retry count and joined project name;
+  whole-scope `total` before the bounded page); orphan entries are excluded and
+  an optional project scope uses shared 404/422 envelopes
 - **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
   `GET /providers/feed?location=&status=&limit=` — deterministic provider feed
   (identity/health, sorted advertised operation ids and capability count;

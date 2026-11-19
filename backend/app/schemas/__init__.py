@@ -273,6 +273,10 @@ from .publish_stats import (
     PublishStats,
     PublishVersionCount,
 )
+from .retry_feed import (
+    RetryFeed,
+    RetryFeedItem,
+)
 from .retry_stats import (
     RetryProjectCount,
     RetryStats,
@@ -570,6 +574,9 @@ __all__ = [
     "ProviderCapability",
     "ProviderLocation",
     "ProviderStatus",
+    # retry feed
+    "RetryFeed",
+    "RetryFeedItem",
     # retry stats
     "RetryProjectCount",
     "RetryStats",
