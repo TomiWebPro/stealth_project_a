@@ -16,6 +16,7 @@ import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { AudioPanel } from "../audio/AudioPanel";
 import { formatRelative } from "../home/format";
+import { ConversationOverviewPanel } from "./ConversationOverviewPanel";
 import { ConversationStatsPanel } from "./ConversationStatsPanel";
 import {
   buildConversationRows,
@@ -327,6 +328,13 @@ export function ChatScreen() {
             title="Project conversation stats"
             description="Authoritative message metrics scoped to the selected project."
           />
+          {conversationId ? (
+            <ConversationOverviewPanel
+              conversationId={conversationId}
+              title="Conversation overview"
+              description="Authoritative snapshot of the selected conversation, derived from the conversation stores."
+            />
+          ) : null}
           <div className="grid min-h-[34rem] gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
             <ConversationList
               projectId={selectedProjectId}
