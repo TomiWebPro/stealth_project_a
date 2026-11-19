@@ -226,6 +226,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the publish stats key by project", () => {
+    expect(queryKeys.publishStats.summary()).toEqual(["publish-stats", "summary", "all"]);
+    expect(queryKeys.publishStats.summary({ projectId: "p1" })).toEqual([
+      "publish-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

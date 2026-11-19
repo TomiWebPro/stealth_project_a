@@ -40,6 +40,8 @@ import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import { providerStatsQueryParams } from "./providerStats";
 import type { ProviderStatsOptions } from "./providerStats";
+import { publishStatsQueryParams } from "./publishStats";
+import type { PublishStatsOptions } from "./publishStats";
 import { retryStatsQueryParams } from "./retryStats";
 import type { RetryStatsOptions } from "./retryStats";
 import { searchQueryParams } from "./search";
@@ -85,6 +87,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  PublishStats,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -596,6 +599,11 @@ export function createHttpApiClient(
     /** Authoritative asset version metrics derived by the backend `/versions/stats`. */
     getVersionStats(options?: VersionStatsOptions): Promise<VersionStats> {
       return request<VersionStats>("/versions/stats", versionStatsQueryParams(options));
+    },
+
+    /** Authoritative publish-receipt metrics derived by the backend `/publishes/stats`. */
+    getPublishStats(options?: PublishStatsOptions): Promise<PublishStats> {
+      return request<PublishStats>("/publishes/stats", publishStatsQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

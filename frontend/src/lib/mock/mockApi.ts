@@ -57,6 +57,8 @@ import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
 import type { ProviderStatsOptions } from "../providerStats";
+import { derivePublishStats, validatePublishStatsArgs } from "../publishStats";
+import type { PublishStatsOptions } from "../publishStats";
 import { deriveRetryStats, validateRetryStatsArgs } from "../retryStats";
 import type { RetryStatsOptions } from "../retryStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
@@ -100,6 +102,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  PublishStats,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -163,7 +166,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
  * with {@link clearMockFailures} afterwards.
  */
@@ -1020,6 +1023,25 @@ export async function fetchVersionStats(options?: VersionStatsOptions): Promise<
     });
   }
   return delay(deriveVersionStats(ASSET_VERSIONS, ASSETS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative publish metrics (C113) derived from the same asset publish
+ * receipts as the live `/publishes/stats` endpoint. Router-style 422 validation,
+ * a normalized 404 for an unknown project scope and the `"publishStats"`
+ * failure domain keep error and empty states at parity.
+ */
+export async function fetchPublishStats(options?: PublishStatsOptions): Promise<PublishStats> {
+  failIfEnabled("publishStats");
+  validatePublishStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(derivePublishStats(ASSETS, REFERENCE_NOW, options));
 }
 
 /**

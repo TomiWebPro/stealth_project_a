@@ -22,6 +22,7 @@ import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
+import type { PublishStatsOptions } from "../lib/publishStats";
 import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
@@ -61,6 +62,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  PublishStats,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -589,6 +591,17 @@ export function useVersionStats(
   return useQuery({
     queryKey: queryKeys.versionStats.summary(options),
     queryFn: () => api.getVersionStats(options),
+  });
+}
+
+/** Authoritative publish-receipt metrics from `/publishes/stats`, optionally project-scoped (C113). */
+export function usePublishStats(
+  options?: PublishStatsOptions,
+): UseQueryResult<PublishStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.publishStats.summary(options),
+    queryFn: () => api.getPublishStats(options),
   });
 }
 
