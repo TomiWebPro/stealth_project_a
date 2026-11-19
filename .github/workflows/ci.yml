@@ -533,6 +533,59 @@ jobs:
                 and psbadbody.get("error", {}).get("code") == "validation_error"
                 and bool(psbadbody.get("error", {}).get("request_id")), pst_bad.text)
 
+          # Authoritative extension registry/installation statistics (C61/C63)
+          # is the newest /api/v1 URL the live client calls (getExtensionStats).
+          # Probe the zero-filled snapshot + breakdown shapes, the independent
+          # type/status filters and the shared 422 envelope, keeping CI aligned
+          # with new endpoints as they go live.
+          extension_stats = httpx.get(f"{base}/extensions/stats", timeout=5)
+          estbody = extension_stats.json() if extension_stats.status_code == 200 else {}
+          check("extensions/stats 200 snapshot shape",
+                extension_stats.status_code == 200 and all(
+                    k in estbody for k in ("total_registered", "total_installed",
+                                           "by_type", "by_status", "enabled", "signed",
+                                           "verified", "total_permissions",
+                                           "unique_permissions", "by_permission",
+                                           "total_capabilities", "generated_at")),
+                extension_stats.text)
+          check("extensions/stats breakdown shapes",
+                isinstance(estbody.get("by_type"), list)
+                and all(isinstance(t, dict) and "type" in t and "count" in t
+                        for t in estbody["by_type"])
+                and isinstance(estbody.get("by_status"), list)
+                and all(isinstance(s, dict) and "status" in s and "count" in s
+                        for s in estbody["by_status"])
+                and isinstance(estbody.get("by_permission"), list)
+                and all(isinstance(p, dict) and "permission" in p and "extensions" in p
+                        for p in estbody["by_permission"]),
+                extension_stats.text)
+          ext_type = httpx.get(
+              f"{base}/extensions/stats", params={"type": "ui"}, timeout=5)
+          etbody = ext_type.json() if ext_type.status_code == 200 else {}
+          check("extensions/stats type filter 200",
+                ext_type.status_code == 200
+                and isinstance(etbody.get("total_registered"), int)
+                and any(t.get("type") == "ui" and t.get("count") == etbody["total_registered"]
+                        for t in etbody.get("by_type", [])),
+                ext_type.text)
+          ext_status = httpx.get(
+              f"{base}/extensions/stats", params={"status": "enabled"}, timeout=5)
+          esbody = ext_status.json() if ext_status.status_code == 200 else {}
+          check("extensions/stats status filter 200",
+                ext_status.status_code == 200
+                and isinstance(esbody.get("total_installed"), int)
+                and any(s.get("status") == "enabled" and s.get("count") == esbody["total_installed"]
+                        for s in esbody.get("by_status", [])),
+                ext_status.text)
+          ext_bad = httpx.get(
+              f"{base}/extensions/stats", params={"type": "mystery"}, timeout=5)
+          ebadbody = ext_bad.json() if ext_bad.status_code == 422 else {}
+          check("extensions/stats 422 validation envelope",
+                ext_bad.status_code == 422
+                and ebadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ebadbody.get("error", {}).get("request_id")),
+                ext_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
