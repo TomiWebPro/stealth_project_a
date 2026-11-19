@@ -1103,6 +1103,20 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `a740483`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C104 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  job event stream statistics endpoint from C101/C103
+  (`GET /api/v1/events/stats?project_id=`): probe the zero-filled snapshot
+  shape (`total_events`, `total_jobs`, `by_type`, `by_job`,
+  `newest_event_at`, `generated_at`) + per-type/per-job breakdown shapes and
+  the six canonical event types (status/progress/intermediate/result/error/
+  log), the optional `project_id` scope (unknown → shared 404
+  `project_not_found`), and the shared 422 `validation_error` envelope with
+  request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C104 was added under the Never-empty well.
+  ✅ 2026-11-19 — `7a65bab`
+  Screens event-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1245,3 +1259,4 @@ this file is the execution checklist.
 - 2026-11-19 — `cf16a19` — C101 (backend): added authoritative `GET /api/v1/events/stats?project_id=` deriving zero-filled per-type event breakdowns, per-job event counts with recency, emitting-job total and newest-event recency from the authoritative `JOB_EVENTS` store (optional project scope joins events to jobs with shared 404/422 envelopes); `EventStats`/`EventTypeCount`/`EventJobCount` mirrored in `frontend/src/types/eventStats.ts`, README endpoint list synced, 5 tests × 2 backends green (751 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C101 was added under the Never-empty well.
 - 2026-11-19 — `4dd4ed1` — C102 (screens): rendered the authoritative upload statistics (C97/C99/C100 follow-up) via `useUploadStats` — a reusable `UploadStatsPanel` on Home (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled pending/complete status and per-project ticket activity breakdowns, and all five UI states; every display value derived in tested `uploadStatsHelpers`. Resolves the C100 screens follow-up. Lint clean, 691 tests, build green. My owned column had no unchecked rows, so C102 was added under the Never-empty well.
 - 2026-11-19 — `a740483` — C103 (mocks): wired the authoritative job event stream statistics API (C101 follow-up) end to end — `getEventStats`/`useEventStats` atomically across mockApi (seed-derived zero-filled per-type buckets, per-job event activity with recency, event→job join for project scope with orphan exclusion, router-style 422 for a malformed project id + unknown-project 404 + injectable `eventStats` failure), the stable facade, live `httpApiClient` (`GET /events/stats?project_id=`), queryKeys and useQueries, with a shared `lib/eventStats` derivation/validation helper and `JOB_EVENTS` seeds; parity guard extended to both transports. My owned column had no unchecked rows, so C103 was added under the Never-empty well. Lint clean, 705 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `7a65bab` — C104 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/events/stats` (zero-filled snapshot + by_type/by_job breakdown shapes, the six canonical event types status/progress/intermediate/result/error/log, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C101/C103. No unchecked CI row remained, so C104 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (107/107 probes OK) with actionlint v1.7.12 + YAML parse; frontend lint/test (705)/build and backend pytest (751) green. Screens event-stats rendering remains a screens follow-up.
