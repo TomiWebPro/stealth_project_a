@@ -12,6 +12,7 @@ import type { OrganizationMemberRecord } from "../organizationStats";
 import type { PipelineChainRecord } from "../pipelineStats";
 import type { JobRetryRecord } from "../retryStats";
 import type { UploadRecord } from "../uploadStats";
+import type { AssetVersionRecord } from "../versionStats";
 import type {
   Asset,
   AuditTrail,
@@ -1733,4 +1734,26 @@ export const JOB_RETRIES: readonly JobRetryRecord[] = [
   { job_id: "0b5c1e2a-3000-4000-8000-000000000017" }, // moonshot, succeeded
   { job_id: "0b5c1e2a-3000-4000-8000-0000000000ff" }, // orphan, excluded everywhere
 ];
+
+// --- Authoritative asset version records (C109 / version statistics) -----------
+// Mirrors the backend `ASSET_VERSIONS` collection read by `/versions/stats`:
+// every registered asset has a v1 record and `create_version` appends v2, v3, ….
+// A version record carries no project of its own — the derivation attributes it
+// via the asset — and records of soft-deleted assets are excluded at read time,
+// matching the backend repository. Seed them from `ASSETS` so mock mode reflects
+// the same "one v1 per asset + one per revision" invariant as live mode; the two
+// version-chain assets (s01_c01 Ver_002) contribute the v2 revisions.
+
+export const ASSET_VERSIONS: readonly AssetVersionRecord[] = ASSETS.flatMap((asset) => {
+  const latest = asset.version ?? 1;
+  const records: AssetVersionRecord[] = [];
+  for (let number = 1; number <= latest; number += 1) {
+    records.push({
+      asset_id: asset.id,
+      version: number,
+      created_at: number === latest ? asset.updated_at : asset.created_at,
+    });
+  }
+  return records;
+});
 

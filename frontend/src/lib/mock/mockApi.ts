@@ -67,6 +67,8 @@ import { deriveTagIndex, validateTagArgs } from "../tags";
 import type { TagOptions } from "../tags";
 import { deriveUploadStats, validateUploadStatsArgs } from "../uploadStats";
 import type { UploadStatsOptions } from "../uploadStats";
+import { deriveVersionStats, validateVersionStatsArgs } from "../versionStats";
+import type { VersionStatsOptions } from "../versionStats";
 import type {
   Asset,
   AssetImpact,
@@ -106,10 +108,12 @@ import type {
   TagIndex,
   UploadStats,
   User,
+  VersionStats,
 } from "../types";
 import {
   ASSETS,
   ASSET_RELATIONSHIPS,
+  ASSET_VERSIONS,
   AUDIT_TRAILS,
   COMMENTS,
   CONVERSATIONS,
@@ -159,7 +163,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
  * with {@link clearMockFailures} afterwards.
  */
@@ -996,6 +1000,26 @@ export async function fetchRetryStats(options?: RetryStatsOptions): Promise<Retr
     });
   }
   return delay(deriveRetryStats(JOB_RETRIES, JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative asset version metrics (C109) derived from the same version
+ * collection as the live `/versions/stats` endpoint, attributed to each live
+ * asset's project. Router-style 422 validation, a normalized 404 for an unknown
+ * project scope and the `"versionStats"` failure domain keep error and empty
+ * states at parity.
+ */
+export async function fetchVersionStats(options?: VersionStatsOptions): Promise<VersionStats> {
+  failIfEnabled("versionStats");
+  validateVersionStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveVersionStats(ASSET_VERSIONS, ASSETS, REFERENCE_NOW, options));
 }
 
 /**

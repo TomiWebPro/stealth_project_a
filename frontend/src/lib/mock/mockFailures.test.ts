@@ -47,6 +47,7 @@ import {
   fetchStorageStats,
   fetchTags,
   fetchUploadStats,
+  fetchVersionStats,
   fetchWorkflowTemplates,
   setMockFailure,
 } from "./mockApi";
@@ -80,6 +81,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchUploadStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchRetryStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchVersionStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobs()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchAssetStats()).rejects.toBeInstanceOf(ApiError);
@@ -300,6 +302,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchRetryStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the version stats domain", async () => {
+    setMockFailure("versionStats");
+
+    await expect(fetchVersionStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchVersionStats()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the orchestration stats domain", async () => {

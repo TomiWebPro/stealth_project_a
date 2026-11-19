@@ -217,6 +217,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the version stats key by project", () => {
+    expect(queryKeys.versionStats.summary()).toEqual(["version-stats", "summary", "all"]);
+    expect(queryKeys.versionStats.summary({ projectId: "p1" })).toEqual([
+      "version-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

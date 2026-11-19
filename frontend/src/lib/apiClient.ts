@@ -25,6 +25,7 @@ import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
 import type { UploadStatsOptions } from "./uploadStats";
+import type { VersionStatsOptions } from "./versionStats";
 import type {
   ActivityFeed,
   ActivityStats,
@@ -65,6 +66,7 @@ import type {
   TagIndex,
   UploadStats,
   User,
+  VersionStats,
 } from "./types";
 import * as mockApi from "./mock/mockApi";
 
@@ -157,6 +159,8 @@ export interface ApiClient {
   getEventStats(options?: EventStatsOptions): Promise<EventStats>;
   /** Authoritative job retry metrics derived by `/retries/stats`, optionally project-scoped (C105). */
   getRetryStats(options?: RetryStatsOptions): Promise<RetryStats>;
+  /** Authoritative asset version metrics derived by `/versions/stats`, optionally project-scoped (C109). */
+  getVersionStats(options?: VersionStatsOptions): Promise<VersionStats>;
   /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
   getTags(options?: TagOptions): Promise<TagIndex>;
   /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
@@ -216,6 +220,7 @@ export const mockApiClient: ApiClient = {
   getUploadStats: mockApi.fetchUploadStats,
   getEventStats: mockApi.fetchEventStats,
   getRetryStats: mockApi.fetchRetryStats,
+  getVersionStats: mockApi.fetchVersionStats,
   getTags: mockApi.fetchTags,
   getAssetImpact: mockApi.fetchAssetImpact,
 };

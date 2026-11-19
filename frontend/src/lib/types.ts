@@ -115,6 +115,9 @@ export type {
   UploadStatusCount,
   User,
   Uuid,
+  VersionNumberCount,
+  VersionProjectCount,
+  VersionStats,
 } from "../types";
 
 // Job-statistics contracts are not (yet) re-exported from the canonical types

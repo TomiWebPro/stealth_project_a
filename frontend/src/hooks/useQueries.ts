@@ -27,6 +27,7 @@ import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
 import type { UploadStatsOptions } from "../lib/uploadStats";
+import type { VersionStatsOptions } from "../lib/versionStats";
 import type {
   ActivityFeed,
   ActivityStats,
@@ -68,6 +69,7 @@ import type {
   TagIndex,
   UploadStats,
   User,
+  VersionStats,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
 
@@ -576,6 +578,17 @@ export function useRetryStats(
   return useQuery({
     queryKey: queryKeys.retryStats.summary(options),
     queryFn: () => api.getRetryStats(options),
+  });
+}
+
+/** Authoritative asset version metrics from `/versions/stats`, optionally project-scoped (C109). */
+export function useVersionStats(
+  options?: VersionStatsOptions,
+): UseQueryResult<VersionStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.versionStats.summary(options),
+    queryFn: () => api.getVersionStats(options),
   });
 }
 

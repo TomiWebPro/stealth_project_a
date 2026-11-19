@@ -50,6 +50,8 @@ import { tagQueryParams } from "./tags";
 import type { TagOptions } from "./tags";
 import { uploadStatsQueryParams } from "./uploadStats";
 import type { UploadStatsOptions } from "./uploadStats";
+import { versionStatsQueryParams } from "./versionStats";
+import type { VersionStatsOptions } from "./versionStats";
 import type {
   ActivityFeed,
   ActivityStats,
@@ -90,6 +92,7 @@ import type {
   TagIndex,
   UploadStats,
   User,
+  VersionStats,
 } from "./types";
 
 /**
@@ -588,6 +591,11 @@ export function createHttpApiClient(
     /** Authoritative job retry metrics derived by the backend `/retries/stats`. */
     getRetryStats(options?: RetryStatsOptions): Promise<RetryStats> {
       return request<RetryStats>("/retries/stats", retryStatsQueryParams(options));
+    },
+
+    /** Authoritative asset version metrics derived by the backend `/versions/stats`. */
+    getVersionStats(options?: VersionStatsOptions): Promise<VersionStats> {
+      return request<VersionStats>("/versions/stats", versionStatsQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

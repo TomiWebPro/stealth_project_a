@@ -20,6 +20,7 @@ import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
 import type { UploadStatsOptions } from "./uploadStats";
+import type { VersionStatsOptions } from "./versionStats";
 
 /**
  * Centralised TanStack Query keys.
@@ -195,6 +196,10 @@ export const queryKeys = {
   retryStats: {
     summary: (options: RetryStatsOptions = {}) =>
       ["retry-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  versionStats: {
+    summary: (options: VersionStatsOptions = {}) =>
+      ["version-stats", "summary", options.projectId ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>
