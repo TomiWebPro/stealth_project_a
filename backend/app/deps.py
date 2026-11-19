@@ -28,6 +28,7 @@ from .repositories.collaboration_stats import CollaborationStatsRepository
 from .repositories.comment_feed import CommentFeedRepository
 from .repositories.comment_stats import CommentStatsRepository
 from .repositories.dashboard import DashboardRepository
+from .repositories.event_feed import EventFeedRepository
 from .repositories.event_stats import EventStatsRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.extension_stats import ExtensionStatsRepository
@@ -368,6 +369,12 @@ def get_activity_stats_repository(
     return repositories.activity_stats
 
 
+def get_event_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> EventFeedRepository:
+    return repositories.event_feed
+
+
 def get_event_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> EventStatsRepository:
@@ -480,6 +487,7 @@ __all__ = [
     "get_conversation_feed_repository",
     "get_conversation_stats_repository",
     "get_dashboard_repository",
+    "get_event_feed_repository",
     "get_event_stats_repository",
     "get_extension_repository",
     "get_extension_stats_repository",

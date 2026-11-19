@@ -36,6 +36,7 @@ from .routers import (
     comment_stats,
     dashboard,
     events,
+    event_feed,
     event_stats,
     exports,
     extension_stats,
@@ -306,8 +307,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # it directly (before the orchestration router) to keep stats paths explicit.
     app.include_router(orchestration_stats.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
-    # "/events/stats" has no templated sibling at that segment; register it
-    # before the events stream router to keep stats paths explicit.
+    # "/events/feed" and "/events/stats" have no templated sibling at that
+    # segment; register them before the events stream router to keep both
+    # aggregate/feed paths explicit.
+    app.include_router(event_feed.router, prefix=API_PREFIX)
     app.include_router(event_stats.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
     # "/orgs/stats" and "/orgs/feed" must be registered before "/orgs/{org_id}"

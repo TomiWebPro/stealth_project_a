@@ -21,6 +21,7 @@ from .collaboration_stats import CollaborationStatsRepository
 from .comment_feed import CommentFeedRepository
 from .comment_stats import CommentStatsRepository
 from .dashboard import DashboardRepository
+from .event_feed import EventFeedRepository
 from .event_stats import EventStatsRepository
 from .extensions import ExtensionRepository
 from .extension_stats import ExtensionStatsRepository
@@ -94,6 +95,7 @@ class Repositories:
     orchestration: OrchestrationRepository
     orchestration_stats: OrchestrationStatsRepository
     auth: AuthRepository
+    event_feed: EventFeedRepository
     event_stats: EventStatsRepository
     extensions: ExtensionRepository
     extension_stats: ExtensionStatsRepository
@@ -160,6 +162,7 @@ class Repositories:
             default_org_id=settings.default_org_id,
             clock=clock,
         )
+        event_feed = EventFeedRepository(store, projects, clock=clock)
         event_stats = EventStatsRepository(store, projects, clock=clock)
         extensions = ExtensionRepository(store, clock=clock)
         extension_stats = ExtensionStatsRepository(store, clock=clock)
@@ -210,6 +213,7 @@ class Repositories:
             orchestration=orchestration,
             orchestration_stats=orchestration_stats,
             auth=auth,
+            event_feed=event_feed,
             event_stats=event_stats,
             extensions=extensions,
             extension_stats=extension_stats,

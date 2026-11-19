@@ -72,6 +72,10 @@ from .dashboard import (
     DashboardCounts,
     DashboardSummary,
 )
+from .event_feed import (
+    EventFeed,
+    EventFeedItem,
+)
 from .event_stats import (
     EventJobCount,
     EventStats,
@@ -317,6 +321,9 @@ __all__ = [
     # dashboard
     "DashboardCounts",
     "DashboardSummary",
+    # event feed
+    "EventFeed",
+    "EventFeedItem",
     # event stats
     "EventJobCount",
     "EventStats",

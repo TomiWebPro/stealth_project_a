@@ -43,6 +43,7 @@ export * from "./pipelineStats";
 export * from "./lineageStats";
 export * from "./uploadStats";
 export * from "./uploadFeed";
+export * from "./eventFeed";
 export * from "./eventStats";
 export * from "./jobLogs";
 export * from "./jobQueue";

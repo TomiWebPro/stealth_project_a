@@ -137,6 +137,11 @@ All paths are prefixed with `/api/v1`.
   `GET /jobs/feed?project_id=&status=&limit=` — authoritative newest-first job
   feed (project-name join, lifecycle fields and whole-scope total before the
   bounded page) derived from the job store; shared 404/422 envelopes
+  `GET /events/feed?project_id=&type=&limit=` — authoritative newest-first job
+  event feed (operation/project-name join, all event lifecycle fields and a
+  whole-scope total before the bounded page) derived from the job event store;
+  `/events/stats` aggregates the same stream. Orphan events are excluded; shared
+  404/422 envelopes
   `GET /events/stats?project_id=` — authoritative job-event stream metrics
   (zero-filled event-type breakdown, per-job event counts with recency and
   newest-event recency) derived from the authoritative job event store; an
