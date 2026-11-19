@@ -721,6 +721,15 @@ this file is the execution checklist.
   items, so C73 was added under the Never-empty well.
   ✅ 2026-11-19 — `459314a`
 
+- [x] C74 (screens) Render the authoritative organization/membership statistics
+  (C69/C71/C72 follow-up) via `useOrganizationStats`: a reusable
+  `OrganizationStatsPanel` with workspace-wide (Home) and org-scoped (Workspaces)
+  variants, four stat cards, zero-filled member-role and per-organization
+  breakdowns, friendly org names and all five UI states — every display value
+  derived in tested `organizationStatsHelpers`. Resolves the C72 screens follow-up.
+  My owned column had no unchecked rows, so C74 was added under the Never-empty
+  well. ✅ 2026-11-19 — `82c5f45`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -833,3 +842,4 @@ this file is the execution checklist.
 - 2026-11-19 — `8d23794` — C71 (mocks): wired the C69 organization stats API end to end — `getOrganizationStats`/`useOrganizationStats` across mockApi (seed-derived zero-filled role/per-org breakdowns, global user total, 3-decimal average + recency, 422 for a malformed org id + zero-filled unknown org + injectable `organizationStats` failure), the stable facade, live `httpApiClient` (`GET /orgs/stats?org_id=`), queryKeys and useQueries, with a shared `lib/organizationStats` helper and new user/member seeds; parity guard extended to both transports; lint clean, 495 tests, build green. Screens rendering + CI live-smoke probe are follow-ups. My owned column had no unchecked rows, so C71 was added under the Never-empty well.
 - 2026-11-19 — `100dd39` — C72 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/orgs/stats` (zero-filled snapshot + role/per-org breakdown shapes, optional `org_id` scope where an unknown-but-valid org yields a zero-filled 200, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C69/C71. No unchecked CI row remained, so C72 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (63/63 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (495)/build and backend pytest (661) green. Screens organization-stats rendering remains a screens follow-up.
 - 2026-11-19 — `459314a` — C73 (backend): added authoritative `GET /api/v1/pipelines/stats?project_id=` deriving zero-filled per-kind (training/shot/splat) chain/job/asset breakdowns, per-project chain counts, totals and newest-chain recency from the three chain collections (no second index), with an optional project scope (unknown → shared 404 `project_not_found`, malformed → shared 422) and deterministic cross-backend ordering; `PipelineKind`/`PipelineKindStats`/`PipelineProjectCount`/`PipelineStats` mirrored in `frontend/src/types/pipelineStats.ts`, README endpoint list synced, 5 tests × 2 backends green (671 passed, contract parity + route guard clean), frontend tsc clean. Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C73 was added under the Never-empty well.
+- 2026-11-19 — `82c5f45` — C74 (screens): rendered the authoritative organization/membership stats (C69/C71/C72 follow-up) via `useOrganizationStats` — a reusable `OrganizationStatsPanel` on Home (workspace-wide) and Workspaces (org-scoped) with four stat cards, zero-filled member-role and per-org breakdowns, friendly org names and all five UI states; every display value derived in tested `organizationStatsHelpers`; lint clean, 507 tests, build green. My owned column had no unchecked rows, so C74 was added under the Never-empty well.
