@@ -862,6 +862,20 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `4e932b9`
   Screens collaboration-stats rendering remains a screens follow-up.
 
+- [x] C85 (backend) Authoritative orchestration statistics API:
+  `GET /api/v1/orchestration/stats?project_id=` derives zero-filled lifecycle-stage
+  breakdowns (plan/resolve/submit/await/collect/done), per-project plan/run activity
+  (runs joined to plans for project attribution), plan-step and linked-job totals and
+  newest-plan/run recency from the authoritative plan/run stores (no second index),
+  with an optional `project_id` scope (unknown → shared 404 `project_not_found`,
+  malformed → shared 422) and deterministic cross-backend ordering;
+  `OrchestrationStats`/`OrchestrationStageCount`/`OrchestrationProjectCount` mirrored in
+  `frontend/src/types/orchestrationStats.ts`, README endpoint list synced, 7 tests × 2
+  storage backends green (709 passed, contract parity + route-surface guard + tsc clean).
+  Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no
+  unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so
+  C85 was added under the Never-empty well. ✅ 2026-11-19 — `4632601`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -985,3 +999,4 @@ this file is the execution checklist.
 - 2026-11-19 — `3dddb3b` — C82 (screens): rendered authoritative asset lineage stats via a reusable `LineageStatsPanel` — workspace-wide on Projects and project-scoped on project detail — with three stat cards, zero-filled derived_from/variant_of/uses_input/related_to/duplicate_of relationship-type and per-project breakdowns, all five UI states, and every display value derived in tested `lineageStatsHelpers`; resolves the C80 screens follow-up. Lint clean, 561 tests, build green. My owned column had no unchecked rows, so C82 was added under the Never-empty well.
 - 2026-11-19 — `9eb617b` — C83 (mocks): wired the authoritative collaboration stats API (C81 follow-up) end to end — `getCollaborationStats`/`useCollaborationStats` atomically across mockApi (seed-derived zero-filled presence-state buckets, per-project activity sorted by comments/presence/id, distinct participant union, deterministic recency, router-style 422 + unknown-project 404 + injectable `collaborationStats` failure), the stable facade, live `httpApiClient` (`GET /collaboration/stats?project_id=`), `queryKeys` and `useQueries`, with a shared `lib/collaborationStats` derivation/validation helper; populated/empty/error seeds and the parity guard extended to both transports. Lint clean, 575 tests, build green. My owned column had no unchecked rows, so C83 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-19 — `4e932b9` — C84 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/collaboration/stats` (zero-filled snapshot + by_state/by_project breakdown shapes, the three canonical presence states, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C81/C83. No unchecked CI row remained, so C84 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (81/81 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (575)/build and backend pytest (695) green. Screens collaboration-stats rendering remains a screens follow-up.
+- 2026-11-19 — `4632601` — C85 (backend): added authoritative `GET /api/v1/orchestration/stats` deriving zero-filled lifecycle-stage breakdowns (plan/resolve/submit/await/collect/done), per-project plan/run activity via a run→plan project join, plan-step and linked-job totals and newest-plan/run recency from the authoritative orchestration stores (optional `project_id` scope with shared 404 `project_not_found` / 422 `validation_error` envelopes, deterministic cross-backend ordering); `OrchestrationStats`/`OrchestrationStageCount`/`OrchestrationProjectCount` mirrored in `frontend/src/types/orchestrationStats.ts`, README endpoint list synced, 7 tests × 2 backends green (709 passed, contract parity + route-surface guard + tsc clean). Mocks transport, screens rendering and CI smoke wiring are follow-ups. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C85 was added under the Never-empty well.
