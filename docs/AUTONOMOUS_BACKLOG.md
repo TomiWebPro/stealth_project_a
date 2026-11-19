@@ -559,6 +559,18 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `9eaf9a3`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C60 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  provider fleet statistics endpoint from C57/C59 (`GET /api/v1/providers/stats`):
+  probe the zero-filled snapshot shape (`total`, `by_status`, `by_location`,
+  `available`, `degraded`, `unavailable`, `total_capabilities`,
+  `unique_operations`, `by_operation`, `generated_at`) + breakdown shapes, the
+  `location`/`status` filters and the shared 422 `validation_error` envelope with
+  request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C60 was added under the Never-empty well.
+  ✅ 2026-11-19 — `1beae67`
+  Screens provider-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -657,3 +669,4 @@ this file is the execution checklist.
 - 2026-11-19 — `b66143a` — C57 (backend): added authoritative `GET /api/v1/providers/stats?location=&status=` deriving zero-filled status/location breakdowns, capability/operation coverage (per-operation provider + available counts) from the provider store with optional filters (invalid values → shared 422); `ProviderStats` + 3 nested contracts mirrored in TS, README synced, 6 tests × 2 backends green (621 passed, contract parity + tsc clean). Mocks/screens/CI wiring is a follow-up. My backend column had no unchecked items, so C57 was added under the Never-empty well.
 - 2026-11-19 — `4088ea4` — C58 (screens): rendered the authoritative project portfolio stats via a reusable `ProjectStatsPanel` — workspace-wide on Home/Projects and org-scoped on Workspaces — with four stat cards, zero-filled lifecycle breakdown, cross-domain totals and per-project averages, all five UI states, and every display value derived in tested `projectStatsHelpers`; resolves the C53/C55/C56 screens follow-up. Lint clean, 394 tests, build green. My owned column had no unchecked rows, so C58 was added under the Never-empty well.
 - 2026-11-19 — `9eaf9a3` — C59 (mocks): wired the authoritative provider fleet stats API (C57 follow-up) end to end — `getProviderStats`/`useProviderStats` atomically across mockApi, the stable facade, live `httpApiClient` (`GET /providers/stats?location=&status=`), `queryKeys` and `useQueries`, with a shared `lib/providerStats` derivation/validation helper; parity guard extended to both transports; injectable `providerStats` error domain documented + covered; lint clean, 412 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents. My owned column had no unchecked rows, so C59 was added under the Never-empty well.
+- 2026-11-19 — `1beae67` — C60 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/providers/stats` (zero-filled snapshot + status/location breakdown shapes, `location`/`status` filters, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C57/C59. No unchecked CI row remained, so C60 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (50/50 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (412)/build and backend pytest (621) green. Screens provider-stats rendering remains a screens follow-up.
