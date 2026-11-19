@@ -11,6 +11,7 @@ import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
+import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
@@ -166,6 +167,10 @@ export function HomeScreen() {
         <AssetStatsPanel
           title="Workspace asset stats"
           description="Authoritative inventory metrics across every project in the workspace."
+        />
+        <VersionStatsPanel
+          title="Workspace version stats"
+          description="Authoritative asset version metrics across every project in the workspace."
         />
         <SearchStatsPanel
           title="Workspace search stats"

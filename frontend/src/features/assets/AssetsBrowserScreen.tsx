@@ -21,6 +21,7 @@ import {
 } from "./helpers";
 import { AssetDetailPanel } from "./AssetDetailPanel";
 import { AssetStatsPanel } from "./AssetStatsPanel";
+import { VersionStatsPanel } from "./VersionStatsPanel";
 import { VersionPanel } from "./VersionPanel";
 import { TagFacetPanel } from "../tags/TagFacetPanel";
 
@@ -185,6 +186,12 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project asset stats"
         description="Authoritative inventory metrics scoped to this project."
+      />
+
+      <VersionStatsPanel
+        projectId={projectId}
+        title="Project version stats"
+        description="Authoritative asset version metrics scoped to this project."
       />
 
       <Card>
