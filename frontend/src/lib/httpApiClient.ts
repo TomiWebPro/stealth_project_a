@@ -23,6 +23,8 @@ import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
+import { pipelineStatsQueryParams } from "./pipelineStats";
+import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
 import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
@@ -54,6 +56,7 @@ import type {
   Organization,
   OrganizationStats,
   OrchestrationRun,
+  PipelineStats,
   Presence,
   Project,
   ProjectStats,
@@ -283,6 +286,11 @@ export function createHttpApiClient(
     /** Authoritative organization/membership metrics derived by `/orgs/stats`. */
     getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats> {
       return request<OrganizationStats>("/orgs/stats", organizationStatsQueryParams(options));
+    },
+
+    /** Authoritative production-pipeline metrics derived by `/pipelines/stats`. */
+    getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats> {
+      return request<PipelineStats>("/pipelines/stats", pipelineStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

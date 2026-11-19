@@ -7,6 +7,7 @@ import {
   EXTENSIONS,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
+  PIPELINE_CHAINS,
   PROJECTS,
   PROVIDERS,
   REFERENCE_NOW,
@@ -36,6 +37,7 @@ import {
   fetchMessages,
   fetchOperations,
   fetchOrganizationStats,
+  fetchPipelineStats,
   openConversationStream,
   sendMessage,
   setMockFailure,
@@ -327,6 +329,57 @@ describe("mock API organization stats (C69 follow-up)", () => {
 
     setMockFailure("organizationStats");
     await expect(fetchOrganizationStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API pipeline stats (C73 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a populated snapshot from the authoritative chain seeds", async () => {
+    const stats = await fetchPipelineStats();
+    expect(stats.total_chains).toBe(PIPELINE_CHAINS.length);
+    expect(stats.total_jobs).toBe(
+      PIPELINE_CHAINS.reduce(
+        (sum, item) => sum + (item.job_ids?.length ?? (item.job_id ? 1 : 0)),
+        0,
+      ),
+    );
+    expect(stats.by_kind?.map((entry) => entry.kind)).toEqual(["training", "shot", "splat"]);
+    expect(stats.by_kind?.reduce((sum, entry) => sum + entry.chains, 0)).toBe(
+      PIPELINE_CHAINS.length,
+    );
+    expect((stats.by_project ?? []).length).toBeGreaterThan(0);
+    expect(stats.newest_chain_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project and zero-fills an unseeded project", async () => {
+    const scoped = await fetchPipelineStats({ projectId: filmId });
+    expect(scoped.total_chains).toBe(PIPELINE_CHAINS.filter((c) => c.project_id === filmId).length);
+    expect(scoped.by_project).toEqual([{ project_id: filmId, chains: scoped.total_chains }]);
+
+    const empty = await fetchPipelineStats({ projectId: emptyId });
+    expect(empty.total_chains).toBe(0);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_chain_at).toBeNull();
+    expect(empty.by_kind?.every((entry) => entry.chains === 0)).toBe(true);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchPipelineStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchPipelineStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("pipelineStats");
+    await expect(fetchPipelineStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

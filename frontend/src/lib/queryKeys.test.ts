@@ -82,6 +82,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the pipeline stats key by project", () => {
+    expect(queryKeys.pipelineStats.summary()).toEqual(["pipeline-stats", "summary", "all"]);
+    expect(queryKeys.pipelineStats.summary({ projectId: "p1" })).toEqual([
+      "pipeline-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes the provider stats key by location and status", () => {
     expect(queryKeys.providerStats.summary()).toEqual([
       "provider-stats",

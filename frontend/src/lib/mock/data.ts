@@ -8,6 +8,7 @@
 
 import { buildAuditTrail } from "../audit";
 import type { OrganizationMemberRecord } from "../organizationStats";
+import type { PipelineChainRecord } from "../pipelineStats";
 import type {
   Asset,
   AuditTrail,
@@ -1382,4 +1383,63 @@ export const EXTENSIONS: readonly Extension[] = [
 export const AUDIT_TRAILS: readonly AuditTrail[] = PROJECTS.map((project) =>
   buildAuditTrail(project.id, ASSETS, JOBS),
 );
+
+// --- Authoritative production-pipeline chains (C73 / C75) -------------------
+// Mirrors the backend's three chain stores (LoraChain, ShotChain, SplatChain).
+// The `*_asset_id` fields and `job_ids`/`job_id` are the exact attributes the
+// backend repository counts; the `kind` discriminator lets one seed array feed
+// the shared derivation. "Blank Slate" deliberately has no chains so mock mode
+// exercises the zero-filled empty state alongside the populated Moonshot film.
+
+export const PIPELINE_CHAINS: readonly PipelineChainRecord[] = [
+  {
+    id: "0b5c1e2a-4000-4000-8000-000000000001",
+    kind: "training",
+    project_id: PROJECT_IDS.moonshot,
+    dataset_asset_id: "0b5c1e2a-2000-4000-8000-000000000012",
+    config_asset_id: "0b5c1e2a-2000-4000-8000-000000000013",
+    lora_asset_id: "0b5c1e2a-2000-4000-8000-000000000015",
+    job_ids: [
+      "0b5c1e2a-3000-4000-8000-000000000011",
+      "0b5c1e2a-3000-4000-8000-000000000012",
+    ],
+    created_at: isoMinutesAgo(240),
+  },
+  {
+    id: "0b5c1e2a-4000-4000-8000-000000000002",
+    kind: "shot",
+    project_id: PROJECT_IDS.moonshot,
+    shot_token: "s01_c01",
+    job_id: "0b5c1e2a-3000-4000-8000-000000000014",
+    video_asset_id: "0b5c1e2a-2000-4000-8000-000000000018",
+    mounted_loras: [],
+    operation_id: "flf2v",
+    created_at: isoMinutesAgo(120),
+  },
+  {
+    id: "0b5c1e2a-4000-4000-8000-000000000003",
+    kind: "splat",
+    project_id: PROJECT_IDS.environment,
+    scene_asset_id: "0b5c1e2a-2000-4000-8000-000000000005",
+    model_asset_id: "0b5c1e2a-2000-4000-8000-000000000006",
+    splat_asset_id: "0b5c1e2a-2000-4000-8000-000000000007",
+    job_ids: [
+      "0b5c1e2a-3000-4000-8000-000000000015",
+      "0b5c1e2a-3000-4000-8000-000000000018",
+    ],
+    camera_path: [],
+    smoke: true,
+    created_at: isoMinutesAgo(30),
+  },
+  {
+    id: "0b5c1e2a-4000-4000-8000-000000000004",
+    kind: "training",
+    project_id: PROJECT_IDS.character,
+    dataset_asset_id: "0b5c1e2a-2000-4000-8000-000000000021",
+    config_asset_id: "0b5c1e2a-2000-4000-8000-000000000022",
+    lora_asset_id: "0b5c1e2a-2000-4000-8000-000000000023",
+    job_ids: ["0b5c1e2a-3000-4000-8000-000000000012"],
+    created_at: isoMinutesAgo(600),
+  },
+];
 

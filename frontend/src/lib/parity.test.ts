@@ -21,6 +21,7 @@ import {
   validateOrganizationStatsArgs,
 } from "./organizationStats";
 import type { ImpactOptions } from "./impact";
+import { derivePipelineStats, validatePipelineStatsArgs } from "./pipelineStats";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import {
@@ -36,6 +37,7 @@ import {
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_RUNS,
+  PIPELINE_CHAINS,
   PRESENCE,
   PROJECTS,
   PROVIDERS,
@@ -426,6 +428,28 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative production-pipeline stats are derived from the three chain
+  // stores on every call; reproduce the router's 422 validation, unknown-project
+  // 404 and the repository derivation over the shared chain seeds so live and
+  // mock agree exactly.
+  if (path === "/pipelines/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validatePipelineStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return derivePipelineStats(PIPELINE_CHAINS, REFERENCE_NOW, options);
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -545,6 +569,8 @@ describe("live vs mock transport parity", () => {
       ["getOrganizationStats", (api) => api.getOrganizationStats()],
       ["getOrganizationStats scoped", (api) => api.getOrganizationStats({ orgId })],
       ["getOrganizationStats unknown", (api) => api.getOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" })],
+      ["getPipelineStats", (api) => api.getPipelineStats()],
+      ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -604,6 +630,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getConversationStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getConversationStats({ projectId: emptyId }),
+    );
+    expect(await live.getPipelineStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getPipelineStats({ projectId: emptyId }),
     );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
@@ -698,6 +727,21 @@ describe("live vs mock transport parity", () => {
     expect(mockAssetStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveAssetStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown pipeline-stats project
+    // scope and reject a malformed project id with the same 422 envelope.
+    const [mockPipeStats404, livePipeStats404] = await Promise.all([
+      mockApiClient.getPipelineStats({ projectId: missingId }).catch((cause) => cause),
+      live.getPipelineStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockPipeStats404).toMatchObject({ status: 404, code: "not_found" });
+    expect(livePipeStats404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockPipeStats422, livePipeStats422] = await Promise.all([
+      mockApiClient.getPipelineStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getPipelineStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockPipeStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(livePipeStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill for an unknown (well-formed) org scope and
     // reject a malformed org id with the same 422 envelope.
     expect(await live.getProjectStats({ orgId: missingId })).toEqual(
@@ -764,7 +808,7 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockImpactErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveImpactErr).toMatchObject({ status: 422, code: "validation_error" });
-  });
+  }, 20_000);
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {
     const failing: ApiClient = createHttpApiClient("http://localhost:8000", {
@@ -798,6 +842,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
+    expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
   });
 });

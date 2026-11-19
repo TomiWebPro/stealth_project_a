@@ -31,6 +31,11 @@ import {
   validateOrganizationStatsArgs,
 } from "../organizationStats";
 import type { OrganizationStatsOptions } from "../organizationStats";
+import {
+  derivePipelineStats,
+  validatePipelineStatsArgs,
+} from "../pipelineStats";
+import type { PipelineStatsOptions } from "../pipelineStats";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
@@ -60,6 +65,7 @@ import type {
   Organization,
   OrganizationStats,
   OrchestrationRun,
+  PipelineStats,
   Presence,
   Project,
   ProjectStats,
@@ -84,6 +90,7 @@ import {
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_RUNS,
+  PIPELINE_CHAINS,
   PRESENCE,
   PROJECTS,
   PROVIDERS,
@@ -116,8 +123,8 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `tags`, `impact`, `operationStats` and `organizationStats`. Always reset with
- * {@link clearMockFailures} afterwards.
+ * `tags`, `impact`, `operationStats`, `organizationStats` and `pipelineStats`.
+ * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -348,6 +355,28 @@ export async function fetchOrganizationStats(
   return delay(
     deriveOrganizationStats(ORGANIZATIONS, ORGANIZATION_MEMBERS, USERS, REFERENCE_NOW, options),
   );
+}
+
+/**
+ * Authoritative production-pipeline metrics (C73) derived from the same three
+ * chain seeds as the live `/pipelines/stats` endpoint. Router-style 422 for a
+ * malformed project id, a normalized 404 for an unknown project scope and the
+ * `"pipelineStats"` failure domain keep error and empty states at parity with
+ * live mode.
+ */
+export async function fetchPipelineStats(
+  options?: PipelineStatsOptions,
+): Promise<PipelineStats> {
+  failIfEnabled("pipelineStats");
+  validatePipelineStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(derivePipelineStats(PIPELINE_CHAINS, REFERENCE_NOW, options));
 }
 
 /**

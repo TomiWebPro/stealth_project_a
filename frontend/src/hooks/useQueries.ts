@@ -13,6 +13,7 @@ import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
+import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
@@ -40,6 +41,7 @@ import type {
   Organization,
   OrganizationStats,
   OrchestrationRun,
+  PipelineStats,
   Presence,
   Project,
   ProjectStats,
@@ -145,6 +147,17 @@ export function useOrganizationStats(
   return useQuery({
     queryKey: queryKeys.organizationStats.summary(options),
     queryFn: () => api.getOrganizationStats(options),
+  });
+}
+
+/** Authoritative production-pipeline metrics from `/pipelines/stats`, optionally project-scoped (C73). */
+export function usePipelineStats(
+  options?: PipelineStatsOptions,
+): UseQueryResult<PipelineStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.pipelineStats.summary(options),
+    queryFn: () => api.getPipelineStats(options),
   });
 }
 
