@@ -28,6 +28,7 @@ from .repositories.impact import ImpactRepository
 from .repositories.job_stats import JobStatsRepository
 from .repositories.jobs import JobRepository
 from .repositories.operation_stats import OperationStatsRepository
+from .repositories.organization_stats import OrganizationStatsRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
 from .repositories.project_stats import ProjectStatsRepository
@@ -181,6 +182,12 @@ def get_operation_stats_repository(
     return repositories.operation_stats
 
 
+def get_organization_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> OrganizationStatsRepository:
+    return repositories.organization_stats
+
+
 def get_provider_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ProviderRepository:
@@ -309,6 +316,7 @@ __all__ = [
     "get_job_stats_repository",
     "get_link_service",
     "get_operation_stats_repository",
+    "get_organization_stats_repository",
     "get_orchestration_repository",
     "get_project_repository",
     "get_project_stats_repository",

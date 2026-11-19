@@ -39,6 +39,7 @@ from .routers import (
     jobs,
     links,
     operation_stats,
+    organization_stats,
     orchestration,
     pipelines,
     projects,
@@ -239,6 +240,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(providers.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
+    # "/orgs/stats" must be registered before "/orgs/{org_id}" in auth.router so
+    # the literal path wins over the UUID-templated one.
+    app.include_router(organization_stats.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     # "/extensions/stats" must be registered before "/extensions/{extension_id}"
     # so the literal path wins over the UUID-templated one.

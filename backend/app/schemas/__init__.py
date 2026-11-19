@@ -135,6 +135,11 @@ from .operation_stats import (
     OperationStats,
     OperationTypeCount,
 )
+from .organization_stats import (
+    OrganizationMemberCount,
+    OrganizationStats,
+    RoleMemberCount,
+)
 from .orchestration import (
     Comment,
     OrchestrationPlan,
@@ -312,6 +317,10 @@ __all__ = [
     # operation stats
     "OperationStats",
     "OperationTypeCount",
+    # organization stats
+    "OrganizationMemberCount",
+    "OrganizationStats",
+    "RoleMemberCount",
     # orchestration
     "Comment",
     "OrchestrationPlan",

@@ -85,7 +85,11 @@ All paths are prefixed with `/api/v1`.
   `GET|POST /comments`, `GET /storage/stats`
 - **Auth/orgs:** `POST /auth/login|refresh`, `GET /auth/session|me`,
   `GET|POST /orgs` (alias `/organizations`), `GET /orgs/{id}`,
-  `GET|POST /orgs/{id}/members`
+  `GET|POST /orgs/{id}/members`,
+  `GET /orgs/stats?org_id=` (alias `/organizations/stats`) — authoritative
+  membership metrics (organization/member/user totals, zero-filled role
+  breakdown, per-organization counts, average and recency) derived from the
+  auth store; optional org scope with shared 422 envelope
 - **Extensions:** `GET /extensions/registry`, `GET /extensions`,
   `POST /extensions/install`, `GET /extensions/{id}`,
   `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`,
