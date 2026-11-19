@@ -5,6 +5,7 @@ import { useApiClient } from "../app/apiContext";
 import type { ActivityOptions } from "../lib/activity";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
+import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
@@ -20,6 +21,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  ConversationStats,
   DashboardSummary,
   Extension,
   Job,
@@ -72,6 +74,17 @@ export function useJobStats(options?: JobStatsOptions): UseQueryResult<JobStats>
   return useQuery({
     queryKey: queryKeys.jobStats.summary(options),
     queryFn: () => api.getJobStats(options),
+  });
+}
+
+/** Authoritative conversation/message metrics from `/conversations/stats`, optionally project-scoped (C45). */
+export function useConversationStats(
+  options?: ConversationStatsOptions,
+): UseQueryResult<ConversationStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.conversationStats.summary(options),
+    queryFn: () => api.getConversationStats(options),
   });
 }
 

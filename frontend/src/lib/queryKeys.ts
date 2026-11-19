@@ -1,5 +1,6 @@
 import type { ActivityOptions } from "./activity";
 import type { AuditQuery } from "./audit";
+import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
@@ -34,6 +35,10 @@ export const queryKeys = {
   jobStats: {
     summary: (options: JobStatsOptions = {}) =>
       ["job-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  conversationStats: {
+    summary: (options: ConversationStatsOptions = {}) =>
+      ["conversation-stats", "summary", options.projectId ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

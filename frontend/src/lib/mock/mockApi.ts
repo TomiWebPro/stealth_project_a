@@ -4,6 +4,11 @@ import type { ActivityOptions } from "../activity";
 import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
+import {
+  deriveConversationStats,
+  validateConversationStatsArgs,
+} from "../conversationStats";
+import type { ConversationStatsOptions } from "../conversationStats";
 import type { ConversationStream } from "../conversationStream";
 import { deriveDashboardSummary, validateDashboardArgs } from "../dashboard";
 import type { DashboardOptions } from "../dashboard";
@@ -25,6 +30,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  ConversationStats,
   Extension,
   Job,
   JobStats,
@@ -81,7 +87,7 @@ function delay<T>(value: T): Promise<T> {
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
- * `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `conversationStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -204,6 +210,28 @@ export async function fetchJobStats(
     });
   }
   return delay(deriveJobStats(JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative conversation/message metrics (C45) derived from the same
+ * conversation/message seeds as the live `/conversations/stats` endpoint.
+ * Router-style 422 validation, a 404 for an unknown project scope and the
+ * `"conversationStats"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchConversationStats(
+  options?: ConversationStatsOptions,
+): Promise<ConversationStats> {
+  failIfEnabled("conversationStats");
+  validateConversationStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveConversationStats(CONVERSATIONS, MESSAGES, REFERENCE_NOW, options));
 }
 
 /**

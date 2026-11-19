@@ -7,6 +7,8 @@ import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
+import { conversationStatsQueryParams } from "./conversationStats";
+import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 import { dashboardQueryParams } from "./dashboard";
 import type { DashboardOptions } from "./dashboard";
@@ -28,6 +30,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  ConversationStats,
   DashboardSummary,
   Extension,
   Job,
@@ -231,6 +234,14 @@ export function createHttpApiClient(
     /** Authoritative job execution metrics derived by the backend `/jobs/stats`. */
     getJobStats(options?: JobStatsOptions): Promise<JobStats> {
       return request<JobStats>("/jobs/stats", jobStatsQueryParams(options));
+    },
+
+    /** Authoritative conversation metrics derived by the backend `/conversations/stats`. */
+    getConversationStats(options?: ConversationStatsOptions): Promise<ConversationStats> {
+      return request<ConversationStats>(
+        "/conversations/stats",
+        conversationStatsQueryParams(options),
+      );
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

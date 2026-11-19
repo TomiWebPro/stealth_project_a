@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
-import { PROJECTS } from "./data";
+import { CONVERSATIONS, PROJECTS } from "./data";
 import {
   clearMockFailures,
   fetchActivity,
@@ -12,6 +12,7 @@ import {
   fetchConversation,
   fetchComments,
   fetchConversations,
+  fetchConversationStats,
   fetchCurrentUser,
   fetchDashboard,
   fetchExtension,
@@ -115,6 +116,58 @@ describe("mock API workspace activity (C29)", () => {
 
     setMockFailure("activity");
     await expect(fetchActivity()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API conversation stats (C45 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+  const missingId = "00000000-0000-4000-8000-000000000000";
+
+  it("derives a populated snapshot from the authoritative seeds", async () => {
+    const stats = await fetchConversationStats();
+    expect(stats.total_conversations).toBe(3);
+    expect(stats.total_messages).toBe(5);
+    expect(stats.average_messages_per_conversation).toBeCloseTo(5 / 3, 3);
+    expect(stats.last_activity_at).toBeTruthy();
+    expect(stats.by_role?.reduce((sum, entry) => sum + entry.count, 0)).toBe(5);
+    expect(stats.by_status?.reduce((sum, entry) => sum + entry.count, 0)).toBe(5);
+    expect(stats.generated_at).toBeTruthy();
+  });
+
+  it("scopes conversations and messages to one project", async () => {
+    const scoped = await fetchConversationStats({ projectId: filmId });
+    const filmConversations = CONVERSATIONS.filter(
+      (conversation) => conversation.project_id === filmId,
+    );
+    expect(scoped.total_conversations).toBe(filmConversations.length);
+    expect(scoped.total_messages).toBeGreaterThan(0);
+    expect(scoped.total_messages).toBeLessThan(5);
+  });
+
+  it("returns an empty snapshot for a project whose conversation has no messages", async () => {
+    const stats = await fetchConversationStats({ projectId: emptyId });
+    expect(stats.total_conversations).toBe(1);
+    expect(stats.total_messages).toBe(0);
+    expect(stats.average_messages_per_conversation).toBe(0);
+    expect(stats.last_activity_at).toBeTruthy();
+  });
+
+  it("mirrors router validation, 404s unknown projects and surfaces the injected failure", async () => {
+    await expect(fetchConversationStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchConversationStats({ projectId: missingId })).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+    });
+
+    setMockFailure("conversationStats");
+    await expect(fetchConversationStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -7,6 +7,7 @@ import type { ActivityOptions } from "./activity";
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
+import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
@@ -279,6 +280,28 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   }
   if (path === "/operations") return OPERATION_CATALOG;
 
+  // Authoritative conversation/message stats are derived from the conversation
+  // and message stores on every call; reproduce the router's 422 validation,
+  // unknown-project 404 and repository derivation over the shared seeds. This
+  // must precede the dynamic /conversations/{id} detail branch below.
+  if (path === "/conversations/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateConversationStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveConversationStats(CONVERSATIONS, MESSAGES, REFERENCE_NOW, options);
+  }
+
   if (path === "/conversations") {
     return CONVERSATIONS.filter((c) => c.project_id === params.get("project_id"));
   }
@@ -369,6 +392,8 @@ describe("live vs mock transport parity", () => {
       ["getDashboard limited", (api) => api.getDashboard({ recentLimit: 3 })],
       ["getJobStats", (api) => api.getJobStats()],
       ["getJobStats scoped", (api) => api.getJobStats({ projectId: filmId })],
+      ["getConversationStats", (api) => api.getConversationStats()],
+      ["getConversationStats scoped", (api) => api.getConversationStats({ projectId: filmId })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -421,6 +446,9 @@ describe("live vs mock transport parity", () => {
     // An empty (but valid) project scope yields the same zero-filled snapshot.
     expect(await live.getJobStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getJobStats({ projectId: emptyId }),
+    );
+    expect(await live.getConversationStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getConversationStats({ projectId: emptyId }),
     );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
@@ -485,6 +513,21 @@ describe("live vs mock transport parity", () => {
     expect(mockStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown conversation-stats project
+    // scope and reject a malformed project id with the same 422 envelope.
+    const [mockConvStats404, liveConvStats404] = await Promise.all([
+      mockApiClient.getConversationStats({ projectId: missingId }).catch((cause) => cause),
+      live.getConversationStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockConvStats404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveConvStats404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockConvStats422, liveConvStats422] = await Promise.all([
+      mockApiClient.getConversationStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getConversationStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockConvStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveConvStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both resolve an unknown impact root to undefined.
     expect(await live.getAssetImpact(missingId)).toEqual(
       await mockApiClient.getAssetImpact(missingId),
@@ -527,6 +570,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getActivity).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.getJobStats).toBe("function");
+    expect(typeof typed.getConversationStats).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getTags).toBe("function");

@@ -1,6 +1,7 @@
 import type { ActivityOptions } from "./activity";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
+import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
@@ -18,6 +19,7 @@ import type {
   AuditTrail,
   Comment,
   Conversation,
+  ConversationStats,
   DashboardSummary,
   Extension,
   Job,
@@ -56,6 +58,8 @@ export interface ApiClient {
   getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
   /** Authoritative job execution metrics derived by `/jobs/stats`, optionally project-scoped (C40). */
   getJobStats(options?: JobStatsOptions): Promise<JobStats>;
+  /** Authoritative conversation/message metrics derived by `/conversations/stats`, optionally project-scoped (C45). */
+  getConversationStats(options?: ConversationStatsOptions): Promise<ConversationStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -106,6 +110,7 @@ export const mockApiClient: ApiClient = {
   getActivity: mockApi.fetchActivity,
   getDashboard: mockApi.fetchDashboard,
   getJobStats: mockApi.fetchJobStats,
+  getConversationStats: mockApi.fetchConversationStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

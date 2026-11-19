@@ -743,6 +743,56 @@ describe("createHttpApiClient job stats", () => {
   });
 });
 
+describe("createHttpApiClient conversation stats", () => {
+  const stats = {
+    total_conversations: 2,
+    total_messages: 3,
+    by_role: [
+      { role: "system", count: 0 },
+      { role: "user", count: 2 },
+      { role: "assistant", count: 1 },
+      { role: "tool", count: 0 },
+    ],
+    by_status: [
+      { status: "pending", count: 0 },
+      { status: "streaming", count: 0 },
+      { status: "complete", count: 3 },
+      { status: "error", count: 0 },
+    ],
+    average_messages_per_conversation: 1.5,
+    last_activity_at: "2026-01-06T00:00:00Z",
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /conversations/stats with the project scope and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/conversations/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getConversationStats({ projectId: "11111111-1111-4111-8111-111111111111" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/conversations/stats`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "not_found", message: "Project not found" } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getConversationStats()).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+      message: "Project not found",
+    });
+  });
+});
+
 describe("createHttpApiClient cross-domain search", () => {
   const response = {
     query: "mara",
