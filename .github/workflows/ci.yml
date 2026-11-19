@@ -393,6 +393,55 @@ jobs:
                 and cbadbody.get("error", {}).get("code") == "validation_error"
                 and bool(cbadbody.get("error", {}).get("request_id")), conv_bad.text)
 
+          # Authoritative asset inventory statistics (C49/C51) is the newest
+          # /api/v1 URL the live client calls (getAssetStats). Probe the
+          # zero-filled snapshot shape, the optional project scope and the
+          # shared 404/422 envelopes, keeping CI aligned with new endpoints
+          # as they go live.
+          asset_stats = httpx.get(f"{base}/assets/stats", timeout=5)
+          asbody = asset_stats.json() if asset_stats.status_code == 200 else {}
+          check("assets/stats 200 snapshot shape",
+                asset_stats.status_code == 200 and all(
+                    k in asbody for k in ("total", "by_type", "by_status",
+                                          "total_size_bytes", "total_versions",
+                                          "newest_asset_at", "generated_at")),
+                asset_stats.text)
+          check("assets/stats breakdown shapes",
+                isinstance(asbody.get("by_type"), list)
+                and all(isinstance(t, dict) and "type" in t and "count" in t
+                        for t in asbody["by_type"])
+                and isinstance(asbody.get("by_status"), list)
+                and all(isinstance(s, dict) and "status" in s and "count" in s
+                        for s in asbody["by_status"]),
+                asset_stats.text)
+          if project_id:
+              asset_scoped = httpx.get(
+                  f"{base}/assets/stats", params={"project_id": project_id}, timeout=5)
+              ascbody = asset_scoped.json() if asset_scoped.status_code == 200 else {}
+              check("assets/stats project scope 200",
+                    asset_scoped.status_code == 200
+                    and isinstance(ascbody.get("total"), int)
+                    and isinstance(ascbody.get("by_type"), list),
+                    asset_scoped.text)
+          else:
+              check("assets/stats project scope setup", False,
+                    "could not obtain a project id")
+          asset_stats_missing = httpx.get(
+              f"{base}/assets/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          a404body = asset_stats_missing.json() if asset_stats_missing.status_code == 404 else {}
+          check("assets/stats 404 shared envelope",
+                asset_stats_missing.status_code == 404
+                and a404body.get("error", {}).get("code") == "project_not_found"
+                and bool(a404body.get("error", {}).get("request_id")), asset_stats_missing.text)
+          asset_stats_bad = httpx.get(
+              f"{base}/assets/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          abadbody = asset_stats_bad.json() if asset_stats_bad.status_code == 422 else {}
+          check("assets/stats 422 validation envelope",
+                asset_stats_bad.status_code == 422
+                and abadbody.get("error", {}).get("code") == "validation_error"
+                and bool(abadbody.get("error", {}).get("request_id")), asset_stats_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
