@@ -1702,6 +1702,133 @@ jobs:
                 and fblbody.get("error", {}).get("code") == "validation_error"
                 and bool(fblbody.get("error", {}).get("request_id")), feed_bad_limit.text)
 
+          # Authoritative conversation feed (C133/C135) is the newest /api/v1 URL
+          # the live client calls (getConversationFeed). Create one conversation
+          # with an initial message and append an assistant reply on demand so the
+          # derived feed has a real item with a last-message preview, then probe
+          # the feed shape, item shapes, newest-first order and whole-scope total,
+          # the `limit` page bound, the optional project scope and the shared
+          # 404/422 envelopes, keeping CI aligned with new endpoints as they go
+          # live.
+          conversation_id = None
+          if project_id:
+              conv_created = httpx.post(
+                  f"{base}/projects/{project_id}/conversations",
+                  json={"title": "CI smoke conversation",
+                        "initial_message": "ci smoke seed"},
+                  timeout=5)
+              check("conversations/feed create conversation 201",
+                    conv_created.status_code == 201, conv_created.text)
+              conversation_id = (
+                  conv_created.json().get("id")
+                  if conv_created.status_code == 201 else None)
+              if conversation_id:
+                  conv_msg = httpx.post(
+                      f"{base}/conversations/{conversation_id}/messages",
+                      json={"role": "assistant", "content": "ci smoke reply"},
+                      timeout=5)
+                  check("conversations/feed add reply 201",
+                        conv_msg.status_code == 201, conv_msg.text)
+          else:
+              check("conversations/feed create setup", False,
+                    "could not obtain a project id")
+
+          conv_feed = httpx.get(f"{base}/conversations/feed", timeout=5)
+          cfbody = conv_feed.json() if conv_feed.status_code == 200 else {}
+          check("conversations/feed 200 feed shape",
+                conv_feed.status_code == 200
+                and isinstance(cfbody.get("items"), list)
+                and isinstance(cfbody.get("total"), int)
+                and "generated_at" in cfbody, conv_feed.text)
+          check("conversations/feed derived item shape",
+                conv_feed.status_code == 200
+                and cfbody.get("total", 0) >= 1
+                and len(cfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "conversation_id", "project_id", "project_name", "title",
+                    "message_count", "created_at", "updated_at"))
+                    for item in cfbody["items"]), conv_feed.text)
+          check("conversations/feed request-id header",
+                "x-request-id" in {k.lower() for k in conv_feed.headers},
+                str(dict(conv_feed.headers)))
+          if conversation_id:
+              derived_item = next(
+                  (i for i in cfbody.get("items", [])
+                   if i.get("conversation_id") == conversation_id),
+                  None)
+              check("conversations/feed derived conversation",
+                    conv_feed.status_code == 200 and derived_item is not None
+                    and derived_item.get("title") == "CI smoke conversation"
+                    and derived_item.get("project_id") == project_id
+                    and derived_item.get("message_count", 0) >= 2
+                    and derived_item.get("last_message_role") == "assistant"
+                    and derived_item.get("last_message_excerpt") == "ci smoke reply"
+                    and isinstance(derived_item.get("project_name"), str),
+                    conv_feed.text)
+          else:
+              check("conversations/feed derived setup", False,
+                    "could not create a conversation for the feed probe")
+          updated_times = [i.get("updated_at") for i in cfbody.get("items", [])]
+          check("conversations/feed newest-first order",
+                conv_feed.status_code == 200
+                and updated_times == sorted(updated_times, reverse=True),
+                conv_feed.text)
+          conv_feed_limited = httpx.get(
+              f"{base}/conversations/feed", params={"limit": 1}, timeout=5)
+          cflbody = (conv_feed_limited.json()
+                     if conv_feed_limited.status_code == 200 else {})
+          check("conversations/feed limit bounds page not total",
+                conv_feed_limited.status_code == 200
+                and len(cflbody.get("items", [])) <= 1
+                and cflbody.get("total") == cfbody.get("total"),
+                conv_feed_limited.text)
+          if project_id:
+              conv_feed_scoped = httpx.get(
+                  f"{base}/conversations/feed",
+                  params={"project_id": project_id}, timeout=5)
+              cfsbody = (conv_feed_scoped.json()
+                         if conv_feed_scoped.status_code == 200 else {})
+              check("conversations/feed project scope 200",
+                    conv_feed_scoped.status_code == 200
+                    and isinstance(cfsbody.get("total"), int)
+                    and cfsbody.get("total", 0) >= 1
+                    and all(i.get("project_id") == project_id
+                            for i in cfsbody.get("items", [])),
+                    conv_feed_scoped.text)
+          else:
+              check("conversations/feed project scope setup", False,
+                    "could not obtain a project id")
+          conv_feed_missing = httpx.get(
+              f"{base}/conversations/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          cf404body = (conv_feed_missing.json()
+                       if conv_feed_missing.status_code == 404 else {})
+          check("conversations/feed 404 shared envelope",
+                conv_feed_missing.status_code == 404
+                and cf404body.get("error", {}).get("code") == "project_not_found"
+                and bool(cf404body.get("error", {}).get("request_id")),
+                conv_feed_missing.text)
+          conv_feed_bad = httpx.get(
+              f"{base}/conversations/feed",
+              params={"project_id": "not-a-uuid"}, timeout=5)
+          cfbadbody = (conv_feed_bad.json()
+                       if conv_feed_bad.status_code == 422 else {})
+          check("conversations/feed 422 malformed id envelope",
+                conv_feed_bad.status_code == 422
+                and cfbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(cfbadbody.get("error", {}).get("request_id")),
+                conv_feed_bad.text)
+          conv_feed_bad_limit = httpx.get(
+              f"{base}/conversations/feed", params={"limit": 0}, timeout=5)
+          cfblbody = (conv_feed_bad_limit.json()
+                      if conv_feed_bad_limit.status_code == 422 else {})
+          check("conversations/feed 422 invalid limit envelope",
+                conv_feed_bad_limit.status_code == 422
+                and cfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(cfblbody.get("error", {}).get("request_id")),
+                conv_feed_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
