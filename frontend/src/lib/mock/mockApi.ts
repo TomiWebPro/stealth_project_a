@@ -90,6 +90,8 @@ import { deriveUploadFeed, validateUploadFeedArgs } from "../uploadFeed";
 import type { UploadFeedOptions } from "../uploadFeed";
 import { deriveUploadStats, validateUploadStatsArgs } from "../uploadStats";
 import type { UploadStatsOptions } from "../uploadStats";
+import { deriveVersionFeed, validateVersionFeedArgs } from "../versionFeed";
+import type { VersionFeedOptions } from "../versionFeed";
 import { deriveVersionStats, validateVersionStatsArgs } from "../versionStats";
 import type { VersionStatsOptions } from "../versionStats";
 import type {
@@ -141,6 +143,7 @@ import type {
   UploadFeed,
   UploadStats,
   User,
+  VersionFeed,
   VersionStats,
 } from "../types";
 import {
@@ -196,7 +199,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs`,
  * `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1201,6 +1204,25 @@ export async function fetchVersionStats(options?: VersionStatsOptions): Promise<
     });
   }
   return delay(deriveVersionStats(ASSET_VERSIONS, ASSETS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative asset version feed (C153) derived from the same version/asset/
+ * project seeds as the live `/versions/feed` endpoint. Router-style 422
+ * validation, a normalized 404 for an unknown project scope and the
+ * `"versionFeed"` failure domain keep error and empty states at parity.
+ */
+export async function fetchVersionFeed(options?: VersionFeedOptions): Promise<VersionFeed> {
+  failIfEnabled("versionFeed");
+  validateVersionFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveVersionFeed(ASSET_VERSIONS, ASSETS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

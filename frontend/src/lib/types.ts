@@ -137,6 +137,8 @@ export type {
   UploadStatusCount,
   User,
   Uuid,
+  VersionFeed,
+  VersionFeedItem,
   VersionNumberCount,
   VersionProjectCount,
   VersionStats,

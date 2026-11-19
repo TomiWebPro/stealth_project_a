@@ -57,6 +57,7 @@ import {
   fetchTags,
   fetchUploadFeed,
   fetchUploadStats,
+  fetchVersionFeed,
   fetchVersionStats,
   fetchWorkflowTemplates,
   setMockFailure,
@@ -93,6 +94,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchEventStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchRetryStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchVersionStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchVersionFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationFeed()).rejects.toBeInstanceOf(ApiError);
@@ -431,6 +433,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchVersionStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the version feed domain", async () => {
+    setMockFailure("versionFeed");
+
+    await expect(fetchVersionFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchVersionFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the publish stats domain", async () => {

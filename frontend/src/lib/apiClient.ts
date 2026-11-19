@@ -35,6 +35,7 @@ import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
 import type { UploadFeedOptions } from "./uploadFeed";
 import type { UploadStatsOptions } from "./uploadStats";
+import type { VersionFeedOptions } from "./versionFeed";
 import type { VersionStatsOptions } from "./versionStats";
 import type {
   ActivityFeed,
@@ -86,6 +87,7 @@ import type {
   UploadFeed,
   UploadStats,
   User,
+  VersionFeed,
   VersionStats,
 } from "./types";
 import * as mockApi from "./mock/mockApi";
@@ -204,6 +206,8 @@ export interface ApiClient {
   getRetryStats(options?: RetryStatsOptions): Promise<RetryStats>;
   /** Authoritative asset version metrics derived by `/versions/stats`, optionally project-scoped (C109). */
   getVersionStats(options?: VersionStatsOptions): Promise<VersionStats>;
+  /** Newest-first authoritative asset version feed derived by `/versions/feed`, optionally project-scoped (C153). */
+  getVersionFeed(options?: VersionFeedOptions): Promise<VersionFeed>;
   /** Authoritative publish-receipt metrics derived by `/publishes/stats`, optionally project-scoped (C113). */
   getPublishStats(options?: PublishStatsOptions): Promise<PublishStats>;
   /** Newest-first authoritative publish feed derived by `/publishes`, optionally project-scoped (C125). */
@@ -276,6 +280,7 @@ export const mockApiClient: ApiClient = {
   getEventStats: mockApi.fetchEventStats,
   getRetryStats: mockApi.fetchRetryStats,
   getVersionStats: mockApi.fetchVersionStats,
+  getVersionFeed: mockApi.fetchVersionFeed,
   getPublishStats: mockApi.fetchPublishStats,
   getPublishFeed: mockApi.fetchPublishFeed,
   getTags: mockApi.fetchTags,

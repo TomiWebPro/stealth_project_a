@@ -13,7 +13,7 @@ import type { PipelineChainRecord } from "../pipelineStats";
 import type { JobRetryRecord } from "../retryStats";
 import type { UploadFeedRecord } from "../uploadFeed";
 import type { UploadStatus } from "../types";
-import type { AssetVersionRecord } from "../versionStats";
+import type { AssetVersionFeedRecord } from "../versionFeed";
 import type {
   Asset,
   AuditTrail,
@@ -1794,14 +1794,15 @@ export const JOB_RETRIES: readonly JobRetryRecord[] = [
 // the same "one v1 per asset + one per revision" invariant as live mode; the two
 // version-chain assets (s01_c01 Ver_002) contribute the v2 revisions.
 
-export const ASSET_VERSIONS: readonly AssetVersionRecord[] = ASSETS.flatMap((asset) => {
+export const ASSET_VERSIONS: readonly AssetVersionFeedRecord[] = ASSETS.flatMap((asset) => {
   const latest = asset.version ?? 1;
-  const records: AssetVersionRecord[] = [];
+  const records: AssetVersionFeedRecord[] = [];
   for (let number = 1; number <= latest; number += 1) {
     records.push({
       asset_id: asset.id,
       version: number,
       created_at: number === latest ? asset.updated_at : asset.created_at,
+      created_by: asset.creator_id,
     });
   }
   return records;

@@ -30,6 +30,7 @@ import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
 import type { UploadFeedOptions } from "./uploadFeed";
 import type { UploadStatsOptions } from "./uploadStats";
+import type { VersionFeedOptions } from "./versionFeed";
 import type { VersionStatsOptions } from "./versionStats";
 
 /**
@@ -261,6 +262,10 @@ export const queryKeys = {
   versionStats: {
     summary: (options: VersionStatsOptions = {}) =>
       ["version-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  versionFeed: {
+    feed: (options: VersionFeedOptions = {}) =>
+      ["version-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   publishStats: {
     summary: (options: PublishStatsOptions = {}) =>

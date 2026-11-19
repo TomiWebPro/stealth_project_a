@@ -37,6 +37,7 @@ import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
 import type { UploadFeedOptions } from "../lib/uploadFeed";
 import type { UploadStatsOptions } from "../lib/uploadStats";
+import type { VersionFeedOptions } from "../lib/versionFeed";
 import type { VersionStatsOptions } from "../lib/versionStats";
 import type {
   ActivityFeed,
@@ -89,6 +90,7 @@ import type {
   UploadFeed,
   UploadStats,
   User,
+  VersionFeed,
   VersionStats,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
@@ -685,6 +687,17 @@ export function useVersionStats(
   return useQuery({
     queryKey: queryKeys.versionStats.summary(options),
     queryFn: () => api.getVersionStats(options),
+  });
+}
+
+/** Newest-first authoritative asset version feed from `/versions/feed`, optionally project-scoped (C153). */
+export function useVersionFeed(
+  options?: VersionFeedOptions,
+): UseQueryResult<VersionFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.versionFeed.feed(options),
+    queryFn: () => api.getVersionFeed(options),
   });
 }
 

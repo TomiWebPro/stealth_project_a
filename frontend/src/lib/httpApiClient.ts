@@ -70,6 +70,8 @@ import { uploadFeedQueryParams } from "./uploadFeed";
 import type { UploadFeedOptions } from "./uploadFeed";
 import { uploadStatsQueryParams } from "./uploadStats";
 import type { UploadStatsOptions } from "./uploadStats";
+import { versionFeedQueryParams } from "./versionFeed";
+import type { VersionFeedOptions } from "./versionFeed";
 import { versionStatsQueryParams } from "./versionStats";
 import type { VersionStatsOptions } from "./versionStats";
 import type {
@@ -122,6 +124,7 @@ import type {
   UploadFeed,
   UploadStats,
   User,
+  VersionFeed,
   VersionStats,
 } from "./types";
 
@@ -679,6 +682,11 @@ export function createHttpApiClient(
     /** Authoritative asset version metrics derived by the backend `/versions/stats`. */
     getVersionStats(options?: VersionStatsOptions): Promise<VersionStats> {
       return request<VersionStats>("/versions/stats", versionStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative asset version feed derived by `/versions/feed` (C153). */
+    getVersionFeed(options?: VersionFeedOptions): Promise<VersionFeed> {
+      return request<VersionFeed>("/versions/feed", versionFeedQueryParams(options));
     },
 
     /** Authoritative publish-receipt metrics derived by the backend `/publishes/stats`. */
