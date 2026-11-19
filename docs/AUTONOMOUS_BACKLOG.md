@@ -381,6 +381,17 @@ this file is the execution checklist.
   parity guard extended to both transports. ✅ 2026-11-19 — `caa18df`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C44 (CI) Extend the live-mode HTTP smoke job with the authoritative job
+  execution statistics endpoint from C40/C43 (`GET /api/v1/jobs/stats`): probe
+  the zero-filled snapshot shape (`total`, `by_status`, `by_operation`,
+  `success_rate`, `in_flight`, `completed`, `average_duration_seconds`,
+  `generated_at`) + breakdown shapes, the optional `project_id` scope, and the
+  shared 404 `project_not_found` / 422 `validation_error` envelopes with
+  request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows.
+  ✅ 2026-11-19 — `2f4cfa0`
+  Screens job-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -463,3 +474,4 @@ this file is the execution checklist.
 - 2026-11-19 — `75242d7` — C41 (screens): the Assets browser now renders the authoritative `useTags` facet index with prefix autocomplete, count chips, project scoping and click-to-filter on asset search; all five UI states and display values derived in tested `tagHelpers`; lint clean, 279 tests, build green.
 - 2026-11-19 — `75242d7` — C42 (screens): asset detail now renders authoritative downstream impact via `useAssetImpact` with depth chips, name-resolved descendant rows that select the asset deep link, and all five UI states with display values derived in tested `impactHelpers`; lint clean, 279 tests, build green.
 - 2026-11-19 — `caa18df` — C43 (mocks): wired the authoritative job execution stats API (C40 follow-up) end to end — `getJobStats`/`useJobStats` across mockApi (seed-derived zero-filled status counts, per-operation totals/outcomes, terminal-only success rate, in-flight/completed counts, mean duration; router-style 422 for malformed project id + unknown-project 404 + injectable `jobStats` failure), the stable facade, live `httpApiClient` (`GET /jobs/stats?project_id=`), `queryKeys` and `useQueries`, with a shared `lib/jobStats` derivation/validation helper; parity guard extended to both transports; lint clean, 294 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `2f4cfa0` — C44 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/jobs/stats` (zero-filled snapshot + breakdown shapes, optional `project_id` scope, shared 404 `project_not_found` + 422 `validation_error` envelopes with request-id) — the CI follow-up from C40/C43. No unchecked CI row remained, so C44 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (31/31 probes OK) and with pinned actionlint; frontend lint/test (294)/build and backend pytest (575) green. Screens job-stats rendering remains a screens follow-up.
