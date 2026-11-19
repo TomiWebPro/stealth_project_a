@@ -219,6 +219,12 @@ from .tags import (
     TagFacet,
     TagIndex,
 )
+from .upload_stats import (
+    UploadProjectCount,
+    UploadStats,
+    UploadStatus,
+    UploadStatusCount,
+)
 
 __all__ = [
     "API_PREFIX",
@@ -409,4 +415,9 @@ __all__ = [
     # tags
     "TagFacet",
     "TagIndex",
+    # upload stats
+    "UploadStatus",
+    "UploadStatusCount",
+    "UploadProjectCount",
+    "UploadStats",
 ]

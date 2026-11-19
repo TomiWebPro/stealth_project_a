@@ -58,6 +58,7 @@ from .routers import (
     splat,
     tags,
     tree,
+    upload_stats,
     uploads,
 )
 from .schemas.common import API_PREFIX, ErrorBody, ErrorDetail, ErrorResponse, HealthResponse
@@ -240,6 +241,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # literal path wins over the UUID-templated one.
     app.include_router(asset_stats.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
+    # "/uploads/stats" must be registered before "/uploads/{id}" so the literal
+    # stats path wins over the upload-id-templated one.
+    app.include_router(upload_stats.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
     # "/jobs/stats" must be registered before "/jobs/{job_id}" so the literal
     # path wins over the UUID-templated one.

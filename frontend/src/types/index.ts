@@ -32,3 +32,4 @@ export * from "./operationStats";
 export * from "./organizationStats";
 export * from "./pipelineStats";
 export * from "./lineageStats";
+export * from "./uploadStats";

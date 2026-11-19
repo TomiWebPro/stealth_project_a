@@ -74,7 +74,11 @@ All paths are prefixed with `/api/v1`.
   relationship-type breakdown, per-project link counts, distinct live-asset count
   and newest-link recency) derived from the asset relationship store; links from
   soft-deleted/unknown source assets are excluded
-- **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`
+- **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`,
+  `GET /uploads/stats?project_id=` — authoritative upload-ticket metrics
+  (zero-filled pending/complete breakdown, per-project activity, completed byte
+  totals and newest-ticket recency) derived from the upload store; optional
+  project scope with shared 404/422 envelopes
 - **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
   `GET /operations/stats` — authoritative catalog metrics (total/streaming/
   provider coverage, setting counts and zero-free asset-type breakdowns) derived

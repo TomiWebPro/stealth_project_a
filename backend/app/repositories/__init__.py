@@ -36,6 +36,7 @@ from .search import SearchRepository
 from .search_stats import SearchStatsRepository
 from .tags import TagRepository
 from .uploads import UploadRepository
+from .upload_stats import UploadStatsRepository
 
 
 @dataclass(slots=True)
@@ -50,6 +51,7 @@ class Repositories:
     conversation_stats: ConversationStatsRepository
     collaboration_stats: CollaborationStatsRepository
     uploads: UploadRepository
+    upload_stats: UploadStatsRepository
     jobs: JobRepository
     job_stats: JobStatsRepository
     lineage_stats: LineageStatsRepository
@@ -87,6 +89,7 @@ class Repositories:
         uploads = UploadRepository(
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
+        upload_stats = UploadStatsRepository(store, projects, clock=clock)
         jobs = JobRepository(store, projects, clock=clock)
         job_stats = JobStatsRepository(store, projects, clock=clock)
         lineage_stats = LineageStatsRepository(store, projects, clock=clock)
@@ -130,6 +133,7 @@ class Repositories:
             conversation_stats=conversation_stats,
             collaboration_stats=collaboration_stats,
             uploads=uploads,
+            upload_stats=upload_stats,
             jobs=jobs,
             job_stats=job_stats,
             lineage_stats=lineage_stats,

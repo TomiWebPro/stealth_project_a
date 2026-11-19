@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -18,6 +17,7 @@ from pydantic import BaseModel, ConfigDict
 from ..errors import ConflictError, GoneError, NotFoundError
 from ..schemas.asset import UploadRequest, UploadTicket
 from ..schemas.common import utcnow
+from ..schemas.upload_stats import UploadStatus
 from ..storage.base import Collections, DocumentStore
 from .base import BaseRepository
 from .projects import ProjectRepository
@@ -34,7 +34,7 @@ class UploadRecord(BaseModel):
     content_type: str
     declared_size: int
     size_bytes: int = 0
-    status: Literal["pending", "complete"] = "pending"
+    status: UploadStatus = "pending"
     path: str | None = None
     created_at: datetime
     expires_at: datetime

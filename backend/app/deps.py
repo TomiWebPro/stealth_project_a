@@ -43,6 +43,7 @@ from .repositories.search import SearchRepository
 from .repositories.search_stats import SearchStatsRepository
 from .repositories.tags import TagRepository
 from .repositories.uploads import UploadRepository
+from .repositories.upload_stats import UploadStatsRepository
 from .storage.base import DocumentStore
 from .tree import ProjectTree
 from .shots import ShotPipelineService
@@ -174,6 +175,12 @@ def get_upload_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> UploadRepository:
     return repositories.uploads
+
+
+def get_upload_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> UploadStatsRepository:
+    return repositories.upload_stats
 
 
 def get_job_repository(
@@ -381,4 +388,5 @@ __all__ = [
     "get_store",
     "get_training_service",
     "get_upload_repository",
+    "get_upload_stats_repository",
 ]
