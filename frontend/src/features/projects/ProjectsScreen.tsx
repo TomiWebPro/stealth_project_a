@@ -8,6 +8,7 @@ import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { formatProjectUpdatedAt } from "./helpers";
+import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
 import { ProjectStatsPanel } from "./ProjectStatsPanel";
 
@@ -73,6 +74,11 @@ export function ProjectsScreen() {
       <ProjectStatsPanel
         title="Project portfolio stats"
         description="Authoritative lifecycle and cross-domain metrics for all projects."
+      />
+
+      <PipelineStatsPanel
+        title="Production pipeline stats"
+        description="Authoritative training, shot and splat chain metrics across the workspace."
       />
 
       {isPending ? <ProjectsSkeleton /> : null}
