@@ -458,6 +458,16 @@ describe("queryKeys", () => {
   it("scopes the new catalog, conversation and message keys", () => {
     expect(queryKeys.operations.catalog()).toEqual(["operations", "catalog"]);
     expect(queryKeys.operationStats.summary()).toEqual(["operation-stats", "summary"]);
+    expect(queryKeys.operationFeed.feed()).toEqual([
+      "operation-feed",
+      "feed",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(
+      queryKeys.operationFeed.feed({ streaming: true, provider_id: "prov-a", limit: 5 }),
+    ).toEqual(["operation-feed", "feed", true, "prov-a", 5]);
     expect(queryKeys.capabilities.list()).toEqual(["capabilities", "list", "all"]);
     expect(queryKeys.capabilities.list("lora-train")).toEqual([
       "capabilities",

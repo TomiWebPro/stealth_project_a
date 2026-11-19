@@ -52,6 +52,8 @@ import type { OrganizationFeedOptions } from "./organizationFeed";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import { orchestrationFeedQueryParams } from "./orchestrationFeed";
+import { operationFeedQueryParams } from "./operationFeed";
+import type { OperationFeedOptions } from "./operationFeed";
 import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import { orchestrationStatsQueryParams } from "./orchestrationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
@@ -122,6 +124,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationFeed,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -586,6 +589,11 @@ export function createHttpApiClient(
     },
 
     getOperations: () => request<OperationCatalog>("/operations"),
+
+    /** Deterministic authoritative operation feed derived by the backend `/operations/feed` (C189). */
+    getOperationFeed(options?: OperationFeedOptions): Promise<OperationFeed> {
+      return request<OperationFeed>("/operations/feed", operationFeedQueryParams(options));
+    },
 
     /** Authoritative catalog metrics derived by the backend `/operations/stats`. */
     getOperationStats: () => request<OperationStats>("/operations/stats"),

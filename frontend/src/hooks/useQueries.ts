@@ -26,6 +26,7 @@ import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageFeedOptions } from "../lib/lineageFeed";
 import type { LineageStatsOptions } from "../lib/lineageStats";
+import type { OperationFeedOptions } from "../lib/operationFeed";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
@@ -79,6 +80,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationFeed,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -549,6 +551,15 @@ export function useOperations(): UseQueryResult<OperationCatalog> {
   return useQuery({
     queryKey: queryKeys.operations.catalog(),
     queryFn: () => api.getOperations(),
+  });
+}
+
+/** Deterministic authoritative operation feed from `/operations/feed`, optionally filtered/limited (C189). */
+export function useOperationFeed(options?: OperationFeedOptions): UseQueryResult<OperationFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.operationFeed.feed(options),
+    queryFn: () => api.getOperationFeed(options),
   });
 }
 

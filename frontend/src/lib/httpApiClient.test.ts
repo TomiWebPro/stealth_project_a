@@ -2192,6 +2192,65 @@ describe("createHttpApiClient operation stats", () => {
   });
 });
 
+describe("createHttpApiClient operation feed", () => {
+  const feed = {
+    items: [
+      {
+        operation_id: "image-to-video",
+        title: "Image to video",
+        description: "Animate a first frame.",
+        schema_version: "v1",
+        input_types: ["image"],
+        output_types: ["video"],
+        settings_count: 2,
+        streaming: true,
+        provider_ids: ["prov-a"],
+        provider_count: 1,
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /operations/feed with filters and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/operations/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getOperationFeed({ streaming: false, provider_id: "prov-a", limit: 2 }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/operations/feed`);
+    expect(url.searchParams.get("streaming")).toBe("false");
+    expect(url.searchParams.get("provider_id")).toBe("prov-a");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no filters or page are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/operations/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getOperationFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Feed limit must be between 1 and 200." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getOperationFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Feed limit must be between 1 and 200.",
+    });
+  });
+});
+
 describe("createHttpApiClient asset feed", () => {
   const feed = {
     items: [

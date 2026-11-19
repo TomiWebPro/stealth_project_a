@@ -83,6 +83,8 @@ export type {
   MessageStatus,
   Metadata,
   OperationCatalog,
+  OperationFeed,
+  OperationFeedItem,
   OperationSpec,
   OperationStats,
   OperationTypeCount,

@@ -20,6 +20,7 @@ import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
+import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
@@ -247,6 +248,16 @@ export const queryKeys = {
   },
   operations: {
     catalog: () => ["operations", "catalog"] as const,
+  },
+  operationFeed: {
+    feed: (options: OperationFeedOptions = {}) =>
+      [
+        "operation-feed",
+        "feed",
+        options.streaming ?? "all",
+        options.provider_id ?? "all",
+        options.limit ?? "all",
+      ] as const,
   },
   operationStats: {
     summary: () => ["operation-stats", "summary"] as const,

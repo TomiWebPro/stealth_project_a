@@ -24,6 +24,7 @@ import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
+import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
@@ -77,6 +78,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationFeed,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -203,6 +205,8 @@ export interface ApiClient {
   listWorkflowTemplates(projectId?: string): Promise<readonly Asset[]>;
   /** Static operation catalog (pipeline stages 1-9). */
   getOperations(): Promise<OperationCatalog>;
+  /** Deterministic authoritative operation feed derived by `/operations/feed`, optionally filtered/limited (C189). */
+  getOperationFeed(options?: OperationFeedOptions): Promise<OperationFeed>;
   /** Authoritative catalog metrics derived by `/operations/stats` (C65). */
   getOperationStats(): Promise<OperationStats>;
   /** Flattened provider capability rows, optionally filtered by operation id. */
@@ -297,6 +301,7 @@ export const mockApiClient: ApiClient = {
   getProvider: mockApi.fetchProvider,
   listWorkflowTemplates: mockApi.fetchWorkflowTemplates,
   getOperations: mockApi.fetchOperations,
+  getOperationFeed: mockApi.fetchOperationFeed,
   getOperationStats: mockApi.fetchOperationStats,
   listCapabilities: mockApi.fetchCapabilities,
   listConversations: mockApi.fetchConversations,

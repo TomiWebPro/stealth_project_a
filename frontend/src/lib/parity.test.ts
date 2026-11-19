@@ -41,6 +41,8 @@ import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import { deriveLineageFeed, validateLineageFeedArgs } from "./lineageFeed";
 import type { LineageFeedOptions } from "./lineageFeed";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
+import { deriveOperationFeed, validateOperationFeedArgs } from "./operationFeed";
+import type { OperationFeedOptions } from "./operationFeed";
 import { deriveOperationStats } from "./operationStats";
 import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
@@ -843,6 +845,39 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
         })),
     );
   }
+  // Authoritative operation feed projects the same catalog as `/operations` and
+  // `/operations/stats`; mirror the router's 422 validation (streaming /
+  // provider_id / limit) over the shared seeds so live and mock agree. This must
+  // precede the dynamic `/operations/{operation_id}` branch below.
+  if (path === "/operations/feed") {
+    const streamingRaw = params.get("streaming");
+    const providerIdRaw = params.get("provider_id");
+    const limitRaw = params.get("limit");
+    const options: OperationFeedOptions = {
+      ...(streamingRaw !== null
+        ? { streaming: (streamingRaw === "true"
+            ? true
+            : streamingRaw === "false"
+              ? false
+              : streamingRaw) as boolean }
+        : {}),
+      ...(providerIdRaw !== null ? { provider_id: providerIdRaw } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateOperationFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveOperationFeed(OPERATION_CATALOG.operations ?? [], REFERENCE_NOW, options);
+  }
+
   if (path === "/operations") return OPERATION_CATALOG;
 
   // Authoritative catalog metrics are derived from the same operation catalog
@@ -1433,6 +1468,10 @@ describe("live vs mock transport parity", () => {
       ["getProvider", (api) => api.getProvider("prov_local")],
       ["listWorkflowTemplates", (api) => api.listWorkflowTemplates()],
       ["getOperations", (api) => api.getOperations()],
+      ["getOperationFeed", (api) => api.getOperationFeed()],
+      ["getOperationFeed streaming", (api) => api.getOperationFeed({ streaming: true })],
+      ["getOperationFeed non-streaming", (api) => api.getOperationFeed({ streaming: false })],
+      ["getOperationFeed limited", (api) => api.getOperationFeed({ limit: 2 })],
       ["getOperationStats", (api) => api.getOperationStats()],
       ["listCapabilities", (api) => api.listCapabilities()],
       ["listConversations", (api) => api.listConversations(filmId)],
@@ -2184,6 +2223,21 @@ describe("live vs mock transport parity", () => {
     expect(mockProviderFeed422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProviderFeed422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both narrow the operation feed and reject invalid streaming filters and
+    // page bounds with the same 422 envelope (empty provider scopes stay empty).
+    expect(await live.getOperationFeed({ streaming: true })).toEqual(
+      await mockApiClient.getOperationFeed({ streaming: true }),
+    );
+    expect(await live.getOperationFeed({ provider_id: "missing" })).toEqual(
+      await mockApiClient.getOperationFeed({ provider_id: "missing" }),
+    );
+    const [mockOperationFeed422, liveOperationFeed422] = await Promise.all([
+      mockApiClient.getOperationFeed({ streaming: "yes" as never }).catch((cause) => cause),
+      live.getOperationFeed({ streaming: "yes" as never }).catch((cause) => cause),
+    ]);
+    expect(mockOperationFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveOperationFeed422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both zero-fill an empty extension-stats filter and reject invalid filters
     // with the same 422 envelope.
     expect(await live.getExtensionStats({ type: "bundle" })).toEqual(
@@ -2289,6 +2343,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getCollaborationStats).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");
     expect(typeof typed.getOrchestrationFeed).toBe("function");
+    expect(typeof typed.getOperationFeed).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
   });
 });
