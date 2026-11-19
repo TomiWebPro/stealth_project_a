@@ -38,6 +38,7 @@ from .routers import (
     job_stats,
     jobs,
     links,
+    operation_stats,
     orchestration,
     pipelines,
     projects,
@@ -206,6 +207,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     # --- Routes -------------------------------------------------------------
+
+    # "/operations/stats" must be registered before "/operations/{operation_id}"
+    # so the literal path wins over the operation-id-templated one.
+    app.include_router(operation_stats.router, prefix=API_PREFIX)
 
     app.include_router(health.router, prefix=API_PREFIX)
     app.include_router(activity.router, prefix=API_PREFIX)

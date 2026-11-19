@@ -131,6 +131,10 @@ from .operation import (
     OperationSpec,
     SettingType,
 )
+from .operation_stats import (
+    OperationStats,
+    OperationTypeCount,
+)
 from .orchestration import (
     Comment,
     OrchestrationPlan,
@@ -305,6 +309,9 @@ __all__ = [
     "OperationSetting",
     "OperationSpec",
     "SettingType",
+    # operation stats
+    "OperationStats",
+    "OperationTypeCount",
     # orchestration
     "Comment",
     "OrchestrationPlan",

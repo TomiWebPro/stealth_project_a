@@ -68,6 +68,9 @@ All paths are prefixed with `/api/v1`.
   store; deleted assets are excluded
 - **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`
 - **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
+  `GET /operations/stats` — authoritative catalog metrics (total/streaming/
+  provider coverage, setting counts and zero-free asset-type breakdowns) derived
+  from the operation catalog
   `GET|POST /jobs`, `GET /jobs/{id}`, `GET /jobs/{id}/events`,
   `POST /jobs/{id}/cancel|retry|run`,
   `GET /jobs/{id}/events/stream` (SSE, `since`/`idle_timeout`)

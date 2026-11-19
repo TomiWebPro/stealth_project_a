@@ -618,6 +618,14 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `562ab49`
   Screens extension-stats rendering remains a screens follow-up.
 
+- [ ] C65 (backend) Authoritative operation catalog statistics API:
+  `GET /api/v1/operations/stats` derives catalog size, streaming/provider
+  coverage, total settings, unique output types and deterministic asset-type
+  input/output breakdowns from the authoritative operation catalog (no second
+  index); `OperationStats`/`OperationTypeCount` mirrored in
+  `frontend/src/types/operationStats.ts`, README endpoint list synced, tests on
+  memory+sqlite. Mocks/screens/CI wiring is a follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
