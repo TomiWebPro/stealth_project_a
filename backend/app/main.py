@@ -55,6 +55,7 @@ from .routers import (
     provider_stats,
     providers,
     publish,
+    publish_feed,
     publish_stats,
     retry_stats,
     search,
@@ -286,8 +287,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(extensions.router, prefix=API_PREFIX)
     app.include_router(tree.router, prefix=API_PREFIX)
     # "/publishes/stats" has no templated sibling; register it directly to keep
-    # the publish-stats path explicit.
+    # the publish-stats path explicit. "/publishes" is the literal feed path;
+    # mount it beside publish-stats so both publish views stay explicit.
     app.include_router(publish_stats.router, prefix=API_PREFIX)
+    app.include_router(publish_feed.router, prefix=API_PREFIX)
     app.include_router(publish.router, prefix=API_PREFIX)
     app.include_router(links.router, prefix=API_PREFIX)
     # "/pipelines/stats" is a literal path; register before the chain routers so

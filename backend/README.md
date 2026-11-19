@@ -79,6 +79,10 @@ All paths are prefixed with `/api/v1`.
   per-project activity and newest-version recency) derived from the asset version
   store; versions of soft-deleted/unknown assets are excluded, optional project
   scope with shared 404/422 envelopes
+  `GET /publishes?project_id=&limit=` — newest-first publish feed of published
+  deliverables (asset/project id + name, type, receipt version/bytes, publish
+  time) derived from the same authoritative receipts; soft-deleted/unpublished
+  assets and malformed receipts are excluded
   `GET /publishes/stats?project_id=` — authoritative publish metrics (total
   published assets and bytes, by-version distribution, per-project activity and
   newest-publish recency) derived from publish receipts in the asset store;

@@ -28,6 +28,7 @@ export * from "./tags";
 export * from "./impact";
 export * from "./providerStats";
 export * from "./publishStats";
+export * from "./publishFeed";
 export * from "./extensionStats";
 export * from "./operationStats";
 export * from "./organizationStats";

@@ -204,6 +204,10 @@ from .provider_stats import (
     ProviderStats,
     ProviderStatusCount,
 )
+from .publish_feed import (
+    PublishFeed,
+    PublishFeedItem,
+)
 from .publish_stats import (
     PublishProjectCount,
     PublishStats,
@@ -337,6 +341,9 @@ __all__ = [
     "ProviderOperationStat",
     "ProviderStats",
     "ProviderStatusCount",
+    # publish feed
+    "PublishFeed",
+    "PublishFeedItem",
     # publish stats
     "PublishProjectCount",
     "PublishStats",

@@ -35,6 +35,7 @@ from .projects import ProjectRepository
 from .project_stats import ProjectStatsRepository
 from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
+from .publish_feed import PublishFeedRepository
 from .publish_stats import PublishStatsRepository
 from .retry_stats import RetryStatsRepository
 from .search import SearchRepository
@@ -68,6 +69,7 @@ class Repositories:
     organization_stats: OrganizationStatsRepository
     providers: ProviderRepository
     provider_stats: ProviderStatsRepository
+    publish_feed: PublishFeedRepository
     publish_stats: PublishStatsRepository
     retry_stats: RetryStatsRepository
     orchestration: OrchestrationRepository
@@ -112,6 +114,7 @@ class Repositories:
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
+        publish_feed = PublishFeedRepository(store, projects, clock=clock)
         publish_stats = PublishStatsRepository(store, projects, clock=clock)
         retry_stats = RetryStatsRepository(store, projects, clock=clock)
         orchestration = OrchestrationRepository(
@@ -162,6 +165,7 @@ class Repositories:
             organization_stats=organization_stats,
             providers=providers,
             provider_stats=provider_stats,
+            publish_feed=publish_feed,
             publish_stats=publish_stats,
             retry_stats=retry_stats,
             orchestration=orchestration,
