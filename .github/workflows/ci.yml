@@ -1058,6 +1058,66 @@ jobs:
                 and bool(usbadbody.get("error", {}).get("request_id")),
                 upload_bad.text)
 
+          # Authoritative job event stream statistics (C101/C103) is the newest
+          # /api/v1 URL the live client calls (getEventStats). Probe the zero-
+          # filled snapshot + by_type/by_job breakdown shapes, the six canonical
+          # event types, the optional project scope (unknown project -> shared
+          # 404) and the shared 422 envelope, keeping CI aligned with new
+          # endpoints as they go live.
+          event_stats = httpx.get(f"{base}/events/stats", timeout=5)
+          evbody = event_stats.json() if event_stats.status_code == 200 else {}
+          check("events/stats 200 snapshot shape",
+                event_stats.status_code == 200 and all(
+                    k in evbody for k in ("total_events", "total_jobs", "by_type",
+                                          "by_job", "newest_event_at", "generated_at")),
+                event_stats.text)
+          check("events/stats breakdown shapes",
+                isinstance(evbody.get("by_type"), list)
+                and all(isinstance(t, dict) and "type" in t and "count" in t
+                        for t in evbody["by_type"])
+                and isinstance(evbody.get("by_job"), list)
+                and all(isinstance(j, dict) and all(
+                    k in j for k in ("job_id", "events", "newest_event_at"))
+                    for j in evbody["by_job"]),
+                event_stats.text)
+          check("events/stats zero-filled types",
+                event_stats.status_code == 200
+                and {t.get("type") for t in evbody["by_type"]} >= {
+                    "status", "progress", "intermediate", "result", "error", "log"},
+                event_stats.text)
+          check("events/stats request-id header",
+                "x-request-id" in {k.lower() for k in event_stats.headers},
+                str(dict(event_stats.headers)))
+          if project_id:
+              event_scoped = httpx.get(
+                  f"{base}/events/stats", params={"project_id": project_id}, timeout=5)
+              evsbody = event_scoped.json() if event_scoped.status_code == 200 else {}
+              check("events/stats project scope 200",
+                    event_scoped.status_code == 200
+                    and isinstance(evsbody.get("total_events"), int)
+                    and isinstance(evsbody.get("by_type"), list),
+                    event_scoped.text)
+          else:
+              check("events/stats project scope setup", False,
+                    "could not obtain a project id")
+          event_missing = httpx.get(
+              f"{base}/events/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          ev404body = event_missing.json() if event_missing.status_code == 404 else {}
+          check("events/stats 404 shared envelope",
+                event_missing.status_code == 404
+                and ev404body.get("error", {}).get("code") == "project_not_found"
+                and bool(ev404body.get("error", {}).get("request_id")),
+                event_missing.text)
+          event_bad = httpx.get(
+              f"{base}/events/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          evbadbody = event_bad.json() if event_bad.status_code == 422 else {}
+          check("events/stats 422 validation envelope",
+                event_bad.status_code == 422
+                and evbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(evbadbody.get("error", {}).get("request_id")),
+                event_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
