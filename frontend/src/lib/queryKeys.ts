@@ -10,6 +10,7 @@ import type { DashboardOptions } from "./dashboard";
 import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
+import type { JobFeedOptions } from "./jobFeed";
 import type { JobLogsOptions } from "./jobLogs";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
@@ -61,6 +62,16 @@ export const queryKeys = {
   jobStats: {
     summary: (options: JobStatsOptions = {}) =>
       ["job-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  jobFeed: {
+    feed: (options: JobFeedOptions = {}) =>
+      [
+        "job-feed",
+        "feed",
+        options.projectId ?? "all",
+        options.status ?? "all",
+        options.limit ?? "all",
+      ] as const,
   },
   assetStats: {
     summary: (options: AssetStatsOptions = {}) =>

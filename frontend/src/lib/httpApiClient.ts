@@ -29,6 +29,8 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
+import { jobFeedQueryParams } from "./jobFeed";
+import type { JobFeedOptions } from "./jobFeed";
 import { jobLogsQueryParams } from "./jobLogs";
 import type { JobLogsOptions } from "./jobLogs";
 import { jobQueueQueryParams } from "./jobQueue";
@@ -85,6 +87,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobFeed,
   JobLogFrame,
   JobQueueView,
   JobStats,
@@ -306,6 +309,11 @@ export function createHttpApiClient(
     /** Authoritative job execution metrics derived by the backend `/jobs/stats`. */
     getJobStats(options?: JobStatsOptions): Promise<JobStats> {
       return request<JobStats>("/jobs/stats", jobStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative job feed derived by the backend `/jobs/feed` (C141). */
+    getJobFeed(options?: JobFeedOptions): Promise<JobFeed> {
+      return request<JobFeed>("/jobs/feed", jobFeedQueryParams(options));
     },
 
     /** Authoritative active dispatch queue derived by the backend `/jobs/queue` (C121). */

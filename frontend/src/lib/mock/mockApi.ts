@@ -41,6 +41,8 @@ import { deriveLineageStats, validateLineageStatsArgs } from "../lineageStats";
 import type { LineageStatsOptions } from "../lineageStats";
 import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
+import { deriveJobFeed, validateJobFeedArgs } from "../jobFeed";
+import type { JobFeedOptions } from "../jobFeed";
 import { deriveJobLogs, validateJobLogsArgs } from "../jobLogs";
 import type { JobLogsOptions } from "../jobLogs";
 import { deriveJobQueue, validateJobQueueArgs } from "../jobQueue";
@@ -103,6 +105,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobFeed,
   JobLogFrame,
   JobQueueView,
   JobStats,
@@ -188,8 +191,8 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
- * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs` and
- * `jobQueue`.
+ * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs`,
+ * `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -780,6 +783,25 @@ export async function fetchJobQueue(options?: JobQueueOptions): Promise<JobQueue
     });
   }
   return delay(deriveJobQueue(JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative job feed (C141) derived from the same job/project stores as the
+ * live `/jobs/feed` endpoint. Router-style 422 validation, a normalized 404 for
+ * an unknown project scope and the `"jobFeed"` failure domain keep error and
+ * empty states at parity with live mode.
+ */
+export async function fetchJobFeed(options?: JobFeedOptions): Promise<JobFeed> {
+  failIfEnabled("jobFeed");
+  validateJobFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveJobFeed(JOBS, PROJECTS, REFERENCE_NOW, options));
 }
 
 export async function fetchProvider(providerId: string): Promise<Provider | undefined> {

@@ -24,6 +24,8 @@ import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
 import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
+import { deriveJobFeed, validateJobFeedArgs } from "./jobFeed";
+import type { JobFeedOptions } from "./jobFeed";
 import { deriveJobLogs, validateJobLogsArgs } from "./jobLogs";
 import type { JobLogsOptions } from "./jobLogs";
 import { deriveJobQueue, validateJobQueueArgs } from "./jobQueue";
@@ -595,6 +597,35 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveJobStats(JOBS, REFERENCE_NOW, options);
   }
 
+  // Authoritative job feed derives the same newest-first view as the
+  // `/jobs/feed` endpoint from the shared job/project seeds; mirror its 422
+  // validation, unknown-project 404, status filter, page bound and repository
+  // derivation so live and mock agree exactly. This must precede the dynamic
+  // `/jobs/{id}` branch below.
+  if (path === "/jobs/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const statusRaw = params.get("status");
+    const limitRaw = params.get("limit");
+    const options: JobFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(statusRaw ? { status: statusRaw as JobFeedOptions["status"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateJobFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveJobFeed(JOBS, PROJECTS, REFERENCE_NOW, options);
+  }
+
   // Authoritative per-job execution log is derived from the same JOB_EVENTS
   // stream the endpoint reads; mirror its 422 validation, unknown-job 404 and
   // repository derivation (severity filter + resume cursor + page) over seeds.
@@ -980,6 +1011,14 @@ describe("live vs mock transport parity", () => {
       ["getJobQueue scoped", (api) => api.getJobQueue({ projectId: filmId })],
       ["getJobQueue limited", (api) => api.getJobQueue({ limit: 3 })],
       ["getJobQueue scoped and limited", (api) => api.getJobQueue({ projectId: filmId, limit: 2 })],
+      ["getJobFeed", (api) => api.getJobFeed()],
+      ["getJobFeed scoped", (api) => api.getJobFeed({ projectId: filmId })],
+      ["getJobFeed filtered", (api) => api.getJobFeed({ status: "running" })],
+      ["getJobFeed limited", (api) => api.getJobFeed({ limit: 2 })],
+      [
+        "getJobFeed scoped, filtered and limited",
+        (api) => api.getJobFeed({ projectId: filmId, status: "running", limit: 1 }),
+      ],
       ["getAssetStats", (api) => api.getAssetStats()],
       ["getAssetStats scoped", (api) => api.getAssetStats({ projectId: filmId })],
       ["getAssetFeed", (api) => api.getAssetFeed()],
@@ -1450,6 +1489,29 @@ describe("live vs mock transport parity", () => {
       expect(liveAssetFeed422).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports 404 identically for an unknown job-feed project scope and
+    // reject a malformed id, unknown status or out-of-range limit with the same
+    // 422 envelope.
+    const [mockJobFeed404, liveJobFeed404] = await Promise.all([
+      mockApiClient.getJobFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getJobFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockJobFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveJobFeed404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [
+      { projectId: "not-a-uuid" },
+      { status: "paused" as never },
+      { limit: 0 },
+      { limit: 201 },
+    ]) {
+      const [mockJobFeed422, liveJobFeed422] = await Promise.all([
+        mockApiClient.getJobFeed(bad).catch((cause) => cause),
+        live.getJobFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockJobFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveJobFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports 404 identically for an unknown pipeline-stats project
     // scope and reject a malformed project id with the same 422 envelope.
     const [mockPipeStats404, livePipeStats404] = await Promise.all([
@@ -1601,6 +1663,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getActivityStats).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.getJobStats).toBe("function");
+    expect(typeof typed.getJobFeed).toBe("function");
     expect(typeof typed.getJobLogs).toBe("function");
     expect(typeof typed.getJobQueue).toBe("function");
     expect(typeof typed.getAssetStats).toBe("function");

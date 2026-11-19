@@ -103,6 +103,17 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the job feed key by project, status and limit", () => {
+    expect(queryKeys.jobFeed.feed()).toEqual(["job-feed", "feed", "all", "all", "all"]);
+    expect(queryKeys.jobFeed.feed({ projectId: "p1", status: "failed", limit: 5 })).toEqual([
+      "job-feed",
+      "feed",
+      "p1",
+      "failed",
+      5,
+    ]);
+  });
+
   it("scopes the conversation feed key by project and limit", () => {
     expect(queryKeys.conversationFeed.feed()).toEqual(["conversation-feed", "feed", "all", "all"]);
     expect(queryKeys.conversationFeed.feed({ projectId: "p1", limit: 5 })).toEqual([

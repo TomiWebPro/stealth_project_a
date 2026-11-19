@@ -51,6 +51,8 @@ export type {
   Job,
   JobEvent,
   JobEventType,
+  JobFeed,
+  JobFeedItem,
   JobLogEntry,
   JobLogFrame,
   JobQueueEntry,

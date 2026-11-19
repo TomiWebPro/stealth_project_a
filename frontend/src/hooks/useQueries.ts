@@ -16,6 +16,7 @@ import type { EventStatsOptions } from "../lib/eventStats";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
+import type { JobFeedOptions } from "../lib/jobFeed";
 import type { JobLogsOptions } from "../lib/jobLogs";
 import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
@@ -54,6 +55,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobFeed,
   JobLogFrame,
   JobQueueView,
   JobStats,
@@ -130,6 +132,15 @@ export function useJobStats(options?: JobStatsOptions): UseQueryResult<JobStats>
   return useQuery({
     queryKey: queryKeys.jobStats.summary(options),
     queryFn: () => api.getJobStats(options),
+  });
+}
+
+/** Newest-first authoritative job feed from `/jobs/feed`, optionally project/status-scoped (C141). */
+export function useJobFeed(options?: JobFeedOptions): UseQueryResult<JobFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.jobFeed.feed(options),
+    queryFn: () => api.getJobFeed(options),
   });
 }
 

@@ -14,6 +14,7 @@ import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
+import type { JobFeedOptions } from "./jobFeed";
 import type { JobLogsOptions } from "./jobLogs";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
@@ -52,6 +53,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobFeed,
   JobLogFrame,
   JobQueueView,
   JobStats,
@@ -105,6 +107,8 @@ export interface ApiClient {
   getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
   /** Authoritative job execution metrics derived by `/jobs/stats`, optionally project-scoped (C40). */
   getJobStats(options?: JobStatsOptions): Promise<JobStats>;
+  /** Newest-first authoritative job feed derived by `/jobs/feed`, optionally project/status-scoped (C141). */
+  getJobFeed(options?: JobFeedOptions): Promise<JobFeed>;
   /** Authoritative asset inventory metrics derived by `/assets/stats`, optionally project-scoped (C49). */
   getAssetStats(options?: AssetStatsOptions): Promise<AssetStats>;
   /** Newest-first authoritative asset feed derived by `/assets/feed`, optionally project-scoped (C137). */
@@ -209,6 +213,7 @@ export const mockApiClient: ApiClient = {
   getActivityStats: mockApi.fetchActivityStats,
   getDashboard: mockApi.fetchDashboard,
   getJobStats: mockApi.fetchJobStats,
+  getJobFeed: mockApi.fetchJobFeed,
   getAssetStats: mockApi.fetchAssetStats,
   getAssetFeed: mockApi.fetchAssetFeed,
   getConversationStats: mockApi.fetchConversationStats,
