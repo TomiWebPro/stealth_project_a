@@ -1160,6 +1160,19 @@ this file is the execution checklist.
   Never-empty well. ✅ 2026-11-19 — `87ae1e5`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C108 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  job retry statistics endpoint from C105/C107
+  (`GET /api/v1/retries/stats?project_id=`): probe the zero-filled snapshot
+  shape (`total_retries`, `total_jobs`, `by_status`, `by_project`,
+  `newest_retry_at`, `generated_at`) + status/project breakdown shapes and the
+  five canonical job statuses (queued/running/succeeded/failed/canceled), the
+  optional `project_id` scope (unknown → shared 404 `project_not_found`), and
+  the shared 422 `validation_error` envelope with request-id, keeping CI
+  aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client calls
+  as the repo grows. No unchecked CI row remained, so C108 was added under the
+  Never-empty well. ✅ 2026-11-19 — `d88537d`
+  Screens retry-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1306,3 +1319,4 @@ this file is the execution checklist.
 - 2026-11-19 — `9db35b3` — C105 (backend): added authoritative `GET /api/v1/retries/stats?project_id=` deriving accepted-retry totals, distinct retried-job counts, a zero-filled retried-jobs-by-status breakdown, per-project retry/job activity and newest retried-job recency from the authoritative `JOB_RETRIES` idempotency ledger joined to jobs (orphans excluded); `RetryStats`/`RetryStatusCount`/`RetryProjectCount` mirrored in `frontend/src/types/retryStats.ts`, README endpoint list synced, 5 tests × 2 backends green (761 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C105 was added under the Never-empty well.
 - 2026-11-19 — `0471d47` — C106 (screens): rendered the authoritative job event-stream statistics (C101/C103/C104 follow-up) via `useEventStats` — a reusable `EventStatsPanel` on Jobs (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled status/progress/intermediate/result/error/log type and per-job activity breakdowns, and all five UI states; every display value derived in tested `eventStatsHelpers`. Resolves the C104 screens follow-up. Lint clean, 719 tests, build green. My owned column had no unchecked rows, so C106 was added under the Never-empty well.
 - 2026-11-19 — `87ae1e5` — C107 (mocks): wired the authoritative job retry statistics API (C105 follow-up) end to end — `getRetryStats`/`useRetryStats` atomically across mockApi (seed-derived zero-filled status buckets, duplicate-ledger retry counts, per-project retry/job activity sorted by retries then id, orphan exclusion, joined-job recency; router-style 422 + unknown-project 404 + injectable `retryStats` failure), the stable facade, live `httpApiClient` (`GET /retries/stats?project_id=`), queryKeys and useQueries, with a shared `lib/retryStats` derivation/validation helper + ledger seeds and parity extended to both transports; lint clean, 733 tests, build green. My owned column had no unchecked rows, so C107 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `d88537d` — C108 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/retries/stats` (zero-filled snapshot + by_status/by_project breakdown shapes, the five canonical job statuses queued/running/succeeded/failed/canceled, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found`, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C105/C107. No unchecked CI row remained, so C108 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (115/115 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12; frontend lint/test (733)/build and backend pytest (761) green. Screens retry-stats rendering remains a screens follow-up.
