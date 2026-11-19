@@ -942,6 +942,62 @@ jobs:
                 and bool(astbadbody.get("error", {}).get("request_id")),
                 activity_bad.text)
 
+          # Authoritative search index statistics (C93/C95) is the newest /api/v1
+          # URL the live client calls (getSearchStats). Probe the zero-filled
+          # snapshot + by_kind breakdown shape, the three canonical search result
+          # kinds, the optional project scope (unknown project -> shared 404) and
+          # the shared 422 envelope, keeping CI aligned with new endpoints as they
+          # go live.
+          search_stats = httpx.get(f"{base}/search/stats", timeout=5)
+          ssbody = search_stats.json() if search_stats.status_code == 200 else {}
+          check("search/stats 200 snapshot shape",
+                search_stats.status_code == 200 and all(
+                    k in ssbody for k in ("total_documents", "by_kind",
+                                          "newest_document_at", "generated_at")),
+                search_stats.text)
+          check("search/stats breakdown shapes",
+                isinstance(ssbody.get("by_kind"), list)
+                and all(isinstance(k, dict) and "kind" in k and "count" in k
+                        for k in ssbody["by_kind"]),
+                search_stats.text)
+          check("search/stats zero-filled kinds",
+                search_stats.status_code == 200
+                and {k.get("kind") for k in ssbody["by_kind"]} >= {
+                    "project", "asset", "conversation"},
+                search_stats.text)
+          check("search/stats request-id header",
+                "x-request-id" in {k.lower() for k in search_stats.headers},
+                str(dict(search_stats.headers)))
+          if project_id:
+              search_scoped = httpx.get(
+                  f"{base}/search/stats", params={"project_id": project_id}, timeout=5)
+              sssbody = search_scoped.json() if search_scoped.status_code == 200 else {}
+              check("search/stats project scope 200",
+                    search_scoped.status_code == 200
+                    and isinstance(sssbody.get("total_documents"), int)
+                    and isinstance(sssbody.get("by_kind"), list),
+                    search_scoped.text)
+          else:
+              check("search/stats project scope setup", False,
+                    "could not obtain a project id")
+          search_missing = httpx.get(
+              f"{base}/search/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          ss404body = search_missing.json() if search_missing.status_code == 404 else {}
+          check("search/stats 404 shared envelope",
+                search_missing.status_code == 404
+                and ss404body.get("error", {}).get("code") == "project_not_found"
+                and bool(ss404body.get("error", {}).get("request_id")),
+                search_missing.text)
+          search_bad = httpx.get(
+              f"{base}/search/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          ssbadbody = search_bad.json() if search_bad.status_code == 422 else {}
+          check("search/stats 422 validation envelope",
+                search_bad.status_code == 422
+                and ssbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ssbadbody.get("error", {}).get("request_id")),
+                search_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
