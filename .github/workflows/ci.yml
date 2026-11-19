@@ -1255,6 +1255,97 @@ jobs:
                 and bool(vsbadbody.get("error", {}).get("request_id")),
                 version_bad.text)
 
+          # Authoritative publish statistics (C113/C115) is the newest /api/v1
+          # URL the live client calls (getPublishStats). Probe the snapshot +
+          # by_version/by_project breakdown shapes, the derived shape after
+          # publishing the on-demand registered asset, the optional project scope
+          # (unknown project -> shared 404, malformed -> shared 422) and the
+          # request-id header, keeping CI aligned with new endpoints as they go
+          # live.
+          publish_stats = httpx.get(f"{base}/publishes/stats", timeout=5)
+          pubsbody = publish_stats.json() if publish_stats.status_code == 200 else {}
+          check("publishes/stats 200 snapshot shape",
+                publish_stats.status_code == 200 and all(
+                    k in pubsbody for k in ("total_published", "total_bytes",
+                                            "by_version", "by_project",
+                                            "newest_published_at", "generated_at")),
+                publish_stats.text)
+          check("publishes/stats breakdown shapes",
+                isinstance(pubsbody.get("by_version"), list)
+                and all(isinstance(v, dict) and "version" in v and "count" in v
+                        for v in pubsbody["by_version"])
+                and isinstance(pubsbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "published", "bytes"))
+                    for p in pubsbody["by_project"]),
+                publish_stats.text)
+          check("publishes/stats request-id header",
+                "x-request-id" in {k.lower() for k in publish_stats.headers},
+                str(dict(publish_stats.headers)))
+          if asset_id and project_id:
+              pub_patched = httpx.patch(
+                  f"{base}/assets/{asset_id}",
+                  json={"metadata": {"publish_receipt": {
+                      "asset_id": asset_id,
+                      "project_id": project_id,
+                      "version": 1,
+                      "version_folder": "Ver_001",
+                      "comment": "ci smoke publish",
+                      "thumbnail": None,
+                      "published_by": project_id,
+                      "published_at": "2026-11-19T00:00:00",
+                      "source_key": "ci/smoke.png",
+                      "published_path": "Projects/Default/Assets/Char/ci-smoke/Ver_001/Dataset/Publish/ci-smoke_v001.png",
+                      "checksum_sha256": "deadbeef",
+                      "size_bytes": 8,
+                  }}},
+                  timeout=5)
+              check("publishes/stats register receipt 200", pub_patched.status_code == 200,
+                    pub_patched.text)
+              pub_derived = httpx.get(f"{base}/publishes/stats", timeout=5)
+              pub_dbody = pub_derived.json() if pub_derived.status_code == 200 else {}
+              check("publishes/stats derived shape",
+                    pub_derived.status_code == 200
+                    and pub_dbody.get("total_published", 0) >= 1
+                    and pub_dbody.get("total_bytes", 0) >= 8
+                    and any(v.get("version") == 1 for v in pub_dbody.get("by_version", []))
+                    and any(p.get("project_id") == project_id
+                            and p.get("published", 0) >= 1
+                            for p in pub_dbody.get("by_project", [])),
+                    pub_derived.text)
+          else:
+              check("publishes/stats derived setup", False,
+                    "could not obtain an asset/project for the publish probe")
+          if project_id:
+              pub_scoped = httpx.get(
+                  f"{base}/publishes/stats", params={"project_id": project_id}, timeout=5)
+              pubs_sbody = pub_scoped.json() if pub_scoped.status_code == 200 else {}
+              check("publishes/stats project scope 200",
+                    pub_scoped.status_code == 200
+                    and isinstance(pubs_sbody.get("total_published"), int)
+                    and isinstance(pubs_sbody.get("by_version"), list),
+                    pub_scoped.text)
+          else:
+              check("publishes/stats project scope setup", False,
+                    "could not obtain a project id")
+          pub_missing = httpx.get(
+              f"{base}/publishes/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          pubs404body = pub_missing.json() if pub_missing.status_code == 404 else {}
+          check("publishes/stats 404 shared envelope",
+                pub_missing.status_code == 404
+                and pubs404body.get("error", {}).get("code") == "project_not_found"
+                and bool(pubs404body.get("error", {}).get("request_id")),
+                pub_missing.text)
+          pub_bad = httpx.get(
+              f"{base}/publishes/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          pubsbadbody = pub_bad.json() if pub_bad.status_code == 422 else {}
+          check("publishes/stats 422 validation envelope",
+                pub_bad.status_code == 422
+                and pubsbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(pubsbadbody.get("error", {}).get("request_id")),
+                pub_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
