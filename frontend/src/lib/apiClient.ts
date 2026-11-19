@@ -1,5 +1,6 @@
 import type { ActivityOptions } from "./activity";
 import type { ActivityStatsOptions } from "./activityStats";
+import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
@@ -36,6 +37,7 @@ import type {
   ActivityFeed,
   ActivityStats,
   Asset,
+  AssetFeed,
   AssetImpact,
   AssetStats,
   AssetUpdate,
@@ -105,6 +107,8 @@ export interface ApiClient {
   getJobStats(options?: JobStatsOptions): Promise<JobStats>;
   /** Authoritative asset inventory metrics derived by `/assets/stats`, optionally project-scoped (C49). */
   getAssetStats(options?: AssetStatsOptions): Promise<AssetStats>;
+  /** Newest-first authoritative asset feed derived by `/assets/feed`, optionally project-scoped (C137). */
+  getAssetFeed(options?: AssetFeedOptions): Promise<AssetFeed>;
   /** Authoritative conversation/message metrics derived by `/conversations/stats`, optionally project-scoped (C45). */
   getConversationStats(options?: ConversationStatsOptions): Promise<ConversationStats>;
   /** Newest-first authoritative conversation feed derived by `/conversations/feed`, optionally project-scoped (C133). */
@@ -206,6 +210,7 @@ export const mockApiClient: ApiClient = {
   getDashboard: mockApi.fetchDashboard,
   getJobStats: mockApi.fetchJobStats,
   getAssetStats: mockApi.fetchAssetStats,
+  getAssetFeed: mockApi.fetchAssetFeed,
   getConversationStats: mockApi.fetchConversationStats,
   getConversationFeed: mockApi.fetchConversationFeed,
   getProjectStats: mockApi.fetchProjectStats,

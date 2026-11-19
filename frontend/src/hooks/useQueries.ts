@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
 import type { ActivityOptions } from "../lib/activity";
 import type { ActivityStatsOptions } from "../lib/activityStats";
+import type { AssetFeedOptions } from "../lib/assetFeed";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
@@ -38,6 +39,7 @@ import type {
   ActivityFeed,
   ActivityStats,
   Asset,
+  AssetFeed,
   AssetImpact,
   AssetStats,
   AssetUpdate,
@@ -137,6 +139,15 @@ export function useAssetStats(options?: AssetStatsOptions): UseQueryResult<Asset
   return useQuery({
     queryKey: queryKeys.assetStats.summary(options),
     queryFn: () => api.getAssetStats(options),
+  });
+}
+
+/** Newest-first authoritative asset feed from `/assets/feed`, optionally project-scoped (C137). */
+export function useAssetFeed(options?: AssetFeedOptions): UseQueryResult<AssetFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.assetFeed.feed(options),
+    queryFn: () => api.getAssetFeed(options),
   });
 }
 

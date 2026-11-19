@@ -12,6 +12,8 @@ import {
   deriveCollaborationStats,
   validateCollaborationStatsArgs,
 } from "./collaborationStats";
+import { deriveAssetFeed, validateAssetFeedArgs } from "./assetFeed";
+import type { AssetFeedOptions } from "./assetFeed";
 import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationFeed, validateConversationFeedArgs } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
@@ -517,6 +519,33 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveAssetStats(ASSETS, REFERENCE_NOW, options);
   }
 
+  // Authoritative asset feed derives the same newest-first view as the
+  // `/assets/feed` endpoint from the shared asset/project seeds; mirror its 422
+  // validation, unknown-project 404, page bound and repository derivation so
+  // live and mock agree exactly. This must precede the dynamic `/assets/{id}`
+  // branch below.
+  if (path === "/assets/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const limitRaw = params.get("limit");
+    const options: AssetFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateAssetFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveAssetFeed(ASSETS, PROJECTS, REFERENCE_NOW, options);
+  }
+
   if (path.startsWith("/assets/")) return ASSETS.find((a) => a.id === id) ?? NOT_FOUND;
 
   // Authoritative dispatch queue is derived from the job store on every call;
@@ -953,6 +982,10 @@ describe("live vs mock transport parity", () => {
       ["getJobQueue scoped and limited", (api) => api.getJobQueue({ projectId: filmId, limit: 2 })],
       ["getAssetStats", (api) => api.getAssetStats()],
       ["getAssetStats scoped", (api) => api.getAssetStats({ projectId: filmId })],
+      ["getAssetFeed", (api) => api.getAssetFeed()],
+      ["getAssetFeed scoped", (api) => api.getAssetFeed({ projectId: filmId })],
+      ["getAssetFeed limited", (api) => api.getAssetFeed({ limit: 2 })],
+      ["getAssetFeed scoped and limited", (api) => api.getAssetFeed({ projectId: filmId, limit: 1 })],
       ["getConversationStats", (api) => api.getConversationStats()],
       ["getConversationStats scoped", (api) => api.getConversationStats({ projectId: filmId })],
       ["getConversationFeed", (api) => api.getConversationFeed()],
@@ -1069,6 +1102,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getAssetStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getAssetStats({ projectId: emptyId }),
+    );
+    expect(await live.getAssetFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getAssetFeed({ projectId: emptyId }),
     );
     expect(await live.getConversationStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getConversationStats({ projectId: emptyId }),
@@ -1397,6 +1433,23 @@ describe("live vs mock transport parity", () => {
     expect(mockAssetStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveAssetStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown asset-feed project scope
+    // and reject a malformed id / out-of-range limit with the same 422 envelope.
+    const [mockAssetFeed404, liveAssetFeed404] = await Promise.all([
+      mockApiClient.getAssetFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getAssetFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockAssetFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveAssetFeed404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }]) {
+      const [mockAssetFeed422, liveAssetFeed422] = await Promise.all([
+        mockApiClient.getAssetFeed(bad).catch((cause) => cause),
+        live.getAssetFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockAssetFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveAssetFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports 404 identically for an unknown pipeline-stats project
     // scope and reject a malformed project id with the same 422 envelope.
     const [mockPipeStats404, livePipeStats404] = await Promise.all([
@@ -1551,6 +1604,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getJobLogs).toBe("function");
     expect(typeof typed.getJobQueue).toBe("function");
     expect(typeof typed.getAssetStats).toBe("function");
+    expect(typeof typed.getAssetFeed).toBe("function");
     expect(typeof typed.getConversationStats).toBe("function");
     expect(typeof typed.getConversationFeed).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");

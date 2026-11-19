@@ -1834,6 +1834,64 @@ describe("createHttpApiClient operation stats", () => {
   });
 });
 
+describe("createHttpApiClient asset feed", () => {
+  const feed = {
+    items: [
+      {
+        asset_id: "0b5c1e2a-2000-4000-8000-000000000001",
+        project_id: "11111111-1111-4111-8111-111111111111",
+        project_name: "Moonshot",
+        type: "image",
+        name: "Design frame",
+        status: "ready",
+        version: 3,
+        size_bytes: 2_048_000,
+        created_at: "2026-01-05T00:00:00Z",
+        updated_at: "2026-01-06T00:00:00Z",
+      },
+    ],
+    total: 8,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /assets/feed with the scope and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/assets/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getAssetFeed({ projectId: "11111111-1111-4111-8111-111111111111", limit: 2 }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/assets/feed`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no scope or page is supplied", async () => {
+    const { fetchImpl, calls } = router({ "/assets/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getAssetFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getAssetFeed({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient conversation feed", () => {
   const feed = {
     items: [

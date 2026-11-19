@@ -93,6 +93,16 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the asset feed key by project and limit", () => {
+    expect(queryKeys.assetFeed.feed()).toEqual(["asset-feed", "feed", "all", "all"]);
+    expect(queryKeys.assetFeed.feed({ projectId: "p1", limit: 5 })).toEqual([
+      "asset-feed",
+      "feed",
+      "p1",
+      5,
+    ]);
+  });
+
   it("scopes the conversation feed key by project and limit", () => {
     expect(queryKeys.conversationFeed.feed()).toEqual(["conversation-feed", "feed", "all", "all"]);
     expect(queryKeys.conversationFeed.feed({ projectId: "p1", limit: 5 })).toEqual([

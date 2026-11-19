@@ -3,6 +3,8 @@ import { deriveActivityFeed, validateActivityArgs } from "../activity";
 import type { ActivityOptions } from "../activity";
 import { deriveActivityStats, validateActivityStatsArgs } from "../activityStats";
 import type { ActivityStatsOptions } from "../activityStats";
+import { deriveAssetFeed, validateAssetFeedArgs } from "../assetFeed";
+import type { AssetFeedOptions } from "../assetFeed";
 import { deriveAssetStats, validateAssetStatsArgs } from "../assetStats";
 import type { AssetStatsOptions } from "../assetStats";
 import { filterAuditTrail } from "../audit";
@@ -86,6 +88,7 @@ import { deriveVersionStats, validateVersionStatsArgs } from "../versionStats";
 import type { VersionStatsOptions } from "../versionStats";
 import type {
   Asset,
+  AssetFeed,
   AssetImpact,
   AssetStats,
   AssetUpdate,
@@ -180,7 +183,7 @@ function delay<T>(value: T): Promise<T> {
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
  * `activityStats`, `jobStats`,
- * `assetStats`, `conversationStats`, `projectStats`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -327,6 +330,25 @@ export async function fetchAssetStats(
     });
   }
   return delay(deriveAssetStats(ASSETS.map(withAssetOverrides), REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative asset feed (C137) derived from the same asset store as the live
+ * `/assets/feed` endpoint. Router-style 422 validation, a normalized 404 for an
+ * unknown project scope and the `"assetFeed"` failure domain keep error and
+ * empty states at parity.
+ */
+export async function fetchAssetFeed(options?: AssetFeedOptions): Promise<AssetFeed> {
+  failIfEnabled("assetFeed");
+  validateAssetFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveAssetFeed(ASSETS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

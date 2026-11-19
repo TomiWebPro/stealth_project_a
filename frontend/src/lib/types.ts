@@ -14,6 +14,8 @@ export type {
   ActivityStats,
   ActivityTone,
   Asset,
+  AssetFeed,
+  AssetFeedItem,
   AssetImpact,
   AssetProps,
   AssetStats,

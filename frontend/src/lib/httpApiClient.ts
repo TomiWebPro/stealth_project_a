@@ -4,6 +4,8 @@ import { activityQueryParams } from "./activity";
 import type { ActivityOptions } from "./activity";
 import { activityStatsQueryParams } from "./activityStats";
 import type { ActivityStatsOptions } from "./activityStats";
+import { assetFeedQueryParams } from "./assetFeed";
+import type { AssetFeedOptions } from "./assetFeed";
 import { assetStatsQueryParams } from "./assetStats";
 import type { AssetStatsOptions } from "./assetStats";
 import { auditQueryParams } from "./audit";
@@ -68,6 +70,7 @@ import type {
   ActivityFeed,
   ActivityStats,
   Asset,
+  AssetFeed,
   AssetImpact,
   AssetStats,
   AssetUpdate,
@@ -313,6 +316,11 @@ export function createHttpApiClient(
     /** Authoritative asset inventory metrics derived by the backend `/assets/stats`. */
     getAssetStats(options?: AssetStatsOptions): Promise<AssetStats> {
       return request<AssetStats>("/assets/stats", assetStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative asset feed derived by the backend `/assets/feed`. */
+    getAssetFeed(options?: AssetFeedOptions): Promise<AssetFeed> {
+      return request<AssetFeed>("/assets/feed", assetFeedQueryParams(options));
     },
 
     /** Authoritative conversation metrics derived by the backend `/conversations/stats`. */
