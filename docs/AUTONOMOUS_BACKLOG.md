@@ -990,6 +990,19 @@ this file is the execution checklist.
   rows, so C94 was added under the Never-empty well.
   ✅ 2026-11-19 — `78dabbe`
 
+- [x] C95 (mocks) Wire the authoritative search index statistics API (C93
+  follow-up) end to end: expose `getSearchStats` / `useSearchStats` atomically
+  across mockApi (seed-derived zero-filled project/asset/conversation document
+  counts, total, newest-document recency and soft-deleted-asset exclusion,
+  router-style 422 for a malformed project id, normalized 404 for an unknown
+  project + injectable `searchStats` failure), the stable `ApiClient` facade,
+  live `httpApiClient` (`GET /search/stats?project_id=`), `queryKeys` and
+  `useQueries`, with a shared `lib/searchStats` derivation/validation helper;
+  populated/empty/error seeds and parity guard extended to both transports.
+  My owned column had no unchecked rows, so C95 was added under the Never-empty
+  well. ✅ 2026-11-19 — `21df9fe`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1123,3 +1136,4 @@ this file is the execution checklist.
 - 2026-11-19 — `8018614` — C92 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/activity/stats` (zero-filled snapshot + by_kind/by_project breakdown shapes, the four canonical activity kinds asset/publish/job/comment, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C89/C91. No unchecked CI row remained, so C92 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (94/94 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (625)/build and backend pytest (721) green. Screens activity-stats rendering remains a screens follow-up.
 - 2026-11-19 — `cc29f83` — C93 (backend): added authoritative `GET /api/v1/search/stats?project_id=` index-coverage metrics (zero-filled project/asset/conversation document counts, total, newest-document recency) derived from the same stores `/search` reads (no second index, soft-deleted assets excluded), with optional project scope (shared 404 `project_not_found` / 422 `validation_error` envelopes); contracts mirrored in `frontend/src/types/searchStats.ts`, README endpoint list synced, 5 tests × 2 backends green (731 passed, contract parity + route guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C93 was added under the Never-empty well.
 - 2026-11-19 — `78dabbe` — C94 (screens): rendered the authoritative activity statistics (C89/C91/C92 follow-up) via `useActivityStats` — a reusable `ActivityStatsPanel` on Home (workspace-wide, beside the activity feed) and project detail (project-scoped) with four stat cards, zero-filled asset/publish/job/comment kind and per-project event/participant breakdowns, and all five UI states; every display value derived in tested `activityStatsHelpers`. Resolves the C89/C91/C92 screens follow-up. Lint clean, 636 tests, build green. My owned column had no unchecked rows, so C94 was added under the Never-empty well.
+- 2026-11-19 — `21df9fe` — C95 (mocks): wired the authoritative search index statistics API (C93 follow-up) end to end — `getSearchStats`/`useSearchStats` atomically across mockApi (seed-derived zero-filled project/asset/conversation document counts, total, newest-document recency, soft-deleted-asset exclusion, scoped-project self-count; router-style 422 + unknown-project 404 + injectable `searchStats` failure), the stable facade, live `httpApiClient` (`GET /search/stats?project_id=`), queryKeys and useQueries, with a shared `lib/searchStats` helper; parity guard extended to both transports (populated/scoped/empty/404/422 + surface guard). Lint clean, 650 tests, build green. My owned column had no unchecked rows, so C95 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
