@@ -1878,6 +1878,23 @@ this file is the execution checklist.
   (only the repo-wide C6 docs pass remains, owned by other agents), so C158 was
   added under the Never-empty well. ✅ 2026-11-19 — `d6d0933`
 
+- [x] C159 (mocks) Wire the authoritative asset lineage feed API (C157 follow-up)
+  end to end: expose `getLineageFeed` / `useLineageFeed` atomically across mockApi
+  (newest-first `(created_at, id)` typed-relationship derivation over the
+  relationship/asset/project seeds, source-project attribution, soft-deleted/
+  unknown-source exclusion, stable "Unknown asset"/"Unknown project" fallbacks
+  for missing targets/projects, whole-scope `total` before the `limit` page,
+  router-style 422 for a malformed project id or out-of-range limit,
+  unknown-project 404 + injectable `lineageFeed` failure), the stable `ApiClient`
+  facade, live `httpApiClient` (`GET /lineage/feed?project_id=&limit=`),
+  `queryKeys` and `useQueries`, with a shared `lib/lineageFeed`
+  derivation/validation helper and populated/empty/error tests; parity guard
+  extended to both transports. Resolves the C157 mocks-transport follow-up. My
+  owned column had no unchecked rows (only the repo-wide C6 docs pass remains,
+  owned by other agents), so C159 was added under the Never-empty well.
+  ✅ 2026-11-19 — `42acc47`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2075,3 +2092,4 @@ this file is the execution checklist.
 - 2026-11-19 — `f37a8ea` — C156 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/versions/feed?project_id=&limit=` asset version feed (the C153/C155 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined project name + asset name/type/version/creator/timestamps, newest-first `(created_at, asset_id, version)` ordering with an asset-id/version tie-break, whole-scope `total` before the `limit` page with unchanged counters, optional `project_id` scope (unknown → shared 404 `project_not_found`), and the shared 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — reusing the on-demand registered asset (v1 + appended v2) so the derived feed is non-empty. No unchecked CI row remained, so C156 was added under the Never-empty well; resolves the C155 CI follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (244/244 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1029 tests/build green and backend pytest (975) green. Screens version-feed rendering remains a screens follow-up.
 - 2026-11-19 — `07ae5ed` — C157 (backend): added authoritative `GET /api/v1/lineage/feed?project_id=&limit=` — a newest-first, workspace-wide feed of typed asset relationships derived fresh from the authoritative `ASSET_RELATIONSHIPS` store (no second index) with relationship id, source/target asset ids + joined display names and project id/name, canonical relationship type and creation time, a deterministic `(created_at, id)` tie-break and a whole-scope `total` before the `limit` page; links from soft-deleted/unknown source assets excluded (matching `/lineage/stats`, feed total agrees with the snapshot) while a soft-deleted/unknown target keeps the link with a stable "Unknown asset" fallback; optional `project_id` scope with shared 404 `project_not_found` / 422 `validation_error` envelopes; `LineageFeed`/`LineageFeedItem` mirrored in `frontend/src/types/lineageFeed.ts` + exported from the types index, README endpoint list synced, 11 tests × 2 storage backends green (997 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C157 was added under the Never-empty well.
 - 2026-11-19 — `d6d0933` — C158 (screens): rendered the authoritative asset version feed (C153/C155/C156 follow-up) via `useVersionFeed` — a reusable `VersionFeedPanel` on Home (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first rows showing asset/project names, version + type badges, creator and creation recency, and asset deep links that scope the assets browser first, plus loading/error/missing/empty/populated states — every display value derived in tested `versionFeedHelpers` (9 new tests). Resolves the C155/C156 screens follow-up; lint clean, 1038 tests, build green. My owned column had no unchecked rows, so C158 was added under the Never-empty well.
+- 2026-11-19 — `42acc47` — C159 (mocks): wired the authoritative asset lineage feed (C157 follow-up) end to end — `getLineageFeed`/`useLineageFeed` atomically across mockApi (newest-first `(created_at, id)` typed-relationship derivation with source-project attribution, soft-deleted/unknown-source exclusion, stable unknown asset/project fallbacks, whole-scope `total` before the `limit` page, router-style 422 for a malformed project id / invalid limit + unknown-project 404 + injectable `lineageFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /lineage/feed?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/lineageFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C157 mocks-transport follow-up; lint clean, 1048 tests, build green. My owned column had no unchecked rows, so C159 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
