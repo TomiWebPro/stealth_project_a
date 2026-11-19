@@ -214,6 +214,10 @@ from .pipeline_stats import (
     PipelineProjectCount,
     PipelineStats,
 )
+from .pipeline_feed import (
+    PipelineFeed,
+    PipelineFeedItem,
+)
 from .orchestration import (
     Comment,
     OrchestrationPlan,
@@ -509,6 +513,9 @@ __all__ = [
     "PipelineKindStats",
     "PipelineProjectCount",
     "PipelineStats",
+    # pipeline feed
+    "PipelineFeed",
+    "PipelineFeedItem",
     # orchestration
     "Comment",
     "OrchestrationPlan",

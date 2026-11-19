@@ -53,6 +53,7 @@ from .routers import (
     lineage_stats,
     links,
     operation_stats,
+    pipeline_feed,
     pipeline_stats,
     organization_feed,
     organization_stats,
@@ -333,8 +334,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(publish_feed.router, prefix=API_PREFIX)
     app.include_router(publish.router, prefix=API_PREFIX)
     app.include_router(links.router, prefix=API_PREFIX)
-    # "/pipelines/stats" is a literal path; register before the chain routers so
-    # it is unambiguous against the "/pipelines/{kind}/{chain_id}" detail routes.
+    # "/pipelines/stats" and "/pipelines/feed" are literal paths; register them
+    # before the chain routers so they are unambiguous against the
+    # "/pipelines/{kind}/{chain_id}" detail routes.
+    app.include_router(pipeline_feed.router, prefix=API_PREFIX)
     app.include_router(pipeline_stats.router, prefix=API_PREFIX)
     app.include_router(pipelines.router, prefix=API_PREFIX)
     app.include_router(shots.router, prefix=API_PREFIX)

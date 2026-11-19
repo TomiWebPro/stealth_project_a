@@ -201,6 +201,10 @@ All paths are prefixed with `/api/v1`.
   coverage) derived from the extension stores, with optional type/status filters
 - **Pipelines:** `GET|POST /pipelines/lora`, `/pipelines/shot`, `/pipelines/splat`
   (each with `GET /pipelines/<kind>/{id}`)
+  `GET /pipelines/feed?project_id=&kind=&limit=` — newest-first workspace feed of
+  LoRA/shot/splat chains with joined project name, job/asset counts and a
+  deterministic `(created_at, chain_id)` tie-break; whole-scope `total` before the
+  `limit` page, optional `project_id`/`kind` filters, shared 404/422 envelopes
   `GET /pipelines/stats?project_id=` — authoritative production-pipeline metrics
   (zero-filled per-kind chain/job/asset breakdowns, per-project chain counts,
   totals and newest-chain recency) derived from the chain stores; unknown
