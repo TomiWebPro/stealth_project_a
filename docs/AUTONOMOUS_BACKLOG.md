@@ -2601,6 +2601,18 @@ this file is the execution checklist.
    agents), so C201 was added under the Never-empty well.
    ✅ 2026-11-19 — `d65532e`
 
+- [x] C202 (screens) Render the authoritative collaboration feed (C197/C199/C200
+  follow-up) via `useCollaborationFeed`: a reusable `CollaborationFeedPanel` on
+  Workspaces (workspace-wide) and project detail (project-scoped) with signal-kind
+  and page-size filter chips, newest-first rows showing a signal badge, actor
+  label/state or comment preview, joined project name, optional asset-reference
+  badge and signal recency, with Open deep links to project detail and Asset links
+  that scope the assets browser to the row's project before selecting the asset —
+  plus loading/error/missing/empty/populated states — every display value derived
+  in tested `collaborationFeedHelpers`. Resolves the C200 screens follow-up. My
+  owned column had no unchecked rows, so C202 was added under the Never-empty well.
+  ✅ 2026-11-19 — `585e84b`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2682,6 +2694,7 @@ this file is the execution checklist.
 - 2026-11-19 — `c14da59` — C40 (backend): added authoritative `GET /api/v1/jobs/stats` deriving zero-filled status counts, per-operation totals/outcomes, terminal success rate, in-flight/completed counts and mean duration from the job store (optional `project_id` scope, shared 404/422 envelopes); contracts mirrored in `frontend/src/types/jobStats.ts`, 5 tests × 2 backends green (575 passed). Mocks/screens/CI wiring is a follow-up.
 - 2026-11-19 — `75242d7` — C41 (screens): the Assets browser now renders the authoritative `useTags` facet index with prefix autocomplete, count chips, project scoping and click-to-filter on asset search; all five UI states and display values derived in tested `tagHelpers`; lint clean, 279 tests, build green.
 - 2026-11-19 — `75242d7` — C42 (screens): asset detail now renders authoritative downstream impact via `useAssetImpact` with depth chips, name-resolved descendant rows that select the asset deep link, and all five UI states with display values derived in tested `impactHelpers`; lint clean, 279 tests, build green.
+- 2026-11-19 — `585e84b` — C202 (screens): added `CollaborationFeedPanel` (useCollaborationFeed) on Workspaces + project detail with signal/page-size filters, actor/state/comment rows, asset + project deep links and all five UI states; display values derived in tested `collaborationFeedHelpers`; lint clean/1374 tests/build green.
 - 2026-11-19 — `caa18df` — C43 (mocks): wired the authoritative job execution stats API (C40 follow-up) end to end — `getJobStats`/`useJobStats` across mockApi (seed-derived zero-filled status counts, per-operation totals/outcomes, terminal-only success rate, in-flight/completed counts, mean duration; router-style 422 for malformed project id + unknown-project 404 + injectable `jobStats` failure), the stable facade, live `httpApiClient` (`GET /jobs/stats?project_id=`), `queryKeys` and `useQueries`, with a shared `lib/jobStats` derivation/validation helper; parity guard extended to both transports; lint clean, 294 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `2f4cfa0` — C44 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/jobs/stats` (zero-filled snapshot + breakdown shapes, optional `project_id` scope, shared 404 `project_not_found` + 422 `validation_error` envelopes with request-id) — the CI follow-up from C40/C43. No unchecked CI row remained, so C44 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (31/31 probes OK) and with pinned actionlint; frontend lint/test (294)/build and backend pytest (575) green. Screens job-stats rendering remains a screens follow-up.
 - 2026-11-19 — `60e1404` — C45 (backend): added authoritative `GET /api/v1/conversations/stats` deriving zero-filled role/status message breakdowns, totals, average messages per conversation and last activity from the conversation/message stores (optional `project_id` scope, shared 404/422 envelopes); contracts mirrored in `frontend/src/types/conversationStats.ts` and exported from the types index, 5 tests × 2 backends green (585 passed), tsc --noEmit clean. Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C45 was added under the Never-empty well.
