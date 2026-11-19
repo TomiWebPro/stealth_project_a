@@ -9,6 +9,7 @@ import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { CollaborationStatsPanel } from "./CollaborationStatsPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
+import { OrganizationFeedPanel } from "./OrganizationFeedPanel";
 import { OrganizationStatsPanel } from "./OrganizationStatsPanel";
 
 export function WorkspacesScreen() {
@@ -29,6 +30,8 @@ export function WorkspacesScreen() {
       />
 
       <CollaborationPanel />
+
+      <OrganizationFeedPanel />
 
       <ProjectStatsPanel
         orgId={orgId}
