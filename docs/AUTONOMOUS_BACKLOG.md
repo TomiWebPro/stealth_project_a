@@ -1370,6 +1370,20 @@ this file is the execution checklist.
   unchecked rows, so C123 was added under the Never-empty well. Resolves the
   C121 mocks-transport follow-up. ✅ 2026-11-19 — `c26c1d9`
 
+- [x] C124 (CI) Extend the live-mode HTTP smoke job with the authoritative job
+  dispatch queue endpoint from C121/C123 (`GET /api/v1/jobs/queue?project_id=&limit=`):
+  probe the derived snapshot shape (`total`/`waiting`/`running`/`entries`/
+  `generated_at`), whole-queue counter invariants (`total == waiting + running`,
+  page bounded by `total`), entry shapes with 1-based FIFO positions and active
+  statuses (queued/running), reuse the on-demand submitted job to assert it appears
+  as a derived queued entry, the `limit` page bound (counters unchanged), the
+  optional `project_id` scope and the shared 404 `project_not_found` / 422
+  `validation_error` envelopes with request-id. Keeps CI aligned with the exact
+  `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows. No
+  unchecked CI row remained, so C124 was added under the Never-empty well.
+  ✅ 2026-11-19 — `bf28a6a`
+  Screens queue-view rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1532,3 +1546,4 @@ this file is the execution checklist.
 - 2026-11-19 — `f76e856` — C121 (backend): added authoritative `GET /api/v1/jobs/queue?project_id=&limit=` deriving the active (queued + running) dispatch queue in FIFO order with 1-based positions, whole-queue waiting/running counters and a bounded page from the authoritative `JOBS` store (no second index; terminal jobs excluded, `(created_at, job_id)` FIFO tie-break for deterministic cross-backend order), optional `project_id` scope (unknown → shared 404 `project_not_found`, malformed → shared 422) and `limit` bounds; `JobQueueEntry`/`JobQueueView` mirrored in `frontend/src/types/jobQueue.ts`, README endpoint list synced, 8 tests × 2 backends green (815 passed, contract parity + route-surface guard + tsc clean). Mocks transport, screens rendering and CI live-smoke wiring of the queue view are follow-ups. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C121 was added under the Never-empty well.
 - 2026-11-19 — `e8ac977` — C122 (screens): rendered the authoritative per-job execution log (C117/C119/C120 follow-up) via `useJobLogs` — a reusable `JobLogConsole` on the Jobs screen and project detail with a job picker, severity filter chips, page-size select and forward/backward cursor navigation, plus loading/error/missing/empty/populated states; every display value derived in tested `jobLogHelpers` (14 new tests). Resolves the C120 screens follow-up. Lint clean, 821 tests, build green. My owned column had no unchecked rows, so C122 was added under the Never-empty well.
 - 2026-11-19 — `c26c1d9` — C123 (mocks): wired the authoritative job dispatch-queue API (C121 follow-up) end to end — `getJobQueue`/`useJobQueue` atomically across mockApi (FIFO active-job derivation with 1-based positions, whole-queue counters, bounded page, router-style 422 + unknown-project 404 + injectable `jobQueue` failure), the stable ApiClient facade, live `httpApiClient` (`GET /jobs/queue?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/jobQueue` derivation/validation helper; parity guard extended to both transports; lint clean, 836 tests, build green. My owned column had no unchecked rows, so C123 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-19 — `bf28a6a` — C124 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/jobs/queue` (derived snapshot + entry shapes, whole-queue counter invariants and 1-based FIFO positions, reuse of the on-demand submitted job as a derived queued entry, `limit` page bound with unchanged counters, optional `project_id` scope, and shared 404 `project_not_found` / 422 `validation_error` envelopes with request-id) — the CI follow-up from C121/C123. No unchecked CI row remained, so C124 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (156/156 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12 (`-shellcheck=`, since shellcheck integration is pathologically slow on the large heredoc); frontend lint clean/836 tests/build green and backend pytest (815) green. Screens queue-view rendering remains a screens follow-up.
