@@ -14,6 +14,7 @@ import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
+import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
 import { OrganizationStatsPanel } from "../workspaces/OrganizationStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
 import {
@@ -169,6 +170,10 @@ export function HomeScreen() {
         <SearchStatsPanel
           title="Workspace search stats"
           description="Authoritative index metrics for projects, assets and conversations in the workspace."
+        />
+        <UploadStatsPanel
+          title="Workspace upload stats"
+          description="Authoritative upload-ticket metrics across every project in the workspace."
         />
 
         {isPending ? <HomeSkeleton /> : null}

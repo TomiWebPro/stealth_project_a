@@ -22,6 +22,7 @@ import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
+import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
 import { CollaborationStatsPanel } from "../workspaces/CollaborationStatsPanel";
 import { formatProjectUpdatedAtLong } from "./helpers";
 
@@ -176,6 +177,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project search stats"
         description="Authoritative index metrics scoped to this project."
+      />
+      <UploadStatsPanel
+        projectId={projectId}
+        title="Project upload stats"
+        description="Authoritative upload-ticket metrics scoped to this project."
       />
       <LineageStatsPanel
         projectId={projectId}
