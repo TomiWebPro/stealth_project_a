@@ -10,6 +10,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
+import { CommentFeedPanel } from "../comments/CommentFeedPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
@@ -172,6 +173,10 @@ export function HomeScreen() {
         <ConversationFeedPanel
           title="Workspace conversations"
           description="Newest-first conversations across every project in the workspace."
+        />
+        <CommentFeedPanel
+          title="Workspace comments"
+          description="Newest-first collaboration comments across every project in the workspace."
         />
         <AssetStatsPanel
           title="Workspace asset stats"
