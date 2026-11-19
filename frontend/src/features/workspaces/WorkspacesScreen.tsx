@@ -8,6 +8,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
+import { OrganizationStatsPanel } from "./OrganizationStatsPanel";
 
 export function WorkspacesScreen() {
   const { data, isPending, isError, error, refetch } = useAssets();
@@ -32,6 +33,12 @@ export function WorkspacesScreen() {
         orgId={orgId}
         title="Organization project stats"
         description="Authoritative portfolio metrics scoped to this organization."
+      />
+
+      <OrganizationStatsPanel
+        orgId={orgId}
+        title="Organization membership stats"
+        description="Authoritative membership metrics scoped to this organization."
       />
 
       {isPending ? (

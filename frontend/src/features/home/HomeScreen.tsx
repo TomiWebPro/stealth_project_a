@@ -12,6 +12,7 @@ import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
+import { OrganizationStatsPanel } from "../workspaces/OrganizationStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
 import {
   assetTypeTone,
@@ -146,6 +147,10 @@ export function HomeScreen() {
         <ProjectStatsPanel
           title="Workspace project stats"
           description="Authoritative portfolio metrics across every project in the workspace."
+        />
+        <OrganizationStatsPanel
+          title="Workspace organization stats"
+          description="Authoritative membership metrics across every organization in the workspace."
         />
         <ConversationStatsPanel
           title="Workspace conversation stats"
