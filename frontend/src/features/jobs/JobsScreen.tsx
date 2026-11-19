@@ -10,6 +10,7 @@ import { EventStatsPanel } from "./EventStatsPanel";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
+import { RetryStatsPanel } from "./RetryStatsPanel";
 import { OperationStatsPanel } from "../operations/OperationStatsPanel";
 
 /**
@@ -73,6 +74,11 @@ export function JobsScreen() {
       <EventStatsPanel
         title="Global job event stats"
         description="Authoritative workspace-wide status, progress and result event metrics."
+      />
+
+      <RetryStatsPanel
+        title="Global job retry stats"
+        description="Authoritative workspace-wide retry and retried-job metrics."
       />
 
       {data ? (

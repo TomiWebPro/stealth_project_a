@@ -12,6 +12,7 @@ import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
+import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
@@ -218,6 +219,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project event stats"
         description="Authoritative job event metrics scoped to this project."
+      />
+      <RetryStatsPanel
+        projectId={projectId}
+        title="Project retry stats"
+        description="Authoritative job retry metrics scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <VersionPanel assets={assets} />
