@@ -481,6 +481,58 @@ jobs:
                 and bool(psbadbody.get("error", {}).get("request_id")),
                 project_stats_bad.text)
 
+          # Authoritative provider fleet statistics (C57/C59) is the newest
+          # /api/v1 URL the live client calls (getProviderStats). Probe the
+          # zero-filled snapshot + breakdown shapes, the location/status filters
+          # and the shared 422 envelope, keeping CI aligned with new endpoints
+          # as they go live.
+          provider_stats = httpx.get(f"{base}/providers/stats", timeout=5)
+          pstbody = provider_stats.json() if provider_stats.status_code == 200 else {}
+          check("providers/stats 200 snapshot shape",
+                provider_stats.status_code == 200 and all(
+                    k in pstbody for k in ("total", "by_status", "by_location",
+                                           "available", "degraded", "unavailable",
+                                           "total_capabilities", "unique_operations",
+                                           "by_operation", "generated_at")),
+                provider_stats.text)
+          check("providers/stats breakdown shapes",
+                isinstance(pstbody.get("by_status"), list)
+                and all(isinstance(s, dict) and "status" in s and "count" in s
+                        for s in pstbody["by_status"])
+                and isinstance(pstbody.get("by_location"), list)
+                and all(isinstance(l, dict) and "location" in l and "count" in l
+                        for l in pstbody["by_location"])
+                and isinstance(pstbody.get("by_operation"), list)
+                and all(isinstance(op, dict) and all(
+                    k in op for k in ("operation_id", "providers", "available"))
+                    for op in pstbody["by_operation"]),
+                provider_stats.text)
+          pst_location = httpx.get(
+              f"{base}/providers/stats", params={"location": "local"}, timeout=5)
+          plbody = pst_location.json() if pst_location.status_code == 200 else {}
+          check("providers/stats location filter 200",
+                pst_location.status_code == 200
+                and isinstance(plbody.get("total"), int)
+                and any(l.get("location") == "local" and l.get("count") == plbody["total"]
+                        for l in plbody.get("by_location", [])),
+                pst_location.text)
+          pst_status = httpx.get(
+              f"{base}/providers/stats", params={"status": "available"}, timeout=5)
+          pssbody = pst_status.json() if pst_status.status_code == 200 else {}
+          check("providers/stats status filter 200",
+                pst_status.status_code == 200
+                and isinstance(pssbody.get("total"), int)
+                and any(s.get("status") == "available" and s.get("count") == pssbody["total"]
+                        for s in pssbody.get("by_status", [])),
+                pst_status.text)
+          pst_bad = httpx.get(
+              f"{base}/providers/stats", params={"location": "mars"}, timeout=5)
+          psbadbody = pst_bad.json() if pst_bad.status_code == 422 else {}
+          check("providers/stats 422 validation envelope",
+                pst_bad.status_code == 422
+                and psbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(psbadbody.get("error", {}).get("request_id")), pst_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
