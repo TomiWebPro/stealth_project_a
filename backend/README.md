@@ -123,6 +123,10 @@ All paths are prefixed with `/api/v1`.
 - **Search:** `GET /search?q=&kind=&limit=` — ranked, best-first project/asset/
   conversation matches derived from the authoritative stores (no second index);
   blank queries and no-match queries return an empty `results` list
+  `GET /search/stats?project_id=` — authoritative index-coverage metrics (zero-filled
+  per-kind document counts, total, newest-document recency) derived from the same
+  stores the search reads; soft-deleted assets are excluded, optional project scope
+  with shared 404/422 envelopes
 - **Tags:** `GET /tags?project_id=&prefix=&limit=` — most-used-first asset tag
   facets (count of non-deleted assets per tag) derived from the authoritative
   store; optional case-insensitive prefix filter for autocomplete

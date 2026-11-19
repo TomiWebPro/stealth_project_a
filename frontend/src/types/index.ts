@@ -22,6 +22,7 @@ export * from "./provider";
 export * from "./orchestration";
 export * from "./orchestrationStats";
 export * from "./search";
+export * from "./searchStats";
 export * from "./dashboard";
 export * from "./tags";
 export * from "./impact";

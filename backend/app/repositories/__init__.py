@@ -33,6 +33,7 @@ from .project_stats import ProjectStatsRepository
 from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
 from .search import SearchRepository
+from .search_stats import SearchStatsRepository
 from .tags import TagRepository
 from .uploads import UploadRepository
 
@@ -64,6 +65,7 @@ class Repositories:
     extension_stats: ExtensionStatsRepository
     audit: AuditRepository
     search: SearchRepository
+    search_stats: SearchStatsRepository
     dashboard: DashboardRepository
     tags: TagRepository
     impact: ImpactRepository
@@ -111,6 +113,7 @@ class Repositories:
         extension_stats = ExtensionStatsRepository(store, clock=clock)
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
         search = SearchRepository(store, clock=clock)
+        search_stats = SearchStatsRepository(store, projects, clock=clock)
         dashboard = DashboardRepository(store, clock=clock)
         activity = ActivityRepository(store, projects, clock=clock)
         activity_stats = ActivityStatsRepository(activity, clock=clock)
@@ -142,6 +145,7 @@ class Repositories:
             extension_stats=extension_stats,
             audit=audit,
             search=search,
+            search_stats=search_stats,
             dashboard=dashboard,
             tags=tags,
             impact=impact,

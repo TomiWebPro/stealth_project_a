@@ -211,6 +211,10 @@ from .search import (
     SearchResult,
     SearchResultKind,
 )
+from .search_stats import (
+    SearchKindCount,
+    SearchStats,
+)
 from .tags import (
     TagFacet,
     TagIndex,
@@ -399,6 +403,9 @@ __all__ = [
     "SearchResponse",
     "SearchResult",
     "SearchResultKind",
+    # search stats
+    "SearchKindCount",
+    "SearchStats",
     # tags
     "TagFacet",
     "TagIndex",

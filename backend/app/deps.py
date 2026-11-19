@@ -40,6 +40,7 @@ from .repositories.project_stats import ProjectStatsRepository
 from .repositories.provider_stats import ProviderStatsRepository
 from .repositories.providers import ProviderRepository
 from .repositories.search import SearchRepository
+from .repositories.search_stats import SearchStatsRepository
 from .repositories.tags import TagRepository
 from .repositories.uploads import UploadRepository
 from .storage.base import DocumentStore
@@ -277,6 +278,12 @@ def get_search_repository(
     return repositories.search
 
 
+def get_search_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> SearchStatsRepository:
+    return repositories.search_stats
+
+
 def get_dashboard_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> DashboardRepository:
@@ -369,6 +376,7 @@ __all__ = [
     "get_shot_service",
     "get_splat_service",
     "get_search_repository",
+    "get_search_stats_repository",
     "get_tag_repository",
     "get_store",
     "get_training_service",

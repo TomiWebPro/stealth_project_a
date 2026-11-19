@@ -53,6 +53,7 @@ from .routers import (
     providers,
     publish,
     search,
+    search_stats,
     shots,
     splat,
     tags,
@@ -271,6 +272,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(shots.router, prefix=API_PREFIX)
     app.include_router(splat.router, prefix=API_PREFIX)
     app.include_router(exports.router, prefix=API_PREFIX)
+    # Register the literal "/search/stats" before the search router to keep the
+    # stats path explicit against the "/search" query endpoint.
+    app.include_router(search_stats.router, prefix=API_PREFIX)
     app.include_router(search.router, prefix=API_PREFIX)
     app.include_router(dashboard.router, prefix=API_PREFIX)
     app.include_router(tags.router, prefix=API_PREFIX)
