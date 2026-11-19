@@ -2999,6 +2999,178 @@ jobs:
                 and plfblbody.get("error", {}).get("code") == "validation_error"
                 and bool(plfblbody.get("error", {}).get("request_id")), plf_bad_limit.text)
 
+          # Authoritative orchestration feed (C181/C183) is the newest /api/v1
+          # URL the live client calls (getOrchestrationFeed). Create one plan and
+          # one run on demand so the derived feed has real plan + run items, then
+          # probe the feed shape, item shapes, newest-first (created_at, kind, id)
+          # order, the whole-scope total, the `kind` filter, the `limit` page
+          # bound, the optional project scope and the shared 404/422 envelopes,
+          # keeping CI aligned with the exact /api/v1 URLs the live client calls
+          # as the repo grows.
+          orch_plan_id = None
+          orch_run_id = None
+          if project_id:
+              orch_plan_created = httpx.post(
+                  f"{base}/orchestration/plans",
+                  json={"project_id": project_id,
+                        "goal": "ci smoke orchestration feed"},
+                  timeout=5)
+              check("orchestration/feed create plan 201",
+                    orch_plan_created.status_code == 201, orch_plan_created.text)
+              orch_plan_id = (
+                  orch_plan_created.json().get("plan_id")
+                  if orch_plan_created.status_code == 201 else None)
+              orch_run_created = httpx.post(
+                  f"{base}/orchestration/runs",
+                  json={"project_id": project_id,
+                        "goal": "ci smoke orchestration run"},
+                  timeout=5)
+              check("orchestration/feed create run 201",
+                    orch_run_created.status_code == 201, orch_run_created.text)
+              orch_run_id = (
+                  orch_run_created.json().get("run_id")
+                  if orch_run_created.status_code == 201 else None)
+          else:
+              check("orchestration/feed create setup", False,
+                    "could not obtain a project id")
+
+          orch_feed = httpx.get(f"{base}/orchestration/feed", timeout=5)
+          ofbody = orch_feed.json() if orch_feed.status_code == 200 else {}
+          check("orchestration/feed 200 feed shape",
+                orch_feed.status_code == 200
+                and isinstance(ofbody.get("items"), list)
+                and isinstance(ofbody.get("total"), int)
+                and "generated_at" in ofbody, orch_feed.text)
+          check("orchestration/feed derived item shape",
+                orch_feed.status_code == 200
+                and ofbody.get("total", 0) >= 2
+                and len(ofbody.get("items", [])) >= 2
+                and all(all(k in item for k in (
+                    "id", "kind", "plan_id", "run_id", "project_id", "project_name",
+                    "goal", "stage", "step_count", "job_count", "created_at"))
+                    for item in ofbody["items"]), orch_feed.text)
+          check("orchestration/feed request-id header",
+                "x-request-id" in {k.lower() for k in orch_feed.headers},
+                str(dict(orch_feed.headers)))
+          if orch_plan_id:
+              derived_plan = next(
+                  (i for i in ofbody.get("items", [])
+                   if i.get("id") == orch_plan_id), None)
+              check("orchestration/feed derived plan item",
+                    orch_feed.status_code == 200 and derived_plan is not None
+                    and derived_plan.get("kind") == "plan"
+                    and derived_plan.get("plan_id") == orch_plan_id
+                    and derived_plan.get("run_id") is None
+                    and derived_plan.get("goal") == "ci smoke orchestration feed"
+                    and derived_plan.get("project_id") == project_id
+                    and isinstance(derived_plan.get("project_name"), str)
+                    and bool(derived_plan.get("project_name"))
+                    and isinstance(derived_plan.get("step_count"), int)
+                    and derived_plan.get("step_count", 0) >= 0
+                    and derived_plan.get("stage") is None
+                    and isinstance(derived_plan.get("created_at"), str),
+                    orch_feed.text)
+          else:
+              check("orchestration/feed derived plan setup", False,
+                    "could not create a plan for the feed probe")
+          if orch_run_id:
+              derived_run = next(
+                  (i for i in ofbody.get("items", [])
+                   if i.get("id") == orch_run_id), None)
+              check("orchestration/feed derived run item",
+                    orch_feed.status_code == 200 and derived_run is not None
+                    and derived_run.get("kind") == "run"
+                    and derived_run.get("run_id") == orch_run_id
+                    and derived_run.get("stage") == "plan"
+                    and derived_run.get("project_id") == project_id
+                    and isinstance(derived_run.get("project_name"), str)
+                    and bool(derived_run.get("project_name"))
+                    and isinstance(derived_run.get("job_count"), int)
+                    and isinstance(derived_run.get("created_at"), str),
+                    orch_feed.text)
+          else:
+              check("orchestration/feed derived run setup", False,
+                    "could not create a run for the feed probe")
+          of_created_keys = [
+              (i.get("created_at"), i.get("kind"), i.get("id"))
+              for i in ofbody.get("items", [])]
+          check("orchestration/feed newest-first order",
+                orch_feed.status_code == 200
+                and of_created_keys == sorted(of_created_keys, reverse=True),
+                orch_feed.text)
+          of_limited = httpx.get(
+              f"{base}/orchestration/feed", params={"limit": 1}, timeout=5)
+          oflbody = of_limited.json() if of_limited.status_code == 200 else {}
+          check("orchestration/feed limit bounds page not total",
+                of_limited.status_code == 200
+                and len(oflbody.get("items", [])) <= 1
+                and oflbody.get("total") == ofbody.get("total"), of_limited.text)
+          of_kind_plan = httpx.get(
+              f"{base}/orchestration/feed", params={"kind": "plan"}, timeout=5)
+          ofkpbody = of_kind_plan.json() if of_kind_plan.status_code == 200 else {}
+          check("orchestration/feed kind=plan filter 200",
+                of_kind_plan.status_code == 200
+                and isinstance(ofkpbody.get("total"), int)
+                and ofkpbody.get("total", 0) >= 1
+                and ofkpbody.get("total", 0) <= ofbody.get("total", 0)
+                and all(i.get("kind") == "plan" for i in ofkpbody.get("items", [])),
+                of_kind_plan.text)
+          of_kind_run = httpx.get(
+              f"{base}/orchestration/feed", params={"kind": "run"}, timeout=5)
+          ofkrbody = of_kind_run.json() if of_kind_run.status_code == 200 else {}
+          check("orchestration/feed kind=run filter 200",
+                of_kind_run.status_code == 200
+                and isinstance(ofkrbody.get("total"), int)
+                and ofkrbody.get("total", 0) >= 1
+                and ofkrbody.get("total", 0) <= ofbody.get("total", 0)
+                and all(i.get("kind") == "run" for i in ofkrbody.get("items", [])),
+                of_kind_run.text)
+          if project_id:
+              of_scoped = httpx.get(
+                  f"{base}/orchestration/feed",
+                  params={"project_id": project_id}, timeout=5)
+              ofsbody = of_scoped.json() if of_scoped.status_code == 200 else {}
+              check("orchestration/feed project scope 200",
+                    of_scoped.status_code == 200
+                    and isinstance(ofsbody.get("total"), int)
+                    and ofsbody.get("total", 0) >= 2
+                    and all(i.get("project_id") == project_id
+                            for i in ofsbody.get("items", [])), of_scoped.text)
+          else:
+              check("orchestration/feed project scope setup", False,
+                    "could not obtain a project id")
+          of_missing = httpx.get(
+              f"{base}/orchestration/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          of404body = of_missing.json() if of_missing.status_code == 404 else {}
+          check("orchestration/feed 404 shared envelope",
+                of_missing.status_code == 404
+                and of404body.get("error", {}).get("code") == "project_not_found"
+                and bool(of404body.get("error", {}).get("request_id")),
+                of_missing.text)
+          of_bad = httpx.get(
+              f"{base}/orchestration/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          ofbadbody = of_bad.json() if of_bad.status_code == 422 else {}
+          check("orchestration/feed 422 malformed id envelope",
+                of_bad.status_code == 422
+                and ofbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ofbadbody.get("error", {}).get("request_id")), of_bad.text)
+          of_bad_kind = httpx.get(
+              f"{base}/orchestration/feed", params={"kind": "mystery"}, timeout=5)
+          ofbkbody = of_bad_kind.json() if of_bad_kind.status_code == 422 else {}
+          check("orchestration/feed 422 invalid kind envelope",
+                of_bad_kind.status_code == 422
+                and ofbkbody.get("error", {}).get("code") == "validation_error"
+                and bool(ofbkbody.get("error", {}).get("request_id")), of_bad_kind.text)
+          of_bad_limit = httpx.get(
+              f"{base}/orchestration/feed", params={"limit": 0}, timeout=5)
+          ofblbody = of_bad_limit.json() if of_bad_limit.status_code == 422 else {}
+          check("orchestration/feed 422 invalid limit envelope",
+                of_bad_limit.status_code == 422
+                and ofblbody.get("error", {}).get("code") == "validation_error"
+                and bool(ofblbody.get("error", {}).get("request_id")), of_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
