@@ -2375,6 +2375,26 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `9038424`
   Screens provider-feed rendering remains a screens follow-up.
 
+- [x] C189 (backend) Authoritative operation catalog feed API:
+  `GET /api/v1/operations/feed?streaming=&provider_id=&limit=` derives a bounded,
+  deterministic feed of operations projected fresh from the authoritative, static
+  versioned `OPERATION_CATALOG` (no second index; the same registry `POST /jobs`
+  validates against and `/operations/stats` aggregates) — each item is a compact
+  operation card with identity/display fields, canonical `schema_version`, input/
+  output asset types, settings count, streaming flag and sorted/deduplicated
+  provider bindings (with a matching `provider_count`), ordered ascending by
+  `(title, operation_id)` with a whole-scope `total` counted before the `limit`
+  page. Optional `streaming`/`provider_id` filters narrow both items and total
+  with a shared 422 envelope for invalid filters/limit; the literal feed path is
+  registered before `/operations/{operation_id}`. `OperationFeed`/
+  `OperationFeedItem` mirrored in `frontend/src/types/operationFeed.ts` + exported
+  from the types index, README endpoint list synced, 10 tests × 2 storage backends
+  green (1159 passed, contract parity + route-surface guard + tsc clean).
+  Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had
+  no unchecked items (only the repo-wide C6 docs pass remains, owned by other
+  agents), so C189 was added under the Never-empty well.
+  ✅ 2026-11-19 — `5775830`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2601,3 +2621,4 @@ this file is the execution checklist.
 - 2026-11-19 — `f41ae6c` — C186 (screens): rendered the authoritative orchestration feed (C181/C183/C184 follow-up) via `useOrchestrationFeed` — a reusable `OrchestrationFeedPanel` on Jobs (workspace-wide) and project detail (project-scoped) with kind/page-size filter chips, newest-first plan/run rows showing a kind + stage badge, goal/stage detail, joined project name, step/job counts and creation recency, and Open buttons deep-linking to the existing project-detail route, with all five UI states — every display value derived in 15 new tested `orchestrationFeedHelpers` cases. Resolves the C183/C184 screens follow-up. Lint clean, 1235 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C186 was added under the Never-empty well.
 - 2026-11-19 — `56d2bcf` — C187 (mocks): wired the authoritative provider feed (C185 follow-up) end to end — `getProviderFeed`/`useProviderFeed` atomically across mockApi (seed-derived ascending `(name, provider_id)` feed with sorted/deduplicated advertised operation ids and raw capability counts, `location`/`status` filters, whole-scope `total` before the `limit` page, router-style 422 for invalid filters/limit + injectable `providerFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /providers/feed?location=&status=&limit=`), queryKeys and useQueries, with a shared `lib/providerFeed` derivation/validation helper reusing provider-stats enums and populated/empty/error tests; parity guard extended to both transports. Resolves the C185 mocks-transport follow-up. My owned column had no unchecked rows, so C187 was added under the Never-empty well. Lint clean, 1254 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `9038424` — C188 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/providers/feed?location=&status=&limit=` provider feed (the C185/C187 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (provider id/name/location/status, sorted deduplicated advertised operation ids, raw capability count) with the canonical location (local/studio/cloud) and status (available/unavailable/degraded) enums, ascending `(name, provider_id)` ordering, the `limit` page bound (whole-scope `total` unchanged), the `location`/`status` filters and the shared 422 `validation_error` envelopes (invalid filter value + invalid limit) with request-id. No unchecked CI row remained (only the repo-wide C6 docs pass remains, owned by other agents), so C188 was added under the Never-empty well; resolves the C187 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (all probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1254 tests/build green and backend pytest (1139) green. Screens provider-feed rendering remains a screens follow-up.
+- 2026-11-19 — `5775830` — C189 (backend): added authoritative `GET /api/v1/operations/feed?streaming=&provider_id=&limit=` — a bounded, deterministic operation-catalog feed projected fresh from the authoritative static versioned catalog (no second index; the same registry job submission validates against and `/operations/stats` aggregates) — compact operation cards (identity/display, schema_version, input/output asset types, settings count, streaming flag, sorted/deduplicated provider bindings + count) ordered ascending `(title, operation_id)` with a whole-scope `total` before the `limit` page; optional `streaming`/`provider_id` filters narrow both with a shared 422 envelope, and the literal feed path is registered before `/operations/{operation_id}`. `OperationFeed`/`OperationFeedItem` mirrored in `frontend/src/types/operationFeed.ts` + exported from the types index, README endpoint list synced, 10 tests × 2 storage backends green (1159 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C189 was added under the Never-empty well.
