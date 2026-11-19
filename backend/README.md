@@ -176,6 +176,9 @@ All paths are prefixed with `/api/v1`.
   membership metrics (organization/member/user totals, zero-filled role
   breakdown, per-organization counts, average and recency) derived from the
   auth store; optional org scope with shared 422 envelope
+  `GET /orgs/feed?limit=` (alias `/organizations/feed`) — authoritative newest-first
+  organization feed (member/project activity joins, whole-scope total before the
+  `limit` page) derived from the auth/project stores; shared 422 envelope
 - **Extensions:** `GET /extensions/registry`, `GET /extensions`,
   `POST /extensions/install`, `GET /extensions/{id}`,
   `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`,

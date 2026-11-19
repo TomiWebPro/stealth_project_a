@@ -33,6 +33,7 @@ from .job_queue import JobQueueRepository
 from .jobs import JobRepository
 from .operation_stats import OperationStatsRepository
 from .pipeline_stats import PipelineStatsRepository
+from .organization_feed import OrganizationFeedRepository
 from .organization_stats import OrganizationStatsRepository
 from .orchestration import OrchestrationRepository
 from .orchestration_stats import OrchestrationStatsRepository
@@ -81,6 +82,7 @@ class Repositories:
     lineage_stats: LineageStatsRepository
     operation_stats: OperationStatsRepository
     pipeline_stats: PipelineStatsRepository
+    organization_feed: OrganizationFeedRepository
     organization_stats: OrganizationStatsRepository
     providers: ProviderRepository
     provider_stats: ProviderStatsRepository
@@ -134,6 +136,7 @@ class Repositories:
         lineage_stats = LineageStatsRepository(store, projects, clock=clock)
         operation_stats = OperationStatsRepository(store, clock=clock)
         pipeline_stats = PipelineStatsRepository(store, projects, clock=clock)
+        organization_feed = OrganizationFeedRepository(store, clock=clock)
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
@@ -193,6 +196,7 @@ class Repositories:
             lineage_stats=lineage_stats,
             operation_stats=operation_stats,
             pipeline_stats=pipeline_stats,
+            organization_feed=organization_feed,
             organization_stats=organization_stats,
             providers=providers,
             provider_stats=provider_stats,

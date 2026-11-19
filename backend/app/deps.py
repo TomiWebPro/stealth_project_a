@@ -40,6 +40,7 @@ from .repositories.job_queue import JobQueueRepository
 from .repositories.jobs import JobRepository
 from .repositories.operation_stats import OperationStatsRepository
 from .repositories.pipeline_stats import PipelineStatsRepository
+from .repositories.organization_feed import OrganizationFeedRepository
 from .repositories.organization_stats import OrganizationStatsRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.orchestration_stats import OrchestrationStatsRepository
@@ -282,6 +283,12 @@ def get_pipeline_stats_repository(
     return repositories.pipeline_stats
 
 
+def get_organization_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> OrganizationFeedRepository:
+    return repositories.organization_feed
+
+
 def get_organization_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> OrganizationStatsRepository:
@@ -482,6 +489,7 @@ __all__ = [
     "get_link_service",
     "get_operation_stats_repository",
     "get_pipeline_stats_repository",
+    "get_organization_feed_repository",
     "get_organization_stats_repository",
     "get_orchestration_repository",
     "get_orchestration_stats_repository",

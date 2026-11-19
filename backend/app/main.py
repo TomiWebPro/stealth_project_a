@@ -51,6 +51,7 @@ from .routers import (
     links,
     operation_stats,
     pipeline_stats,
+    organization_feed,
     organization_stats,
     orchestration,
     orchestration_stats,
@@ -305,9 +306,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # before the events stream router to keep stats paths explicit.
     app.include_router(event_stats.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
-    # "/orgs/stats" must be registered before "/orgs/{org_id}" in auth.router so
-    # the literal path wins over the UUID-templated one.
+    # "/orgs/stats" and "/orgs/feed" must be registered before "/orgs/{org_id}"
+    # in auth.router so the literal paths win over the UUID-templated one.
     app.include_router(organization_stats.router, prefix=API_PREFIX)
+    app.include_router(organization_feed.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     # "/extensions/stats" must be registered before "/extensions/{extension_id}"
     # so the literal path wins over the UUID-templated one.

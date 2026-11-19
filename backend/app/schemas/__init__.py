@@ -184,6 +184,10 @@ from .operation_stats import (
     OperationStats,
     OperationTypeCount,
 )
+from .organization_feed import (
+    OrganizationFeed,
+    OrganizationFeedItem,
+)
 from .organization_stats import (
     OrganizationMemberCount,
     OrganizationStats,
@@ -466,6 +470,9 @@ __all__ = [
     # operation stats
     "OperationStats",
     "OperationTypeCount",
+    # organization feed
+    "OrganizationFeed",
+    "OrganizationFeedItem",
     # organization stats
     "OrganizationMemberCount",
     "OrganizationStats",
