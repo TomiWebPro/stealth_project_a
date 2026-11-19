@@ -1103,6 +1103,55 @@ describe("createHttpApiClient collaboration stats", () => {
   });
 });
 
+describe("createHttpApiClient orchestration stats", () => {
+  const stats = {
+    total_plans: 3,
+    total_runs: 3,
+    total_steps: 6,
+    total_jobs_linked: 3,
+    by_stage: [
+      { stage: "plan", count: 1 },
+      { stage: "resolve", count: 0 },
+      { stage: "submit", count: 0 },
+      { stage: "await", count: 1 },
+      { stage: "collect", count: 0 },
+      { stage: "done", count: 1 },
+    ],
+    by_project: [{ project_id: "11111111-1111-4111-8111-111111111111", plans: 2, runs: 1 }],
+    newest_plan_at: "2026-01-06T00:00:00Z",
+    newest_run_at: "2026-01-06T00:00:00Z",
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /orchestration/stats with the project scope and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/orchestration/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getOrchestrationStats({ projectId: "11111111-1111-4111-8111-111111111111" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/orchestration/stats`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getOrchestrationStats({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient provider stats", () => {
   const stats = {
     total: 2,

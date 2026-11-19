@@ -9,6 +9,8 @@ import {
   EXTENSIONS,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
+  ORCHESTRATION_PLANS,
+  ORCHESTRATION_RUNS,
   PIPELINE_CHAINS,
   PRESENCE,
   PROJECTS,
@@ -48,6 +50,7 @@ import {
   setMockFailure,
   fetchOrganizations,
   fetchOrchestrationRun,
+  fetchOrchestrationStats,
   fetchPresence,
   fetchProject,
   fetchProjectAudit,
@@ -498,6 +501,78 @@ describe("mock API collaboration stats (C81 follow-up)", () => {
 
     setMockFailure("collaborationStats");
     await expect(fetchCollaborationStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API orchestration stats (C85 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a populated snapshot from the authoritative plan/run seeds", async () => {
+    const stats = await fetchOrchestrationStats();
+    expect(stats.total_plans).toBe(ORCHESTRATION_PLANS.length);
+    expect(stats.total_runs).toBe(ORCHESTRATION_RUNS.length);
+    expect(stats.total_steps).toBe(
+      ORCHESTRATION_PLANS.reduce((sum, plan) => sum + (plan.steps ?? []).length, 0),
+    );
+    expect(stats.total_jobs_linked).toBe(
+      ORCHESTRATION_RUNS.reduce((sum, run) => sum + (run.job_ids ?? []).length, 0),
+    );
+    expect(stats.by_stage?.map((entry) => entry.stage)).toEqual([
+      "plan",
+      "resolve",
+      "submit",
+      "await",
+      "collect",
+      "done",
+    ]);
+    expect(stats.by_stage?.reduce((sum, entry) => sum + entry.count, 0)).toBe(
+      ORCHESTRATION_RUNS.length,
+    );
+    expect((stats.by_project ?? []).length).toBeGreaterThan(0);
+    expect(stats.newest_plan_at).toBeTruthy();
+    expect(stats.newest_run_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project and zero-fills an unseeded project", async () => {
+    const scoped = await fetchOrchestrationStats({ projectId: filmId });
+    expect(scoped.by_project).toEqual([
+      {
+        project_id: filmId,
+        plans: ORCHESTRATION_PLANS.filter((plan) => plan.project_id === filmId).length,
+        runs: ORCHESTRATION_RUNS.filter(
+          (run) => ORCHESTRATION_PLANS.some((plan) => plan.plan_id === run.plan_id && plan.project_id === filmId),
+        ).length,
+      },
+    ]);
+    expect(scoped.total_plans).toBeGreaterThan(0);
+
+    const empty = await fetchOrchestrationStats({ projectId: emptyId });
+    expect(empty.total_plans).toBe(0);
+    expect(empty.total_runs).toBe(0);
+    expect(empty.total_steps).toBe(0);
+    expect(empty.total_jobs_linked).toBe(0);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_plan_at).toBeNull();
+    expect(empty.newest_run_at).toBeNull();
+    expect(empty.by_stage?.every((entry) => entry.count === 0)).toBe(true);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchOrchestrationStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchOrchestrationStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("orchestrationStats");
+    await expect(fetchOrchestrationStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -20,6 +20,7 @@ import type {
   Message,
   OperationCatalog,
   Organization,
+  OrchestrationPlan,
   OrchestrationRun,
   Presence,
   Project,
@@ -1246,6 +1247,43 @@ export const ORGANIZATION_MEMBERS: readonly OrganizationMemberRecord[] = [
     display_name: "Casey Observer",
     role: "viewer",
     joined_at: isoMinutesAgo(5_000),
+  },
+];
+
+/**
+ * Authoritative orchestration plans (C85). Runs reference plans by id, so these
+ * seeds give every seeded run a project attribution and exercise the run→plan
+ * join the stats derivation performs. The third plan has no runs so the
+ * per-project breakdown also covers plans-only activity.
+ */
+export const ORCHESTRATION_PLANS: readonly OrchestrationPlan[] = [
+  {
+    plan_id: "0b5c1e2a-6100-4000-8000-000000000001",
+    project_id: PROJECT_IDS.moonshot,
+    goal: "Generate the s01_c01 shot video from locked frames and sequence LoRAs.",
+    steps: [
+      { step_id: "step-1", operation_id: "image-to-video" },
+      { step_id: "step-2", operation_id: "upscale" },
+      { step_id: "step-3", operation_id: "text-to-image" },
+    ],
+    created_at: isoMinutesAgo(15),
+  },
+  {
+    plan_id: "0b5c1e2a-6100-4000-8000-000000000002",
+    project_id: PROJECT_IDS.character,
+    goal: "Expand the Sable concept frame into a training dataset.",
+    steps: [
+      { step_id: "step-1", operation_id: "dataset-prep" },
+      { step_id: "step-2", operation_id: "lora-train" },
+    ],
+    created_at: isoMinutesAgo(225),
+  },
+  {
+    plan_id: "0b5c1e2a-6100-4000-8000-000000000003",
+    project_id: PROJECT_IDS.brand,
+    goal: "Prepare a hero-key-visual plan that has not started running yet.",
+    steps: [{ step_id: "step-1", operation_id: "text-to-image" }],
+    created_at: isoMinutesAgo(400),
   },
 ];
 

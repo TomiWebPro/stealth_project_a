@@ -15,6 +15,7 @@ import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
+import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
@@ -45,6 +46,7 @@ import type {
   Organization,
   OrganizationStats,
   OrchestrationRun,
+  OrchestrationStats,
   PipelineStats,
   Presence,
   Project,
@@ -184,6 +186,17 @@ export function useCollaborationStats(
   return useQuery({
     queryKey: queryKeys.collaborationStats.summary(options),
     queryFn: () => api.getCollaborationStats(options),
+  });
+}
+
+/** Authoritative orchestration metrics from `/orchestration/stats`, optionally project-scoped (C85). */
+export function useOrchestrationStats(
+  options?: OrchestrationStatsOptions,
+): UseQueryResult<OrchestrationStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.orchestrationStats.summary(options),
+    queryFn: () => api.getOrchestrationStats(options),
   });
 }
 

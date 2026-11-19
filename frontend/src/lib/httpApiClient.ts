@@ -27,6 +27,8 @@ import { lineageStatsQueryParams } from "./lineageStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
+import { orchestrationStatsQueryParams } from "./orchestrationStats";
+import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import { pipelineStatsQueryParams } from "./pipelineStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
@@ -62,6 +64,7 @@ import type {
   Organization,
   OrganizationStats,
   OrchestrationRun,
+  OrchestrationStats,
   PipelineStats,
   Presence,
   Project,
@@ -309,6 +312,14 @@ export function createHttpApiClient(
       return request<CollaborationStats>(
         "/collaboration/stats",
         collaborationStatsQueryParams(options),
+      );
+    },
+
+    /** Authoritative orchestration metrics derived by `/orchestration/stats`. */
+    getOrchestrationStats(options?: OrchestrationStatsOptions): Promise<OrchestrationStats> {
+      return request<OrchestrationStats>(
+        "/orchestration/stats",
+        orchestrationStatsQueryParams(options),
       );
     },
 

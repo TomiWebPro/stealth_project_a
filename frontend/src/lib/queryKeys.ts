@@ -9,6 +9,7 @@ import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
+import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderStatsOptions } from "./providerStats";
@@ -84,6 +85,10 @@ export const queryKeys = {
   collaborationStats: {
     summary: (options: CollaborationStatsOptions = {}) =>
       ["collaboration-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  orchestrationStats: {
+    summary: (options: OrchestrationStatsOptions = {}) =>
+      ["orchestration-stats", "summary", options.projectId ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

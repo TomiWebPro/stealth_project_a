@@ -39,6 +39,11 @@ import {
 } from "../organizationStats";
 import type { OrganizationStatsOptions } from "../organizationStats";
 import {
+  deriveOrchestrationStats,
+  validateOrchestrationStatsArgs,
+} from "../orchestrationStats";
+import type { OrchestrationStatsOptions } from "../orchestrationStats";
+import {
   derivePipelineStats,
   validatePipelineStatsArgs,
 } from "../pipelineStats";
@@ -74,6 +79,7 @@ import type {
   Organization,
   OrganizationStats,
   OrchestrationRun,
+  OrchestrationStats,
   PipelineStats,
   Presence,
   Project,
@@ -99,6 +105,7 @@ import {
   OPERATION_CATALOG,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
+  ORCHESTRATION_PLANS,
   ORCHESTRATION_RUNS,
   PIPELINE_CHAINS,
   PRESENCE,
@@ -134,8 +141,8 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
- * `lineageStats` and `collaborationStats`. Always reset with
- * {@link clearMockFailures} afterwards.
+ * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
+ * with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -434,6 +441,30 @@ export async function fetchCollaborationStats(
     });
   }
   return delay(deriveCollaborationStats(PRESENCE, COMMENTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative orchestration metrics (C85) derived from the same plan/run
+ * seeds as the live `/orchestration/stats` endpoint. Router-style 422
+ * validation, a normalized 404 for an unknown project scope and the
+ * `"orchestrationStats"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchOrchestrationStats(
+  options?: OrchestrationStatsOptions,
+): Promise<OrchestrationStats> {
+  failIfEnabled("orchestrationStats");
+  validateOrchestrationStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveOrchestrationStats(ORCHESTRATION_PLANS, ORCHESTRATION_RUNS, REFERENCE_NOW, options),
+  );
 }
 
 /**
