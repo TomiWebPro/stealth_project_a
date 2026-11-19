@@ -22,6 +22,7 @@ from .repositories import Repositories
 from .routers import (
     activity,
     adapters,
+    asset_stats,
     assets,
     audit,
     auth,
@@ -212,6 +213,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # the literal path wins over the UUID-templated one.
     app.include_router(conversation_stats.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
+    # "/assets/stats" must be registered before "/assets/{asset_id}" so the
+    # literal path wins over the UUID-templated one.
+    app.include_router(asset_stats.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
     # "/jobs/stats" must be registered before "/jobs/{job_id}" so the literal

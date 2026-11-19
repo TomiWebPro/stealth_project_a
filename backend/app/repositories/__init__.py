@@ -9,6 +9,7 @@ from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
 from .activity import ActivityRepository
 from .assets import AssetRepository
+from .asset_stats import AssetStatsRepository
 from .audit import AuditRepository
 from .auth import AuthRepository
 from .conversations import ConversationRepository
@@ -31,6 +32,7 @@ class Repositories:
     activity: ActivityRepository
     projects: ProjectRepository
     assets: AssetRepository
+    asset_stats: AssetStatsRepository
     conversations: ConversationRepository
     conversation_stats: ConversationStatsRepository
     uploads: UploadRepository
@@ -55,6 +57,7 @@ class Repositories:
     ) -> "Repositories":
         projects = ProjectRepository(store, clock=clock)
         assets = AssetRepository(store, projects, clock=clock)
+        asset_stats = AssetStatsRepository(store, projects, clock=clock)
         conversations = ConversationRepository(store, projects, assets, clock=clock)
         conversation_stats = ConversationStatsRepository(store, projects, clock=clock)
         uploads = UploadRepository(
@@ -87,6 +90,7 @@ class Repositories:
             activity=activity,
             projects=projects,
             assets=assets,
+            asset_stats=asset_stats,
             conversations=conversations,
             conversation_stats=conversation_stats,
             uploads=uploads,

@@ -16,6 +16,11 @@ from .audit import (
     AuditTone,
     AuditTrail,
 )
+from .asset_stats import (
+    AssetStats,
+    AssetStatusCount,
+    AssetTypeCount,
+)
 from .asset import (
     Asset,
     AssetLineage,
@@ -182,6 +187,10 @@ __all__ = [
     "AuditEventKind",
     "AuditTone",
     "AuditTrail",
+    # asset stats
+    "AssetStats",
+    "AssetStatusCount",
+    "AssetTypeCount",
     # asset
     "Asset",
     "AssetLineage",

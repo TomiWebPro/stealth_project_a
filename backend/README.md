@@ -58,7 +58,10 @@ All paths are prefixed with `/api/v1`.
 - **Assets:** `GET /assets`, `POST /assets/register`,
   `GET|PATCH|DELETE /assets/{id}`,
   `GET|POST /assets/{id}/versions`, `GET /assets/{id}/relationships|lineage|download|content`,
-  `GET|POST /assets/{id}/publish`, `GET|POST /assets/{id}/exports`
+  `GET|POST /assets/{id}/publish`, `GET|POST /assets/{id}/exports`,
+  `GET /assets/stats?project_id=` — inventory metrics (zero-filled type/status
+  breakdowns, stored bytes, version revisions, recency) derived from the asset
+  store; deleted assets are excluded
 - **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`
 - **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
   `GET|POST /jobs`, `GET /jobs/{id}`, `GET /jobs/{id}/events`,
