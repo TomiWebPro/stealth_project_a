@@ -16,6 +16,7 @@ import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { AudioPanel } from "../audio/AudioPanel";
 import { formatRelative } from "../home/format";
+import { ConversationStatsPanel } from "./ConversationStatsPanel";
 import {
   buildConversationRows,
   buildMessageRows,
@@ -320,22 +321,29 @@ export function ChatScreen() {
           <EmptyState title="No projects" description="Create a project before starting a conversation." />
         </Card>
       ) : selectedProjectId ? (
-        <div className="grid min-h-[34rem] gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
-          <ConversationList
+        <div className="space-y-4">
+          <ConversationStatsPanel
             projectId={selectedProjectId}
-            selectedId={conversationId}
-            onSelect={selectConversation}
+            title="Project conversation stats"
+            description="Authoritative message metrics scoped to the selected project."
           />
-          {conversationId ? (
-            <MessageThread key={conversationId} conversationId={conversationId} />
-          ) : (
-            <Card className="grid place-items-center p-6">
-              <EmptyState
-                title="Select a conversation"
-                description="Choose a conversation on the left to read and reply to its messages."
-              />
-            </Card>
-          )}
+          <div className="grid min-h-[34rem] gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
+            <ConversationList
+              projectId={selectedProjectId}
+              selectedId={conversationId}
+              onSelect={selectConversation}
+            />
+            {conversationId ? (
+              <MessageThread key={conversationId} conversationId={conversationId} />
+            ) : (
+              <Card className="grid place-items-center p-6">
+                <EmptyState
+                  title="Select a conversation"
+                  description="Choose a conversation on the left to read and reply to its messages."
+                />
+              </Card>
+            )}
+          </div>
         </div>
       ) : null}
       <AudioPanel />

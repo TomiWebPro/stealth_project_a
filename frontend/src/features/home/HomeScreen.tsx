@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
+import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
 import {
   assetTypeTone,
@@ -140,6 +141,10 @@ export function HomeScreen() {
       <div className="space-y-6">
         <DashboardPanel />
         <ActivityFeedPanel />
+        <ConversationStatsPanel
+          title="Workspace conversation stats"
+          description="Authoritative message metrics across every project in the workspace."
+        />
 
         {isPending ? <HomeSkeleton /> : null}
 
