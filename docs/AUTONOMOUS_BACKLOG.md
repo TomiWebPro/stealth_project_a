@@ -1438,6 +1438,23 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `85c9f68`
   Screens publish-feed rendering remains a screens follow-up.
 
+- [x] C129 (backend) Authoritative upload-ticket feed API:
+   `GET /api/v1/uploads/feed?project_id=&limit=` derives a newest-first feed of
+   upload tickets from the same authoritative `UPLOADS` collection
+   `GET /uploads/stats` reads (no second index) — ticket and project identity
+   (id + joined display name), filename/content type, lifecycle status, declared
+   and uploaded byte sizes and creation/expiry timestamps (internal storage path
+   excluded), with a deterministic `(created_at, upload_id)` newest-first tie-break,
+   a whole-scope `total` counted before the `limit` page, and an optional
+   `project_id` scope with shared 404 `project_not_found` / 422 `validation_error`
+   envelopes; `UploadFeed`/`UploadFeedItem` mirrored in
+   `frontend/src/types/uploadFeed.ts`, README endpoint list synced, 8 tests × 2
+   storage backends green (849 passed, contract parity + route-surface guard + tsc
+   clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend
+   column had no unchecked items (only the repo-wide C6 docs pass remains, owned by
+   other agents), so C129 was added under the Never-empty well.
+   ✅ 2026-11-19 — `f0ddf48`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1605,3 +1622,4 @@ this file is the execution checklist.
 - 2026-11-19 — `ef8ab4e` — C126 (screens): rendered the authoritative job dispatch queue (C121/C123/C124 follow-up) via `useJobQueue` — a reusable `JobQueuePanel` on the Jobs screen and project detail with four whole-queue cards, waiting/running composition bars, FIFO rows with 1-based positions and friendly operation/project labels, a bounded page-size select and refresh, and loading/error/missing/empty/populated states; all display values derived in 11 new tested `jobQueueHelpers` cases. Resolves the C124 screens follow-up. Lint clean, 847 tests, build green. My owned column had no unchecked rows, so C126 was added under the Never-empty well.
 - 2026-11-19 — `b009ad1` — C127 (mocks): wired the authoritative publish-feed API (C125 follow-up) end to end — `getPublishFeed`/`usePublishFeed` atomically across mockApi (newest-first receipt derivation with `(published_at, asset_id)` tie-break, joined project names with "Unknown project" fallback, soft-deleted/malformed-receipt exclusion, whole-scope `total` before the `limit` page, router-style 422 + unknown-project 404 + injectable `publishFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /publishes?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/publishFeed` derivation/validation helper; parity guard extended to both transports; lint clean, 863 tests, build green. My owned column had no unchecked rows, so C127 was added under the Never-empty well. Screens feed rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-19 — `85c9f68` — C128 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/publishes?project_id=&limit=` publish feed (C125/C127 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes, newest-first `(published_at, asset_id)` ordering, whole-scope `total` before the `limit` page, the `limit` page bound with unchanged counters, the optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — reusing the on-demand published asset from the publishes/stats probe. No unchecked CI row remained, so C128 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (all probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/863 tests/build green and backend pytest (833) green. Screens publish-feed rendering remains a screens follow-up.
+- 2026-11-19 — `f0ddf48` — C129 (backend): added authoritative `GET /api/v1/uploads/feed` newest-first upload-ticket feed derived from the same authoritative `UPLOADS` store as uploads/stats (no second index) — ticket/project identity with joined display names, filename/content type, lifecycle status, declared/uploaded bytes and creation/expiry timestamps, deterministic `(created_at, upload_id)` order, whole-scope `total` before the `limit` page, and optional `project_id` scope with shared 404 `project_not_found` / 422 `validation_error` envelopes; `UploadFeed`/`UploadFeedItem` mirrored in `frontend/src/types/uploadFeed.ts`, README endpoint list synced, 8 tests × 2 storage backends green (849 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C129 was added under the Never-empty well.
