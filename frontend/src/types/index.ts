@@ -26,3 +26,4 @@ export * from "./providerStats";
 export * from "./extensionStats";
 export * from "./operationStats";
 export * from "./organizationStats";
+export * from "./pipelineStats";

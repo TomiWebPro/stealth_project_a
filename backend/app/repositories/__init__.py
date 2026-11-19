@@ -21,6 +21,7 @@ from .impact import ImpactRepository
 from .job_stats import JobStatsRepository
 from .jobs import JobRepository
 from .operation_stats import OperationStatsRepository
+from .pipeline_stats import PipelineStatsRepository
 from .organization_stats import OrganizationStatsRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
@@ -45,6 +46,7 @@ class Repositories:
     jobs: JobRepository
     job_stats: JobStatsRepository
     operation_stats: OperationStatsRepository
+    pipeline_stats: PipelineStatsRepository
     organization_stats: OrganizationStatsRepository
     providers: ProviderRepository
     provider_stats: ProviderStatsRepository
@@ -77,6 +79,7 @@ class Repositories:
         jobs = JobRepository(store, projects, clock=clock)
         job_stats = JobStatsRepository(store, projects, clock=clock)
         operation_stats = OperationStatsRepository(store, clock=clock)
+        pipeline_stats = PipelineStatsRepository(store, projects, clock=clock)
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
@@ -113,6 +116,7 @@ class Repositories:
             jobs=jobs,
             job_stats=job_stats,
             operation_stats=operation_stats,
+            pipeline_stats=pipeline_stats,
             organization_stats=organization_stats,
             providers=providers,
             provider_stats=provider_stats,

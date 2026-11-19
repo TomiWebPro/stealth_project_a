@@ -140,6 +140,12 @@ from .organization_stats import (
     OrganizationStats,
     RoleMemberCount,
 )
+from .pipeline_stats import (
+    PipelineKind,
+    PipelineKindStats,
+    PipelineProjectCount,
+    PipelineStats,
+)
 from .orchestration import (
     Comment,
     OrchestrationPlan,
@@ -321,6 +327,11 @@ __all__ = [
     "OrganizationMemberCount",
     "OrganizationStats",
     "RoleMemberCount",
+    # pipeline stats
+    "PipelineKind",
+    "PipelineKindStats",
+    "PipelineProjectCount",
+    "PipelineStats",
     # orchestration
     "Comment",
     "OrchestrationPlan",

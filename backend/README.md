@@ -98,6 +98,10 @@ All paths are prefixed with `/api/v1`.
   coverage) derived from the extension stores, with optional type/status filters
 - **Pipelines:** `GET|POST /pipelines/lora`, `/pipelines/shot`, `/pipelines/splat`
   (each with `GET /pipelines/<kind>/{id}`)
+  `GET /pipelines/stats?project_id=` — authoritative production-pipeline metrics
+  (zero-filled per-kind chain/job/asset breakdowns, per-project chain counts,
+  totals and newest-chain recency) derived from the chain stores; unknown
+  `project_id` uses the shared 404 envelope
 - **Exports:** `GET /projects/{id}/exports`, `GET /assets/{id}/exports`
 - **Search:** `GET /search?q=&kind=&limit=` — ranked, best-first project/asset/
   conversation matches derived from the authoritative stores (no second index);
