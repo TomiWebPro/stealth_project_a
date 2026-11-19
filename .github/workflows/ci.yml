@@ -884,6 +884,64 @@ jobs:
                 and bool(ostbadbody.get("error", {}).get("request_id")),
                 orchestration_bad.text)
 
+          # Authoritative activity statistics (C89/C91) is the newest /api/v1
+          # URL the live client calls (getActivityStats). Probe the zero-filled
+          # snapshot + by_kind/by_project breakdown shapes, the four canonical
+          # activity kinds, the optional project scope (unknown project -> shared
+          # 404) and the shared 422 envelope, keeping CI aligned with new
+          # endpoints as they go live.
+          activity_stats = httpx.get(f"{base}/activity/stats", timeout=5)
+          astbody = activity_stats.json() if activity_stats.status_code == 200 else {}
+          check("activity/stats 200 snapshot shape",
+                activity_stats.status_code == 200 and all(
+                    k in astbody for k in ("total_events", "total_participants",
+                                           "by_kind", "by_project",
+                                           "newest_event_at", "generated_at")),
+                activity_stats.text)
+          check("activity/stats breakdown shapes",
+                isinstance(astbody.get("by_kind"), list)
+                and all(isinstance(k, dict) and "kind" in k and "count" in k
+                        for k in astbody["by_kind"])
+                and isinstance(astbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "events", "participants"))
+                    for p in astbody["by_project"]),
+                activity_stats.text)
+          check("activity/stats zero-filled kinds",
+                activity_stats.status_code == 200
+                and {k.get("kind") for k in astbody["by_kind"]} >= {
+                    "asset", "publish", "job", "comment"},
+                activity_stats.text)
+          if project_id:
+              activity_scoped = httpx.get(
+                  f"{base}/activity/stats", params={"project_id": project_id}, timeout=5)
+              assbody = activity_scoped.json() if activity_scoped.status_code == 200 else {}
+              check("activity/stats project scope 200",
+                    activity_scoped.status_code == 200
+                    and isinstance(assbody.get("total_events"), int)
+                    and isinstance(assbody.get("by_kind"), list),
+                    activity_scoped.text)
+          else:
+              check("activity/stats project scope setup", False,
+                    "could not obtain a project id")
+          activity_missing = httpx.get(
+              f"{base}/activity/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          ast404body = activity_missing.json() if activity_missing.status_code == 404 else {}
+          check("activity/stats 404 shared envelope",
+                activity_missing.status_code == 404
+                and ast404body.get("error", {}).get("code") == "project_not_found"
+                and bool(ast404body.get("error", {}).get("request_id")),
+                activity_missing.text)
+          activity_bad = httpx.get(
+              f"{base}/activity/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          astbadbody = activity_bad.json() if activity_bad.status_code == 422 else {}
+          check("activity/stats 422 validation envelope",
+                activity_bad.status_code == 422
+                and astbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(astbadbody.get("error", {}).get("request_id")),
+                activity_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
