@@ -9,6 +9,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ExportPanel } from "../export/ExportPanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
+import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
@@ -188,6 +189,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project collaboration stats"
         description="Authoritative presence and comment metrics scoped to this project."
+      />
+      <OrchestrationStatsPanel
+        projectId={projectId}
+        title="Project orchestration stats"
+        description="Authoritative plan, run and step metrics scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <VersionPanel assets={assets} />

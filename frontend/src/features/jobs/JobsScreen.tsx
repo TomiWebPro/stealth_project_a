@@ -8,6 +8,7 @@ import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
+import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
 import { OperationStatsPanel } from "../operations/OperationStatsPanel";
 
 /**
@@ -62,6 +63,11 @@ export function JobsScreen() {
       />
 
       <OperationStatsPanel />
+
+      <OrchestrationStatsPanel
+        title="Global orchestration stats"
+        description="Authoritative workspace-wide plan, run and step metrics."
+      />
 
       {data ? (
         <JobsPanel
