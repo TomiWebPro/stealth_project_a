@@ -23,6 +23,7 @@ import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageFeedOptions } from "../lib/lineageFeed";
 import type { LineageStatsOptions } from "../lib/lineageStats";
+import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
@@ -71,6 +72,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationFeed,
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
@@ -234,6 +236,17 @@ export function useExtensionStats(
   return useQuery({
     queryKey: queryKeys.extensionStats.summary(options),
     queryFn: () => api.getExtensionStats(options),
+  });
+}
+
+/** Newest-first authoritative organization feed from `/orgs/feed`, with joined activity counts (C161). */
+export function useOrganizationFeed(
+  options?: OrganizationFeedOptions,
+): UseQueryResult<OrganizationFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.organizationFeed.feed(options),
+    queryFn: () => api.getOrganizationFeed(options),
   });
 }
 

@@ -21,6 +21,7 @@ import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
+import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
@@ -69,6 +70,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationFeed,
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
@@ -135,6 +137,8 @@ export interface ApiClient {
   getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats>;
   /** Authoritative extension registry/installation metrics derived by `/extensions/stats`, optionally filtered (C61). */
   getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats>;
+  /** Newest-first authoritative organization feed derived by `/orgs/feed`, with joined member/project counts (C161). */
+  getOrganizationFeed(options?: OrganizationFeedOptions): Promise<OrganizationFeed>;
   /** Authoritative organization/membership metrics derived by `/orgs/stats`, optionally org-scoped (C69). */
   getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats>;
   /** Authoritative production-pipeline metrics derived by `/pipelines/stats`, optionally project-scoped (C73). */
@@ -239,6 +243,7 @@ export const mockApiClient: ApiClient = {
   getProjectFeed: mockApi.fetchProjectFeed,
   getProviderStats: mockApi.fetchProviderStats,
   getExtensionStats: mockApi.fetchExtensionStats,
+  getOrganizationFeed: mockApi.fetchOrganizationFeed,
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getPipelineStats: mockApi.fetchPipelineStats,
   getLineageStats: mockApi.fetchLineageStats,

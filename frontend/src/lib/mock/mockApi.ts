@@ -54,6 +54,8 @@ import type { JobQueueOptions } from "../jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
 import { deriveOperationStats } from "../operationStats";
+import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "../organizationFeed";
+import type { OrganizationFeedOptions } from "../organizationFeed";
 import {
   deriveOrganizationStats,
   validateOrganizationStatsArgs,
@@ -125,6 +127,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationFeed,
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
@@ -202,7 +205,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `pipelineStats`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -509,6 +512,22 @@ export async function fetchOrganizationStats(
   validateOrganizationStatsArgs(options);
   return delay(
     deriveOrganizationStats(ORGANIZATIONS, ORGANIZATION_MEMBERS, USERS, REFERENCE_NOW, options),
+  );
+}
+
+/**
+ * Authoritative organization feed (C161) derived from the same organization/
+ * membership/project seeds as the live `/orgs/feed` endpoint. Router-style 422
+ * validation for an out-of-range limit and the `"organizationFeed"` failure
+ * domain keep error and empty states at parity with live mode.
+ */
+export async function fetchOrganizationFeed(
+  options?: OrganizationFeedOptions,
+): Promise<OrganizationFeed> {
+  failIfEnabled("organizationFeed");
+  validateOrganizationFeedArgs(options);
+  return delay(
+    deriveOrganizationFeed(ORGANIZATIONS, ORGANIZATION_MEMBERS, PROJECTS, REFERENCE_NOW, options),
   );
 }
 

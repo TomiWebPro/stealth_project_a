@@ -41,6 +41,8 @@ import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
 import { lineageStatsQueryParams } from "./lineageStats";
 import type { LineageStatsOptions } from "./lineageStats";
+import { organizationFeedQueryParams } from "./organizationFeed";
+import type { OrganizationFeedOptions } from "./organizationFeed";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import { orchestrationStatsQueryParams } from "./orchestrationStats";
@@ -107,6 +109,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationFeed,
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
@@ -379,6 +382,11 @@ export function createHttpApiClient(
     /** Authoritative extension registry/installation metrics derived by `/extensions/stats`. */
     getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats> {
       return request<ExtensionStats>("/extensions/stats", extensionStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative organization feed derived by `/orgs/feed` (C161). */
+    getOrganizationFeed(options?: OrganizationFeedOptions): Promise<OrganizationFeed> {
+      return request<OrganizationFeed>("/orgs/feed", organizationFeedQueryParams(options));
     },
 
     /** Authoritative organization/membership metrics derived by `/orgs/stats`. */

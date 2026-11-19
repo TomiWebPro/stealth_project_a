@@ -37,6 +37,8 @@ import { deriveLineageFeed, validateLineageFeedArgs } from "./lineageFeed";
 import type { LineageFeedOptions } from "./lineageFeed";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationStats } from "./operationStats";
+import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "./organizationFeed";
+import type { OrganizationFeedOptions } from "./organizationFeed";
 import {
   deriveOrganizationStats,
   validateOrganizationStatsArgs,
@@ -841,6 +843,28 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return CONVERSATIONS.find((c) => c.id === id) ?? NOT_FOUND;
   }
 
+  // Authoritative organization feed derives the same newest-first organization
+  // view as the `/orgs/feed` endpoint from the shared auth/project seeds; mirror
+  // its 422 validation, page bound and repository derivation so live and mock
+  // agree exactly.
+  if (path === "/orgs/feed") {
+    const limitRaw = params.get("limit");
+    const options: OrganizationFeedOptions =
+      limitRaw !== null ? { limit: Number(limitRaw) } : {};
+    try {
+      validateOrganizationFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveOrganizationFeed(ORGANIZATIONS, ORGANIZATION_MEMBERS, PROJECTS, REFERENCE_NOW, options);
+  }
+
   // Authoritative organization/membership stats are derived from the auth store
   // on every call; reproduce the router's 422 validation and the repository
   // derivation over the shared seeds so live and mock agree exactly. An unknown
@@ -1171,6 +1195,8 @@ describe("live vs mock transport parity", () => {
       ["getExtensionStats", (api) => api.getExtensionStats()],
       ["getExtensionStats scoped", (api) => api.getExtensionStats({ type: "ui" })],
       ["getExtensionStats filtered", (api) => api.getExtensionStats({ type: "ui", status: "enabled" })],
+      ["getOrganizationFeed", (api) => api.getOrganizationFeed()],
+      ["getOrganizationFeed limited", (api) => api.getOrganizationFeed({ limit: 1 })],
       ["getOrganizationStats", (api) => api.getOrganizationStats()],
       ["getOrganizationStats scoped", (api) => api.getOrganizationStats({ orgId })],
       ["getOrganizationStats unknown", (api) => api.getOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" })],
@@ -1807,6 +1833,17 @@ describe("live vs mock transport parity", () => {
       expect(liveProjectFeed422).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject an out-of-range organization-feed limit with the
+    // same 422 envelope.
+    for (const bad of [{ limit: 0 }, { limit: 201 }]) {
+      const [mockOrgFeed422, liveOrgFeed422] = await Promise.all([
+        mockApiClient.getOrganizationFeed(bad).catch((cause) => cause),
+        live.getOrganizationFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockOrgFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveOrgFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope and reject a
     // malformed org id with the same 422 envelope.
     expect(await live.getOrganizationStats({ orgId: missingId })).toEqual(
@@ -1911,6 +1948,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectFeed).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
+    expect(typeof typed.getOrganizationFeed).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getLineageStats).toBe("function");

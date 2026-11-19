@@ -35,6 +35,7 @@ import {
   fetchLineageStats,
   fetchOperations,
   fetchOperationStats,
+  fetchOrganizationFeed,
   fetchOrganizationStats,
   fetchPipelineStats,
   fetchOrchestrationRun,
@@ -114,6 +115,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchExtensionStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOperationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrganizationStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchOrganizationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
@@ -243,6 +245,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchOperationStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the organization feed domain", async () => {
+    setMockFailure("organizationFeed");
+
+    await expect(fetchOrganizationFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchOrganizationFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the organization stats domain", async () => {

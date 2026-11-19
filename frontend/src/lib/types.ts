@@ -78,6 +78,8 @@ export type {
   OperationStats,
   OperationTypeCount,
   Organization,
+  OrganizationFeed,
+  OrganizationFeedItem,
   OrganizationMemberCount,
   OrganizationStats,
   OrchestrationPlan,

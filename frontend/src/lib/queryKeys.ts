@@ -17,6 +17,7 @@ import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
+import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
@@ -123,6 +124,10 @@ export const queryKeys = {
   extensionStats: {
     summary: (options: ExtensionStatsOptions = {}) =>
       ["extension-stats", "summary", options.type ?? "all", options.status ?? "all"] as const,
+  },
+  organizationFeed: {
+    feed: (options: OrganizationFeedOptions = {}) =>
+      ["organization-feed", "feed", options.limit ?? "all"] as const,
   },
   organizationStats: {
     summary: (options: OrganizationStatsOptions = {}) =>
