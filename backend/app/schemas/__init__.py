@@ -138,6 +138,11 @@ from .orchestration import (
     StorageQuotaUnit,
     StorageStats,
 )
+from .project_stats import (
+    ProjectLifecycle,
+    ProjectLifecycleCount,
+    ProjectStats,
+)
 from .provider import (
     CapabilityQuery,
     Extension,
@@ -213,6 +218,10 @@ __all__ = [
     "StorageRef",
     "UploadRequest",
     "UploadTicket",
+    # project stats
+    "ProjectLifecycle",
+    "ProjectLifecycleCount",
+    "ProjectStats",
     # auth
     "LoginRequest",
     "Member",

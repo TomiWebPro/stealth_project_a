@@ -10,6 +10,7 @@ export * from "./common";
 export * from "./activity";
 export * from "./audit";
 export * from "./auth";
+export * from "./projectStats";
 export * from "./conversation";
 export * from "./conversationStats";
 export * from "./asset";

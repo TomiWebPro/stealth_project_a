@@ -28,6 +28,7 @@ from .repositories.job_stats import JobStatsRepository
 from .repositories.jobs import JobRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
+from .repositories.project_stats import ProjectStatsRepository
 from .repositories.providers import ProviderRepository
 from .repositories.search import SearchRepository
 from .repositories.tags import TagRepository
@@ -121,6 +122,12 @@ def get_project_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ProjectRepository:
     return repositories.projects
+
+
+def get_project_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ProjectStatsRepository:
+    return repositories.project_stats
 
 
 def get_asset_repository(
@@ -281,6 +288,7 @@ __all__ = [
     "get_link_service",
     "get_orchestration_repository",
     "get_project_repository",
+    "get_project_stats_repository",
     "get_project_tree",
     "get_provider_repository",
     "get_publish_service",

@@ -21,6 +21,7 @@ from .job_stats import JobStatsRepository
 from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
+from .project_stats import ProjectStatsRepository
 from .providers import ProviderRepository
 from .search import SearchRepository
 from .tags import TagRepository
@@ -31,6 +32,7 @@ from .uploads import UploadRepository
 class Repositories:
     activity: ActivityRepository
     projects: ProjectRepository
+    project_stats: ProjectStatsRepository
     assets: AssetRepository
     asset_stats: AssetStatsRepository
     conversations: ConversationRepository
@@ -56,6 +58,7 @@ class Repositories:
         clock=utcnow,
     ) -> "Repositories":
         projects = ProjectRepository(store, clock=clock)
+        project_stats = ProjectStatsRepository(store, clock=clock)
         assets = AssetRepository(store, projects, clock=clock)
         asset_stats = AssetStatsRepository(store, projects, clock=clock)
         conversations = ConversationRepository(store, projects, assets, clock=clock)
@@ -89,6 +92,7 @@ class Repositories:
         return cls(
             activity=activity,
             projects=projects,
+            project_stats=project_stats,
             assets=assets,
             asset_stats=asset_stats,
             conversations=conversations,
