@@ -648,6 +648,19 @@ this file is the execution checklist.
   well. ✅ 2026-11-19 — `e9aebe3`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C68 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  operation catalog statistics endpoint from C65/C67
+  (`GET /api/v1/operations/stats`, which takes no query params): probe the
+  catalog-derived snapshot shape (`total`, `streaming`, `with_provider`,
+  `without_provider`, `total_settings`, `unique_output_types`, `by_output_type`,
+  `by_input_type`, `generated_at`), the asset-type breakdown shapes, the
+  with/without-provider and unique-output-type invariants, and the request-id
+  header, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C68 was added under the Never-empty well.
+  ✅ 2026-11-19 — `da42ae8`
+  Screens operation-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -754,3 +767,4 @@ this file is the execution checklist.
 - 2026-11-19 — `5bc5f46` — C65 (backend): added authoritative `GET /api/v1/operations/stats` deriving catalog size, streaming/provider coverage, total settings, unique output types and deterministic asset-type input/output breakdowns from the authoritative operation catalog (no second index); `OperationStats`/`OperationTypeCount` mirrored in TS, README synced, 7 tests × 2 backends green (647 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C65 was added under the Never-empty well.
 - 2026-11-19 — `d81bc55` — C66 (screens): rendered authoritative extension registry/installation stats via `useExtensionStats` — a reusable `ExtensionStatsPanel` on the Extensions screen with type/status filters, four stat cards, zero-filled type/status distributions, trust flags and permission coverage, and all five UI states; display values derived in tested `extensionStatsHelpers`. Resolves the C61/C63/C64 screens follow-up. Lint clean, 459 tests, build green. My owned column had no unchecked rows, so C66 was added under the Never-empty well.
 - 2026-11-19 — `e9aebe3` — C67 (mocks): wired the C65 operations stats API end to end — `getOperationStats`/`useOperationStats` atomically across mockApi (seed-derived catalog coverage + deterministic asset-type input/output breakdowns, injectable `operationStats` failure), the stable facade, live `httpApiClient` (`GET /operations/stats`, no query params), `queryKeys` and `useQueries`, with a shared `lib/operationStats` helper; parity guard extended to both transports; lint clean, 466 tests, build green. Screens rendering + CI live-smoke probe are follow-ups. My owned column had no unchecked rows, so C67 was added under the Never-empty well.
+- 2026-11-19 — `da42ae8` — C68 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/operations/stats` (catalog snapshot + asset-type breakdown shapes, provider/type split invariants, request-id header) — the CI follow-up from C65/C67. No unchecked CI row remained, so C68 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (59/59 executed probes OK) with actionlint v1.7.12 + YAML parse; frontend lint/test (466)/build and backend pytest (647) green. Screens operation-stats rendering remains a screens follow-up.
