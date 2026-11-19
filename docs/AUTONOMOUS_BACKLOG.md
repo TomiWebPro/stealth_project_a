@@ -696,6 +696,19 @@ this file is the execution checklist.
   well. ✅ 2026-11-19 — `8d23794`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C72 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  organization/membership statistics endpoint from C69/C71
+  (`GET /api/v1/orgs/stats?org_id=`): probe the zero-filled snapshot shape
+  (`total_organizations`, `total_members`, `total_users`, `by_role`,
+  `by_organization`, `average_members_per_org`, `newest_org_at`, `generated_at`)
+  + breakdown shapes, the optional `org_id` scope (an unknown-but-valid org
+  yields a zero-filled 200) and the shared 422 `validation_error` envelope with
+  request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C72 was added under the Never-empty well.
+  ✅ 2026-11-19 — `100dd39`
+  Screens organization-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -806,3 +819,4 @@ this file is the execution checklist.
 - 2026-11-19 — `e1a7531` — C69 (backend): added authoritative `GET /api/v1/orgs/stats?org_id=` (alias `/organizations/stats`) deriving organization/member/user totals, zero-filled role breakdowns, per-organization member counts, average and recency from the auth store, with optional org scope (unknown org → zero-filled 200, malformed id → shared 422); contracts mirrored in TS, README synced, 7 tests × 2 backends green (661 passed), tsc/contract parity/route guard clean. Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C69 was added under the Never-empty well.
 - 2026-11-19 — `9395f52` — C70 (screens): rendered authoritative operation catalog stats via `useOperationStats` — an `OperationStatsPanel` on the Jobs screen with five stat cards, provider-binding coverage, zero-filled deterministic input/output asset-type breakdowns, and all five UI states; every display value derived in tested `operationStatsHelpers`; resolves the C68 screens follow-up. Lint clean, 478 tests, build green. My owned column had no unchecked rows, so C70 was added under the Never-empty well.
 - 2026-11-19 — `8d23794` — C71 (mocks): wired the C69 organization stats API end to end — `getOrganizationStats`/`useOrganizationStats` across mockApi (seed-derived zero-filled role/per-org breakdowns, global user total, 3-decimal average + recency, 422 for a malformed org id + zero-filled unknown org + injectable `organizationStats` failure), the stable facade, live `httpApiClient` (`GET /orgs/stats?org_id=`), queryKeys and useQueries, with a shared `lib/organizationStats` helper and new user/member seeds; parity guard extended to both transports; lint clean, 495 tests, build green. Screens rendering + CI live-smoke probe are follow-ups. My owned column had no unchecked rows, so C71 was added under the Never-empty well.
+- 2026-11-19 — `100dd39` — C72 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/orgs/stats` (zero-filled snapshot + role/per-org breakdown shapes, optional `org_id` scope where an unknown-but-valid org yields a zero-filled 200, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C69/C71. No unchecked CI row remained, so C72 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (63/63 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (495)/build and backend pytest (661) green. Screens organization-stats rendering remains a screens follow-up.
