@@ -11,6 +11,7 @@ import { formatProjectUpdatedAt } from "./helpers";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
+import { ProjectFeedPanel } from "./ProjectFeedPanel";
 import { ProjectStatsPanel } from "./ProjectStatsPanel";
 
 function ProjectRow({
@@ -75,6 +76,11 @@ export function ProjectsScreen() {
       <ProjectStatsPanel
         title="Project portfolio stats"
         description="Authoritative lifecycle and cross-domain metrics for all projects."
+      />
+
+      <ProjectFeedPanel
+        title="Global project feed"
+        description="Newest-first projects from the authoritative project store, with lifecycle filters."
       />
 
       <PipelineStatsPanel

@@ -31,6 +31,7 @@ import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
+import { ProjectFeedPanel } from "./ProjectFeedPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
 import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
@@ -173,6 +174,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         )}
       </Card>
 
+      <ProjectFeedPanel
+        orgId={project.org_id}
+        title="Organization project feed"
+        description="Newest-first projects in this organization, derived from the authoritative project store."
+      />
       <StoragePanel projectId={projectId} />
       <ActivityStatsPanel
         projectId={projectId}
