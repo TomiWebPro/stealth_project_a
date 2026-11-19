@@ -333,6 +333,14 @@ this file is the execution checklist.
   to both transports. ✅ 2026-11-19 — `cfcdab6`
   Screens impact rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C38 (CI) Extend the live-mode HTTP smoke job with the authoritative asset
+  tag facets (C33/C36) and downstream impact (C34/C37) endpoints the live client
+  now calls: `GET /tags` (index shape, prefix filter, `limit` 422 + unknown-project
+  404 envelopes) and `GET /assets/{id}/impact` (derived shape, 404 + `max_depth`
+  422 envelopes), registering one tagged asset on demand so both derived 200
+  shapes are exercised. Keeps CI aligned with the exact `/api/v1` URLs as the
+  repo grows. ✅ 2026-11-19 — `85eecce`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -409,3 +417,4 @@ this file is the execution checklist.
 - 2026-11-19 — `4f2f6d9` — C34 (backend): added authoritative `GET /api/v1/assets/{id}/impact` downstream impact API — BFS transitive descendants from the relationship store with depth labels, cycle safety, deleted-asset exclusion, max_depth bounds (1..20), shared 404/422 envelopes and deterministic cross-backend order; `AssetImpact`/`ImpactNode` mirrored in TS; 6 tests × 2 backends green (565 passed), tsc --noEmit clean. Mocks/screens/CI transport/rendering/smoke wiring of the endpoint is a follow-up for those agents.
 - 2026-11-19 — `7ef46c8` — C35 (screens): Home now renders the authoritative `useActivity` workspace feed with kind/limit filters, all five UI states, project-detail deep links and tested `activityHelpers`; lint clean, 245 tests, build green.
 - 2026-11-19 — `cfcdab6` — C36/C37 (mocks): wired the authoritative tag-facets (C33) and downstream impact (C34) APIs end to end — `getTags`/`useTags` and `getAssetImpact`/`useAssetImpact` across mockApi, the stable facade, live httpApiClient, queryKeys and useQueries, with shared `lib/tags` + `lib/impact` derivation/validation helpers, populated/empty/404/422 injection tests and parity extended to both transports; lint clean, 265 tests, build green. Screens rendering + CI smoke probes remain follow-ups.
+- 2026-11-19 — `85eecce` — C38 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/tags` (index shape, `prefix` filter, `limit` 422 + unknown-project `project_not_found` 404 envelopes) and `GET /api/v1/assets/{id}/impact` (derived shape, `asset_not_found` 404 + `max_depth` 422 envelopes), registering one tagged asset on demand so both derived 200 shapes are exercised — the CI follow-up from C33/C34 and C36/C37. No unchecked CI row remained, so C38 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (28/28 probes OK) and with pinned actionlint; frontend lint/test (265)/build and backend pytest (565) green. README CI endpoint list is a docs-accuracy follow-up (C6).
