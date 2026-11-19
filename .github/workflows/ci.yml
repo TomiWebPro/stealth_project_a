@@ -296,6 +296,54 @@ jobs:
               check("impact/tags seeded asset setup", False,
                     "could not register an asset for the derived-endpoint probes")
 
+          # Authoritative job execution statistics (C40) is the newest /api/v1
+          # URL the live client calls (getJobStats). Probe the zero-filled
+          # snapshot shape, the optional project scope and the shared 404/422
+          # envelopes, keeping CI aligned with new endpoints as they go live.
+          stats = httpx.get(f"{base}/jobs/stats", timeout=5)
+          jsbody = stats.json() if stats.status_code == 200 else {}
+          check("jobs/stats 200 snapshot shape",
+                stats.status_code == 200 and all(
+                    k in jsbody for k in ("total", "by_status", "by_operation",
+                                          "success_rate", "in_flight", "completed",
+                                          "average_duration_seconds", "generated_at")),
+                stats.text)
+          check("jobs/stats breakdown shapes",
+                isinstance(jsbody.get("by_status"), list)
+                and all(isinstance(s, dict) and "status" in s and "count" in s
+                        for s in jsbody["by_status"])
+                and isinstance(jsbody.get("by_operation"), list)
+                and all(isinstance(op, dict) and all(
+                    k in op for k in ("operation_id", "total", "succeeded", "failed"))
+                    for op in jsbody["by_operation"]),
+                stats.text)
+          if project_id:
+              stats_scoped = httpx.get(
+                  f"{base}/jobs/stats", params={"project_id": project_id}, timeout=5)
+              sbody = stats_scoped.json() if stats_scoped.status_code == 200 else {}
+              check("jobs/stats project scope 200",
+                    stats_scoped.status_code == 200
+                    and isinstance(sbody.get("by_status"), list),
+                    stats_scoped.text)
+          else:
+              check("jobs/stats project scope setup", False,
+                    "could not obtain a project id")
+          stats_missing = httpx.get(
+              f"{base}/jobs/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          j404body = stats_missing.json() if stats_missing.status_code == 404 else {}
+          check("jobs/stats 404 shared envelope",
+                stats_missing.status_code == 404
+                and j404body.get("error", {}).get("code") == "project_not_found"
+                and bool(j404body.get("error", {}).get("request_id")), stats_missing.text)
+          stats_bad = httpx.get(
+              f"{base}/jobs/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          jbadbody = stats_bad.json() if stats_bad.status_code == 422 else {}
+          check("jobs/stats 422 validation envelope",
+                stats_bad.status_code == 422
+                and jbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(jbadbody.get("error", {}).get("request_id")), stats_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
