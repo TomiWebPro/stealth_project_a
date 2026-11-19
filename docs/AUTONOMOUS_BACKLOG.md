@@ -1945,6 +1945,20 @@ this file is the execution checklist.
   so C162 was added under the Never-empty well.
   ✅ 2026-11-19 — `0ab0bb3`
 
+- [x] C163 (mocks) Wire the authoritative organization feed API (C161
+  follow-up) end to end: expose `getOrganizationFeed` / `useOrganizationFeed`
+  atomically across mockApi (newest-first `(created_at, id)` organization feed
+  with joined member/project activity counts, orphan-member and unknown-org-
+  project exclusion, whole-scope `total` before the `limit` page, router-style
+  422 for an invalid limit + injectable `organizationFeed` failure), the stable
+  `ApiClient` facade, live `httpApiClient` (`GET /orgs/feed?limit=`), `queryKeys`
+  and `useQueries`, with a shared `lib/organizationFeed` derivation/validation
+  helper and populated/empty/error tests; parity guard extended to both
+  transports. Resolves the C161 mocks-transport follow-up. My owned column had
+  no unchecked rows, so C163 was added under the Never-empty well.
+  ✅ 2026-11-19 — `2b9c330`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2146,3 +2160,4 @@ this file is the execution checklist.
 - 2026-11-19 — `e817534` — C160 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/lineage/feed?project_id=&limit=` asset lineage feed (the C157/C159 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined asset/project names + canonical relationship type/timestamps, newest-first `(created_at, id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, optional `project_id` scope (unknown → shared 404 `project_not_found`) and the shared 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — registering one child asset on demand so the derived feed is non-empty. No unchecked CI row remained, so C160 was added under the Never-empty well; resolves the C159 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (298 probes OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1048 tests/build green and backend pytest (997) green. Screens lineage-feed rendering remains a screens follow-up.
 - 2026-11-19 — `194bd45` — C161 (backend): added authoritative `GET /api/v1/orgs/feed?limit=` (alias `/organizations/feed`) — a newest-first, workspace-wide organization feed derived fresh from the authoritative `ORGANIZATIONS` store (no second index) with id/name/slug and joined member/project activity counts (orphan/malformed `_org_id` members and unknown-org projects excluded), a deterministic `(created_at, org_id)` tie-break and a whole-scope `total` before the `limit` page; shared 422 envelope for an invalid limit and literal paths registered before `/orgs/{org_id}`. `OrganizationFeed`/`OrganizationFeedItem` mirrored in `frontend/src/types/organizationFeed.ts` + exported from the types index, README endpoint list synced, 9 tests × 2 storage backends green (1015 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items, so C161 was added under the Never-empty well.
 - 2026-11-19 — `0ab0bb3` — C162 (screens): rendered the authoritative asset lineage feed (C157/C159/C160 follow-up) via `useLineageFeed` — a reusable `LineageFeedPanel` on Projects (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first typed relationship rows showing source → target asset names, joined project name, a relationship-type badge and creation recency, with source and (live-target-only) target deep links that scope the assets browser first, plus loading/error/missing/empty/populated states — every display value derived in tested `lineageFeedHelpers` (8 new tests). Resolves the C160 screens follow-up; lint clean, 1056 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C162 was added under the Never-empty well.
+- 2026-11-19 — `2b9c330` — C163 (mocks): wired the authoritative organization feed (C161 follow-up) end to end — `getOrganizationFeed`/`useOrganizationFeed` atomically across mockApi (newest-first `(created_at, id)` organization derivation with joined member/project activity counts, orphan-member/unknown-org-project exclusion, whole-scope `total` before the `limit` page, router-style 422 for an invalid limit + injectable `organizationFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /orgs/feed?limit=`), queryKeys and useQueries, with a shared `lib/organizationFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C161 mocks-transport follow-up; lint clean, 1063 tests, build green. My owned column had no unchecked rows, so C163 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
