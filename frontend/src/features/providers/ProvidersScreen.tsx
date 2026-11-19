@@ -19,6 +19,7 @@ import {
   providerOperationIds,
   providerStatusTone,
 } from "./helpers";
+import { ProviderStatsPanel } from "./ProviderStatsPanel";
 
 function HealthOverview({ providers }: { readonly providers: readonly Provider[] }) {
   const summary = providerHealthSummary(providers);
@@ -138,6 +139,11 @@ export function ProvidersScreen() {
               </label>
             </div>
           </Card>
+
+          <ProviderStatsPanel
+            location={location === "all" ? undefined : location}
+            status={status === "all" ? undefined : status}
+          />
 
           <Card>
             <div className="p-4">
