@@ -2423,6 +2423,26 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `21c5851`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C192 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  operation catalog feed endpoint from C189/C191
+  (`GET /api/v1/operations/feed?streaming=&provider_id=&limit=`): probe the feed
+  shape (`items`/`total`/`generated_at`), compact operation-card item shapes
+  (identity/display, `schema_version`, input/output asset types, settings count,
+  streaming flag, sorted/deduplicated provider bindings + matching
+  `provider_count`) with ascending `(title, operation_id)` order and provider-count
+  invariants, whole-scope `total` before the `limit` page (agrees with
+  `/operations/stats` total), the `streaming`/`provider_id` filters (including an
+  unknown provider yielding a zero-filled 200) and the shared 422
+  `validation_error` envelopes (invalid streaming + invalid limit) with request-id,
+  keeping CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client
+  calls as the repo grows. No unchecked CI row remained, so C192 was added under
+  the Never-empty well; resolves the C191 CI live-smoke follow-up. Verified the
+  exact embedded smoke script against a real ASGI server on a dynamically chosen
+  free port (347 checks OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`);
+  frontend lint clean/1285 tests/build green and backend pytest (1159) green.
+  ✅ 2026-11-19 — `5b4cb0f`
+  Screens operation-feed rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2652,3 +2672,4 @@ this file is the execution checklist.
 - 2026-11-19 — `5775830` — C189 (backend): added authoritative `GET /api/v1/operations/feed?streaming=&provider_id=&limit=` — a bounded, deterministic operation-catalog feed projected fresh from the authoritative static versioned catalog (no second index; the same registry job submission validates against and `/operations/stats` aggregates) — compact operation cards (identity/display, schema_version, input/output asset types, settings count, streaming flag, sorted/deduplicated provider bindings + count) ordered ascending `(title, operation_id)` with a whole-scope `total` before the `limit` page; optional `streaming`/`provider_id` filters narrow both with a shared 422 envelope, and the literal feed path is registered before `/operations/{operation_id}`. `OperationFeed`/`OperationFeedItem` mirrored in `frontend/src/types/operationFeed.ts` + exported from the types index, README endpoint list synced, 10 tests × 2 storage backends green (1159 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C189 was added under the Never-empty well.
 - 2026-11-19 — `5c657d4` — C190 (screens): rendered the authoritative provider feed (C185/C187/C188 follow-up) via `useProviderFeed` — a reusable `ProviderFeedPanel` on the Providers screen with location/status/page-size filter chips synced to the existing selects, ascending name-ordered rows showing provider name/id, location/status/capability badges and a humanized advertised-operation preview, and all five UI states — every display value derived in 16 new tested `providerFeedHelpers` cases. Resolves the C187/C188 screens follow-up. Lint clean, 1270 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C190 was added under the Never-empty well.
 - 2026-11-19 — `21c5851` — C191 (mocks): wired the authoritative operation catalog feed (C189 follow-up) end to end — `getOperationFeed`/`useOperationFeed` atomically across mockApi (seed-derived compact operation cards with sorted/deduplicated provider bindings and `provider_count`, ascending `(title, operation_id)` order, `streaming`/`provider_id` filters, whole-scope `total` before the `limit` page, router-style 422 for an invalid boolean streaming filter / provider id / limit + injectable `operationFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /operations/feed?streaming=&provider_id=&limit=`), queryKeys and useQueries, with a shared `lib/operationFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C189 mocks-transport follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C191 was added under the Never-empty well. Lint clean, 1285 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-19 — `5b4cb0f` — C192 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/operations/feed?streaming=&provider_id=&limit=` operation catalog feed (the C189/C191 follow-up) — feed shape (`items`/`total`/`generated_at`), compact operation-card item shapes (identity/display, `schema_version`, input/output asset types, settings count, streaming flag, sorted/deduplicated provider bindings + matching `provider_count`), ascending `(title, operation_id)` order, whole-scope `total` before the `limit` page (agrees with `/operations/stats` total), the `streaming`/`provider_id` filters (unknown provider → zero-filled 200) and the shared 422 `validation_error` envelopes (invalid streaming + invalid limit) with request-id. No unchecked CI row remained, so C192 was added under the Never-empty well; resolves the C191 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (347 checks OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1285 tests/build green and backend pytest (1159) green. Screens operation-feed rendering remains a screens follow-up.
