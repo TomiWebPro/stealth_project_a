@@ -95,6 +95,9 @@ All paths are prefixed with `/api/v1`.
   `GET|POST /jobs`, `GET /jobs/{id}`, `GET /jobs/{id}/events`,
   `POST /jobs/{id}/cancel|retry|run`,
   `GET /jobs/{id}/events/stream` (SSE, `since`/`idle_timeout`)
+  `GET /jobs/{id}/logs?level=&since_seq=&limit=` — authoritative per-job
+  execution log (chronological, severity-filtered, cursor-paginated entries with
+  a total) derived from the job event store; shared 404/422 envelopes
   `GET /events/stats?project_id=` — authoritative job-event stream metrics
   (zero-filled event-type breakdown, per-job event counts with recency and
   newest-event recency) derived from the authoritative job event store; an

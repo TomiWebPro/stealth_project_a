@@ -35,5 +35,6 @@ export * from "./pipelineStats";
 export * from "./lineageStats";
 export * from "./uploadStats";
 export * from "./eventStats";
+export * from "./jobLogs";
 export * from "./retryStats";
 export * from "./versionStats";
