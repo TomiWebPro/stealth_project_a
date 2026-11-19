@@ -53,6 +53,8 @@ import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import { orchestrationStatsQueryParams } from "./orchestrationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
+import { pipelineFeedQueryParams } from "./pipelineFeed";
+import type { PipelineFeedOptions } from "./pipelineFeed";
 import { pipelineStatsQueryParams } from "./pipelineStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
@@ -122,6 +124,7 @@ import type {
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
+  PipelineFeed,
   PipelineStats,
   Presence,
   Project,
@@ -416,6 +419,11 @@ export function createHttpApiClient(
     /** Authoritative production-pipeline metrics derived by `/pipelines/stats`. */
     getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats> {
       return request<PipelineStats>("/pipelines/stats", pipelineStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative production-pipeline feed derived by `/pipelines/feed` (C177). */
+    getPipelineFeed(options?: PipelineFeedOptions): Promise<PipelineFeed> {
+      return request<PipelineFeed>("/pipelines/feed", pipelineFeedQueryParams(options));
     },
 
     /** Authoritative asset-lineage metrics derived by `/lineage/stats`. */

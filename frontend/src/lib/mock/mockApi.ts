@@ -72,6 +72,8 @@ import {
   validateOrchestrationStatsArgs,
 } from "../orchestrationStats";
 import type { OrchestrationStatsOptions } from "../orchestrationStats";
+import { derivePipelineFeed, validatePipelineFeedArgs } from "../pipelineFeed";
+import type { PipelineFeedOptions } from "../pipelineFeed";
 import {
   derivePipelineStats,
   validatePipelineStatsArgs,
@@ -140,6 +142,7 @@ import type {
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
+  PipelineFeed,
   PipelineStats,
   Presence,
   Project,
@@ -214,7 +217,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -595,6 +598,28 @@ export async function fetchPipelineStats(
     });
   }
   return delay(derivePipelineStats(PIPELINE_CHAINS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative production-pipeline feed (C177) derived from the same three
+ * chain/project seeds as the live `/pipelines/feed` endpoint. Router-style 422
+ * validation (project id / kind / limit), a normalized 404 for an unknown
+ * project scope and the `"pipelineFeed"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchPipelineFeed(
+  options?: PipelineFeedOptions,
+): Promise<PipelineFeed> {
+  failIfEnabled("pipelineFeed");
+  validatePipelineFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(derivePipelineFeed(PIPELINE_CHAINS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

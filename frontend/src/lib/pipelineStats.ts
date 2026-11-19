@@ -32,6 +32,7 @@ export interface PipelineChainRecord {
   readonly id: string;
   readonly project_id: string;
   readonly created_at: string;
+  readonly created_by?: string;
   readonly job_ids?: readonly string[] | null;
   readonly job_id?: string | null;
   readonly [key: string]: unknown;
@@ -60,13 +61,13 @@ export function validatePipelineStatsArgs(options: PipelineStatsOptions = {}): v
 }
 
 /** Jobs spawned by a chain: a `job_ids` list or a single `job_id`. */
-function jobCount(chain: PipelineChainRecord): number {
+export function jobCount(chain: PipelineChainRecord): number {
   if (chain.job_ids != null) return chain.job_ids.length;
   return chain.job_id != null ? 1 : 0;
 }
 
 /** Asset references produced by a chain: every non-null `*_asset_id` field. */
-function assetCount(chain: PipelineChainRecord): number {
+export function assetCount(chain: PipelineChainRecord): number {
   return Object.keys(chain).filter(
     (field) => field.endsWith("_asset_id") && chain[field] != null,
   ).length;

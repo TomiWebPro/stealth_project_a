@@ -1196,6 +1196,67 @@ describe("createHttpApiClient pipeline stats", () => {
   });
 });
 
+describe("createHttpApiClient /pipelines/feed", () => {
+  const feed = {
+    items: [
+      {
+        chain_id: "0b5c1e2a-4000-4000-8000-000000000002",
+        project_id: "0b5c1e2a-1000-4000-8000-000000000005",
+        project_name: "Moonshot — Short Film",
+        kind: "shot",
+        job_count: 1,
+        asset_count: 1,
+        created_by: "0b5c1e2a-0000-4000-8000-0000000000aa",
+        created_at: "2026-01-06T00:00:00Z",
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /pipelines/feed with filters and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/pipelines/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getPipelineFeed({
+        projectId: "0b5c1e2a-1000-4000-8000-000000000005",
+        kind: "shot",
+        limit: 2,
+      }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/pipelines/feed`);
+    expect(url.searchParams.get("project_id")).toBe("0b5c1e2a-1000-4000-8000-000000000005");
+    expect(url.searchParams.get("kind")).toBe("shot");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no filters or page are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/pipelines/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getPipelineFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Feed limit must be between 1 and 200." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getPipelineFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Feed limit must be between 1 and 200.",
+    });
+  });
+});
+
 describe("createHttpApiClient lineage stats", () => {
   const stats = {
     total_relationships: 3,

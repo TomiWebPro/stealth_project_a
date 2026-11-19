@@ -27,6 +27,7 @@ import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
+import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
 import type { ProjectFeedOptions } from "./projectFeed";
@@ -80,6 +81,7 @@ import type {
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
+  PipelineFeed,
   PipelineStats,
   Presence,
   Project,
@@ -153,6 +155,8 @@ export interface ApiClient {
   getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats>;
   /** Authoritative production-pipeline metrics derived by `/pipelines/stats`, optionally project-scoped (C73). */
   getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats>;
+  /** Newest-first authoritative production-pipeline feed derived by `/pipelines/feed`, optionally project/kind-scoped (C177). */
+  getPipelineFeed(options?: PipelineFeedOptions): Promise<PipelineFeed>;
   /** Authoritative asset-lineage metrics derived by `/lineage/stats`, optionally project-scoped (C77). */
   getLineageStats(options?: LineageStatsOptions): Promise<LineageStats>;
   /** Newest-first authoritative asset lineage feed derived by `/lineage/feed`, optionally project-scoped (C157). */
@@ -260,6 +264,7 @@ export const mockApiClient: ApiClient = {
   getOrganizationFeed: mockApi.fetchOrganizationFeed,
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getPipelineStats: mockApi.fetchPipelineStats,
+  getPipelineFeed: mockApi.fetchPipelineFeed,
   getLineageStats: mockApi.fetchLineageStats,
   getLineageFeed: mockApi.fetchLineageFeed,
   getCollaborationStats: mockApi.fetchCollaborationStats,

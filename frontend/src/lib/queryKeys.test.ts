@@ -171,6 +171,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the pipeline feed key by project, kind and limit", () => {
+    expect(queryKeys.pipelineFeed.feed()).toEqual([
+      "pipeline-feed",
+      "feed",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.pipelineFeed.feed({ projectId: "p1", kind: "shot", limit: 5 })).toEqual([
+      "pipeline-feed",
+      "feed",
+      "p1",
+      "shot",
+      5,
+    ]);
+  });
+
   it("scopes the lineage stats key by project", () => {
     expect(queryKeys.lineageStats.summary()).toEqual(["lineage-stats", "summary", "all"]);
     expect(queryKeys.lineageStats.summary({ projectId: "p1" })).toEqual([

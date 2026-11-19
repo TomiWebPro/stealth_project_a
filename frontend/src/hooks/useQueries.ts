@@ -29,6 +29,7 @@ import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
+import type { PipelineFeedOptions } from "../lib/pipelineFeed";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectFeedOptions } from "../lib/projectFeed";
@@ -82,6 +83,7 @@ import type {
   OrganizationStats,
   OrchestrationRun,
   OrchestrationStats,
+  PipelineFeed,
   PipelineStats,
   Presence,
   Project,
@@ -295,6 +297,17 @@ export function usePipelineStats(
   return useQuery({
     queryKey: queryKeys.pipelineStats.summary(options),
     queryFn: () => api.getPipelineStats(options),
+  });
+}
+
+/** Newest-first authoritative production-pipeline feed from `/pipelines/feed`, optionally project/kind-scoped (C177). */
+export function usePipelineFeed(
+  options?: PipelineFeedOptions,
+): UseQueryResult<PipelineFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.pipelineFeed.feed(options),
+    queryFn: () => api.getPipelineFeed(options),
   });
 }
 

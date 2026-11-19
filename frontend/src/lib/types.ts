@@ -97,6 +97,8 @@ export type {
   OrchestrationStage,
   OrchestrationStageCount,
   OrchestrationStats,
+  PipelineFeed,
+  PipelineFeedItem,
   PipelineKind,
   PipelineKindStats,
   PipelineProjectCount,
