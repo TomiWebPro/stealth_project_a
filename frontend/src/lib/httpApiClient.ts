@@ -9,6 +9,8 @@ import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
+import { collaborationStatsQueryParams } from "./collaborationStats";
+import type { CollaborationStatsOptions } from "./collaborationStats";
 import { conversationStatsQueryParams } from "./conversationStats";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
@@ -43,6 +45,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationStats,
   Comment,
   Conversation,
   ConversationStats,
@@ -299,6 +302,14 @@ export function createHttpApiClient(
     /** Authoritative asset-lineage metrics derived by `/lineage/stats`. */
     getLineageStats(options?: LineageStatsOptions): Promise<LineageStats> {
       return request<LineageStats>("/lineage/stats", lineageStatsQueryParams(options));
+    },
+
+    /** Authoritative collaboration metrics derived by `/collaboration/stats`. */
+    getCollaborationStats(options?: CollaborationStatsOptions): Promise<CollaborationStats> {
+      return request<CollaborationStats>(
+        "/collaboration/stats",
+        collaborationStatsQueryParams(options),
+      );
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

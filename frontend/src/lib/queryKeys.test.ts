@@ -100,6 +100,19 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the collaboration stats key by project", () => {
+    expect(queryKeys.collaborationStats.summary()).toEqual([
+      "collaboration-stats",
+      "summary",
+      "all",
+    ]);
+    expect(queryKeys.collaborationStats.summary({ projectId: "p1" })).toEqual([
+      "collaboration-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes the provider stats key by location and status", () => {
     expect(queryKeys.providerStats.summary()).toEqual([
       "provider-stats",

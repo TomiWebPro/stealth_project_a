@@ -10,6 +10,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchCollaborationStats,
   fetchComments,
   fetchConversation,
   fetchConversations,
@@ -79,6 +80,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchOrganizationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
@@ -214,6 +216,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchLineageStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the collaboration stats domain", async () => {
+    setMockFailure("collaborationStats");
+
+    await expect(fetchCollaborationStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchCollaborationStats()).resolves.toBeDefined();
   });
 
   it("exposes injectable failures for the tags and impact domains", async () => {

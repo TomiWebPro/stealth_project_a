@@ -2,6 +2,7 @@ import type { ActivityOptions } from "./activity";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
+import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
@@ -25,6 +26,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationStats,
   Comment,
   Conversation,
   ConversationStats,
@@ -89,6 +91,8 @@ export interface ApiClient {
   getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats>;
   /** Authoritative asset-lineage metrics derived by `/lineage/stats`, optionally project-scoped (C77). */
   getLineageStats(options?: LineageStatsOptions): Promise<LineageStats>;
+  /** Authoritative collaboration metrics derived by `/collaboration/stats`, optionally project-scoped (C81). */
+  getCollaborationStats(options?: CollaborationStatsOptions): Promise<CollaborationStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -149,6 +153,7 @@ export const mockApiClient: ApiClient = {
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getPipelineStats: mockApi.fetchPipelineStats,
   getLineageStats: mockApi.fetchLineageStats,
+  getCollaborationStats: mockApi.fetchCollaborationStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

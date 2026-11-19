@@ -1,6 +1,7 @@
 import type { ActivityOptions } from "./activity";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
+import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { ExtensionStatsOptions } from "./extensionStats";
@@ -79,6 +80,10 @@ export const queryKeys = {
   lineageStats: {
     summary: (options: LineageStatsOptions = {}) =>
       ["lineage-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  collaborationStats: {
+    summary: (options: CollaborationStatsOptions = {}) =>
+      ["collaboration-stats", "summary", options.projectId ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

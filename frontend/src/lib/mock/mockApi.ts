@@ -7,6 +7,11 @@ import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
 import {
+  deriveCollaborationStats,
+  validateCollaborationStatsArgs,
+} from "../collaborationStats";
+import type { CollaborationStatsOptions } from "../collaborationStats";
+import {
   deriveConversationStats,
   validateConversationStatsArgs,
 } from "../conversationStats";
@@ -53,6 +58,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationStats,
   Comment,
   Conversation,
   ConversationStats,
@@ -127,8 +133,9 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats` and
- * `lineageStats`. Always reset with {@link clearMockFailures} afterwards.
+ * `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `lineageStats` and `collaborationStats`. Always reset with
+ * {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -405,6 +412,28 @@ export async function fetchLineageStats(
   return delay(
     deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options),
   );
+}
+
+/**
+ * Authoritative collaboration metrics (C81) derived from the same presence and
+ * comment seeds as the live `/collaboration/stats` endpoint. Router-style 422
+ * validation, a normalized 404 for an unknown project scope and the
+ * `"collaborationStats"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchCollaborationStats(
+  options?: CollaborationStatsOptions,
+): Promise<CollaborationStats> {
+  failIfEnabled("collaborationStats");
+  validateCollaborationStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveCollaborationStats(PRESENCE, COMMENTS, REFERENCE_NOW, options));
 }
 
 /**

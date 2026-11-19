@@ -6,6 +6,7 @@ import type { ActivityOptions } from "../lib/activity";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
+import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
@@ -27,6 +28,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationStats,
   Comment,
   Conversation,
   ConversationStats,
@@ -171,6 +173,17 @@ export function useLineageStats(
   return useQuery({
     queryKey: queryKeys.lineageStats.summary(options),
     queryFn: () => api.getLineageStats(options),
+  });
+}
+
+/** Authoritative collaboration metrics from `/collaboration/stats`, optionally project-scoped (C81). */
+export function useCollaborationStats(
+  options?: CollaborationStatsOptions,
+): UseQueryResult<CollaborationStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.collaborationStats.summary(options),
+    queryFn: () => api.getCollaborationStats(options),
   });
 }
 

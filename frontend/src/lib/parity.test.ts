@@ -7,6 +7,10 @@ import type { ActivityOptions } from "./activity";
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
+import {
+  deriveCollaborationStats,
+  validateCollaborationStatsArgs,
+} from "./collaborationStats";
 import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import type { ApiClient } from "./apiClient";
@@ -474,6 +478,28 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options);
   }
 
+  // Authoritative collaboration stats are derived from the presence + comment
+  // stores on every call; reproduce the router's 422 validation, unknown-project
+  // 404 and the repository derivation over the shared seeds so live and mock
+  // agree exactly.
+  if (path === "/collaboration/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateCollaborationStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveCollaborationStats(PRESENCE, COMMENTS, REFERENCE_NOW, options);
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -597,6 +623,8 @@ describe("live vs mock transport parity", () => {
       ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
       ["getLineageStats", (api) => api.getLineageStats()],
       ["getLineageStats scoped", (api) => api.getLineageStats({ projectId: filmId })],
+      ["getCollaborationStats", (api) => api.getCollaborationStats()],
+      ["getCollaborationStats scoped", (api) => api.getCollaborationStats({ projectId: filmId })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -662,6 +690,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getLineageStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getLineageStats({ projectId: emptyId }),
+    );
+    expect(await live.getCollaborationStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getCollaborationStats({ projectId: emptyId }),
     );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
@@ -786,6 +817,21 @@ describe("live vs mock transport parity", () => {
     expect(mockLineage422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveLineage422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown collaboration-stats project
+    // scope and reject a malformed project id with the same 422 envelope.
+    const [mockCollab404, liveCollab404] = await Promise.all([
+      mockApiClient.getCollaborationStats({ projectId: missingId }).catch((cause) => cause),
+      live.getCollaborationStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockCollab404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveCollab404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockCollab422, liveCollab422] = await Promise.all([
+      mockApiClient.getCollaborationStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getCollaborationStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockCollab422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveCollab422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill for an unknown (well-formed) org scope and
     // reject a malformed org id with the same 422 envelope.
     expect(await live.getProjectStats({ orgId: missingId })).toEqual(
@@ -888,6 +934,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getLineageStats).toBe("function");
+    expect(typeof typed.getCollaborationStats).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
   });
 });

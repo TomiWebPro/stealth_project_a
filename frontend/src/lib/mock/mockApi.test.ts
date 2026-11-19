@@ -4,11 +4,13 @@ import type { StreamEvent } from "../../types";
 import {
   ASSETS,
   ASSET_RELATIONSHIPS,
+  COMMENTS,
   CONVERSATIONS,
   EXTENSIONS,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   PIPELINE_CHAINS,
+  PRESENCE,
   PROJECTS,
   PROVIDERS,
   REFERENCE_NOW,
@@ -22,6 +24,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchCollaborationStats,
   fetchConversation,
   fetchComments,
   fetchConversations,
@@ -440,6 +443,61 @@ describe("mock API lineage stats (C77 follow-up)", () => {
 
     setMockFailure("lineageStats");
     await expect(fetchLineageStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API collaboration stats (C81 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a populated snapshot from the authoritative presence/comment seeds", async () => {
+    const stats = await fetchCollaborationStats();
+    expect(stats.total_presence).toBe(PRESENCE.length);
+    expect(stats.total_comments).toBe(COMMENTS.length);
+    expect(stats.by_state?.reduce((sum, entry) => sum + entry.count, 0)).toBe(PRESENCE.length);
+    expect(stats.by_state?.map((entry) => entry.state)).toEqual(["online", "away", "offline"]);
+    expect((stats.by_project ?? []).length).toBeGreaterThan(0);
+    expect(stats.total_participants).toBeGreaterThan(0);
+    expect(stats.newest_presence_at).toBeTruthy();
+    expect(stats.newest_comment_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project and zero-fills an unseeded project", async () => {
+    const scoped = await fetchCollaborationStats({ projectId: filmId });
+    expect(scoped.by_project).toEqual([
+      {
+        project_id: filmId,
+        comments: COMMENTS.filter((comment) => comment.project_id === filmId).length,
+        presence: PRESENCE.filter((entry) => entry.project_id === filmId).length,
+      },
+    ]);
+    expect(scoped.total_presence).toBeGreaterThan(0);
+
+    const empty = await fetchCollaborationStats({ projectId: emptyId });
+    expect(empty.total_presence).toBe(0);
+    expect(empty.total_comments).toBe(0);
+    expect(empty.total_participants).toBe(0);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_presence_at).toBeNull();
+    expect(empty.newest_comment_at).toBeNull();
+    expect(empty.by_state?.every((entry) => entry.count === 0)).toBe(true);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchCollaborationStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchCollaborationStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("collaborationStats");
+    await expect(fetchCollaborationStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
