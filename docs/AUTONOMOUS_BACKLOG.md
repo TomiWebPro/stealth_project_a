@@ -1117,6 +1117,23 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `7a65bab`
   Screens event-stats rendering remains a screens follow-up.
 
+- [x] C105 (backend) Authoritative job retry statistics API:
+  `GET /api/v1/retries/stats?project_id=` derives accepted-retry totals,
+  distinct retried-job counts, a zero-filled retried-jobs-by-current-status
+  breakdown (queued/running/succeeded/failed/canceled) and per-project retry/
+  job activity from the authoritative `JOB_RETRIES` idempotency ledger joined to
+  jobs (orphans excluded, idempotent replays collapse), with newest retried-job
+  activity recency (the timestamp-free ledger uses the joined job's latest
+  created/started/finished signal) and deterministic cross-backend ordering;
+  optional `project_id` scope (unknown → shared 404 `project_not_found`,
+  malformed → shared 422); `RetryStats`/`RetryStatusCount`/`RetryProjectCount`
+  mirrored in `frontend/src/types/retryStats.ts`, README endpoint list synced,
+  5 tests × 2 storage backends green (761 passed, contract parity + route-surface
+  guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up.
+  My owned backend column had no unchecked items (only the repo-wide C6 docs
+  pass remains, owned by other agents), so C105 was added under the Never-empty
+  well. ✅ 2026-11-19 — `9db35b3`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1260,3 +1277,4 @@ this file is the execution checklist.
 - 2026-11-19 — `4dd4ed1` — C102 (screens): rendered the authoritative upload statistics (C97/C99/C100 follow-up) via `useUploadStats` — a reusable `UploadStatsPanel` on Home (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled pending/complete status and per-project ticket activity breakdowns, and all five UI states; every display value derived in tested `uploadStatsHelpers`. Resolves the C100 screens follow-up. Lint clean, 691 tests, build green. My owned column had no unchecked rows, so C102 was added under the Never-empty well.
 - 2026-11-19 — `a740483` — C103 (mocks): wired the authoritative job event stream statistics API (C101 follow-up) end to end — `getEventStats`/`useEventStats` atomically across mockApi (seed-derived zero-filled per-type buckets, per-job event activity with recency, event→job join for project scope with orphan exclusion, router-style 422 for a malformed project id + unknown-project 404 + injectable `eventStats` failure), the stable facade, live `httpApiClient` (`GET /events/stats?project_id=`), queryKeys and useQueries, with a shared `lib/eventStats` derivation/validation helper and `JOB_EVENTS` seeds; parity guard extended to both transports. My owned column had no unchecked rows, so C103 was added under the Never-empty well. Lint clean, 705 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `7a65bab` — C104 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/events/stats` (zero-filled snapshot + by_type/by_job breakdown shapes, the six canonical event types status/progress/intermediate/result/error/log, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C101/C103. No unchecked CI row remained, so C104 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (107/107 probes OK) with actionlint v1.7.12 + YAML parse; frontend lint/test (705)/build and backend pytest (751) green. Screens event-stats rendering remains a screens follow-up.
+- 2026-11-19 — `9db35b3` — C105 (backend): added authoritative `GET /api/v1/retries/stats?project_id=` deriving accepted-retry totals, distinct retried-job counts, a zero-filled retried-jobs-by-status breakdown, per-project retry/job activity and newest retried-job recency from the authoritative `JOB_RETRIES` idempotency ledger joined to jobs (orphans excluded); `RetryStats`/`RetryStatusCount`/`RetryProjectCount` mirrored in `frontend/src/types/retryStats.ts`, README endpoint list synced, 5 tests × 2 backends green (761 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C105 was added under the Never-empty well.
