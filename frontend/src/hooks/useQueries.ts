@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
 import type { ActivityOptions } from "../lib/activity";
+import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
@@ -17,6 +18,7 @@ import type {
   ActivityFeed,
   Asset,
   AssetImpact,
+  AssetStats,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -74,6 +76,15 @@ export function useJobStats(options?: JobStatsOptions): UseQueryResult<JobStats>
   return useQuery({
     queryKey: queryKeys.jobStats.summary(options),
     queryFn: () => api.getJobStats(options),
+  });
+}
+
+/** Authoritative asset inventory metrics from `/assets/stats`, optionally project-scoped (C49). */
+export function useAssetStats(options?: AssetStatsOptions): UseQueryResult<AssetStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.assetStats.summary(options),
+    queryFn: () => api.getAssetStats(options),
   });
 }
 

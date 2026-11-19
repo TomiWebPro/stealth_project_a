@@ -2,6 +2,8 @@ import { ApiError } from "../api/client";
 import { parseStreamEvent } from "../api/conversations";
 import { activityQueryParams } from "./activity";
 import type { ActivityOptions } from "./activity";
+import { assetStatsQueryParams } from "./assetStats";
+import type { AssetStatsOptions } from "./assetStats";
 import { auditQueryParams } from "./audit";
 import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
@@ -26,6 +28,7 @@ import type {
   ActivityFeed,
   Asset,
   AssetImpact,
+  AssetStats,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -234,6 +237,11 @@ export function createHttpApiClient(
     /** Authoritative job execution metrics derived by the backend `/jobs/stats`. */
     getJobStats(options?: JobStatsOptions): Promise<JobStats> {
       return request<JobStats>("/jobs/stats", jobStatsQueryParams(options));
+    },
+
+    /** Authoritative asset inventory metrics derived by the backend `/assets/stats`. */
+    getAssetStats(options?: AssetStatsOptions): Promise<AssetStats> {
+      return request<AssetStats>("/assets/stats", assetStatsQueryParams(options));
     },
 
     /** Authoritative conversation metrics derived by the backend `/conversations/stats`. */

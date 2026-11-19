@@ -1,6 +1,8 @@
 import { ApiError } from "../../api/client";
 import { deriveActivityFeed, validateActivityArgs } from "../activity";
 import type { ActivityOptions } from "../activity";
+import { deriveAssetStats, validateAssetStatsArgs } from "../assetStats";
+import type { AssetStatsOptions } from "../assetStats";
 import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
@@ -26,6 +28,7 @@ import type { TagOptions } from "../tags";
 import type {
   Asset,
   AssetImpact,
+  AssetStats,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -87,7 +90,7 @@ function delay<T>(value: T): Promise<T> {
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
- * `conversationStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `conversationStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -210,6 +213,27 @@ export async function fetchJobStats(
     });
   }
   return delay(deriveJobStats(JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative asset inventory metrics (C49) derived from the same asset store
+ * as the live `/assets/stats` endpoint. Router-style 422 validation, a 404 for an
+ * unknown project scope and the `"assetStats"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchAssetStats(
+  options?: AssetStatsOptions,
+): Promise<AssetStats> {
+  failIfEnabled("assetStats");
+  validateAssetStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveAssetStats(ASSETS.map(withAssetOverrides), REFERENCE_NOW, options));
 }
 
 /**

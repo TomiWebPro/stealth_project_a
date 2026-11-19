@@ -42,6 +42,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the asset stats key by project", () => {
+    expect(queryKeys.assetStats.summary()).toEqual(["asset-stats", "summary", "all"]);
+    expect(queryKeys.assetStats.summary({ projectId: "p1" })).toEqual([
+      "asset-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes the conversation stats key by project", () => {
     expect(queryKeys.conversationStats.summary()).toEqual([
       "conversation-stats",

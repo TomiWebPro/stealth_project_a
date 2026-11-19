@@ -6,6 +6,7 @@ import {
   clearMockFailures,
   fetchAsset,
   fetchAssetImpact,
+  fetchAssetStats,
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
@@ -62,6 +63,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchHomeSummary()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobs()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchAssetStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
@@ -90,6 +92,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchJobStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the asset stats domain", async () => {
+    setMockFailure("assetStats");
+
+    await expect(fetchAssetStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchAssetStats()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the conversation stats domain", async () => {

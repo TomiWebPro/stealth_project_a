@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
-import { CONVERSATIONS, PROJECTS } from "./data";
+import { ASSETS, CONVERSATIONS, PROJECTS } from "./data";
 import {
   clearMockFailures,
   fetchActivity,
   fetchAsset,
+  fetchAssetStats,
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
@@ -168,6 +169,57 @@ describe("mock API conversation stats (C45 follow-up)", () => {
 
     setMockFailure("conversationStats");
     await expect(fetchConversationStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API asset stats (C49 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+  const missingId = "00000000-0000-4000-8000-000000000000";
+
+  it("derives a populated snapshot from the authoritative asset seeds", async () => {
+    const stats = await fetchAssetStats();
+    expect(stats.total).toBe(ASSETS.filter((asset) => asset.status !== "deleted").length);
+    expect(stats.total_size_bytes).toBeGreaterThan(0);
+    expect(stats.total_versions).toBeGreaterThanOrEqual(stats.total);
+    expect(stats.newest_asset_at).toBeTruthy();
+    expect(stats.by_type?.reduce((sum, entry) => sum + entry.count, 0)).toBe(stats.total);
+    expect(stats.by_status?.reduce((sum, entry) => sum + entry.count, 0)).toBe(stats.total);
+    expect(stats.generated_at).toBeTruthy();
+  });
+
+  it("scopes every metric to one project and yields zeros for an empty one", async () => {
+    const scoped = await fetchAssetStats({ projectId: filmId });
+    expect(scoped.total).toBe(
+      ASSETS.filter(
+        (asset) => asset.project_id === filmId && asset.status !== "deleted",
+      ).length,
+    );
+    expect(
+      (scoped.by_type ?? []).reduce((sum, entry) => sum + entry.count, 0),
+    ).toBe(scoped.total);
+
+    const empty = await fetchAssetStats({ projectId: emptyId });
+    expect(empty.total).toBe(0);
+    expect(empty.newest_asset_at).toBeNull();
+    expect(empty.total_size_bytes).toBe(0);
+  });
+
+  it("mirrors router validation, 404s unknown projects and surfaces the injected failure", async () => {
+    await expect(fetchAssetStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchAssetStats({ projectId: missingId })).rejects.toMatchObject({
+      status: 404,
+      code: "not_found",
+    });
+
+    setMockFailure("assetStats");
+    await expect(fetchAssetStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
