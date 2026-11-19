@@ -537,6 +537,14 @@ this file is the execution checklist.
   items, so C57 was added under the Never-empty well.
   ✅ 2026-11-19 — `b66143a`
 
+- [x] C58 (screens) Render the authoritative project portfolio stats (C53/C55/C56
+  follow-up) via `useProjectStats`: a reusable `ProjectStatsPanel` with workspace-wide
+  (Home, Projects) and org-scoped (Workspaces) variants, four stat cards, zero-filled
+  active/archived lifecycle breakdown, cross-domain totals and per-project averages,
+  and loading/error/missing/empty/populated states — all display values derived in
+  tested `projectStatsHelpers`. My owned column had no unchecked rows, so C58 was
+  added under the Never-empty well. ✅ 2026-11-19 — `4088ea4`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -633,3 +641,4 @@ this file is the execution checklist.
 - 2026-11-19 — `7d08eaf` — C55 (mocks): wired the authoritative project portfolio stats API (C53 follow-up) end to end — `getProjectStats`/`useProjectStats` across mockApi (seed-derived zero-filled lifecycle counts, org-scoped cross-domain totals, 3-decimal averages, newest-project recency with id tie-break, deleted-asset exclusion; 422 for malformed org id + zero-filled unknown org + injectable `projectStats` failure), the stable facade, live `httpApiClient` (`GET /projects/stats?org_id=`), `queryKeys` and `useQueries`, with a shared `lib/projectStats` helper; parity guard extended to both transports; lint clean, 383 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `b8e2007` — C56 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/projects/stats` (zero-filled snapshot + lifecycle breakdown shapes, optional `org_id` scope with an unknown-but-valid org yielding a zero-filled 200, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C53/C55. No unchecked CI row remained, so C56 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (45/45 probes OK) and with YAML parse + actionlint v1.7.12; frontend lint/test (383)/build and backend pytest (609) green. Screens project-stats rendering remains a screens follow-up.
 - 2026-11-19 — `b66143a` — C57 (backend): added authoritative `GET /api/v1/providers/stats?location=&status=` deriving zero-filled status/location breakdowns, capability/operation coverage (per-operation provider + available counts) from the provider store with optional filters (invalid values → shared 422); `ProviderStats` + 3 nested contracts mirrored in TS, README synced, 6 tests × 2 backends green (621 passed, contract parity + tsc clean). Mocks/screens/CI wiring is a follow-up. My backend column had no unchecked items, so C57 was added under the Never-empty well.
+- 2026-11-19 — `4088ea4` — C58 (screens): rendered the authoritative project portfolio stats via a reusable `ProjectStatsPanel` — workspace-wide on Home/Projects and org-scoped on Workspaces — with four stat cards, zero-filled lifecycle breakdown, cross-domain totals and per-project averages, all five UI states, and every display value derived in tested `projectStatsHelpers`; resolves the C53/C55/C56 screens follow-up. Lint clean, 394 tests, build green. My owned column had no unchecked rows, so C58 was added under the Never-empty well.
