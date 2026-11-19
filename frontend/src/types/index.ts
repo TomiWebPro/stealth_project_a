@@ -11,6 +11,7 @@ export * from "./activity";
 export * from "./audit";
 export * from "./auth";
 export * from "./conversation";
+export * from "./conversationStats";
 export * from "./asset";
 export * from "./operation";
 export * from "./provider";

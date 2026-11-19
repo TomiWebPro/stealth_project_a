@@ -97,6 +97,11 @@ from .conversation import (
     StreamEvent,
     StreamEventType,
 )
+from .conversation_stats import (
+    ConversationStats,
+    RoleMessageCount,
+    StatusMessageCount,
+)
 from .operation import (
     Job,
     JobCancelRequest,
@@ -239,6 +244,10 @@ __all__ = [
     "MessageStatus",
     "StreamEvent",
     "StreamEventType",
+    # conversation stats
+    "ConversationStats",
+    "RoleMessageCount",
+    "StatusMessageCount",
     # operation
     "Job",
     "JobCancelRequest",

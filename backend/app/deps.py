@@ -19,6 +19,7 @@ from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
 from .repositories.audit import AuditRepository
 from .repositories.conversations import ConversationRepository
+from .repositories.conversation_stats import ConversationStatsRepository
 from .repositories.dashboard import DashboardRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.impact import ImpactRepository
@@ -131,6 +132,12 @@ def get_conversation_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ConversationRepository:
     return repositories.conversations
+
+
+def get_conversation_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ConversationStatsRepository:
+    return repositories.conversation_stats
 
 
 def get_upload_repository(
@@ -254,6 +261,7 @@ __all__ = [
     "get_auth_repository",
     "get_bearer_token",
     "get_conversation_repository",
+    "get_conversation_stats_repository",
     "get_dashboard_repository",
     "get_extension_repository",
     "get_impact_repository",

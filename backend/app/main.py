@@ -26,6 +26,7 @@ from .routers import (
     audit,
     auth,
     conversations,
+    conversation_stats,
     dashboard,
     events,
     exports,
@@ -207,6 +208,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(audit.router, prefix=API_PREFIX)
     app.include_router(adapters.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
+    # "/conversations/stats" must be registered before "/conversations/{id}" so
+    # the literal path wins over the UUID-templated one.
+    app.include_router(conversation_stats.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
