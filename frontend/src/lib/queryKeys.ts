@@ -4,6 +4,7 @@ import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CollaborationStatsOptions } from "./collaborationStats";
+import type { CommentFeedOptions } from "./commentFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
@@ -89,6 +90,10 @@ export const queryKeys = {
   conversationFeed: {
     feed: (options: ConversationFeedOptions = {}) =>
       ["conversation-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
+  },
+  commentFeed: {
+    feed: (options: CommentFeedOptions = {}) =>
+      ["comment-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   projectStats: {
     summary: (options: ProjectStatsOptions = {}) =>

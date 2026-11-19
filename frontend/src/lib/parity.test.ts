@@ -18,6 +18,8 @@ import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationFeed, validateConversationFeedArgs } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
+import { deriveCommentFeed, validateCommentFeedArgs } from "./commentFeed";
+import type { CommentFeedOptions } from "./commentFeed";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
@@ -936,6 +938,32 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   if (path === "/presence") {
     return PRESENCE.filter((p) => p.project_id === params.get("project_id"));
   }
+  // Authoritative comment feed derives the same newest-first view as the
+  // `/comments/feed` endpoint from the shared comment/project seeds; mirror its
+  // 422 validation, unknown-project 404, page bound and repository derivation so
+  // live and mock agree exactly. This must precede the `/comments` branch below.
+  if (path === "/comments/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const limitRaw = params.get("limit");
+    const options: CommentFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateCommentFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveCommentFeed(COMMENTS, PROJECTS, REFERENCE_NOW, options);
+  }
+
   if (path === "/comments") {
     const assetId = params.get("asset_id");
     return COMMENTS.filter(
@@ -1062,6 +1090,13 @@ describe("live vs mock transport parity", () => {
       [
         "getConversationFeed scoped and limited",
         (api) => api.getConversationFeed({ projectId: filmId, limit: 1 }),
+      ],
+      ["getCommentFeed", (api) => api.getCommentFeed()],
+      ["getCommentFeed scoped", (api) => api.getCommentFeed({ projectId: filmId })],
+      ["getCommentFeed limited", (api) => api.getCommentFeed({ limit: 2 })],
+      [
+        "getCommentFeed scoped and limited",
+        (api) => api.getCommentFeed({ projectId: filmId, limit: 1 }),
       ],
       ["getProjectStats", (api) => api.getProjectStats()],
       ["getProjectStats scoped", (api) => api.getProjectStats({ orgId })],
@@ -1202,6 +1237,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getConversationFeed({ projectId: noConversationsId })).toEqual(
       await mockApiClient.getConversationFeed({ projectId: noConversationsId }),
+    );
+    expect(await live.getCommentFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getCommentFeed({ projectId: emptyId }),
     );
     expect(await live.getActivity({ projectId: emptyId })).toEqual(
       await mockApiClient.getActivity({ projectId: emptyId }),
@@ -1377,6 +1415,23 @@ describe("live vs mock transport parity", () => {
       ]);
       expect(mockConversationFeed422).toMatchObject({ status: 422, code: "validation_error" });
       expect(liveConversationFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
+    // Both transports 404 identically for an unknown comment-feed project scope
+    // and reject a malformed id / out-of-range limit with the same 422 envelope.
+    const [mockCommentFeed404, liveCommentFeed404] = await Promise.all([
+      mockApiClient.getCommentFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getCommentFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockCommentFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveCommentFeed404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }]) {
+      const [mockCommentFeed422, liveCommentFeed422] = await Promise.all([
+        mockApiClient.getCommentFeed(bad).catch((cause) => cause),
+        live.getCommentFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockCommentFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveCommentFeed422).toMatchObject({ status: 422, code: "validation_error" });
     }
 
     // Both transports 404 identically for an unknown event-stats project scope
@@ -1727,6 +1782,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getAssetFeed).toBe("function");
     expect(typeof typed.getConversationStats).toBe("function");
     expect(typeof typed.getConversationFeed).toBe("function");
+    expect(typeof typed.getCommentFeed).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getSearchStats).toBe("function");

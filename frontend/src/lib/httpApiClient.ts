@@ -15,6 +15,8 @@ import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
 import { collaborationStatsQueryParams } from "./collaborationStats";
 import type { CollaborationStatsOptions } from "./collaborationStats";
+import { commentFeedQueryParams } from "./commentFeed";
+import type { CommentFeedOptions } from "./commentFeed";
 import { conversationFeedQueryParams } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import { conversationStatsQueryParams } from "./conversationStats";
@@ -81,6 +83,7 @@ import type {
   AuditTrail,
   CollaborationStats,
   Comment,
+  CommentFeed,
   Conversation,
   ConversationFeed,
   ConversationStats,
@@ -345,6 +348,11 @@ export function createHttpApiClient(
     /** Newest-first authoritative conversation feed derived by `/conversations/feed`. */
     getConversationFeed(options?: ConversationFeedOptions): Promise<ConversationFeed> {
       return request<ConversationFeed>("/conversations/feed", conversationFeedQueryParams(options));
+    },
+
+    /** Newest-first authoritative comment feed derived by `/comments/feed` (C149). */
+    getCommentFeed(options?: CommentFeedOptions): Promise<CommentFeed> {
+      return request<CommentFeed>("/comments/feed", commentFeedQueryParams(options));
     },
 
     /** Authoritative project portfolio metrics derived by the backend `/projects/stats`. */

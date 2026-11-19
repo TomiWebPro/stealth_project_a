@@ -15,6 +15,8 @@ import {
   validateCollaborationStatsArgs,
 } from "../collaborationStats";
 import type { CollaborationStatsOptions } from "../collaborationStats";
+import { deriveCommentFeed, validateCommentFeedArgs } from "../commentFeed";
+import type { CommentFeedOptions } from "../commentFeed";
 import {
   deriveConversationFeed,
   validateConversationFeedArgs,
@@ -100,6 +102,7 @@ import type {
   AuditTrail,
   CollaborationStats,
   Comment,
+  CommentFeed,
   Conversation,
   ConversationFeed,
   ConversationStats,
@@ -191,7 +194,7 @@ function delay<T>(value: T): Promise<T> {
  * `activityStats`, `jobStats`,
  * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
- * `conversations`, `conversationFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
+ * `conversations`, `conversationFeed`, `commentFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs`,
@@ -400,6 +403,25 @@ export async function fetchConversationFeed(
   return delay(
     deriveConversationFeed(CONVERSATIONS, MESSAGES, PROJECTS, REFERENCE_NOW, options),
   );
+}
+
+/**
+ * Authoritative comment feed (C149) derived from the same comment/project seeds
+ * as the live `/comments/feed` endpoint. Router-style 422 validation, a
+ * normalized 404 for an unknown project scope and the `"commentFeed"` failure
+ * domain keep error and empty states at parity.
+ */
+export async function fetchCommentFeed(options?: CommentFeedOptions): Promise<CommentFeed> {
+  failIfEnabled("commentFeed");
+  validateCommentFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveCommentFeed(COMMENTS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

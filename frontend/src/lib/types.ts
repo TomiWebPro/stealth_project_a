@@ -31,6 +31,8 @@ export type {
   CollaborationProjectCount,
   CollaborationStats,
   Comment,
+  CommentFeed,
+  CommentFeedItem,
   Conversation,
   ConversationFeed,
   ConversationFeedItem,
