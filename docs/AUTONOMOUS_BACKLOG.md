@@ -370,6 +370,17 @@ this file is the execution checklist.
   loading/error/missing-root/empty/populated states with display values derived
   in tested `impactHelpers`. ✅ 2026-11-19 — `75242d7`
 
+- [x] C43 (mocks) Wire the authoritative job execution statistics API (C40
+  follow-up) end to end: expose `getJobStats` / `useJobStats` atomically across
+  mockApi (seed-derived zero-filled status counts, per-operation totals/outcomes,
+  terminal success rate, in-flight/completed counts and mean duration; router-style
+  422 for a malformed project id + unknown-project 404 + injectable `jobStats`
+  failure), the stable `ApiClient` facade, live `httpApiClient`
+  (`GET /jobs/stats?project_id=`), `queryKeys` and `useQueries`, with a shared
+  `lib/jobStats` derivation/validation helper and populated/empty/error seeds;
+  parity guard extended to both transports. ✅ 2026-11-19 — `caa18df`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -451,3 +462,4 @@ this file is the execution checklist.
 - 2026-11-19 — `c14da59` — C40 (backend): added authoritative `GET /api/v1/jobs/stats` deriving zero-filled status counts, per-operation totals/outcomes, terminal success rate, in-flight/completed counts and mean duration from the job store (optional `project_id` scope, shared 404/422 envelopes); contracts mirrored in `frontend/src/types/jobStats.ts`, 5 tests × 2 backends green (575 passed). Mocks/screens/CI wiring is a follow-up.
 - 2026-11-19 — `75242d7` — C41 (screens): the Assets browser now renders the authoritative `useTags` facet index with prefix autocomplete, count chips, project scoping and click-to-filter on asset search; all five UI states and display values derived in tested `tagHelpers`; lint clean, 279 tests, build green.
 - 2026-11-19 — `75242d7` — C42 (screens): asset detail now renders authoritative downstream impact via `useAssetImpact` with depth chips, name-resolved descendant rows that select the asset deep link, and all five UI states with display values derived in tested `impactHelpers`; lint clean, 279 tests, build green.
+- 2026-11-19 — `caa18df` — C43 (mocks): wired the authoritative job execution stats API (C40 follow-up) end to end — `getJobStats`/`useJobStats` across mockApi (seed-derived zero-filled status counts, per-operation totals/outcomes, terminal-only success rate, in-flight/completed counts, mean duration; router-style 422 for malformed project id + unknown-project 404 + injectable `jobStats` failure), the stable facade, live `httpApiClient` (`GET /jobs/stats?project_id=`), `queryKeys` and `useQueries`, with a shared `lib/jobStats` derivation/validation helper; parity guard extended to both transports; lint clean, 294 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
