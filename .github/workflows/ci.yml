@@ -712,6 +712,61 @@ jobs:
                 and pglbadbody.get("error", {}).get("code") == "validation_error"
                 and bool(pglbadbody.get("error", {}).get("request_id")), pipeline_bad.text)
 
+          # Authoritative asset lineage statistics (C77/C79) is the newest
+          # /api/v1 URL the live client calls (getLineageStats). Probe the
+          # zero-filled snapshot + by_type/by_project breakdown shapes, the
+          # five canonical relationship kinds, the optional project scope
+          # (unknown project -> shared 404) and the shared 422 envelope,
+          # keeping CI aligned with new endpoints as they go live.
+          lineage_stats = httpx.get(f"{base}/lineage/stats", timeout=5)
+          lngbody = lineage_stats.json() if lineage_stats.status_code == 200 else {}
+          check("lineage/stats 200 snapshot shape",
+                lineage_stats.status_code == 200 and all(
+                    k in lngbody for k in ("total_relationships", "total_linked_assets",
+                                           "by_type", "by_project",
+                                           "newest_relationship_at", "generated_at")),
+                lineage_stats.text)
+          check("lineage/stats breakdown shapes",
+                isinstance(lngbody.get("by_type"), list)
+                and all(isinstance(t, dict) and "type" in t and "count" in t
+                        for t in lngbody["by_type"])
+                and isinstance(lngbody.get("by_project"), list)
+                and all(isinstance(p, dict) and "project_id" in p and "relationships" in p
+                        for p in lngbody["by_project"]),
+                lineage_stats.text)
+          check("lineage/stats zero-filled kinds",
+                lineage_stats.status_code == 200
+                and {t.get("type") for t in lngbody["by_type"]} >= {
+                    "derived_from", "variant_of", "uses_input", "related_to", "duplicate_of"},
+                lineage_stats.text)
+          if project_id:
+              lineage_scoped = httpx.get(
+                  f"{base}/lineage/stats", params={"project_id": project_id}, timeout=5)
+              lngsbody = lineage_scoped.json() if lineage_scoped.status_code == 200 else {}
+              check("lineage/stats project scope 200",
+                    lineage_scoped.status_code == 200
+                    and isinstance(lngsbody.get("total_relationships"), int)
+                    and isinstance(lngsbody.get("by_type"), list),
+                    lineage_scoped.text)
+          else:
+              check("lineage/stats project scope setup", False,
+                    "could not obtain a project id")
+          lineage_missing = httpx.get(
+              f"{base}/lineage/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          lng404body = lineage_missing.json() if lineage_missing.status_code == 404 else {}
+          check("lineage/stats 404 shared envelope",
+                lineage_missing.status_code == 404
+                and lng404body.get("error", {}).get("code") == "project_not_found"
+                and bool(lng404body.get("error", {}).get("request_id")), lineage_missing.text)
+          lineage_bad = httpx.get(
+              f"{base}/lineage/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          lngbadbody = lineage_bad.json() if lineage_bad.status_code == 422 else {}
+          check("lineage/stats 422 validation envelope",
+                lineage_bad.status_code == 422
+                and lngbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(lngbadbody.get("error", {}).get("request_id")), lineage_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
