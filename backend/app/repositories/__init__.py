@@ -45,6 +45,7 @@ from .orchestration_stats import OrchestrationStatsRepository
 from .projects import ProjectRepository
 from .project_feed import ProjectFeedRepository
 from .project_stats import ProjectStatsRepository
+from .provider_feed import ProviderFeedRepository
 from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
 from .publish_feed import PublishFeedRepository
@@ -92,6 +93,7 @@ class Repositories:
     organization_feed: OrganizationFeedRepository
     organization_stats: OrganizationStatsRepository
     providers: ProviderRepository
+    provider_feed: ProviderFeedRepository
     provider_stats: ProviderStatsRepository
     publish_feed: PublishFeedRepository
     publish_stats: PublishStatsRepository
@@ -151,6 +153,7 @@ class Repositories:
         organization_feed = OrganizationFeedRepository(store, clock=clock)
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
+        provider_feed = ProviderFeedRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
         publish_feed = PublishFeedRepository(store, projects, clock=clock)
         publish_stats = PublishStatsRepository(store, projects, clock=clock)
@@ -216,6 +219,7 @@ class Repositories:
             organization_feed=organization_feed,
             organization_stats=organization_stats,
             providers=providers,
+            provider_feed=provider_feed,
             provider_stats=provider_stats,
             publish_feed=publish_feed,
             publish_stats=publish_stats,

@@ -33,6 +33,7 @@ export * from "./dashboard";
 export * from "./tags";
 export * from "./impact";
 export * from "./lineageFeed";
+export * from "./providerFeed";
 export * from "./providerStats";
 export * from "./publishStats";
 export * from "./publishFeed";

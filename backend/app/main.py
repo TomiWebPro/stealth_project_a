@@ -64,6 +64,7 @@ from .routers import (
     projects,
     project_feed,
     project_stats,
+    provider_feed,
     provider_stats,
     providers,
     publish,
@@ -299,9 +300,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/jobs/{job_id}" route so "feed" is never parsed as a job id.
     app.include_router(job_feed.router, prefix=API_PREFIX)
     app.include_router(jobs.router, prefix=API_PREFIX)
-    # "/providers/stats" must be registered before "/providers/{provider_id}" so
-    # the literal path wins over the dynamic one.
+    # "/providers/stats" and "/providers/feed" must be registered before
+    # "/providers/{provider_id}" so the literal paths win over the dynamic one.
     app.include_router(provider_stats.router, prefix=API_PREFIX)
+    app.include_router(provider_feed.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
     # "/retries/stats" has no templated sibling; register it directly to keep
     # the stats path explicit.

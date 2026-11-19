@@ -153,6 +153,10 @@ All paths are prefixed with `/api/v1`.
   entries are excluded and an optional project scope uses shared 404/422
   envelopes
 - **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
+  `GET /providers/feed?location=&status=&limit=` — deterministic provider feed
+  (identity/health, sorted advertised operation ids and capability count;
+  whole-scope `total` before the bounded page) derived fresh from the provider
+  store, with optional location/status filters;
   `GET /providers/stats?location=&status=` — authoritative fleet metrics
   (zero-filled health/location breakdowns, capability/operation coverage) derived
   from the provider store, with optional location/status filters

@@ -52,6 +52,7 @@ from .repositories.orchestration_stats import OrchestrationStatsRepository
 from .repositories.projects import ProjectRepository
 from .repositories.project_feed import ProjectFeedRepository
 from .repositories.project_stats import ProjectStatsRepository
+from .repositories.provider_feed import ProviderFeedRepository
 from .repositories.provider_stats import ProviderStatsRepository
 from .repositories.providers import ProviderRepository
 from .repositories.publish_feed import PublishFeedRepository
@@ -318,6 +319,12 @@ def get_provider_repository(
     return repositories.providers
 
 
+def get_provider_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ProviderFeedRepository:
+    return repositories.provider_feed
+
+
 def get_provider_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ProviderStatsRepository:
@@ -537,6 +544,7 @@ __all__ = [
     "get_project_feed_repository",
     "get_project_stats_repository",
     "get_project_tree",
+    "get_provider_feed_repository",
     "get_provider_repository",
     "get_provider_stats_repository",
     "get_publish_feed_repository",
