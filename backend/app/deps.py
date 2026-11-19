@@ -42,6 +42,7 @@ from .repositories.organization_stats import OrganizationStatsRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.orchestration_stats import OrchestrationStatsRepository
 from .repositories.projects import ProjectRepository
+from .repositories.project_feed import ProjectFeedRepository
 from .repositories.project_stats import ProjectStatsRepository
 from .repositories.provider_stats import ProviderStatsRepository
 from .repositories.providers import ProviderRepository
@@ -144,6 +145,12 @@ def get_project_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ProjectRepository:
     return repositories.projects
+
+
+def get_project_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ProjectFeedRepository:
+    return repositories.project_feed
 
 
 def get_project_stats_repository(
@@ -456,6 +463,7 @@ __all__ = [
     "get_orchestration_repository",
     "get_orchestration_stats_repository",
     "get_project_repository",
+    "get_project_feed_repository",
     "get_project_stats_repository",
     "get_project_tree",
     "get_provider_repository",

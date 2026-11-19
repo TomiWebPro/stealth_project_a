@@ -54,6 +54,9 @@ All paths are prefixed with `/api/v1`.
   (entity counts, zero-filled job-status/asset-type breakdowns and the newest
   jobs/assets) derived from the stores; deleted assets are excluded
 - **Projects:** `GET|POST /projects`, `GET|PATCH|DELETE /projects/{id}`,
+  `GET /projects/feed?org_id=&lifecycle=&limit=` — authoritative newest-first
+  project feed (org-name join, lifecycle label, whole-scope total before the
+  page) derived fresh from the project store;
   `GET /projects/stats?org_id=` — authoritative portfolio metrics (lifecycle
   breakdown, cross-domain totals/averages, recency) derived from the stores;
   soft-deleted assets are excluded

@@ -54,6 +54,7 @@ from .routers import (
     orchestration_stats,
     pipelines,
     projects,
+    project_feed,
     project_stats,
     provider_stats,
     providers,
@@ -241,6 +242,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/projects/stats" must be registered before "/projects/{project_id}" so
     # the literal path wins over the UUID-templated one.
     app.include_router(project_stats.router, prefix=API_PREFIX)
+    # "/projects/feed" is a literal path; register it before the
+    # UUID-templated "/projects/{project_id}" route so "feed" is never parsed as
+    # a project id.
+    app.include_router(project_feed.router, prefix=API_PREFIX)
     app.include_router(projects.router, prefix=API_PREFIX)
     # "/conversations/stats" must be registered before "/conversations/{id}" so
     # the literal path wins over the UUID-templated one.

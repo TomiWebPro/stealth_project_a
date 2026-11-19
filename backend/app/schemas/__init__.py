@@ -205,6 +205,10 @@ from .orchestration_stats import (
     OrchestrationStageCount,
     OrchestrationStats,
 )
+from .project_feed import (
+    ProjectFeed,
+    ProjectFeedItem,
+)
 from .project_stats import (
     ProjectLifecycle,
     ProjectLifecycleCount,
@@ -354,6 +358,9 @@ __all__ = [
     "StorageRef",
     "UploadRequest",
     "UploadTicket",
+    # project feed
+    "ProjectFeed",
+    "ProjectFeedItem",
     # project stats
     "ProjectLifecycle",
     "ProjectLifecycleCount",

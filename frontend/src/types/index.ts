@@ -11,6 +11,7 @@ export * from "./activity";
 export * from "./activityStats";
 export * from "./audit";
 export * from "./auth";
+export * from "./projectFeed";
 export * from "./projectStats";
 export * from "./conversation";
 export * from "./conversationFeed";
