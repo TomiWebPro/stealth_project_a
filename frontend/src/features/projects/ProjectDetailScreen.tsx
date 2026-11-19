@@ -43,6 +43,7 @@ import { ProjectFeedPanel } from "./ProjectFeedPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
 import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
+import { CollaborationFeedPanel } from "../workspaces/CollaborationFeedPanel";
 import { CollaborationStatsPanel } from "../workspaces/CollaborationStatsPanel";
 import { formatProjectUpdatedAtLong } from "./helpers";
 
@@ -287,6 +288,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project collaboration stats"
         description="Authoritative presence and comment metrics scoped to this project."
+      />
+      <CollaborationFeedPanel
+        projectId={projectId}
+        title="Project collaboration feed"
+        description="Newest-first presence and comment signals scoped to this project."
       />
       <OrchestrationStatsPanel
         projectId={projectId}

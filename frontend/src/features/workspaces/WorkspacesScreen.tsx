@@ -6,6 +6,7 @@ import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
+import { CollaborationFeedPanel } from "./CollaborationFeedPanel";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { CollaborationStatsPanel } from "./CollaborationStatsPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
@@ -48,6 +49,11 @@ export function WorkspacesScreen() {
       <CollaborationStatsPanel
         title="Workspace collaboration stats"
         description="Authoritative presence and comment metrics across the workspace."
+      />
+
+      <CollaborationFeedPanel
+        title="Workspace collaboration feed"
+        description="Newest-first presence and comment signals across the workspace."
       />
 
       {isPending ? (
