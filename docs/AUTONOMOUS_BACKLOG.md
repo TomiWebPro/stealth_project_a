@@ -1334,6 +1334,21 @@ this file is the execution checklist.
   added under the Never-empty well. ✅ 2026-11-19 — `60e6b6e`
   Screens log-console rendering remains a screens follow-up.
 
+- [x] C121 (backend) Authoritative job dispatch-queue API:
+  `GET /api/v1/jobs/queue?project_id=&limit=` derives the active (queued +
+  running) job queue in FIFO order with 1-based positions, whole-queue
+  waiting/running counters and a bounded page directly from the authoritative
+  `JOBS` store (no second index; terminal jobs excluded, `(created_at, job_id)`
+  FIFO tie-break for deterministic cross-backend order), with an optional
+  `project_id` scope (unknown → shared 404 `project_not_found`, malformed →
+  shared 422) and `limit` bounds; `JobQueueEntry`/`JobQueueView` mirrored in
+  `frontend/src/types/jobQueue.ts`, README endpoint list synced, 8 tests × 2
+  storage backends green (815 passed, contract parity + route-surface guard +
+  tsc clean). Mocks/screens/CI wiring of the queue view is a follow-up. My owned
+  backend column had no unchecked items (only the repo-wide C6 docs pass
+  remains, owned by other agents), so C121 was added under the Never-empty well.
+  ✅ 2026-11-19 — `f76e856`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1493,3 +1508,4 @@ this file is the execution checklist.
 - 2026-11-19 — `068adb7` — C118 (screens): rendered authoritative publish statistics (C113/C115/C116 follow-up) via `usePublishStats` — a reusable `PublishStatsPanel` on Home (workspace-wide), the Assets browser and project detail (project-scoped) with four stat cards, ascending version and descending per-project publish/byte breakdowns, and all five UI states; every display value derived in tested `publishStatsHelpers`. Resolves the C116 screens follow-up. Lint clean, 793 tests, build green. My owned column had no unchecked rows, so C118 was added under the Never-empty well.
 - 2026-11-19 — `c7331a4` — C119 (mocks): wired the authoritative per-job execution log API (C117 follow-up) end to end — `getJobLogs`/`useJobLogs` atomically across mockApi (JOB_EVENTS-derived chronological, severity-filtered, cursor-paginated frames with coarse levels, stream-wide totals, resume cursors; router-style 422 + unknown-job 404-to-undefined + injectable `jobLogs` failure), the stable facade, live `httpApiClient` (`GET /jobs/{job_id}/logs?level=&since_seq=&limit=`), queryKeys and useQueries, with a shared `lib/jobLogs` helper and enriched event seeds; parity guard extended to both transports (populated/filtered/paged/404/422 + surface guard). Lint clean, 807 tests, build green. My owned column had no unchecked rows, so C119 was added under the Never-empty well. Screens log-console rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `60e6b6e` — C120 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/jobs/{job_id}/logs` (frame shape + derived entries with coarse levels, `level` filter, `limit` paging + `since_seq` resume cursor, shared 404 `job_not_found` / 422 `validation_error` envelopes with request-id and the request-id header), submitting a job on demand so the derived event stream is non-empty — the CI follow-up from C117/C119. No unchecked CI row remained, so C120 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (128/128 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12 (`-shellcheck=`, since shellcheck integration is pathologically slow on the large heredoc); frontend lint clean/807 tests/build green and backend pytest (799) green. Screens log-console rendering remains a screens follow-up.
+- 2026-11-19 — `f76e856` — C121 (backend): added authoritative `GET /api/v1/jobs/queue?project_id=&limit=` deriving the active (queued + running) dispatch queue in FIFO order with 1-based positions, whole-queue waiting/running counters and a bounded page from the authoritative `JOBS` store (no second index; terminal jobs excluded, `(created_at, job_id)` FIFO tie-break for deterministic cross-backend order), optional `project_id` scope (unknown → shared 404 `project_not_found`, malformed → shared 422) and `limit` bounds; `JobQueueEntry`/`JobQueueView` mirrored in `frontend/src/types/jobQueue.ts`, README endpoint list synced, 8 tests × 2 backends green (815 passed, contract parity + route-surface guard + tsc clean). Mocks transport, screens rendering and CI live-smoke wiring of the queue view are follow-ups. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C121 was added under the Never-empty well.
