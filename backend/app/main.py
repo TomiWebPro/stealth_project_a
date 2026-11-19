@@ -21,6 +21,7 @@ from .errors import ApiError
 from .repositories import Repositories
 from .routers import (
     activity,
+    activity_stats,
     adapters,
     asset_stats,
     assets,
@@ -218,6 +219,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(operation_stats.router, prefix=API_PREFIX)
 
     app.include_router(health.router, prefix=API_PREFIX)
+    # "/activity/stats" is registered before the activity feed router so the
+    # literal stats path is unambiguous against the "/activity" feed path.
+    app.include_router(activity_stats.router, prefix=API_PREFIX)
     app.include_router(activity.router, prefix=API_PREFIX)
     app.include_router(audit.router, prefix=API_PREFIX)
     app.include_router(adapters.router, prefix=API_PREFIX)

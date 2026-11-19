@@ -8,6 +8,7 @@
 
 export * from "./common";
 export * from "./activity";
+export * from "./activityStats";
 export * from "./audit";
 export * from "./auth";
 export * from "./projectStats";

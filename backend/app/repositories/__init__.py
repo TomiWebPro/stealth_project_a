@@ -8,6 +8,7 @@ from ..config import Settings
 from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
 from .activity import ActivityRepository
+from .activity_stats import ActivityStatsRepository
 from .assets import AssetRepository
 from .asset_stats import AssetStatsRepository
 from .audit import AuditRepository
@@ -39,6 +40,7 @@ from .uploads import UploadRepository
 @dataclass(slots=True)
 class Repositories:
     activity: ActivityRepository
+    activity_stats: ActivityStatsRepository
     projects: ProjectRepository
     project_stats: ProjectStatsRepository
     assets: AssetRepository
@@ -111,10 +113,12 @@ class Repositories:
         search = SearchRepository(store, clock=clock)
         dashboard = DashboardRepository(store, clock=clock)
         activity = ActivityRepository(store, projects, clock=clock)
+        activity_stats = ActivityStatsRepository(activity, clock=clock)
         tags = TagRepository(store, projects, clock=clock)
         impact = ImpactRepository(store, assets, clock=clock)
         return cls(
             activity=activity,
+            activity_stats=activity_stats,
             projects=projects,
             project_stats=project_stats,
             assets=assets,

@@ -10,6 +10,11 @@ from .activity import (
     ActivityKind,
     ActivityTone,
 )
+from .activity_stats import (
+    ActivityKindCount,
+    ActivityProjectCount,
+    ActivityStats,
+)
 from .audit import (
     AuditEvent,
     AuditEventKind,
@@ -219,6 +224,10 @@ __all__ = [
     "ActivityFeed",
     "ActivityKind",
     "ActivityTone",
+    # activity stats
+    "ActivityKindCount",
+    "ActivityProjectCount",
+    "ActivityStats",
     # dashboard
     "DashboardCounts",
     "DashboardSummary",

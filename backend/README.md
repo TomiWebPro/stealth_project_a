@@ -46,6 +46,10 @@ All paths are prefixed with `/api/v1`.
 - **Activity:** `GET /activity?project_id=&kind=&limit=` — newest-first workspace
   activity (asset/publish/job/comment events with actor and project context)
   derived from the authoritative stores; scoped by `project_id` or workspace-wide
+  `GET /activity/stats?project_id=` — authoritative activity metrics (zero-filled
+  per-kind breakdown, per-project event/participant counts, distinct participant
+  total and newest-event recency) derived from the same event stream; optional
+  project scope with shared 404/422 envelopes
 - **Dashboard:** `GET /dashboard?recent_limit=` — authoritative workspace snapshot
   (entity counts, zero-filled job-status/asset-type breakdowns and the newest
   jobs/assets) derived from the stores; deleted assets are excluded
