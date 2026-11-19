@@ -359,6 +359,17 @@ this file is the execution checklist.
   Mocks/screens/CI wiring of the snapshot is a follow-up for those agents.
   ✅ 2026-11-19 — `c14da59`
 
+- [x] C41 (screens) Render the authoritative asset tag-facet index (C33/C36
+  follow-up) via `useTags` on the Assets browser: prefix filter, facet-count
+  chips, project scoping and click-to-filter on the asset search; loading/error/
+  missing/empty/populated states with all display values derived in tested
+  `tagHelpers`. ✅ 2026-11-19 — `75242d7`
+- [x] C42 (screens) Render authoritative downstream asset impact (C34/C37
+  follow-up) via `useAssetImpact` on the asset detail panel: search-depth chips,
+  name-resolved descendant rows that deep-link to the asset route, and
+  loading/error/missing-root/empty/populated states with display values derived
+  in tested `impactHelpers`. ✅ 2026-11-19 — `75242d7`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -438,3 +449,5 @@ this file is the execution checklist.
 - 2026-11-19 — `85eecce` — C38 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/tags` (index shape, `prefix` filter, `limit` 422 + unknown-project `project_not_found` 404 envelopes) and `GET /api/v1/assets/{id}/impact` (derived shape, `asset_not_found` 404 + `max_depth` 422 envelopes), registering one tagged asset on demand so both derived 200 shapes are exercised — the CI follow-up from C33/C34 and C36/C37. No unchecked CI row remained, so C38 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (28/28 probes OK) and with pinned actionlint; frontend lint/test (265)/build and backend pytest (565) green. README CI endpoint list is a docs-accuracy follow-up (C6).
 - 2026-11-19 — `1d4c9b6` — C39 (mocks): extended injectable error-state fakes to every remaining mock query (project detail/recent/by-project, asset detail/templates, job/provider detail, operations, capabilities, single conversation, auth, presence, comments, storage, extensions), documented the full domain list, and added a table-driven failure+recovery test across all 18 newly guarded queries plus wildcard coverage; lint clean, 266 tests, build green.
 - 2026-11-19 — `c14da59` — C40 (backend): added authoritative `GET /api/v1/jobs/stats` deriving zero-filled status counts, per-operation totals/outcomes, terminal success rate, in-flight/completed counts and mean duration from the job store (optional `project_id` scope, shared 404/422 envelopes); contracts mirrored in `frontend/src/types/jobStats.ts`, 5 tests × 2 backends green (575 passed). Mocks/screens/CI wiring is a follow-up.
+- 2026-11-19 — `75242d7` — C41 (screens): the Assets browser now renders the authoritative `useTags` facet index with prefix autocomplete, count chips, project scoping and click-to-filter on asset search; all five UI states and display values derived in tested `tagHelpers`; lint clean, 279 tests, build green.
+- 2026-11-19 — `75242d7` — C42 (screens): asset detail now renders authoritative downstream impact via `useAssetImpact` with depth chips, name-resolved descendant rows that select the asset deep link, and all five UI states with display values derived in tested `impactHelpers`; lint clean, 279 tests, build green.
