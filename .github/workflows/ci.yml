@@ -658,6 +658,60 @@ jobs:
                 and bool(ogsbadbody.get("error", {}).get("request_id")),
                 org_stats_bad.text)
 
+          # Authoritative production-pipeline statistics (C73/C75) is the newest
+          # /api/v1 URL the live client calls (getPipelineStats). Probe the
+          # zero-filled snapshot + breakdown shapes, the optional project scope
+          # (unknown project -> shared 404) and the shared 422 envelope, keeping
+          # CI aligned with new endpoints as they go live.
+          pipeline_stats = httpx.get(f"{base}/pipelines/stats", timeout=5)
+          pglbody = pipeline_stats.json() if pipeline_stats.status_code == 200 else {}
+          check("pipelines/stats 200 snapshot shape",
+                pipeline_stats.status_code == 200 and all(
+                    k in pglbody for k in ("total_chains", "total_jobs", "total_assets",
+                                           "by_kind", "by_project", "newest_chain_at",
+                                           "generated_at")),
+                pipeline_stats.text)
+          check("pipelines/stats breakdown shapes",
+                isinstance(pglbody.get("by_kind"), list)
+                and all(isinstance(k, dict) and all(
+                    field in k for field in ("kind", "chains", "jobs", "assets"))
+                    for k in pglbody["by_kind"])
+                and isinstance(pglbody.get("by_project"), list)
+                and all(isinstance(p, dict) and "project_id" in p and "chains" in p
+                        for p in pglbody["by_project"]),
+                pipeline_stats.text)
+          check("pipelines/stats zero-filled kinds",
+                pipeline_stats.status_code == 200
+                and {k.get("kind") for k in pglbody["by_kind"]} >= {"training", "shot", "splat"},
+                pipeline_stats.text)
+          if project_id:
+              pipeline_scoped = httpx.get(
+                  f"{base}/pipelines/stats", params={"project_id": project_id}, timeout=5)
+              pgsbody = pipeline_scoped.json() if pipeline_scoped.status_code == 200 else {}
+              check("pipelines/stats project scope 200",
+                    pipeline_scoped.status_code == 200
+                    and isinstance(pgsbody.get("total_chains"), int)
+                    and isinstance(pgsbody.get("by_kind"), list),
+                    pipeline_scoped.text)
+          else:
+              check("pipelines/stats project scope setup", False,
+                    "could not obtain a project id")
+          pipeline_missing = httpx.get(
+              f"{base}/pipelines/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          pgl404body = pipeline_missing.json() if pipeline_missing.status_code == 404 else {}
+          check("pipelines/stats 404 shared envelope",
+                pipeline_missing.status_code == 404
+                and pgl404body.get("error", {}).get("code") == "project_not_found"
+                and bool(pgl404body.get("error", {}).get("request_id")), pipeline_missing.text)
+          pipeline_bad = httpx.get(
+              f"{base}/pipelines/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          pglbadbody = pipeline_bad.json() if pipeline_bad.status_code == 422 else {}
+          check("pipelines/stats 422 validation envelope",
+                pipeline_bad.status_code == 422
+                and pglbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(pglbadbody.get("error", {}).get("request_id")), pipeline_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
