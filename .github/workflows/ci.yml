@@ -616,6 +616,48 @@ jobs:
                 "x-request-id" in {k.lower() for k in op_stats.headers},
                 str(dict(op_stats.headers)))
 
+          # Authoritative organization/membership statistics (C69/C71) is the
+          # newest /api/v1 URL the live client calls (getOrganizationStats).
+          # Probe the zero-filled snapshot + breakdown shapes, the optional
+          # org scope (an unknown-but-valid org yields a zero-filled 200, like
+          # GET /projects?org_id=) and the shared 422 envelope, keeping CI
+          # aligned with new endpoints as they go live.
+          org_stats = httpx.get(f"{base}/orgs/stats", timeout=5)
+          ogsbody = org_stats.json() if org_stats.status_code == 200 else {}
+          check("orgs/stats 200 snapshot shape",
+                org_stats.status_code == 200 and all(
+                    k in ogsbody for k in ("total_organizations", "total_members",
+                                          "total_users", "by_role", "by_organization",
+                                          "average_members_per_org", "newest_org_at",
+                                          "generated_at")),
+                org_stats.text)
+          check("orgs/stats breakdown shapes",
+                isinstance(ogsbody.get("by_role"), list)
+                and all(isinstance(r, dict) and "role" in r and "members" in r
+                        for r in ogsbody["by_role"])
+                and isinstance(ogsbody.get("by_organization"), list)
+                and all(isinstance(o, dict) and "org_id" in o and "members" in o
+                        for o in ogsbody["by_organization"]),
+                org_stats.text)
+          org_scoped = httpx.get(
+              f"{base}/orgs/stats",
+              params={"org_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          ogsbody_scoped = org_scoped.json() if org_scoped.status_code == 200 else {}
+          check("orgs/stats unknown org zero-filled 200",
+                org_scoped.status_code == 200
+                and ogsbody_scoped.get("total_organizations") == 0
+                and ogsbody_scoped.get("total_members") == 0
+                and isinstance(ogsbody_scoped.get("by_role"), list),
+                org_scoped.text)
+          org_stats_bad = httpx.get(
+              f"{base}/orgs/stats", params={"org_id": "not-a-uuid"}, timeout=5)
+          ogsbadbody = org_stats_bad.json() if org_stats_bad.status_code == 422 else {}
+          check("orgs/stats 422 validation envelope",
+                org_stats_bad.status_code == 422
+                and ogsbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ogsbadbody.get("error", {}).get("request_id")),
+                org_stats_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
