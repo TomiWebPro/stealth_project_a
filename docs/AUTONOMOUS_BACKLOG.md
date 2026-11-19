@@ -1709,6 +1709,22 @@ this file is the execution checklist.
   C147 was added under the Never-empty well. ✅ 2026-11-19 — `33538cd`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C148 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  project feed endpoint from C145/C147 (`GET /api/v1/projects/feed?org_id=&lifecycle=&limit=`):
+  reuse the on-demand project so the derived feed has a real item, then probe
+  the feed shape (`items`/`total`/`generated_at`), derived item shapes
+  (project/org ids + joined org name, name/description, active/archived
+  lifecycle, creator and created/updated timestamps), newest-first
+  `(created_at, project_id)` ordering, the `limit` page bound (total unchanged),
+  the `lifecycle` filter, the optional `org_id` scope (an unknown-but-valid org
+  yields a zero-filled 200) and the shared 422 `validation_error` envelopes
+  (malformed org + invalid lifecycle + invalid limit) with request-id, keeping
+  CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client calls
+  as the repo grows. No unchecked CI row remained, so C148 was added under the
+  Never-empty well. Resolves the C147 CI live-smoke follow-up.
+  ✅ 2026-11-19 — `52246f5`
+  Screens project-feed rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1895,3 +1911,4 @@ this file is the execution checklist.
 - 2026-11-19 — `a94ae88` — C145 (backend): added authoritative `GET /api/v1/projects/feed?org_id=&lifecycle=&limit=` — a newest-first workspace project feed derived fresh from the authoritative `PROJECTS` collection (no second index) with joined org display name (orphan fallback), description, canonical active/archived lifecycle, creator and timestamps, deterministic `(created_at, project_id)` order and a whole-scope `total` before the `limit` page; optional `org_id` scope yields a zero-filled 200 for an unknown-but-valid org (matching `/projects?org_id=`) with shared 422 envelopes for malformed id / invalid lifecycle / invalid limit. `ProjectFeed`/`ProjectFeedItem` mirrored in `frontend/src/types/projectFeed.ts`, README synced, 12 tests × 2 storage backends green (935 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C145 was added under the Never-empty well.
 - 2026-11-19 — `f7a5c27` — C146 (screens): rendered the authoritative job feed (C141/C143/C144 follow-up) via `useJobFeed` — a reusable `JobFeedPanel` on the Jobs screen (workspace-wide) and project detail (project-scoped) with status and page-size chips, newest-first rows showing prettified operation labels, joined project names, progress percent and attempt labels, and project-detail deep links, with all five UI states and every display value derived in tested `jobFeedHelpers`. Resolves the C144 screens follow-up. Lint clean, 978 tests, build green. My owned column had no unchecked rows, so C146 was added under the Never-empty well.
 - 2026-11-19 — `33538cd` — C147 (mocks): wired the authoritative project feed (C145 follow-up) end to end — `getProjectFeed`/`useProjectFeed` atomically across mockApi (newest-first `(created_at, project_id)` derivation over the project/org seeds with joined org names + "Unknown organization" fallback, `archived`-derived lifecycle, org/lifecycle scopes, zero-filled unknown-org feed, whole-scope `total` before the `limit` page, router-style 422 + injectable `projectFeed` failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /projects/feed?org_id=&lifecycle=&limit=`), queryKeys and useQueries, with a shared `lib/projectFeed` derivation/validation helper; parity guard extended to both transports (populated/scoped/filtered/limited/zero-filled-org/422 + surface guard). Lint clean, 989 tests, build green. My owned column had no unchecked rows, so C147 was added under the Never-empty well. Screens feed rendering + CI live-smoke probe remain follow-ups.
+- 2026-11-19 — `52246f5` — C148 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/projects/feed` project feed (the C145/C147 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined org name + active/archived lifecycle/creator/timestamps, newest-first `(created_at, project_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, `lifecycle` filter, optional `org_id` scope (unknown-but-valid org → zero-filled 200) and the shared 422 `validation_error` envelopes (malformed org + invalid lifecycle + invalid limit) with request-id — reusing the on-demand project so the derived feed is non-empty. No unchecked CI row remained, so C148 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (all probes OK, on a dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/989 tests/build green and backend pytest (935) green. Screens project-feed rendering remains a screens follow-up.
