@@ -6,6 +6,7 @@ import { useUiStore } from "../../stores/uiStore";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
 
 /**
@@ -53,6 +54,11 @@ export function JobsScreen() {
           />
         </Card>
       ) : null}
+
+      <JobStatsPanel
+        title="Global job execution stats"
+        description="Authoritative workspace-wide lifecycle, outcome and timing metrics."
+      />
 
       {data ? (
         <JobsPanel
