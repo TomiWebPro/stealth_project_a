@@ -18,6 +18,7 @@ import {
   tagsToInput,
 } from "./detailHelpers";
 import { assetPreviewUrl, assetTypeTone } from "./helpers";
+import { AssetOverviewPanel } from "./AssetOverviewPanel";
 import { AssetImpactPanel } from "../impact/AssetImpactPanel";
 
 const inputClass =
@@ -189,6 +190,7 @@ export function AssetDetailPanel({ asset, assets }: AssetDetailPanelProps) {
         </form>
       </div>
     </Card>
+    <AssetOverviewPanel assetId={asset.id} />
     <AssetImpactPanel assetId={asset.id} assets={assets} />
     </div>
   );
