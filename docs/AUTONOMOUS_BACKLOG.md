@@ -2487,6 +2487,26 @@ this file is the execution checklist.
   My owned column had no unchecked rows (only the repo-wide C6 docs pass remains,
   owned by other agents), so C195 was added under the Never-empty well.
   ✅ 2026-11-19 — `03f1624`
+  Screens retry-feed rendering remains a screens follow-up.
+
+- [x] C196 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  retry feed endpoint from C193/C195
+  (`GET /api/v1/retries/feed?project_id=&limit=`): create a job on demand and
+  cancel + retry it so the ledger has a real item, then probe the feed shape
+  (`items`/`total`/`generated_at`), derived item shapes (job/project ids + joined
+  project name, operation id, lifecycle status, attempt, accepted-retry count and
+  recency), newest-first `(retried_at, job_id)` ordering, the whole-scope `total`
+  before the `limit` page (page bounded, counters unchanged), the optional
+  `project_id` scope and the shared 404 `project_not_found` / 422
+  `validation_error` envelopes (malformed id + invalid limit) with request-id,
+  keeping CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client
+  calls as the repo grows. No unchecked CI row remained, so C196 was added under
+  the Never-empty well; resolves the C195 CI live-smoke follow-up. Verified the
+  exact embedded smoke script against a real ASGI server on a dynamically chosen
+  free port (360 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`);
+  frontend lint clean/1326 tests/build green and backend pytest (1173) green.
+  ✅ 2026-11-19 — `daddf31`
+  Screens retry-feed rendering remains a screens follow-up.
 
 ## Log (append one line per completed item)
 
@@ -2721,3 +2741,4 @@ this file is the execution checklist.
 - 2026-11-19 — `99fe56b` — C193 (backend): added authoritative `GET /api/v1/retries/feed?project_id=&limit=` — a newest-first, workspace-wide feed of retried jobs derived fresh from the same authoritative `JOB_RETRIES` idempotency ledger `/retries/stats` aggregates (no second index), joined to `JOBS` (job identity, operation, current status/attempt, accepted-retry count, activity-based recency) and `PROJECTS` (joined display name with "Unknown project" fallback); one row per distinct retried job, deterministic `(retried_at, job_id)` newest-first order and a whole-scope `total` before the `limit` page, with orphan/malformed-job entries excluded so the feed agrees with the snapshot; optional `project_id` scope uses shared 404 `project_not_found` / 422 `validation_error` envelopes. `RetryFeed`/`RetryFeedItem` mirrored in `frontend/src/types/retryFeed.ts` + exported from the types index, README endpoint list synced, 7 tests × 2 storage backends green (1173 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C193 was added under the Never-empty well.
 - 2026-11-19 — `456eacc` — C194 (screens): rendered the authoritative operation catalog feed (C189/C191/C192 follow-up) via `useOperationFeed` — an `OperationFeedPanel` on the Jobs screen with streaming/provider-id/page-size filters, title-ordered rows showing operation id, description, input/output asset-type previews and streaming/version/settings/provider badges, and all five UI states — every display value derived in 18 new tested `operationFeedHelpers` cases. Resolves the C192 screens follow-up. Rows stay read-only (no operation-detail route); no new route was added. Lint clean, 1304 tests, build green. My owned column had no unchecked rows, so C194 was added under the Never-empty well.
 - 2026-11-19 — `03f1624` — C195 (mocks): wired the authoritative job retry feed (C193 follow-up) end to end — `getRetryFeed`/`useRetryFeed` atomically across mockApi (newest-first `(retried_at, job_id)` derivation over the shared retry-ledger/job/project seeds, "Unknown project" fallback, orphan-ledger exclusion, accepted-retry counts per job, joined-job latest activity as recency, whole-scope `total` before the `limit` page, router-style 422 for a malformed project id / out-of-range limit, unknown-project 404 + injectable `retryFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /retries/feed?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/retryFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape parity, scoped/limited/error cases + surface guard). Resolves the C193 mocks-transport follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C195 was added under the Never-empty well. Lint clean, 1326 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-19 — `daddf31` — C196 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/retries/feed?project_id=&limit=` retry feed (the C193/C195 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (job/project ids + joined project name, operation id, lifecycle status, attempt, accepted-retry count and recency), newest-first `(retried_at, job_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, the optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — creating one job on demand then cancelling and retrying it so the derived feed has a real item. No unchecked CI row remained, so C196 was added under the Never-empty well; resolves the C195 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (360 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1326 tests/build green and backend pytest (1173) green. Screens retry-feed rendering remains a screens follow-up.
