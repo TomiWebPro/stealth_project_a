@@ -10,6 +10,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
+import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
@@ -175,6 +176,10 @@ export function HomeScreen() {
         <AssetStatsPanel
           title="Workspace asset stats"
           description="Authoritative inventory metrics across every project in the workspace."
+        />
+        <AssetFeedPanel
+          title="Workspace assets"
+          description="Newest-first live assets across every project in the workspace."
         />
         <VersionStatsPanel
           title="Workspace version stats"
