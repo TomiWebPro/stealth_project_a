@@ -767,6 +767,63 @@ jobs:
                 and lngbadbody.get("error", {}).get("code") == "validation_error"
                 and bool(lngbadbody.get("error", {}).get("request_id")), lineage_bad.text)
 
+          # Authoritative collaboration statistics (C81/C83) is the newest
+          # /api/v1 URL the live client calls (getCollaborationStats). Probe the
+          # zero-filled snapshot + by_state/by_project breakdown shapes, the
+          # three canonical presence states, the optional project scope (unknown
+          # project -> shared 404) and the shared 422 envelope, keeping CI aligned
+          # with new endpoints as they go live.
+          collab_stats = httpx.get(f"{base}/collaboration/stats", timeout=5)
+          colbody = collab_stats.json() if collab_stats.status_code == 200 else {}
+          check("collaboration/stats 200 snapshot shape",
+                collab_stats.status_code == 200 and all(
+                    k in colbody for k in ("total_presence", "total_comments",
+                                           "total_participants", "by_state", "by_project",
+                                           "newest_presence_at", "newest_comment_at",
+                                           "generated_at")),
+                collab_stats.text)
+          check("collaboration/stats breakdown shapes",
+                isinstance(colbody.get("by_state"), list)
+                and all(isinstance(s, dict) and "state" in s and "count" in s
+                        for s in colbody["by_state"])
+                and isinstance(colbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "comments", "presence"))
+                    for p in colbody["by_project"]),
+                collab_stats.text)
+          check("collaboration/stats zero-filled states",
+                collab_stats.status_code == 200
+                and {s.get("state") for s in colbody["by_state"]} >= {
+                    "online", "away", "offline"},
+                collab_stats.text)
+          if project_id:
+              collab_scoped = httpx.get(
+                  f"{base}/collaboration/stats", params={"project_id": project_id}, timeout=5)
+              colsbody = collab_scoped.json() if collab_scoped.status_code == 200 else {}
+              check("collaboration/stats project scope 200",
+                    collab_scoped.status_code == 200
+                    and isinstance(colsbody.get("total_presence"), int)
+                    and isinstance(colsbody.get("by_state"), list),
+                    collab_scoped.text)
+          else:
+              check("collaboration/stats project scope setup", False,
+                    "could not obtain a project id")
+          collab_missing = httpx.get(
+              f"{base}/collaboration/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          col404body = collab_missing.json() if collab_missing.status_code == 404 else {}
+          check("collaboration/stats 404 shared envelope",
+                collab_missing.status_code == 404
+                and col404body.get("error", {}).get("code") == "project_not_found"
+                and bool(col404body.get("error", {}).get("request_id")), collab_missing.text)
+          collab_bad = httpx.get(
+              f"{base}/collaboration/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          colbadbody = collab_bad.json() if collab_bad.status_code == 422 else {}
+          check("collaboration/stats 422 validation envelope",
+                collab_bad.status_code == 422
+                and colbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(colbadbody.get("error", {}).get("request_id")), collab_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
