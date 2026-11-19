@@ -24,6 +24,7 @@ import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
+import type { PublishFeedOptions } from "../lib/publishFeed";
 import type { PublishStatsOptions } from "../lib/publishStats";
 import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
@@ -66,6 +67,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  PublishFeed,
   PublishStats,
   RetryStats,
   SearchResponse,
@@ -628,6 +630,15 @@ export function usePublishStats(
   return useQuery({
     queryKey: queryKeys.publishStats.summary(options),
     queryFn: () => api.getPublishStats(options),
+  });
+}
+
+/** Newest-first authoritative publish feed from `/publishes`, optionally project-scoped (C125). */
+export function usePublishFeed(options?: PublishFeedOptions): UseQueryResult<PublishFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.publishFeed.feed(options),
+    queryFn: () => api.getPublishFeed(options),
   });
 }
 

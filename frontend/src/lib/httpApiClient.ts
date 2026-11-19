@@ -44,6 +44,8 @@ import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import { providerStatsQueryParams } from "./providerStats";
 import type { ProviderStatsOptions } from "./providerStats";
+import { publishFeedQueryParams } from "./publishFeed";
+import type { PublishFeedOptions } from "./publishFeed";
 import { publishStatsQueryParams } from "./publishStats";
 import type { PublishStatsOptions } from "./publishStats";
 import { retryStatsQueryParams } from "./retryStats";
@@ -93,6 +95,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  PublishFeed,
   PublishStats,
   RetryStats,
   SearchResponse,
@@ -633,6 +636,11 @@ export function createHttpApiClient(
     /** Authoritative publish-receipt metrics derived by the backend `/publishes/stats`. */
     getPublishStats(options?: PublishStatsOptions): Promise<PublishStats> {
       return request<PublishStats>("/publishes/stats", publishStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative publish feed derived by the backend `/publishes`. */
+    getPublishFeed(options?: PublishFeedOptions): Promise<PublishFeed> {
+      return request<PublishFeed>("/publishes", publishFeedQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

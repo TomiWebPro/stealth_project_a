@@ -68,6 +68,7 @@ import {
   fetchProvider,
   fetchProviders,
   fetchProviderStats,
+  fetchPublishFeed,
   fetchRecentAssets,
   fetchRetryStats,
   fetchSearch,
@@ -1755,6 +1756,64 @@ describe("mock API job retry statistics (C105 follow-up)", () => {
 
     setMockFailure("retryStats");
     await expect(fetchRetryStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API publish feed (C125 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a newest-first feed with joined project names and whole-scope totals", async () => {
+    const feed = await fetchPublishFeed();
+    expect(feed.generated_at).toBe(REFERENCE_NOW);
+    expect(feed.total).toBeGreaterThan(0);
+    expect((feed.items ?? []).length).toBeGreaterThan(0);
+    expect((feed.items ?? []).length).toBeLessThanOrEqual(feed.total);
+
+    const dates = (feed.items ?? []).map((item) => item.published_at);
+    expect([...dates].sort().reverse()).toEqual(dates);
+    for (const item of feed.items ?? []) {
+      const project = PROJECTS.find((candidate) => candidate.id === item.project_id);
+      expect(item.project_name).toBe(project?.name ?? "Unknown project");
+    }
+  });
+
+  it("scopes to one project and bounds the page without changing the total", async () => {
+    const full = await fetchPublishFeed();
+    const paged = await fetchPublishFeed({ limit: 2 });
+    expect(paged.total).toBe(full.total);
+    expect((paged.items ?? []).length).toBeLessThanOrEqual(2);
+    expect((paged.items ?? []).map((item) => item.asset_id)).toEqual(
+      (full.items ?? []).slice(0, 2).map((item) => item.asset_id),
+    );
+
+    const scoped = await fetchPublishFeed({ projectId: filmId });
+    expect((scoped.items ?? []).every((item) => item.project_id === filmId)).toBe(true);
+
+    const empty = await fetchPublishFeed({ projectId: emptyId });
+    expect(empty).toMatchObject({ items: [], total: 0 });
+  });
+
+  it("mirrors router validation, 404s unknown projects and surfaces the injected failure", async () => {
+    await expect(fetchPublishFeed({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    for (const limit of [0, 201]) {
+      await expect(fetchPublishFeed({ limit })).rejects.toMatchObject({
+        status: 422,
+        code: "validation_error",
+      });
+    }
+    await expect(
+      fetchPublishFeed({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("publishFeed");
+    await expect(fetchPublishFeed()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

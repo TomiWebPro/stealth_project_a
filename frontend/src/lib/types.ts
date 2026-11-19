@@ -96,6 +96,8 @@ export type {
   ProviderStats,
   ProviderStatus,
   ProviderStatusCount,
+  PublishFeed,
+  PublishFeedItem,
   PublishProjectCount,
   PublishStats,
   PublishVersionCount,

@@ -61,6 +61,8 @@ import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
 import type { ProviderStatsOptions } from "../providerStats";
+import { derivePublishFeed, validatePublishFeedArgs } from "../publishFeed";
+import type { PublishFeedOptions } from "../publishFeed";
 import { derivePublishStats, validatePublishStatsArgs } from "../publishStats";
 import type { PublishStatsOptions } from "../publishStats";
 import { deriveRetryStats, validateRetryStatsArgs } from "../retryStats";
@@ -108,6 +110,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderStats,
+  PublishFeed,
   PublishStats,
   RetryStats,
   SearchResponse,
@@ -172,7 +175,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs` and
  * `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1084,6 +1087,25 @@ export async function fetchPublishStats(options?: PublishStatsOptions): Promise<
     });
   }
   return delay(derivePublishStats(ASSETS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative publish feed (C125) derived from the same asset publish receipts
+ * as the live `/publishes` endpoint. Router-style 422 validation, a normalized
+ * 404 for an unknown project scope and the `"publishFeed"` failure domain keep
+ * error and empty states at parity.
+ */
+export async function fetchPublishFeed(options?: PublishFeedOptions): Promise<PublishFeed> {
+  failIfEnabled("publishFeed");
+  validatePublishFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(derivePublishFeed(ASSETS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

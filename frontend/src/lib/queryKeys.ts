@@ -17,6 +17,7 @@ import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderStatsOptions } from "./providerStats";
+import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishStatsOptions } from "./publishStats";
 import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
@@ -222,6 +223,10 @@ export const queryKeys = {
   publishStats: {
     summary: (options: PublishStatsOptions = {}) =>
       ["publish-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  publishFeed: {
+    feed: (options: PublishFeedOptions = {}) =>
+      ["publish-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>

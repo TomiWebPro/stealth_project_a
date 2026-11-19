@@ -39,6 +39,8 @@ import {
 import { derivePipelineStats, validatePipelineStatsArgs } from "./pipelineStats";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
+import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
+import type { PublishFeedOptions } from "./publishFeed";
 import { derivePublishStats, validatePublishStatsArgs } from "./publishStats";
 import { deriveRetryStats, validateRetryStatsArgs } from "./retryStats";
 import {
@@ -295,6 +297,32 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return derivePublishStats(ASSETS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative publish feed derives the same newest-first deliverable view as
+  // the `/publishes` endpoint from the shared asset receipts; mirror its 422
+  // validation, unknown-project 404, page bound and repository derivation so
+  // live and mock agree exactly. This must follow `/publishes/stats` above.
+  if (path === "/publishes") {
+    const projectId = params.get("project_id") ?? undefined;
+    const limitRaw = params.get("limit");
+    const options: PublishFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validatePublishFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return derivePublishFeed(ASSETS, PROJECTS, REFERENCE_NOW, options);
   }
 
   // Authoritative cross-domain search is derived from the same document stores
@@ -932,6 +960,13 @@ describe("live vs mock transport parity", () => {
       ["getVersionStats scoped", (api) => api.getVersionStats({ projectId: filmId })],
       ["getPublishStats", (api) => api.getPublishStats()],
       ["getPublishStats scoped", (api) => api.getPublishStats({ projectId: filmId })],
+      ["getPublishFeed", (api) => api.getPublishFeed()],
+      ["getPublishFeed scoped", (api) => api.getPublishFeed({ projectId: filmId })],
+      ["getPublishFeed limited", (api) => api.getPublishFeed({ limit: 3 })],
+      [
+        "getPublishFeed scoped and limited",
+        (api) => api.getPublishFeed({ projectId: filmId, limit: 2 }),
+      ],
       ["getTags", (api) => api.getTags()],
       ["getTags scoped", (api) => api.getTags({ projectId: filmId })],
       ["getTags filtered", (api) => api.getTags({ projectId: filmId, prefix: "lora", limit: 3 })],
@@ -1003,6 +1038,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getPublishStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getPublishStats({ projectId: emptyId }),
+    );
+    expect(await live.getPublishFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getPublishFeed({ projectId: emptyId }),
     );
     // Both transports 404 identically for an unknown project scope.
     const missingId = "00000000-0000-4000-8000-000000000000";
@@ -1175,6 +1213,23 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockPublishStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(livePublishStats422).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown publish-feed project scope
+    // and reject a malformed id / out-of-range limit with the same 422 envelope.
+    const [mockFeed404, liveFeed404] = await Promise.all([
+      mockApiClient.getPublishFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getPublishFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveFeed404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }]) {
+      const [mockFeed422, liveFeed422] = await Promise.all([
+        mockApiClient.getPublishFeed(bad).catch((cause) => cause),
+        live.getPublishFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
 
     // Both transports 404 identically for an unknown project tag scope.
     const [mockTags404, liveTags404] = await Promise.all([
@@ -1392,6 +1447,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getRetryStats).toBe("function");
     expect(typeof typed.getVersionStats).toBe("function");
     expect(typeof typed.getPublishStats).toBe("function");
+    expect(typeof typed.getPublishFeed).toBe("function");
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");
