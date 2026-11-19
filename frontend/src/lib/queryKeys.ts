@@ -1,4 +1,5 @@
 import type { ActivityOptions } from "./activity";
+import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CollaborationStatsOptions } from "./collaborationStats";
@@ -36,6 +37,10 @@ export const queryKeys = {
         options.kind ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  activityStats: {
+    summary: (options: ActivityStatsOptions = {}) =>
+      ["activity-stats", "summary", options.projectId ?? "all"] as const,
   },
   dashboard: {
     summary: (options: DashboardOptions = {}) =>

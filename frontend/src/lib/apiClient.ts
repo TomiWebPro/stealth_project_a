@@ -1,4 +1,5 @@
 import type { ActivityOptions } from "./activity";
+import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
@@ -22,6 +23,7 @@ import type { SearchOptions } from "./search";
 import type { TagOptions } from "./tags";
 import type {
   ActivityFeed,
+  ActivityStats,
   Asset,
   AssetImpact,
   AssetStats,
@@ -73,6 +75,8 @@ export interface ApiClient {
    * `projectId` scope surfaces a normalized 404 `ApiError` on both transports.
    */
   getActivity(options?: ActivityOptions): Promise<ActivityFeed>;
+  /** Authoritative activity metrics derived by `/activity/stats`, optionally project-scoped (C89). */
+  getActivityStats(options?: ActivityStatsOptions): Promise<ActivityStats>;
   /** Authoritative workspace snapshot derived by the backend `/dashboard` endpoint (C25). */
   getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
   /** Authoritative job execution metrics derived by `/jobs/stats`, optionally project-scoped (C40). */
@@ -147,6 +151,7 @@ export interface ApiClient {
 export const mockApiClient: ApiClient = {
   getHomeSummary: mockApi.fetchHomeSummary,
   getActivity: mockApi.fetchActivity,
+  getActivityStats: mockApi.fetchActivityStats,
   getDashboard: mockApi.fetchDashboard,
   getJobStats: mockApi.fetchJobStats,
   getAssetStats: mockApi.fetchAssetStats,

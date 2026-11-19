@@ -113,6 +113,19 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the activity stats key by project", () => {
+    expect(queryKeys.activityStats.summary()).toEqual([
+      "activity-stats",
+      "summary",
+      "all",
+    ]);
+    expect(queryKeys.activityStats.summary({ projectId: "p1" })).toEqual([
+      "activity-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes the orchestration stats key by project", () => {
     expect(queryKeys.orchestrationStats.summary()).toEqual([
       "orchestration-stats",

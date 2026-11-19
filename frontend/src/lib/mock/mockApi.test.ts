@@ -7,6 +7,7 @@ import {
   COMMENTS,
   CONVERSATIONS,
   EXTENSIONS,
+  JOBS,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_PLANS,
@@ -21,6 +22,7 @@ import {
 import {
   clearMockFailures,
   fetchActivity,
+  fetchActivityStats,
   fetchAsset,
   fetchAssetStats,
   fetchAssets,
@@ -501,6 +503,65 @@ describe("mock API collaboration stats (C81 follow-up)", () => {
 
     setMockFailure("collaborationStats");
     await expect(fetchCollaborationStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API activity stats (C89 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+  const publishCount = ASSETS.filter(
+    (asset) => asset.metadata?.["publish_receipt"] !== undefined,
+  ).length;
+
+  it("derives a populated snapshot from the authoritative activity seeds", async () => {
+    const stats = await fetchActivityStats();
+    expect(stats.total_events).toBe(ASSETS.length + publishCount + JOBS.length + COMMENTS.length);
+    expect(stats.by_kind).toEqual([
+      { kind: "asset", count: ASSETS.length },
+      { kind: "publish", count: publishCount },
+      { kind: "job", count: JOBS.length },
+      { kind: "comment", count: COMMENTS.length },
+    ]);
+    expect(stats.total_participants).toBeGreaterThan(0);
+    expect((stats.by_project ?? []).length).toBeGreaterThan(0);
+    expect(stats.newest_event_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project and zero-fills an unseeded project", async () => {
+    const scoped = await fetchActivityStats({ projectId: filmId });
+    expect(scoped.by_project).toEqual([
+      {
+        project_id: filmId,
+        events: expect.any(Number),
+        participants: expect.any(Number),
+      },
+    ]);
+    expect(scoped.by_project?.[0]?.events).toBeGreaterThan(0);
+    expect(scoped.total_events).toBe(scoped.by_project?.[0]?.events);
+
+    const empty = await fetchActivityStats({ projectId: emptyId });
+    expect(empty.total_events).toBe(0);
+    expect(empty.total_participants).toBe(0);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_event_at).toBeNull();
+    expect(empty.by_kind?.every((entry) => entry.count === 0)).toBe(true);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchActivityStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchActivityStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("activityStats");
+    await expect(fetchActivityStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

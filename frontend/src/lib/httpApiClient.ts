@@ -2,6 +2,8 @@ import { ApiError } from "../api/client";
 import { parseStreamEvent } from "../api/conversations";
 import { activityQueryParams } from "./activity";
 import type { ActivityOptions } from "./activity";
+import { activityStatsQueryParams } from "./activityStats";
+import type { ActivityStatsOptions } from "./activityStats";
 import { assetStatsQueryParams } from "./assetStats";
 import type { AssetStatsOptions } from "./assetStats";
 import { auditQueryParams } from "./audit";
@@ -42,6 +44,7 @@ import { tagQueryParams } from "./tags";
 import type { TagOptions } from "./tags";
 import type {
   ActivityFeed,
+  ActivityStats,
   Asset,
   AssetImpact,
   AssetStats,
@@ -252,6 +255,11 @@ export function createHttpApiClient(
     /** The backend derives the feed; the live transport just forwards it. */
     getActivity(options?: ActivityOptions): Promise<ActivityFeed> {
       return request<ActivityFeed>("/activity", activityQueryParams(options));
+    },
+
+    /** Authoritative activity metrics derived by the backend `/activity/stats`. */
+    getActivityStats(options?: ActivityStatsOptions): Promise<ActivityStats> {
+      return request<ActivityStats>("/activity/stats", activityStatsQueryParams(options));
     },
 
     /** The backend owns the whole snapshot; the live transport just forwards it. */

@@ -4,6 +4,7 @@ import { ApiError } from "../api/client";
 import { API_PREFIX } from "../types/common";
 import { deriveActivityFeed, validateActivityArgs } from "./activity";
 import type { ActivityOptions } from "./activity";
+import { deriveActivityStats, validateActivityStatsArgs } from "./activityStats";
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
@@ -102,6 +103,27 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
     };
     return filterAuditTrail(trail, query);
+  }
+
+  // Authoritative activity statistics reuse the same feed derivation over the
+  // asset/job/comment stores, then aggregate it. Mirror the router's 422
+  // validation, unknown-project 404 and repository aggregation over the seeds.
+  if (path === "/activity/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateActivityStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveActivityStats(ASSETS, JOBS, COMMENTS, REFERENCE_NOW, options);
   }
 
   // Authoritative workspace activity is derived from the same asset/job/comment
@@ -630,6 +652,8 @@ describe("live vs mock transport parity", () => {
     const cases: Array<[string, (api: ApiClient) => Promise<unknown>]> = [
       ["getHomeSummary", (api) => api.getHomeSummary()],
       ["getActivity", (api) => api.getActivity()],
+      ["getActivityStats", (api) => api.getActivityStats()],
+      ["getActivityStats scoped", (api) => api.getActivityStats({ projectId: filmId })],
       ["getActivity scoped", (api) => api.getActivity({ projectId: filmId })],
       ["getActivity filtered", (api) => api.getActivity({ projectId: filmId, kind: "job", limit: 3 })],
       ["getDashboard", (api) => api.getDashboard()],
@@ -700,7 +724,7 @@ describe("live vs mock transport parity", () => {
       const [mockValue, liveValue] = await Promise.all([run(mockApiClient), run(live)]);
       expect(liveValue, `${name} differs between mock and live`).toEqual(mockValue);
     }
-  }, 20_000);
+  }, 45_000);
 
   it("returns identical empty/not-found shapes for both transports", async () => {
     expect(await live.listAssetsByProject(emptyId)).toEqual(
@@ -737,6 +761,9 @@ describe("live vs mock transport parity", () => {
     expect(await live.getActivity({ projectId: emptyId })).toEqual(
       await mockApiClient.getActivity({ projectId: emptyId }),
     );
+    expect(await live.getActivityStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getActivityStats({ projectId: emptyId }),
+    );
     // Both transports 404 identically for an unknown project scope.
     const missingId = "00000000-0000-4000-8000-000000000000";
     const [mock404, live404] = await Promise.all([
@@ -770,6 +797,21 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockActivityErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveActivityErr).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown activity-stats project
+    // scope and reject a malformed project id with the same 422 envelope.
+    const [mockActivityStats404, liveActivityStats404] = await Promise.all([
+      mockApiClient.getActivityStats({ projectId: missingId }).catch((cause) => cause),
+      live.getActivityStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockActivityStats404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveActivityStats404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockActivityStats422, liveActivityStats422] = await Promise.all([
+      mockApiClient.getActivityStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getActivityStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockActivityStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveActivityStats422).toMatchObject({ status: 422, code: "validation_error" });
 
     // Both transports 404 identically for an unknown project tag scope.
     const [mockTags404, liveTags404] = await Promise.all([
@@ -950,7 +992,7 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockImpactErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveImpactErr).toMatchObject({ status: 422, code: "validation_error" });
-  }, 20_000);
+  }, 45_000);
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {
     const failing: ApiClient = createHttpApiClient("http://localhost:8000", {
@@ -972,6 +1014,7 @@ describe("live vs mock transport parity", () => {
     const typed: Queries = live as unknown as Queries;
     expect(typeof typed.getHomeSummary).toBe("function");
     expect(typeof typed.getActivity).toBe("function");
+    expect(typeof typed.getActivityStats).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.getJobStats).toBe("function");
     expect(typeof typed.getAssetStats).toBe("function");

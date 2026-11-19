@@ -4,6 +4,7 @@ import { ApiError } from "../../api/client";
 import { ASSETS, CONVERSATIONS, EXTENSIONS, JOBS, PROJECTS, PROVIDERS } from "./data";
 import {
   clearMockFailures,
+  fetchActivityStats,
   fetchAsset,
   fetchAssetImpact,
   fetchAssetStats,
@@ -70,6 +71,7 @@ describe("mock error-state fakes", () => {
     const projectId = PROJECTS[0]?.id ?? "";
 
     await expect(fetchHomeSummary()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchActivityStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobs()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchAssetStats()).rejects.toBeInstanceOf(ApiError);
@@ -230,6 +232,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchCollaborationStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the activity stats domain", async () => {
+    setMockFailure("activityStats");
+
+    await expect(fetchActivityStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchActivityStats()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the orchestration stats domain", async () => {

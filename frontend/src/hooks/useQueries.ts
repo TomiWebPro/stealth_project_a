@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
 import type { ActivityOptions } from "../lib/activity";
+import type { ActivityStatsOptions } from "../lib/activityStats";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
@@ -24,6 +25,7 @@ import type { SearchOptions } from "../lib/search";
 import type { TagOptions } from "../lib/tags";
 import type {
   ActivityFeed,
+  ActivityStats,
   Asset,
   AssetImpact,
   AssetStats,
@@ -75,6 +77,17 @@ export function useActivity(options?: ActivityOptions): UseQueryResult<ActivityF
   return useQuery({
     queryKey: queryKeys.activity.feed(options),
     queryFn: () => api.getActivity(options),
+  });
+}
+
+/** Authoritative activity metrics from `/activity/stats`, optionally project-scoped (C89). */
+export function useActivityStats(
+  options?: ActivityStatsOptions,
+): UseQueryResult<ActivityStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.activityStats.summary(options),
+    queryFn: () => api.getActivityStats(options),
   });
 }
 

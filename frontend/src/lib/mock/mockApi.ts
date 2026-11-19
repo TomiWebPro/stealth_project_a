@@ -1,6 +1,8 @@
 import { ApiError } from "../../api/client";
 import { deriveActivityFeed, validateActivityArgs } from "../activity";
 import type { ActivityOptions } from "../activity";
+import { deriveActivityStats, validateActivityStatsArgs } from "../activityStats";
+import type { ActivityStatsOptions } from "../activityStats";
 import { deriveAssetStats, validateAssetStatsArgs } from "../assetStats";
 import type { AssetStatsOptions } from "../assetStats";
 import { filterAuditTrail } from "../audit";
@@ -62,6 +64,7 @@ import type {
   AssetImpact,
   AssetStats,
   AssetUpdate,
+  ActivityStats,
   AuditTrail,
   CollaborationStats,
   Comment,
@@ -135,7 +138,8 @@ function delay<T>(value: T): Promise<T> {
 /**
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
- * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
+ * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
+ * `activityStats`, `jobStats`,
  * `assetStats`, `conversationStats`, `projectStats`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
@@ -484,6 +488,35 @@ export async function fetchActivity(options?: ActivityOptions) {
     });
   }
   return delay(deriveActivityFeed(ASSETS.map(withAssetOverrides), JOBS, COMMENTS, options));
+}
+
+/**
+ * Authoritative activity metrics (C89) derived by reusing the same activity-feed
+ * derivation as the live `/activity/stats` endpoint. Router-style 422 validation,
+ * a normalized 404 for an unknown project scope and the `"activityStats"` failure
+ * domain keep error and empty states at parity with live mode.
+ */
+export async function fetchActivityStats(
+  options?: ActivityStatsOptions,
+): Promise<ActivityStats> {
+  failIfEnabled("activityStats");
+  validateActivityStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveActivityStats(
+      ASSETS.map(withAssetOverrides),
+      JOBS,
+      COMMENTS,
+      REFERENCE_NOW,
+      options,
+    ),
+  );
 }
 
 export async function fetchProjects(): Promise<readonly Project[]> {
