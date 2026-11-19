@@ -20,6 +20,7 @@ import {
   shotGroupSummary,
 } from "./helpers";
 import { AssetDetailPanel } from "./AssetDetailPanel";
+import { AssetStatsPanel } from "./AssetStatsPanel";
 import { VersionPanel } from "./VersionPanel";
 import { TagFacetPanel } from "../tags/TagFacetPanel";
 
@@ -179,6 +180,12 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
       </Card>
 
       <TagFacetPanel projectId={projectId} onSelectTag={setSearch} />
+
+      <AssetStatsPanel
+        projectId={projectId}
+        title="Project asset stats"
+        description="Authoritative inventory metrics scoped to this project."
+      />
 
       <Card>
         <div className="p-4">

@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
+import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
 import {
@@ -144,6 +145,10 @@ export function HomeScreen() {
         <ConversationStatsPanel
           title="Workspace conversation stats"
           description="Authoritative message metrics across every project in the workspace."
+        />
+        <AssetStatsPanel
+          title="Workspace asset stats"
+          description="Authoritative inventory metrics across every project in the workspace."
         />
 
         {isPending ? <HomeSkeleton /> : null}

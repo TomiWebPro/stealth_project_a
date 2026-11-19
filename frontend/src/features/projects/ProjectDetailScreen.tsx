@@ -15,6 +15,7 @@ import { LineageGraph } from "../lineage/LineageGraph";
 import { StoragePanel } from "../storage/StoragePanel";
 import { LineageView } from "../lineage/LineageView";
 import { VersionPanel } from "../assets/VersionPanel";
+import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
 import { formatProjectUpdatedAtLong } from "./helpers";
 
@@ -155,6 +156,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
       </Card>
 
       <StoragePanel projectId={projectId} />
+      <AssetStatsPanel
+        projectId={projectId}
+        title="Project asset stats"
+        description="Authoritative inventory metrics scoped to this project."
+      />
       <JobStatsPanel
         projectId={projectId}
         title="Project job stats"
