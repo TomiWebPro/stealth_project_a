@@ -2365,6 +2365,134 @@ jobs:
                 and bool(vfblbody.get("error", {}).get("request_id")),
                 version_feed_bad_limit.text)
 
+          # Authoritative asset lineage feed (C157/C159) is the newest /api/v1 URL
+          # the live client calls (getLineageFeed). Register one child asset on
+          # demand with the on-demand asset as its parent so the derived feed has a
+          # real typed relationship, then probe the feed shape, item shapes,
+          # newest-first (created_at, id) order and whole-scope total, the `limit`
+          # page bound, the optional project scope (unknown project -> shared 404)
+          # and the shared 422 envelopes, keeping CI aligned with new endpoints
+          # as they go live.
+          lineage_child = None
+          if asset_id and project_id:
+              child_registered = httpx.post(
+                  f"{base}/assets/register",
+                  json={
+                      "project_id": project_id,
+                      "type": "image",
+                      "name": "CI smoke lineage child",
+                      "parent_asset_ids": [asset_id],
+                      "storage": {"backend": "local", "key": "ci/smoke-child.png",
+                                  "size_bytes": 1, "content_type": "image/png"},
+                  },
+                  timeout=5)
+              check("lineage/feed register child 201", child_registered.status_code == 201,
+                    child_registered.text)
+              lineage_child = (
+                  child_registered.json().get("id")
+                  if child_registered.status_code == 201 else None)
+          else:
+              check("lineage/feed register child setup", False,
+                    "could not obtain an asset/project for the lineage probe")
+
+          lineage_feed = httpx.get(f"{base}/lineage/feed", timeout=5)
+          lfbody = lineage_feed.json() if lineage_feed.status_code == 200 else {}
+          check("lineage/feed 200 feed shape",
+                lineage_feed.status_code == 200
+                and isinstance(lfbody.get("items"), list)
+                and isinstance(lfbody.get("total"), int)
+                and "generated_at" in lfbody, lineage_feed.text)
+          check("lineage/feed derived item shape",
+                lineage_feed.status_code == 200
+                and lfbody.get("total", 0) >= 1
+                and len(lfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "id", "from_asset_id", "to_asset_id", "from_asset_name",
+                    "to_asset_name", "project_id", "project_name", "type",
+                    "created_at"))
+                    for item in lfbody["items"]), lineage_feed.text)
+          check("lineage/feed request-id header",
+                "x-request-id" in {k.lower() for k in lineage_feed.headers},
+                str(dict(lineage_feed.headers)))
+          if lineage_child:
+              derived_item = next(
+                  (i for i in lfbody.get("items", [])
+                   if i.get("from_asset_id") == lineage_child),
+                  None)
+              check("lineage/feed derived relationship",
+                    lineage_feed.status_code == 200 and derived_item is not None
+                    and derived_item.get("to_asset_id") == asset_id
+                    and derived_item.get("from_asset_name") == "CI smoke lineage child"
+                    and derived_item.get("to_asset_name") == "CI smoke impact root"
+                    and derived_item.get("type") == "derived_from"
+                    and derived_item.get("project_id") == project_id
+                    and isinstance(derived_item.get("project_name"), str)
+                    and bool(derived_item.get("project_name")),
+                    lineage_feed.text)
+          else:
+              check("lineage/feed derived setup", False,
+                    "could not register a child asset for the feed probe")
+          lineage_created_keys = [
+              (i.get("created_at"), i.get("id"))
+              for i in lfbody.get("items", [])]
+          check("lineage/feed newest-first order",
+                lineage_feed.status_code == 200
+                and lineage_created_keys == sorted(lineage_created_keys, reverse=True),
+                lineage_feed.text)
+          lineage_feed_limited = httpx.get(
+              f"{base}/lineage/feed", params={"limit": 1}, timeout=5)
+          lflbody = (lineage_feed_limited.json()
+                     if lineage_feed_limited.status_code == 200 else {})
+          check("lineage/feed limit bounds page not total",
+                lineage_feed_limited.status_code == 200
+                and len(lflbody.get("items", [])) <= 1
+                and lflbody.get("total") == lfbody.get("total"),
+                lineage_feed_limited.text)
+          if project_id:
+              lineage_feed_scoped = httpx.get(
+                  f"{base}/lineage/feed", params={"project_id": project_id}, timeout=5)
+              lfsbody = (lineage_feed_scoped.json()
+                         if lineage_feed_scoped.status_code == 200 else {})
+              check("lineage/feed project scope 200",
+                    lineage_feed_scoped.status_code == 200
+                    and isinstance(lfsbody.get("total"), int)
+                    and lfsbody.get("total", 0) >= 1
+                    and all(i.get("project_id") == project_id
+                            for i in lfsbody.get("items", [])),
+                    lineage_feed_scoped.text)
+          else:
+              check("lineage/feed project scope setup", False,
+                    "could not obtain a project id")
+          lineage_feed_missing = httpx.get(
+              f"{base}/lineage/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          lf404body = (lineage_feed_missing.json()
+                       if lineage_feed_missing.status_code == 404 else {})
+          check("lineage/feed 404 shared envelope",
+                lineage_feed_missing.status_code == 404
+                and lf404body.get("error", {}).get("code") == "project_not_found"
+                and bool(lf404body.get("error", {}).get("request_id")),
+                lineage_feed_missing.text)
+          lineage_feed_bad = httpx.get(
+              f"{base}/lineage/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          lfbadbody = (lineage_feed_bad.json()
+                       if lineage_feed_bad.status_code == 422 else {})
+          check("lineage/feed 422 malformed id envelope",
+                lineage_feed_bad.status_code == 422
+                and lfbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(lfbadbody.get("error", {}).get("request_id")),
+                lineage_feed_bad.text)
+          lineage_feed_bad_limit = httpx.get(
+              f"{base}/lineage/feed", params={"limit": 0}, timeout=5)
+          lfblbody = (lineage_feed_bad_limit.json()
+                      if lineage_feed_bad_limit.status_code == 422 else {})
+          check("lineage/feed 422 invalid limit envelope",
+                lineage_feed_bad_limit.status_code == 422
+                and lfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(lfblbody.get("error", {}).get("request_id")),
+                lineage_feed_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
