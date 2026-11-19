@@ -2108,7 +2108,27 @@ this file is the execution checklist.
   (333 checks OK, dynamically chosen free port) with YAML parse + actionlint
   v1.7.12 (`-shellcheck=`); frontend lint/1115 tests/build green and backend
   pytest (1053) green. Screens event-feed rendering remains a screens follow-up.
+- 2026-11-19 — `e510c4f` — C173 (backend): added authoritative `GET /api/v1/extensions/feed?type=&status=&limit=` — a newest-first workspace feed of installed extensions derived fresh from the authoritative `EXTENSIONS` store (no second index; the same store `/extensions` lists and `/extensions/stats` aggregates), with manifest identity/display fields (id/name/version/publisher/type), lifecycle status, trust flags and install time, the deterministic uuid5 extension id matching installation, a `(installed_at, extension_id)` tie-break and a whole-scope `total` before the `limit` page; optional `type`/`status` filters use the shared 422 envelope and the literal feed path is registered before `/extensions/{extension_id}`. `ExtensionFeed`/`ExtensionFeedItem` mirrored in `frontend/src/types/extensionFeed.ts` + exported from the types index, README endpoint list synced, 12 tests × 2 storage backends green (1077 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items, so C173 was added under the Never-empty well.
   ✅ 2026-11-19 — `3da13a8`
+
+- [x] C173 (backend) Authoritative extension installation feed API:
+  `GET /api/v1/extensions/feed?type=&status=&limit=` derives a newest-first,
+  workspace-wide feed of installed extensions from the authoritative `EXTENSIONS`
+  collection (no second index; the same store `/extensions` lists and
+  `/extensions/stats` aggregates) — manifest identity/display fields
+  (name/version/publisher/type), lifecycle status, trust flags and recorded
+  install time, with the deterministic uuid5 extension id matching installation,
+  a `(installed_at, extension_id)` newest-first tie-break and a whole-scope
+  `total` counted before the `limit` page; optional `type`/`status` filters use
+  the shared 422 envelope and the literal feed path is registered before
+  `/extensions/{extension_id}`. `ExtensionFeed`/`ExtensionFeedItem` mirrored in
+  `frontend/src/types/extensionFeed.ts` + exported from the types index, README
+  endpoint list synced, 12 tests × 2 storage backends green (1077 passed,
+  contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of
+  the feed is a follow-up. My owned backend column had no unchecked items (only
+  the repo-wide C6 docs pass remains, owned by other agents), so C173 was added
+  under the Never-empty well.
+  ✅ 2026-11-19 — `e510c4f`
 
 ## Log (append one line per completed item)
 
