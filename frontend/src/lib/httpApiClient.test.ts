@@ -1067,3 +1067,46 @@ describe("createHttpApiClient extension stats", () => {
     });
   });
 });
+
+describe("createHttpApiClient operation stats", () => {
+  const stats = {
+    total: 10,
+    streaming: 3,
+    with_provider: 2,
+    without_provider: 8,
+    total_settings: 8,
+    unique_output_types: 6,
+    by_output_type: [
+      { asset_type: "video", operations: 3 },
+      { asset_type: "image", operations: 2 },
+    ],
+    by_input_type: [{ asset_type: "image", operations: 6 }],
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /operations/stats and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/operations/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getOperationStats()).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/operations/stats`);
+    expect(url.search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "internal_error", message: "boom" } },
+          { status: 500 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getOperationStats()).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+      message: "boom",
+    });
+  });
+});

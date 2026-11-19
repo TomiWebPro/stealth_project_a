@@ -164,6 +164,7 @@ describe("queryKeys", () => {
 
   it("scopes the new catalog, conversation and message keys", () => {
     expect(queryKeys.operations.catalog()).toEqual(["operations", "catalog"]);
+    expect(queryKeys.operationStats.summary()).toEqual(["operation-stats", "summary"]);
     expect(queryKeys.capabilities.list()).toEqual(["capabilities", "list", "all"]);
     expect(queryKeys.capabilities.list("lora-train")).toEqual([
       "capabilities",

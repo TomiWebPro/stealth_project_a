@@ -48,6 +48,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationStats,
   Organization,
   OrchestrationRun,
   Presence,
@@ -376,6 +377,9 @@ export function createHttpApiClient(
     },
 
     getOperations: () => request<OperationCatalog>("/operations"),
+
+    /** Authoritative catalog metrics derived by the backend `/operations/stats`. */
+    getOperationStats: () => request<OperationStats>("/operations/stats"),
 
     async listCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]> {
       // `/capabilities` may return flat rows or full providers depending on the

@@ -33,6 +33,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationStats,
   Organization,
   OrchestrationRun,
   Presence,
@@ -95,6 +96,8 @@ export interface ApiClient {
   listWorkflowTemplates(projectId?: string): Promise<readonly Asset[]>;
   /** Static operation catalog (pipeline stages 1-9). */
   getOperations(): Promise<OperationCatalog>;
+  /** Authoritative catalog metrics derived by `/operations/stats` (C65). */
+  getOperationStats(): Promise<OperationStats>;
   /** Flattened provider capability rows, optionally filtered by operation id. */
   listCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]>;
   listConversations(projectId: string): Promise<readonly Conversation[]>;
@@ -147,6 +150,7 @@ export const mockApiClient: ApiClient = {
   getProvider: mockApi.fetchProvider,
   listWorkflowTemplates: mockApi.fetchWorkflowTemplates,
   getOperations: mockApi.fetchOperations,
+  getOperationStats: mockApi.fetchOperationStats,
   listCapabilities: mockApi.fetchCapabilities,
   listConversations: mockApi.fetchConversations,
   getConversation: mockApi.fetchConversation,

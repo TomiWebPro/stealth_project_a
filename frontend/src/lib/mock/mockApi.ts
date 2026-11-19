@@ -25,6 +25,7 @@ import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
+import { deriveOperationStats } from "../operationStats";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
@@ -50,6 +51,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationStats,
   Organization,
   OrchestrationRun,
   Presence,
@@ -106,7 +108,8 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `tags` and `impact`. Always reset with {@link clearMockFailures} afterwards.
+ * `tags`, `impact` and `operationStats`. Always reset with {@link clearMockFailures}
+ * afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -505,6 +508,16 @@ export async function fetchWorkflowTemplates(projectId?: string): Promise<readon
 export async function fetchOperations(): Promise<OperationCatalog> {
   failIfEnabled("operations");
   return delay(OPERATION_CATALOG);
+}
+
+/**
+ * Authoritative catalog metrics (C65) derived from the same operation catalog
+ * as the live `/operations/stats` endpoint. There are no query parameters, so
+ * only the `"operationStats"` failure domain can make this query fail.
+ */
+export async function fetchOperationStats(): Promise<OperationStats> {
+  failIfEnabled("operationStats");
+  return delay(deriveOperationStats(OPERATION_CATALOG.operations ?? [], REFERENCE_NOW));
 }
 
 /** Flattened capability rows, optionally filtered to one operation id. */

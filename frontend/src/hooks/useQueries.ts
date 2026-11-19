@@ -35,6 +35,7 @@ import type {
   Message,
   MessageCreate,
   OperationCatalog,
+  OperationStats,
   Organization,
   OrchestrationRun,
   Presence,
@@ -282,6 +283,15 @@ export function useOperations(): UseQueryResult<OperationCatalog> {
   return useQuery({
     queryKey: queryKeys.operations.catalog(),
     queryFn: () => api.getOperations(),
+  });
+}
+
+/** Authoritative operation catalog metrics from `/operations/stats` (C65). */
+export function useOperationStats(): UseQueryResult<OperationStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.operationStats.summary(),
+    queryFn: () => api.getOperationStats(),
   });
 }
 

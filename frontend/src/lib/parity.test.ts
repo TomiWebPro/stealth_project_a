@@ -15,6 +15,7 @@ import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionSta
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
+import { deriveOperationStats } from "./operationStats";
 import type { ImpactOptions } from "./impact";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
@@ -352,6 +353,12 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   }
   if (path === "/operations") return OPERATION_CATALOG;
 
+  // Authoritative catalog metrics are derived from the same operation catalog
+  // on every call; reproduce the repository derivation over the shared seeds.
+  if (path === "/operations/stats") {
+    return deriveOperationStats(OPERATION_CATALOG.operations ?? [], REFERENCE_NOW);
+  }
+
   // Authoritative conversation/message stats are derived from the conversation
   // and message stores on every call; reproduce the router's 422 validation,
   // unknown-project 404 and repository derivation over the shared seeds. This
@@ -517,6 +524,7 @@ describe("live vs mock transport parity", () => {
       ["getProvider", (api) => api.getProvider("prov_local")],
       ["listWorkflowTemplates", (api) => api.listWorkflowTemplates()],
       ["getOperations", (api) => api.getOperations()],
+      ["getOperationStats", (api) => api.getOperationStats()],
       ["listCapabilities", (api) => api.listCapabilities()],
       ["listConversations", (api) => api.listConversations(filmId)],
       ["getConversation", (api) => api.getConversation(conversationId)],
@@ -741,5 +749,6 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
+    expect(typeof typed.getOperationStats).toBe("function");
   });
 });

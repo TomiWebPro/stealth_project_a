@@ -95,6 +95,9 @@ export const queryKeys = {
   operations: {
     catalog: () => ["operations", "catalog"] as const,
   },
+  operationStats: {
+    summary: () => ["operation-stats", "summary"] as const,
+  },
   capabilities: {
     list: (operationId?: string) =>
       ["capabilities", "list", operationId ?? "all"] as const,
