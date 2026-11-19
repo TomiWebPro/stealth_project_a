@@ -1266,6 +1266,21 @@ this file is the execution checklist.
   so C115 was added under the Never-empty well. ✅ 2026-11-19 — `91afa99`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C116 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  publish statistics endpoint from C113/C115
+  (`GET /api/v1/publishes/stats?project_id=`): probe the snapshot shape
+  (`total_published`, `total_bytes`, `by_version`, `by_project`,
+  `newest_published_at`, `generated_at`) + by-version/by-project breakdown
+  shapes, publish the on-demand registered asset via `PATCH /assets/{id}` with a
+  `publish_receipt` so the derived 200 shape (`total_published >= 1`, a
+  `version: 1` bucket) is exercised, the optional `project_id` scope (unknown →
+  shared 404 `project_not_found`, malformed → shared 422 `validation_error`)
+  and the request-id header, keeping CI aligned with the exact `/api/v1` URLs
+  the `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C116 was added under the Never-empty well.
+  ✅ 2026-11-19 — `8cc2730`
+  Screens publish-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1420,3 +1435,4 @@ this file is the execution checklist.
 - 2026-11-19 — `207d242` — C113 (backend): added authoritative `GET /api/v1/publishes/stats?project_id=` deriving published-asset totals, delivered bytes, deterministic by-version/by-project breakdowns and newest-publish recency from publish receipts in the authoritative asset store (no second index; soft-deleted/unpublished assets and malformed receipts excluded, shared 404/422 envelopes); `PublishStats`/`PublishVersionCount`/`PublishProjectCount` mirrored in `frontend/src/types/publishStats.ts`, README endpoint list synced, 6 tests × 2 backends green (783 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C113 was added under the Never-empty well.
 - 2026-11-19 — `bad8580` — C114 (screens): rendered the authoritative asset version statistics (C109/C111/C112 follow-up) via `useVersionStats` — a reusable `VersionStatsPanel` on Home (workspace-wide), the Assets browser and project detail (project-scoped) with four stat cards, version-number and per-project version/asset breakdowns, and all five UI states; every display value derived in tested `versionStatsHelpers`. Resolves the C112 screens follow-up. Lint clean, 770 tests, build green. My owned column had no unchecked rows, so C114 was added under the Never-empty well.
 - 2026-11-19 — `91afa99` — C115 (mocks): wired the authoritative publish statistics API (C113 follow-up) end to end — `getPublishStats`/`usePublishStats` atomically across mockApi (receipt-derived totals, delivered bytes, ascending by-version buckets, per-project publish/byte counts sorted by descending publishes then id, newest-publish recency, soft-deleted/malformed-receipt exclusion, router-style 422 + unknown-project 404 + injectable `publishStats` failure), the stable facade, live `httpApiClient` (`GET /publishes/stats?project_id=`), queryKeys and useQueries, with a shared `lib/publishStats` derivation/validation helper + quantitative publish-receipt seeds; parity guard extended to both transports (populated/scoped/empty/404/422 + surface guard). Lint clean, 781 tests, build green. My owned column had no unchecked rows, so C115 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `8cc2730` — C116 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/publishes/stats?project_id=` (snapshot shape + by-version/by-project breakdown shapes, an on-demand `publish_receipt` PATCH on the registered asset so the derived 200 shape is exercised, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found` and a malformed id yields 422 `validation_error`, and the request-id header) — the CI follow-up from C113/C115. No unchecked CI row remained, so C116 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (all probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12; frontend lint clean/781 tests/build green and backend pytest (783) green. Screens publish-stats rendering remains a screens follow-up.
