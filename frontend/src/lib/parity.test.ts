@@ -20,6 +20,8 @@ import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
 import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
+import { deriveJobLogs, validateJobLogsArgs } from "./jobLogs";
+import type { JobLogsOptions } from "./jobLogs";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationStats } from "./operationStats";
@@ -478,6 +480,38 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveJobStats(JOBS, REFERENCE_NOW, options);
   }
 
+  // Authoritative per-job execution log is derived from the same JOB_EVENTS
+  // stream the endpoint reads; mirror its 422 validation, unknown-job 404 and
+  // repository derivation (severity filter + resume cursor + page) over seeds.
+  if (/^\/jobs\/[^/]+\/logs$/.test(path)) {
+    const jobId = pathParts[2] ?? "";
+    const levelRaw = params.get("level");
+    const sinceRaw = params.get("since_seq");
+    const limitRaw = params.get("limit");
+    const options: JobLogsOptions = {
+      ...(levelRaw ? { level: levelRaw as JobLogsOptions["level"] } : {}),
+      ...(sinceRaw !== null ? { sinceSeq: Number(sinceRaw) } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateJobLogsArgs(jobId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!JOBS.some((job) => job.id === jobId)) return NOT_FOUND;
+    return deriveJobLogs(
+      jobId,
+      JOB_EVENTS.filter((event) => event.job_id === jobId),
+      options,
+    );
+  }
+
   if (path === "/jobs") {
     let jobs = [...JOBS];
     const projectId = params.get("project_id");
@@ -830,6 +864,9 @@ describe("live vs mock transport parity", () => {
       ["listJobs", (api) => api.listJobs()],
       ["listJobsByProject", (api) => api.listJobsByProject(filmId)],
       ["getJob", (api) => api.getJob(failedJobId)],
+      ["getJobLogs", (api) => api.getJobLogs(failedJobId)],
+      ["getJobLogs filtered", (api) => api.getJobLogs(failedJobId, { level: "error" })],
+      ["getJobLogs paged", (api) => api.getJobLogs(failedJobId, { sinceSeq: 1, limit: 2 })],
       ["getProjectDetail", (api) => api.getProjectDetail(filmId)],
       ["getProjectAudit", (api) => api.getProjectAudit(filmId)],
       ["listProviders", (api) => api.listProviders()],
@@ -947,6 +984,22 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getProjectAudit("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // Both resolve a job log for an unknown job to undefined and reject
+    // malformed ids / out-of-range filters with the same 422 envelope.
+    expect(await live.getJobLogs(missingId)).toBeUndefined();
+    expect(await mockApiClient.getJobLogs(missingId)).toBeUndefined();
+    const [mockLogs422, liveLogs422] = await Promise.all([
+      mockApiClient.getJobLogs(failedJobId, { limit: 0 }).catch((cause) => cause),
+      live.getJobLogs(failedJobId, { limit: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockLogs422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveLogs422).toMatchObject({ status: 422, code: "validation_error" });
+    const [mockLogId422, liveLogId422] = await Promise.all([
+      mockApiClient.getJobLogs("not-a-uuid").catch((cause) => cause),
+      live.getJobLogs("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(mockLogId422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveLogId422).toMatchObject({ status: 422, code: "validation_error" });
     expect(await live.search("zzzz-no-such-thing")).toEqual(
       await mockApiClient.search("zzzz-no-such-thing"),
     );
@@ -1275,6 +1328,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getActivityStats).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.getJobStats).toBe("function");
+    expect(typeof typed.getJobLogs).toBe("function");
     expect(typeof typed.getAssetStats).toBe("function");
     expect(typeof typed.getConversationStats).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");

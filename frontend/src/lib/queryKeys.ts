@@ -8,6 +8,7 @@ import type { DashboardOptions } from "./dashboard";
 import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
+import type { JobLogsOptions } from "./jobLogs";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
@@ -123,6 +124,17 @@ export const queryKeys = {
     byProject: (projectId: string) => ["jobs", "by-project", projectId] as const,
     list: (params: { projectId?: string; status?: string } = {}) =>
       ["jobs", "list", params] as const,
+  },
+  jobLogs: {
+    frame: (jobId: string, options: JobLogsOptions = {}) =>
+      [
+        "job-logs",
+        "frame",
+        jobId,
+        options.level ?? "all",
+        options.sinceSeq ?? 0,
+        options.limit ?? 50,
+      ] as const,
   },
   providers: {
     all: () => ["providers"] as const,

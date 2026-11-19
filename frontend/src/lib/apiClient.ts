@@ -12,6 +12,7 @@ import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
+import type { JobLogsOptions } from "./jobLogs";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
@@ -44,6 +45,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobLogFrame,
   JobStats,
   LineageStats,
   Message,
@@ -124,6 +126,12 @@ export interface ApiClient {
   listJobs(projectId?: string, status?: Job["status"]): Promise<readonly Job[]>;
   listJobsByProject(projectId: string): Promise<readonly Job[]>;
   getJob(jobId: string): Promise<Job | undefined>;
+  /**
+   * Chronological, severity-filtered, cursor-paginated console log derived from
+   * a job's event stream (C117). Unknown jobs resolve to `undefined`, matching
+   * the live 404-to-undefined detail-lookup mapping.
+   */
+  getJobLogs(jobId: string, options?: JobLogsOptions): Promise<JobLogFrame | undefined>;
   getProjectDetail(projectId: string): Promise<ProjectDetail | undefined>;
   /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
@@ -198,6 +206,7 @@ export const mockApiClient: ApiClient = {
   listJobs: mockApi.fetchJobs,
   listJobsByProject: mockApi.fetchJobsByProject,
   getJob: mockApi.fetchJob,
+  getJobLogs: mockApi.fetchJobLogs,
   getProjectDetail: mockApi.fetchProjectDetail,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,

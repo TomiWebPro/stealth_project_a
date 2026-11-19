@@ -743,6 +743,79 @@ describe("createHttpApiClient job stats", () => {
   });
 });
 
+describe("createHttpApiClient per-job execution log (C117)", () => {
+  const jobId = "33333333-3333-4333-8333-333333333333";
+  const frame = {
+    job_id: jobId,
+    entries: [
+      {
+        seq: 0,
+        type: "status",
+        level: "info",
+        message: "started",
+        status: "running",
+        progress: null,
+        asset_id: null,
+        error: null,
+        timestamp: "2026-01-06T00:00:00Z",
+      },
+      {
+        seq: 1,
+        type: "error",
+        level: "error",
+        message: "boom",
+        status: "failed",
+        progress: null,
+        asset_id: null,
+        error: { code: "E", message: "boom" },
+        timestamp: "2026-01-06T00:01:00Z",
+      },
+    ],
+    next_seq: 2,
+    total: 2,
+  };
+
+  it("GETs /jobs/{id}/logs with filter/cursor params and forwards the frame", async () => {
+    const calls: string[] = [];
+    const api = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async (input: string | URL | Request) => {
+        calls.push(String(input));
+        return jsonResponse(frame);
+      }) as typeof fetch,
+    });
+
+    await expect(api.getJobLogs(jobId, { level: "error", sinceSeq: 1, limit: 10 })).resolves.toEqual(
+      frame,
+    );
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/jobs/${jobId}/logs`);
+    expect(url.searchParams.get("level")).toBe("error");
+    expect(url.searchParams.get("since_seq")).toBe("1");
+    expect(url.searchParams.get("limit")).toBe("10");
+  });
+
+  it("maps a 404 to undefined but surfaces a 422 validation failure", async () => {
+    let status = 404;
+    let code = "job_not_found";
+    const api = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code, message: "nope" } },
+          { status },
+        )) as typeof fetch,
+    });
+
+    await expect(api.getJobLogs(jobId)).resolves.toBeUndefined();
+    status = 422;
+    code = "validation_error";
+    await expect(api.getJobLogs(jobId, { limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+  });
+});
+
 describe("createHttpApiClient conversation stats", () => {
   const stats = {
     total_conversations: 2,

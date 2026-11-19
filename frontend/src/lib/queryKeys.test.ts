@@ -42,6 +42,25 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the job log key by job, severity, cursor and page size", () => {
+    expect(queryKeys.jobLogs.frame("j1")).toEqual([
+      "job-logs",
+      "frame",
+      "j1",
+      "all",
+      0,
+      50,
+    ]);
+    expect(queryKeys.jobLogs.frame("j1", { level: "error", sinceSeq: 3, limit: 10 })).toEqual([
+      "job-logs",
+      "frame",
+      "j1",
+      "error",
+      3,
+      10,
+    ]);
+  });
+
   it("scopes the asset stats key by project", () => {
     expect(queryKeys.assetStats.summary()).toEqual(["asset-stats", "summary", "all"]);
     expect(queryKeys.assetStats.summary({ projectId: "p1" })).toEqual([

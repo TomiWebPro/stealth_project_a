@@ -44,6 +44,7 @@ import {
   fetchExtensionStats,
   fetchHomeSummary,
   fetchJob,
+  fetchJobLogs,
   fetchJobs,
   fetchJobsByProject,
   fetchLineageStats,
@@ -1581,6 +1582,60 @@ describe("mock API event stream statistics (C101 follow-up)", () => {
 
     setMockFailure("eventStats");
     await expect(fetchEventStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API per-job execution log (C117 follow-up)", () => {
+  const failedJobId = JOBS.find((job) => job.status === "failed")?.id ?? "";
+
+  it("derives a chronological, level-filtered, paginated log from the event seeds", async () => {
+    const frame = await fetchJobLogs(failedJobId);
+    const expected = JOB_EVENTS.filter((entry) => entry.job_id === failedJobId);
+
+    expect(frame?.job_id).toBe(failedJobId);
+    expect(frame?.total).toBe(expected.length);
+    expect((frame?.entries ?? []).map((entry) => entry.seq)).toEqual(
+      expected.map((entry) => entry.seq),
+    );
+    expect(frame?.entries?.[0]?.level).toBe("info");
+    expect(frame?.entries?.at(-1)?.level).toBe("error");
+    expect(frame?.entries?.at(-1)?.error).toMatchObject({ code: "TRAIN_OOM" });
+    expect(frame?.next_seq).toBe((expected.at(-1)?.seq ?? 0) + 1);
+
+    const errors = await fetchJobLogs(failedJobId, { level: "error" });
+    expect((errors?.entries ?? []).map((entry) => entry.seq)).toEqual([2]);
+    expect(errors?.total).toBe(1);
+
+    const page = await fetchJobLogs(failedJobId, { sinceSeq: 1, limit: 1 });
+    expect((page?.entries ?? []).map((entry) => entry.seq)).toEqual([1]);
+    expect(page?.next_seq).toBe(2);
+    expect(page?.total).toBe(expected.length);
+  });
+
+  it("resolves an unknown job to undefined and mirrors router 422 validation", async () => {
+    await expect(fetchJobLogs("00000000-0000-4000-8000-000000000000")).resolves.toBeUndefined();
+    await expect(fetchJobLogs("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchJobLogs(failedJobId, { level: "verbose" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchJobLogs(failedJobId, { sinceSeq: -1 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchJobLogs(failedJobId, { limit: 201 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("jobLogs");
+    await expect(fetchJobLogs(failedJobId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

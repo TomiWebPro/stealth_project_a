@@ -1713,33 +1713,86 @@ function jobEvent(
   type: JobEvent["type"],
   seq: number,
   minutesAgo: number,
+  extra: Partial<JobEvent> = {},
 ): JobEvent {
-  return { type, job_id: jobId, seq, timestamp: isoMinutesAgo(minutesAgo) };
+  return { type, job_id: jobId, seq, timestamp: isoMinutesAgo(minutesAgo), ...extra };
 }
 
 export const JOB_EVENTS: readonly JobEvent[] = [
   // Job 001 (brand): status -> progress x2 -> log.
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "status", 0, 30),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "progress", 1, 28),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "progress", 2, 25),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "log", 3, 24),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "status", 0, 30, {
+    status: "running",
+    message: "Job accepted by Local Runtime",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "progress", 1, 28, {
+    progress: 0.3,
+    message: "Sampling step 128/420",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "progress", 2, 25, {
+    progress: 0.62,
+    message: "Sampling step 260/420",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "log", 3, 24, {
+    message: "Latent decode queued",
+  }),
   // Job 002 (character): status -> progress -> intermediate.
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "status", 0, 20),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "progress", 1, 18),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "intermediate", 2, 15),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "status", 0, 20, {
+    status: "running",
+    message: "Video generation started",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "progress", 1, 18, {
+    progress: 0.23,
+    message: "Denoising frame 12/48",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "intermediate", 2, 15, {
+    message: "Preview keyframe ready",
+  }),
   // Job 011 (moonshot, dataset-prep): status -> progress.
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000011", "status", 0, 12),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000011", "progress", 1, 10),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000011", "status", 0, 12, {
+    status: "running",
+    message: "Dataset expansion started",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000011", "progress", 1, 10, {
+    progress: 0.45,
+    message: "Generated 45/100 variations",
+  }),
   // Job 016 (moonshot, failed lora-train): status -> progress -> error.
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "status", 0, 90),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "progress", 1, 60),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "error", 2, 20),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "status", 0, 90, {
+    status: "running",
+    message: "LoRA training started on RunPod Training",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "progress", 1, 60, {
+    progress: 0.82,
+    message: "Training step 812/1000",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "error", 2, 20, {
+    status: "failed",
+    message: "24 GB VRAM exhausted at step 812; retry on 48 GB+ worker.",
+    error: {
+      code: "TRAIN_OOM",
+      message: "24 GB VRAM exhausted at step 812; retry on 48 GB+ worker.",
+      retryable: true,
+    },
+  }),
   // Job 017 (moonshot, succeeded): status -> progress -> result.
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "status", 0, 200),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "progress", 1, 180),
-  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "result", 2, 150),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "status", 0, 200, {
+    status: "running",
+    message: "Design frame generation started",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "progress", 1, 180, {
+    progress: 1,
+    message: "Sampling complete",
+  }),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "result", 2, 150, {
+    status: "succeeded",
+    message: "Design frame published to Output/",
+    asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+  }),
   // Orphan (newest event globally, excluded from every project scope).
-  jobEvent("0b5c1e2a-3000-4000-8000-0000000000ff", "status", 0, 2),
+  jobEvent("0b5c1e2a-3000-4000-8000-0000000000ff", "status", 0, 2, {
+    status: "running",
+    message: "Orphaned event from an untracked job",
+  }),
 ];
 
 // --- Authoritative retry ledger (C105 / retry statistics) --------------------

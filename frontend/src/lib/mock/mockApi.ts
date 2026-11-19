@@ -34,6 +34,8 @@ import { deriveLineageStats, validateLineageStatsArgs } from "../lineageStats";
 import type { LineageStatsOptions } from "../lineageStats";
 import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
+import { deriveJobLogs, validateJobLogsArgs } from "../jobLogs";
+import type { JobLogsOptions } from "../jobLogs";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
 import { deriveOperationStats } from "../operationStats";
@@ -86,6 +88,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobLogFrame,
   JobStats,
   LineageStats,
   Message,
@@ -167,8 +170,8 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
- * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
- * with {@link clearMockFailures} afterwards.
+ * `lineageStats`, `collaborationStats`, `orchestrationStats` and `jobLogs`.
+ * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -681,6 +684,22 @@ export async function updateAsset(assetId: string, body: AssetUpdate): Promise<A
 export async function fetchJob(jobId: string): Promise<Job | undefined> {
   failIfEnabled("jobs");
   return delay(JOBS.find((job) => job.id === jobId));
+}
+
+/**
+ * Authoritative per-job execution log (C117) derived from the same `JOB_EVENTS`
+ * stream as the live `/jobs/{job_id}/logs` endpoint. Router-style 422 validation,
+ * a normalized detail 404 for an unknown job and the `"jobLogs"` failure domain
+ * keep error and empty states at parity.
+ */
+export async function fetchJobLogs(
+  jobId: string,
+  options?: JobLogsOptions,
+): Promise<JobLogFrame | undefined> {
+  failIfEnabled("jobLogs");
+  validateJobLogsArgs(jobId, options);
+  if (!JOBS.some((job) => job.id === jobId)) return delay(undefined);
+  return delay(deriveJobLogs(jobId, JOB_EVENTS.filter((event) => event.job_id === jobId), options));
 }
 
 export async function fetchProvider(providerId: string): Promise<Provider | undefined> {

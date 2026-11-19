@@ -14,6 +14,7 @@ import type { EventStatsOptions } from "../lib/eventStats";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
+import type { JobLogsOptions } from "../lib/jobLogs";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
@@ -46,6 +47,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobLogFrame,
   JobStats,
   LineageStats,
   Message,
@@ -340,6 +342,19 @@ export function useJob(jobId: string): UseQueryResult<Job | undefined> {
   return useQuery({
     queryKey: queryKeys.jobs.byId(jobId),
     queryFn: () => api.getJob(jobId),
+  });
+}
+
+/** Chronological, level-filtered, paginated console log for one job (C117). */
+export function useJobLogs(
+  jobId: string,
+  options?: JobLogsOptions,
+): UseQueryResult<JobLogFrame | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.jobLogs.frame(jobId, options),
+    queryFn: () => api.getJobLogs(jobId, options),
+    enabled: Boolean(jobId),
   });
 }
 

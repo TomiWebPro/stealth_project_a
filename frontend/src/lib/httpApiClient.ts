@@ -25,6 +25,8 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
+import { jobLogsQueryParams } from "./jobLogs";
+import type { JobLogsOptions } from "./jobLogs";
 import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
 import { lineageStatsQueryParams } from "./lineageStats";
@@ -71,6 +73,7 @@ import type {
   Extension,
   ExtensionStats,
   Job,
+  JobLogFrame,
   JobStats,
   LineageStats,
   Message,
@@ -406,6 +409,24 @@ export function createHttpApiClient(
     listJobsByProject: (projectId) => listJobs({ project_id: projectId }),
 
     getJob: (jobId) => maybe(() => request<Job>(`/jobs/${jobId}`)),
+
+    /** Authoritative per-job execution log; the backend 404s on an unknown job. */
+    async getJobLogs(
+      jobId: string,
+      options?: JobLogsOptions,
+    ): Promise<JobLogFrame | undefined> {
+      try {
+        return await request<JobLogFrame>(
+          `/jobs/${encodeURIComponent(jobId)}/logs`,
+          jobLogsQueryParams(options),
+        );
+      } catch (cause) {
+        // Detail lookups resolve to undefined; every other failure (e.g. a 422
+        // for malformed filters) is surfaced to the hook.
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
 
     async getProjectDetail(projectId: string): Promise<ProjectDetail | undefined> {
       const project = await maybe(() => request<Project>(`/projects/${projectId}`));
