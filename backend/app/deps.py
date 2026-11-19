@@ -40,6 +40,7 @@ from .repositories.projects import ProjectRepository
 from .repositories.project_stats import ProjectStatsRepository
 from .repositories.provider_stats import ProviderStatsRepository
 from .repositories.providers import ProviderRepository
+from .repositories.publish_stats import PublishStatsRepository
 from .repositories.retry_stats import RetryStatsRepository
 from .repositories.search import SearchRepository
 from .repositories.search_stats import SearchStatsRepository
@@ -234,6 +235,12 @@ def get_provider_stats_repository(
     return repositories.provider_stats
 
 
+def get_publish_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> PublishStatsRepository:
+    return repositories.publish_stats
+
+
 def get_retry_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> RetryStatsRepository:
@@ -399,6 +406,7 @@ __all__ = [
     "get_project_tree",
     "get_provider_repository",
     "get_provider_stats_repository",
+    "get_publish_stats_repository",
     "get_retry_stats_repository",
     "get_publish_service",
     "get_repositories",

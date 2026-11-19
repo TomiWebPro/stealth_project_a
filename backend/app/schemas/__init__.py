@@ -195,6 +195,11 @@ from .provider_stats import (
     ProviderStats,
     ProviderStatusCount,
 )
+from .publish_stats import (
+    PublishProjectCount,
+    PublishStats,
+    PublishVersionCount,
+)
 from .retry_stats import (
     RetryProjectCount,
     RetryStats,
@@ -316,6 +321,10 @@ __all__ = [
     "ProviderOperationStat",
     "ProviderStats",
     "ProviderStatusCount",
+    # publish stats
+    "PublishProjectCount",
+    "PublishStats",
+    "PublishVersionCount",
     # auth
     "LoginRequest",
     "Member",
