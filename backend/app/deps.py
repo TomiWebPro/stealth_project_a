@@ -21,6 +21,7 @@ from .repositories.asset_stats import AssetStatsRepository
 from .repositories.audit import AuditRepository
 from .repositories.conversations import ConversationRepository
 from .repositories.conversation_stats import ConversationStatsRepository
+from .repositories.collaboration_stats import CollaborationStatsRepository
 from .repositories.dashboard import DashboardRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.extension_stats import ExtensionStatsRepository
@@ -158,6 +159,12 @@ def get_conversation_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ConversationStatsRepository:
     return repositories.conversation_stats
+
+
+def get_collaboration_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> CollaborationStatsRepository:
+    return repositories.collaboration_stats
 
 
 def get_upload_repository(
@@ -317,6 +324,7 @@ __all__ = [
     "get_audit_repository",
     "get_auth_repository",
     "get_bearer_token",
+    "get_collaboration_stats_repository",
     "get_conversation_repository",
     "get_conversation_stats_repository",
     "get_dashboard_repository",

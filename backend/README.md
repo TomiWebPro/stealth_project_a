@@ -86,7 +86,11 @@ All paths are prefixed with `/api/v1`.
 - **Orchestration/collaboration:** `GET|POST /orchestration/plans`,
   `GET|POST /orchestration/runs`, `GET /orchestration/plans/{id}`,
   `GET /orchestration/runs/{id}`, `GET|POST /presence`,
-  `GET|POST /comments`, `GET /storage/stats`
+  `GET|POST /comments`, `GET /storage/stats`,
+  `GET /collaboration/stats?project_id=` — authoritative collaboration metrics
+  (zero-filled presence-state breakdown, per-project activity counts, distinct
+  participant count and newest-signal recency) derived from the presence/comment
+  stores; optional project scope with shared 404/422 envelopes
 - **Auth/orgs:** `POST /auth/login|refresh`, `GET /auth/session|me`,
   `GET|POST /orgs` (alias `/organizations`), `GET /orgs/{id}`,
   `GET|POST /orgs/{id}/members`,

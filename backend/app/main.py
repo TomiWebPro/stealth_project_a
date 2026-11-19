@@ -28,6 +28,7 @@ from .routers import (
     auth,
     conversations,
     conversation_stats,
+    collaboration_stats,
     dashboard,
     events,
     exports,
@@ -227,6 +228,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # the literal path wins over the UUID-templated one.
     app.include_router(conversation_stats.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
+    # "/collaboration/stats" has no templated sibling; register it directly.
+    app.include_router(collaboration_stats.router, prefix=API_PREFIX)
     # "/assets/stats" must be registered before "/assets/{asset_id}" so the
     # literal path wins over the UUID-templated one.
     app.include_router(asset_stats.router, prefix=API_PREFIX)

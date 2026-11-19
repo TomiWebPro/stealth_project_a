@@ -118,6 +118,11 @@ from .conversation_stats import (
     RoleMessageCount,
     StatusMessageCount,
 )
+from .collaboration_stats import (
+    CollaborationProjectCount,
+    CollaborationStats,
+    PresenceStateCount,
+)
 from .operation import (
     Job,
     JobCancelRequest,
@@ -312,6 +317,10 @@ __all__ = [
     "ConversationStats",
     "RoleMessageCount",
     "StatusMessageCount",
+    # collaboration stats
+    "CollaborationProjectCount",
+    "CollaborationStats",
+    "PresenceStateCount",
     # operation
     "Job",
     "JobCancelRequest",

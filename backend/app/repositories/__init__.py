@@ -14,6 +14,7 @@ from .audit import AuditRepository
 from .auth import AuthRepository
 from .conversations import ConversationRepository
 from .conversation_stats import ConversationStatsRepository
+from .collaboration_stats import CollaborationStatsRepository
 from .dashboard import DashboardRepository
 from .extensions import ExtensionRepository
 from .extension_stats import ExtensionStatsRepository
@@ -43,6 +44,7 @@ class Repositories:
     asset_stats: AssetStatsRepository
     conversations: ConversationRepository
     conversation_stats: ConversationStatsRepository
+    collaboration_stats: CollaborationStatsRepository
     uploads: UploadRepository
     jobs: JobRepository
     job_stats: JobStatsRepository
@@ -75,6 +77,7 @@ class Repositories:
         asset_stats = AssetStatsRepository(store, projects, clock=clock)
         conversations = ConversationRepository(store, projects, assets, clock=clock)
         conversation_stats = ConversationStatsRepository(store, projects, clock=clock)
+        collaboration_stats = CollaborationStatsRepository(store, projects, clock=clock)
         uploads = UploadRepository(
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
@@ -115,6 +118,7 @@ class Repositories:
             asset_stats=asset_stats,
             conversations=conversations,
             conversation_stats=conversation_stats,
+            collaboration_stats=collaboration_stats,
             uploads=uploads,
             jobs=jobs,
             job_stats=job_stats,
