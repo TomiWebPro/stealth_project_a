@@ -3773,6 +3773,122 @@ jobs:
                 and bool(ovbadbody.get("error", {}).get("request_id")),
                 ov_bad_id.text)
 
+          # Authoritative single-asset overview (C205/C207) is the newest
+          # /api/v1 URL the live client calls (getAssetOverview). Reuse the
+          # on-demand asset — which now carries registered v1 + appended v2
+          # version records, a publish receipt, a "ci-smoke" tag and a derived-
+          # from child from the probes above — so the derived snapshot has real
+          # counts. Probe the identity + project join, count/recent-version
+          # shapes and derived values, the recent_limit bound + newest-version-
+          # first recency, the 404 unknown-asset envelope and the shared 422
+          # validation envelope, keeping CI aligned with the exact /api/v1 URLs
+          # the VITE_API_MODE=live client calls as the repo grows.
+          if asset_id:
+              aov = httpx.get(
+                  f"{base}/assets/{asset_id}/overview", timeout=5)
+              aobody = aov.json() if aov.status_code == 200 else {}
+              check("assets/{id}/overview 200 snapshot shape",
+                    aov.status_code == 200 and all(
+                        k in aobody for k in ("asset_id", "asset_name",
+                                              "asset_type", "status", "version",
+                                              "project_id", "project_name",
+                                              "created_at", "published", "counts",
+                                              "recent_versions", "generated_at")),
+                    aov.text)
+              check("assets/{id}/overview identity + project join",
+                    aov.status_code == 200
+                    and aobody.get("asset_id") == asset_id
+                    and aobody.get("asset_name") == "CI smoke impact root"
+                    and aobody.get("asset_type") == "image"
+                    and isinstance(aobody.get("status"), str)
+                    and bool(aobody.get("status"))
+                    and isinstance(aobody.get("version"), int)
+                    and aobody.get("version", 0) >= 1
+                    and aobody.get("project_id") == project_id
+                    and isinstance(aobody.get("project_name"), str)
+                    and bool(aobody.get("project_name"))
+                    and isinstance(aobody.get("created_at"), str)
+                    and isinstance(aobody.get("generated_at"), str)
+                    and isinstance(aobody.get("published"), bool),
+                    aov.text)
+              check("assets/{id}/overview counts shape",
+                    aov.status_code == 200
+                    and isinstance(aobody.get("counts"), dict)
+                    and all(
+                        k in aobody["counts"]
+                        and isinstance(aobody["counts"][k], int)
+                        and aobody["counts"][k] >= 0
+                        for k in ("versions", "upstream", "downstream",
+                                  "comments", "tags")),
+                    aov.text)
+              check("assets/{id}/overview derived counts + published flag",
+                    aov.status_code == 200
+                    and aobody["counts"].get("versions", 0) >= 2
+                    and aobody["counts"].get("downstream", 0) >= 1
+                    and aobody["counts"].get("tags", 0) >= 1
+                    and aobody.get("published") is True,
+                    aov.text)
+              check("assets/{id}/overview recent version item shapes",
+                    aov.status_code == 200
+                    and len(aobody.get("recent_versions", [])) >= 1
+                    and all(all(k in v for k in ("asset_id", "version", "storage",
+                                                 "created_at", "created_by"))
+                            for v in aobody.get("recent_versions", [])),
+                    aov.text)
+              check("assets/{id}/overview recent newest-version-first",
+                    aov.status_code == 200
+                    and all(v.get("asset_id") == asset_id
+                            for v in aobody.get("recent_versions", []))
+                    and [v.get("version") for v in aobody.get("recent_versions", [])]
+                    == sorted((v.get("version") for v in
+                               aobody.get("recent_versions", [])), reverse=True),
+                    aov.text)
+              check("assets/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in aov.headers},
+                    str(dict(aov.headers)))
+              aov_limited = httpx.get(
+                  f"{base}/assets/{asset_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              aovlbody = (aov_limited.json()
+                          if aov_limited.status_code == 200 else {})
+              check("assets/{id}/overview recent_limit bounds versions",
+                    aov_limited.status_code == 200
+                    and len(aovlbody.get("recent_versions", [])) <= 1,
+                    aov_limited.text)
+              aov_bad_limit = httpx.get(
+                  f"{base}/assets/{asset_id}/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              aovblbody = (aov_bad_limit.json()
+                           if aov_bad_limit.status_code == 422 else {})
+              check("assets/{id}/overview 422 invalid limit envelope",
+                    aov_bad_limit.status_code == 422
+                    and aovblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(aovblbody.get("error", {}).get("request_id")),
+                    aov_bad_limit.text)
+          else:
+              check("assets/{id}/overview setup", False,
+                    "could not obtain an asset id")
+
+          aov_missing = httpx.get(
+              f"{base}/assets/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          aov404body = (aov_missing.json()
+                        if aov_missing.status_code == 404 else {})
+          check("assets/{id}/overview 404 shared envelope",
+                aov_missing.status_code == 404
+                and aov404body.get("error", {}).get("code") == "asset_not_found"
+                and bool(aov404body.get("error", {}).get("request_id")),
+                aov_missing.text)
+          aov_bad_id = httpx.get(
+              f"{base}/assets/not-a-uuid/overview", timeout=5)
+          aovbadbody = (aov_bad_id.json()
+                        if aov_bad_id.status_code == 422 else {})
+          check("assets/{id}/overview 422 malformed id envelope",
+                aov_bad_id.status_code == 422
+                and aovbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(aovbadbody.get("error", {}).get("request_id")),
+                aov_bad_id.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
