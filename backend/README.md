@@ -77,7 +77,12 @@ All paths are prefixed with `/api/v1`.
   and a deterministic `(updated_at, conversation_id)` tie-break;
   `GET /conversations/stats?project_id=` — authoritative conversation metrics
   (zero-filled role/status breakdowns, totals, average and recency) derived from
-  the conversation/message stores; optional project scope with shared 404/422 envelopes
+  the conversation/message stores; optional project scope with shared 404/422
+  envelopes; `GET /conversations/{id}/overview?recent_limit=` — compact
+  single-conversation snapshot with identity, zero-filled role/status message
+  breakdowns, a last-message role/excerpt preview and the newest messages,
+  derived fresh from the conversation/message stores (no second index; shared
+  404 `conversation_not_found` / 422 envelopes)
 - **Assets:** `GET /assets`, `POST /assets/register`,
   `GET|PATCH|DELETE /assets/{id}`,
   `GET|POST /assets/{id}/versions`, `GET /assets/{id}/relationships|lineage|download|content`,

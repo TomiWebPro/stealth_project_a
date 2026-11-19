@@ -165,6 +165,10 @@ from .conversation_stats import (
     RoleMessageCount,
     StatusMessageCount,
 )
+from .conversation_overview import (
+    ConversationOverview,
+    ConversationOverviewCounts,
+)
 from .collaboration_stats import (
     CollaborationProjectCount,
     CollaborationStats,
@@ -507,6 +511,9 @@ __all__ = [
     "ConversationStats",
     "RoleMessageCount",
     "StatusMessageCount",
+    # conversation overview
+    "ConversationOverview",
+    "ConversationOverviewCounts",
     # collaboration stats
     "CollaborationProjectCount",
     "CollaborationStats",

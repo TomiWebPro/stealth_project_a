@@ -2728,6 +2728,24 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `d4cd230`
   Screens single-asset overview rendering remains a screens follow-up.
 
+- [ ] C209 (backend) Authoritative single-conversation overview API:
+  `GET /api/v1/conversations/{conversation_id}/overview?recent_limit=` derives a
+  compact single-conversation snapshot from the authoritative `CONVERSATIONS`/
+  `MESSAGES` stores (no second index) — conversation identity (id/title/created_by/
+  timestamps) with a joined project name ("Unknown project" fallback), zero-filled
+  message counts by role/status reusing the `/conversations/stats` buckets, a
+  last-message role/excerpt preview reusing the `/conversations/feed` excerpt rule,
+  and the newest messages bounded by `recent_limit` with a deterministic
+  `(created_at, message_id)` newest-first tie-break (counts and preview are never
+  bounded by the page). Unknown conversation → shared 404 `conversation_not_found`;
+  malformed id / invalid `recent_limit` → shared 422 `validation_error`.
+  `ConversationOverview`/`ConversationOverviewCounts` mirrored in
+  `frontend/src/types/conversationOverview.ts` + exported from the types index,
+  README endpoint list synced, 9 tests × 2 storage backends green. Mocks/screens/CI
+  wiring of the snapshot is a follow-up. My owned backend column had no unchecked
+  items (only the repo-wide C6 docs pass remains, owned by other agents), so C209
+  was added under the Never-empty well.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.

@@ -32,6 +32,7 @@ from .routers import (
     conversations,
     conversation_feed,
     conversation_stats,
+    conversation_overview,
     collaboration_stats,
     collaboration_feed,
     comment_feed,
@@ -275,6 +276,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # UUID-templated "/conversations/{conversation_id}" route so "feed" is never
     # parsed as a conversation id.
     app.include_router(conversation_feed.router, prefix=API_PREFIX)
+    # "/conversations/{id}/overview" is a nested single-conversation view; mount
+    # it beside the conversation routers and before the conversations router so
+    # its literal suffix stays explicit.
+    app.include_router(conversation_overview.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
     # "/collaboration/stats" has no templated sibling; register it directly.
     app.include_router(collaboration_stats.router, prefix=API_PREFIX)
