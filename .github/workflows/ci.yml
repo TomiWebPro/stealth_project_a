@@ -2871,6 +2871,134 @@ jobs:
                 and xfblbody.get("error", {}).get("code") == "validation_error"
                 and bool(xfblbody.get("error", {}).get("request_id")), xf_bad_limit.text)
 
+          # Authoritative production-pipeline feed (C177/C179) is the newest
+          # /api/v1 URL the live client calls (getPipelineFeed). Create one LoRA
+          # training chain on demand so the derived feed has a real item, then
+          # probe the feed shape, item shapes, newest-first (created_at, chain_id)
+          # order, the whole-scope total, the `kind` filter, the `limit` page
+          # bound, the optional project scope and the shared 404/422 envelopes,
+          # keeping CI aligned with the exact /api/v1 URLs the live client calls
+          # as the repo grows.
+          pipeline_chain = None
+          if project_id:
+              chain_created = httpx.post(
+                  f"{base}/pipelines/lora",
+                  json={"project_id": project_id,
+                        "dataset_name": "ci-smoke-pipeline",
+                        "trigger_word": "ci"},
+                  timeout=5)
+              check("pipelines/feed create chain 201", chain_created.status_code == 201,
+                    chain_created.text)
+              pipeline_chain = (
+                  chain_created.json().get("id")
+                  if chain_created.status_code == 201 else None)
+          else:
+              check("pipelines/feed create setup", False,
+                    "could not obtain a project id")
+
+          pipeline_feed = httpx.get(f"{base}/pipelines/feed", timeout=5)
+          plfbody = pipeline_feed.json() if pipeline_feed.status_code == 200 else {}
+          check("pipelines/feed 200 feed shape",
+                pipeline_feed.status_code == 200
+                and isinstance(plfbody.get("items"), list)
+                and isinstance(plfbody.get("total"), int)
+                and "generated_at" in plfbody, pipeline_feed.text)
+          check("pipelines/feed derived item shape",
+                pipeline_feed.status_code == 200
+                and plfbody.get("total", 0) >= 1
+                and len(plfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "chain_id", "project_id", "project_name", "kind",
+                    "job_count", "asset_count", "created_by", "created_at"))
+                    for item in plfbody["items"]), pipeline_feed.text)
+          check("pipelines/feed request-id header",
+                "x-request-id" in {k.lower() for k in pipeline_feed.headers},
+                str(dict(pipeline_feed.headers)))
+          if pipeline_chain:
+              derived_chain = next(
+                  (i for i in plfbody.get("items", [])
+                   if i.get("chain_id") == pipeline_chain),
+                  None)
+              check("pipelines/feed derived chain",
+                    pipeline_feed.status_code == 200 and derived_chain is not None
+                    and derived_chain.get("kind") == "training"
+                    and derived_chain.get("project_id") == project_id
+                    and derived_chain.get("job_count", 0) >= 1
+                    and derived_chain.get("asset_count", 0) >= 1
+                    and isinstance(derived_chain.get("project_name"), str)
+                    and bool(derived_chain.get("project_name"))
+                    and isinstance(derived_chain.get("created_at"), str),
+                    pipeline_feed.text)
+          else:
+              check("pipelines/feed derived setup", False,
+                    "could not create a pipeline chain for the feed probe")
+          plf_created_keys = [
+              (i.get("created_at"), i.get("chain_id"))
+              for i in plfbody.get("items", [])]
+          check("pipelines/feed newest-first order",
+                pipeline_feed.status_code == 200
+                and plf_created_keys == sorted(plf_created_keys, reverse=True),
+                pipeline_feed.text)
+          plf_limited = httpx.get(f"{base}/pipelines/feed", params={"limit": 1}, timeout=5)
+          plflbody = (plf_limited.json() if plf_limited.status_code == 200 else {})
+          check("pipelines/feed limit bounds page not total",
+                plf_limited.status_code == 200
+                and len(plflbody.get("items", [])) <= 1
+                and plflbody.get("total") == plfbody.get("total"), plf_limited.text)
+          plf_kind = httpx.get(f"{base}/pipelines/feed", params={"kind": "training"}, timeout=5)
+          plfkbody = plf_kind.json() if plf_kind.status_code == 200 else {}
+          check("pipelines/feed kind filter 200",
+                plf_kind.status_code == 200
+                and isinstance(plfkbody.get("total"), int)
+                and plfkbody.get("total", 0) >= 1
+                and plfkbody.get("total", 0) <= plfbody.get("total", 0)
+                and all(i.get("kind") == "training" for i in plfkbody.get("items", [])),
+                plf_kind.text)
+          if project_id:
+              plf_scoped = httpx.get(
+                  f"{base}/pipelines/feed", params={"project_id": project_id}, timeout=5)
+              plfsbody = (plf_scoped.json()
+                          if plf_scoped.status_code == 200 else {})
+              check("pipelines/feed project scope 200",
+                    plf_scoped.status_code == 200
+                    and isinstance(plfsbody.get("total"), int)
+                    and plfsbody.get("total", 0) >= 1
+                    and all(i.get("project_id") == project_id
+                            for i in plfsbody.get("items", [])), plf_scoped.text)
+          else:
+              check("pipelines/feed project scope setup", False,
+                    "could not obtain a project id")
+          plf_missing = httpx.get(
+              f"{base}/pipelines/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          plf404body = (plf_missing.json() if plf_missing.status_code == 404 else {})
+          check("pipelines/feed 404 shared envelope",
+                plf_missing.status_code == 404
+                and plf404body.get("error", {}).get("code") == "project_not_found"
+                and bool(plf404body.get("error", {}).get("request_id")),
+                plf_missing.text)
+          plf_bad = httpx.get(
+              f"{base}/pipelines/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          plfbadbody = plf_bad.json() if plf_bad.status_code == 422 else {}
+          check("pipelines/feed 422 malformed id envelope",
+                plf_bad.status_code == 422
+                and plfbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(plfbadbody.get("error", {}).get("request_id")), plf_bad.text)
+          plf_bad_kind = httpx.get(
+              f"{base}/pipelines/feed", params={"kind": "mystery"}, timeout=5)
+          plfbkbody = plf_bad_kind.json() if plf_bad_kind.status_code == 422 else {}
+          check("pipelines/feed 422 invalid kind envelope",
+                plf_bad_kind.status_code == 422
+                and plfbkbody.get("error", {}).get("code") == "validation_error"
+                and bool(plfbkbody.get("error", {}).get("request_id")), plf_bad_kind.text)
+          plf_bad_limit = httpx.get(f"{base}/pipelines/feed", params={"limit": 0}, timeout=5)
+          plfblbody = plf_bad_limit.json() if plf_bad_limit.status_code == 422 else {}
+          check("pipelines/feed 422 invalid limit envelope",
+                plf_bad_limit.status_code == 422
+                and plfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(plfblbody.get("error", {}).get("request_id")), plf_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
