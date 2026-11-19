@@ -9,6 +9,7 @@ import type { CommentFeedOptions } from "./commentFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
+import type { EventFeedOptions } from "./eventFeed";
 import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
@@ -269,6 +270,16 @@ export const queryKeys = {
   eventStats: {
     summary: (options: EventStatsOptions = {}) =>
       ["event-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  eventFeed: {
+    feed: (options: EventFeedOptions = {}) =>
+      [
+        "event-feed",
+        "feed",
+        options.projectId ?? "all",
+        options.type ?? "all",
+        options.limit ?? "all",
+      ] as const,
   },
   retryStats: {
     summary: (options: RetryStatsOptions = {}) =>

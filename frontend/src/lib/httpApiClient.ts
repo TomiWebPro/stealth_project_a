@@ -26,6 +26,8 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 import { dashboardQueryParams } from "./dashboard";
 import type { DashboardOptions } from "./dashboard";
+import { eventFeedQueryParams } from "./eventFeed";
+import type { EventFeedOptions } from "./eventFeed";
 import { eventStatsQueryParams } from "./eventStats";
 import type { EventStatsOptions } from "./eventStats";
 import { extensionStatsQueryParams } from "./extensionStats";
@@ -97,6 +99,7 @@ import type {
   ConversationFeed,
   ConversationStats,
   DashboardSummary,
+  EventFeed,
   EventStats,
   Extension,
   ExtensionStats,
@@ -696,6 +699,11 @@ export function createHttpApiClient(
     /** Authoritative job event stream metrics derived by the backend `/events/stats`. */
     getEventStats(options?: EventStatsOptions): Promise<EventStats> {
       return request<EventStats>("/events/stats", eventStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative job event feed derived by `/events/feed` (C169). */
+    getEventFeed(options?: EventFeedOptions): Promise<EventFeed> {
+      return request<EventFeed>("/events/feed", eventFeedQueryParams(options));
     },
 
     /** Authoritative job retry metrics derived by the backend `/retries/stats`. */

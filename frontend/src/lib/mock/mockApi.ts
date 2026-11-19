@@ -33,6 +33,8 @@ import type { ConversationStream } from "../conversationStream";
 import { deriveDashboardSummary, validateDashboardArgs } from "../dashboard";
 import type { DashboardOptions } from "../dashboard";
 import { env } from "../env";
+import { deriveEventFeed, validateEventFeedArgs } from "../eventFeed";
+import type { EventFeedOptions } from "../eventFeed";
 import { deriveEventStats, validateEventStatsArgs } from "../eventStats";
 import type { EventStatsOptions } from "../eventStats";
 import {
@@ -115,6 +117,7 @@ import type {
   Conversation,
   ConversationFeed,
   ConversationStats,
+  EventFeed,
   EventStats,
   Extension,
   ExtensionStats,
@@ -208,7 +211,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `pipelineStats`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1234,6 +1237,26 @@ export async function fetchEventStats(options?: EventStatsOptions): Promise<Even
     });
   }
   return delay(deriveEventStats(JOB_EVENTS, JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative job event feed (C169) derived from the same event store as the
+ * live `/events/feed` endpoint, joined to jobs/projects over the shared seeds.
+ * Router-style 422 validation (project id / event type / limit), a normalized
+ * 404 for an unknown project scope and the `"eventFeed"` failure domain keep
+ * error and empty states at parity.
+ */
+export async function fetchEventFeed(options?: EventFeedOptions): Promise<EventFeed> {
+  failIfEnabled("eventFeed");
+  validateEventFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveEventFeed(JOB_EVENTS, JOBS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

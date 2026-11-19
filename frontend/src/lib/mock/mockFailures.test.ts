@@ -21,6 +21,7 @@ import {
   fetchConversationStats,
   fetchConversationFeed,
   fetchCurrentUser,
+  fetchEventFeed,
   fetchEventStats,
   fetchExtension,
   fetchExtensions,
@@ -129,6 +130,7 @@ describe("mock error-state fakes", () => {
     // Newly guarded domains must honour the wildcard too.
     await expect(fetchCapabilities()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchExtensions()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchEventFeed()).rejects.toBeInstanceOf(ApiError);
   });
 
   it("can be switched off per domain without clearing the rest", async () => {
@@ -487,6 +489,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchLineageFeed()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the event feed domain", async () => {
+    setMockFailure("eventFeed");
+
+    await expect(fetchEventFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchEventFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the publish stats domain", async () => {

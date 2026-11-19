@@ -14,6 +14,7 @@ import type { CommentFeedOptions } from "../lib/commentFeed";
 import type { ConversationFeedOptions } from "../lib/conversationFeed";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
+import type { EventFeedOptions } from "../lib/eventFeed";
 import type { EventStatsOptions } from "../lib/eventStats";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
@@ -59,6 +60,7 @@ import type {
   ConversationFeed,
   ConversationStats,
   DashboardSummary,
+  EventFeed,
   EventStats,
   Extension,
   ExtensionStats,
@@ -702,6 +704,17 @@ export function useEventStats(
   return useQuery({
     queryKey: queryKeys.eventStats.summary(options),
     queryFn: () => api.getEventStats(options),
+  });
+}
+
+/** Newest-first authoritative job event feed from `/events/feed`, optionally project/type-scoped (C169). */
+export function useEventFeed(
+  options?: EventFeedOptions,
+): UseQueryResult<EventFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.eventFeed.feed(options),
+    queryFn: () => api.getEventFeed(options),
   });
 }
 

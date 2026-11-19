@@ -12,6 +12,7 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
+import type { EventFeedOptions } from "./eventFeed";
 import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
@@ -57,6 +58,7 @@ import type {
   ConversationFeed,
   ConversationStats,
   DashboardSummary,
+  EventFeed,
   EventStats,
   Extension,
   ExtensionStats,
@@ -214,6 +216,8 @@ export interface ApiClient {
   getUploadFeed(options?: UploadFeedOptions): Promise<UploadFeed>;
   /** Authoritative job event stream metrics derived by `/events/stats`, optionally project-scoped (C101). */
   getEventStats(options?: EventStatsOptions): Promise<EventStats>;
+  /** Newest-first authoritative job event feed derived by `/events/feed`, optionally project/type-scoped (C169). */
+  getEventFeed(options?: EventFeedOptions): Promise<EventFeed>;
   /** Authoritative job retry metrics derived by `/retries/stats`, optionally project-scoped (C105). */
   getRetryStats(options?: RetryStatsOptions): Promise<RetryStats>;
   /** Authoritative asset version metrics derived by `/versions/stats`, optionally project-scoped (C109). */
@@ -293,6 +297,7 @@ export const mockApiClient: ApiClient = {
   getUploadStats: mockApi.fetchUploadStats,
   getUploadFeed: mockApi.fetchUploadFeed,
   getEventStats: mockApi.fetchEventStats,
+  getEventFeed: mockApi.fetchEventFeed,
   getRetryStats: mockApi.fetchRetryStats,
   getVersionStats: mockApi.fetchVersionStats,
   getVersionFeed: mockApi.fetchVersionFeed,

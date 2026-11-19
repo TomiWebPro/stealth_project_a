@@ -1500,6 +1500,71 @@ describe("createHttpApiClient event stream statistics", () => {
   });
 });
 
+describe("createHttpApiClient /events/feed", () => {
+  const feed = {
+    items: [
+      {
+        job_id: "11111111-1111-4111-8111-111111111111",
+        seq: 0,
+        type: "status",
+        operation_id: "dataset-prep",
+        project_id: "22222222-2222-4222-8222-222222222222",
+        project_name: "Moonshot",
+        status: "running",
+        progress: null,
+        message: "started",
+        asset_id: null,
+        error: null,
+        timestamp: "2026-01-06T00:00:00Z",
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /events/feed with the scope, type filter and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/events/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getEventFeed({
+        projectId: "22222222-2222-4222-8222-222222222222",
+        type: "status",
+        limit: 2,
+      }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/events/feed`);
+    expect(url.searchParams.get("project_id")).toBe("22222222-2222-4222-8222-222222222222");
+    expect(url.searchParams.get("type")).toBe("status");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no scope, type or page is supplied", async () => {
+    const { fetchImpl, calls } = router({ "/events/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getEventFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getEventFeed({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient retry statistics", () => {
   const stats = {
     total_retries: 4,

@@ -44,6 +44,8 @@ export type {
   ConversationStats,
   DashboardCounts,
   DashboardSummary,
+  EventFeed,
+  EventFeedItem,
   EventJobCount,
   EventStats,
   EventTypeCount,
