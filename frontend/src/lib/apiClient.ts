@@ -10,6 +10,7 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
+import type { OrganizationStatsOptions } from "./organizationStats";
 import type { ProjectDetail } from "./projectDetail";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderStatsOptions } from "./providerStats";
@@ -35,6 +36,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationStats,
   OrchestrationRun,
   Presence,
   Project,
@@ -77,6 +79,8 @@ export interface ApiClient {
   getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats>;
   /** Authoritative extension registry/installation metrics derived by `/extensions/stats`, optionally filtered (C61). */
   getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats>;
+  /** Authoritative organization/membership metrics derived by `/orgs/stats`, optionally org-scoped (C69). */
+  getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -134,6 +138,7 @@ export const mockApiClient: ApiClient = {
   getProjectStats: mockApi.fetchProjectStats,
   getProviderStats: mockApi.fetchProviderStats,
   getExtensionStats: mockApi.fetchExtensionStats,
+  getOrganizationStats: mockApi.fetchOrganizationStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

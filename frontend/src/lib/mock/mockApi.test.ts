@@ -1,7 +1,17 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
-import { ASSETS, CONVERSATIONS, EXTENSIONS, PROJECTS, PROVIDERS, REFERENCE_NOW } from "./data";
+import {
+  ASSETS,
+  CONVERSATIONS,
+  EXTENSIONS,
+  ORGANIZATIONS,
+  ORGANIZATION_MEMBERS,
+  PROJECTS,
+  PROVIDERS,
+  REFERENCE_NOW,
+  USERS,
+} from "./data";
 import {
   clearMockFailures,
   fetchActivity,
@@ -25,6 +35,7 @@ import {
   fetchJobsByProject,
   fetchMessages,
   fetchOperations,
+  fetchOrganizationStats,
   openConversationStream,
   sendMessage,
   setMockFailure,
@@ -268,6 +279,54 @@ describe("mock API project stats (C53 follow-up)", () => {
 
     setMockFailure("projectStats");
     await expect(fetchProjectStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API organization stats (C69 follow-up)", () => {
+  const orgId = ORGANIZATIONS[0]?.id ?? "";
+
+  it("derives a populated snapshot from the authoritative auth seeds", async () => {
+    const stats = await fetchOrganizationStats();
+    expect(stats.total_organizations).toBe(ORGANIZATIONS.length);
+    expect(stats.total_members).toBe(ORGANIZATION_MEMBERS.length);
+    expect(stats.total_users).toBe(USERS.length);
+    expect(stats.by_role?.reduce((sum, entry) => sum + entry.members, 0)).toBe(
+      ORGANIZATION_MEMBERS.length,
+    );
+    expect(stats.by_organization?.reduce((sum, entry) => sum + entry.members, 0)).toBe(
+      ORGANIZATION_MEMBERS.length,
+    );
+    expect(stats.average_members_per_org).toBe(ORGANIZATION_MEMBERS.length / ORGANIZATIONS.length);
+    expect(stats.newest_org_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes members and orgs to one organization and zeroes an unknown org", async () => {
+    const scoped = await fetchOrganizationStats({ orgId });
+    expect(scoped.total_organizations).toBe(1);
+    expect(scoped.total_members).toBe(ORGANIZATION_MEMBERS.filter((m) => m.org_id === orgId).length);
+    expect(scoped.by_organization).toEqual([{ org_id: orgId, members: scoped.total_members }]);
+
+    const unknown = await fetchOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" });
+    expect(unknown.total_organizations).toBe(0);
+    expect(unknown.total_members).toBe(0);
+    // The user total stays global even for an unknown org scope.
+    expect(unknown.total_users).toBe(USERS.length);
+    expect(unknown.by_organization).toEqual([]);
+    expect(unknown.newest_org_at).toBeNull();
+  });
+
+  it("mirrors router validation and surfaces the injected failure", async () => {
+    await expect(fetchOrganizationStats({ orgId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("organizationStats");
+    await expect(fetchOrganizationStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

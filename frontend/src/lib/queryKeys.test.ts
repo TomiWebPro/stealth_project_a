@@ -73,6 +73,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the organization stats key by organization", () => {
+    expect(queryKeys.organizationStats.summary()).toEqual(["organization-stats", "summary", "all"]);
+    expect(queryKeys.organizationStats.summary({ orgId: "o1" })).toEqual([
+      "organization-stats",
+      "summary",
+      "o1",
+    ]);
+  });
+
   it("scopes the provider stats key by location and status", () => {
     expect(queryKeys.providerStats.summary()).toEqual([
       "provider-stats",

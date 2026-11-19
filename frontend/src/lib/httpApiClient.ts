@@ -21,6 +21,8 @@ import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
 import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
+import { organizationStatsQueryParams } from "./organizationStats";
+import type { OrganizationStatsOptions } from "./organizationStats";
 import type { ProjectDetail } from "./projectDetail";
 import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
@@ -50,6 +52,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationStats,
   OrchestrationRun,
   Presence,
   Project,
@@ -275,6 +278,11 @@ export function createHttpApiClient(
     /** Authoritative extension registry/installation metrics derived by `/extensions/stats`. */
     getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats> {
       return request<ExtensionStats>("/extensions/stats", extensionStatsQueryParams(options));
+    },
+
+    /** Authoritative organization/membership metrics derived by `/orgs/stats`. */
+    getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats> {
+      return request<OrganizationStats>("/orgs/stats", organizationStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

@@ -26,6 +26,11 @@ import { deriveAssetImpact, validateImpactArgs } from "../impact";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
 import { deriveOperationStats } from "../operationStats";
+import {
+  deriveOrganizationStats,
+  validateOrganizationStatsArgs,
+} from "../organizationStats";
+import type { OrganizationStatsOptions } from "../organizationStats";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
@@ -53,6 +58,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationStats,
   OrchestrationRun,
   Presence,
   Project,
@@ -76,12 +82,14 @@ import {
   MESSAGES,
   OPERATION_CATALOG,
   ORGANIZATIONS,
+  ORGANIZATION_MEMBERS,
   ORCHESTRATION_RUNS,
   PRESENCE,
   PROJECTS,
   PROVIDERS,
   REFERENCE_NOW,
   STORAGE_STATS,
+  USERS,
 } from "./data";
 
 /**
@@ -108,8 +116,8 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `tags`, `impact` and `operationStats`. Always reset with {@link clearMockFailures}
- * afterwards.
+ * `tags`, `impact`, `operationStats` and `organizationStats`. Always reset with
+ * {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -323,6 +331,23 @@ export async function fetchExtensionStats(
   failIfEnabled("extensionStats");
   validateExtensionStatsArgs(options);
   return delay(deriveExtensionStats(EXTENSIONS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative organization/membership metrics (C69) derived from the same
+ * user/organization/member seeds as the live `/orgs/stats` endpoint. Router-style
+ * 422 validation for a malformed org id, a zero-filled snapshot for an unknown
+ * (well-formed) org and the `"organizationStats"` failure domain keep error and
+ * empty states at parity with live mode.
+ */
+export async function fetchOrganizationStats(
+  options?: OrganizationStatsOptions,
+): Promise<OrganizationStats> {
+  failIfEnabled("organizationStats");
+  validateOrganizationStatsArgs(options);
+  return delay(
+    deriveOrganizationStats(ORGANIZATIONS, ORGANIZATION_MEMBERS, USERS, REFERENCE_NOW, options),
+  );
 }
 
 /**

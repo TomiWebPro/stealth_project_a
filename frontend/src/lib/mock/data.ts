@@ -7,6 +7,7 @@
  */
 
 import { buildAuditTrail } from "../audit";
+import type { OrganizationMemberRecord } from "../organizationStats";
 import type {
   Asset,
   AuditTrail,
@@ -1168,6 +1169,81 @@ export const ORGANIZATIONS: readonly Organization[] = [
     name: "Studio Northlight",
     slug: "studio-northlight",
     created_at: isoMinutesAgo(31_000),
+  },
+];
+
+/**
+ * Registered users for the authoritative `/orgs/stats` snapshot (C69). The
+ * total-user count is global — it does not depend on the optional org scope,
+ * matching `OrganizationStatsRepository`'s `Collections.USERS` count.
+ */
+export const USERS: readonly User[] = [
+  CURRENT_USER,
+  {
+    id: "0b5c1e2a-0000-4000-8000-0000000000bb",
+    email: "producer@studio.local",
+    display_name: "Morgan Producer",
+    created_at: isoMinutesAgo(20_000),
+  },
+  {
+    id: "0b5c1e2a-0000-4000-8000-0000000000cc",
+    email: "artist@studio.local",
+    display_name: "Riley Artist",
+    created_at: isoMinutesAgo(15_000),
+  },
+  {
+    id: "0b5c1e2a-0000-4000-8000-0000000000dd",
+    email: "reviewer@studio.local",
+    display_name: "Sam Reviewer",
+    created_at: isoMinutesAgo(9_000),
+  },
+];
+
+/**
+ * Organization memberships for the authoritative `/orgs/stats` snapshot (C69).
+ * The `org_id` discriminator models the backend member document's `_org_id` so
+ * the shared derivation can scope members to one organization.
+ */
+export const ORGANIZATION_MEMBERS: readonly OrganizationMemberRecord[] = [
+  {
+    org_id: ORG_ID,
+    user_id: CREATOR_ID,
+    email: CURRENT_USER.email,
+    display_name: CURRENT_USER.display_name,
+    role: "owner",
+    joined_at: isoMinutesAgo(30_000),
+  },
+  {
+    org_id: ORG_ID,
+    user_id: "0b5c1e2a-0000-4000-8000-0000000000bb",
+    email: "producer@studio.local",
+    display_name: "Morgan Producer",
+    role: "admin",
+    joined_at: isoMinutesAgo(20_000),
+  },
+  {
+    org_id: ORG_ID,
+    user_id: "0b5c1e2a-0000-4000-8000-0000000000cc",
+    email: "artist@studio.local",
+    display_name: "Riley Artist",
+    role: "member",
+    joined_at: isoMinutesAgo(15_000),
+  },
+  {
+    org_id: ORG_ID,
+    user_id: "0b5c1e2a-0000-4000-8000-0000000000dd",
+    email: "reviewer@studio.local",
+    display_name: "Sam Reviewer",
+    role: "member",
+    joined_at: isoMinutesAgo(9_000),
+  },
+  {
+    org_id: ORG_ID,
+    user_id: "0b5c1e2a-0000-4000-8000-0000000000ee",
+    email: "observer@studio.local",
+    display_name: "Casey Observer",
+    role: "viewer",
+    joined_at: isoMinutesAgo(5_000),
   },
 ];
 

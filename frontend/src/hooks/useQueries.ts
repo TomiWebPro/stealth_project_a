@@ -12,6 +12,7 @@ import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
+import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
@@ -37,6 +38,7 @@ import type {
   OperationCatalog,
   OperationStats,
   Organization,
+  OrganizationStats,
   OrchestrationRun,
   Presence,
   Project,
@@ -132,6 +134,17 @@ export function useExtensionStats(
   return useQuery({
     queryKey: queryKeys.extensionStats.summary(options),
     queryFn: () => api.getExtensionStats(options),
+  });
+}
+
+/** Authoritative organization/membership metrics from `/orgs/stats`, optionally org-scoped (C69). */
+export function useOrganizationStats(
+  options?: OrganizationStatsOptions,
+): UseQueryResult<OrganizationStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.organizationStats.summary(options),
+    queryFn: () => api.getOrganizationStats(options),
   });
 }
 

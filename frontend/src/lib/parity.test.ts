@@ -16,6 +16,10 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import { deriveOperationStats } from "./operationStats";
+import {
+  deriveOrganizationStats,
+  validateOrganizationStatsArgs,
+} from "./organizationStats";
 import type { ImpactOptions } from "./impact";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
@@ -30,12 +34,14 @@ import {
   MESSAGES,
   OPERATION_CATALOG,
   ORGANIZATIONS,
+  ORGANIZATION_MEMBERS,
   ORCHESTRATION_RUNS,
   PRESENCE,
   PROJECTS,
   PROVIDERS,
   REFERENCE_NOW,
   STORAGE_STATS,
+  USERS,
 } from "./mock/data";
 import { createHttpApiClient } from "./httpApiClient";
 import { deriveSearchResponse, validateSearchArgs } from "./search";
@@ -393,6 +399,33 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return CONVERSATIONS.find((c) => c.id === id) ?? NOT_FOUND;
   }
 
+  // Authoritative organization/membership stats are derived from the auth store
+  // on every call; reproduce the router's 422 validation and the repository
+  // derivation over the shared seeds so live and mock agree exactly. An unknown
+  // (well-formed) org yields a zero-filled snapshot, never a 404.
+  if (path === "/orgs/stats") {
+    const org = params.get("org_id") ?? undefined;
+    const options = org ? { orgId: org } : {};
+    try {
+      validateOrganizationStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveOrganizationStats(
+      ORGANIZATIONS,
+      ORGANIZATION_MEMBERS,
+      USERS,
+      REFERENCE_NOW,
+      options,
+    );
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -509,6 +542,9 @@ describe("live vs mock transport parity", () => {
       ["getExtensionStats", (api) => api.getExtensionStats()],
       ["getExtensionStats scoped", (api) => api.getExtensionStats({ type: "ui" })],
       ["getExtensionStats filtered", (api) => api.getExtensionStats({ type: "ui", status: "enabled" })],
+      ["getOrganizationStats", (api) => api.getOrganizationStats()],
+      ["getOrganizationStats scoped", (api) => api.getOrganizationStats({ orgId })],
+      ["getOrganizationStats unknown", (api) => api.getOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -674,6 +710,18 @@ describe("live vs mock transport parity", () => {
     expect(mockProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports zero-fill an unknown (well-formed) org scope and reject a
+    // malformed org id with the same 422 envelope.
+    expect(await live.getOrganizationStats({ orgId: missingId })).toEqual(
+      await mockApiClient.getOrganizationStats({ orgId: missingId }),
+    );
+    const [mockOrgStats422, liveOrgStats422] = await Promise.all([
+      mockApiClient.getOrganizationStats({ orgId: "not-a-uuid" }).catch((cause) => cause),
+      live.getOrganizationStats({ orgId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockOrgStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveOrgStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both zero-fill an empty provider-stats filter and reject invalid filters
     // with the same 422 envelope.
     expect(await live.getProviderStats({ location: "studio" })).toEqual(
@@ -749,6 +797,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
+    expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
   });
 });
