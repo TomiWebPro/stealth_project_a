@@ -524,6 +524,19 @@ this file is the execution checklist.
   Never-empty well. ✅ 2026-11-19 — `b8e2007`
   Screens project-stats rendering remains a screens follow-up.
 
+- [x] C57 (backend) Authoritative provider fleet statistics API:
+  `GET /api/v1/providers/stats?location=&status=` derives zero-filled health-status
+  (available/unavailable/degraded) and runtime-location (local/studio/cloud)
+  breakdowns, capability/operation coverage with per-operation provider + available
+  counts and deterministic ordering from the authoritative provider store — no second
+  index; optional location/status filters (invalid values use the shared 422 envelope);
+  `ProviderStats`/`ProviderStatusCount`/`ProviderLocationCount`/`ProviderOperationStat`
+  mirrored in `frontend/src/types/providerStats.ts`, README endpoint list synced,
+  6 tests × 2 storage backends green (621 passed). Mocks/screens/CI wiring of the
+  snapshot is a follow-up for those agents. My owned backend column had no unchecked
+  items, so C57 was added under the Never-empty well.
+  ✅ 2026-11-19 — `b66143a`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -619,3 +632,4 @@ this file is the execution checklist.
 - 2026-11-19 — `62775a5` — C54 (screens): rendered the authoritative asset inventory stats via a reusable `AssetStatsPanel` — workspace-wide on Home and project-scoped on the Assets browser and project detail — with four stat cards, zero-filled type/status breakdowns, all five UI states, and every display value derived in tested `assetStatsHelpers`; resolves the C49/C51/C52 screens follow-up. My owned column had no unchecked rows, so C54 was added under the Never-empty well; lint clean, 367 tests, build green.
 - 2026-11-19 — `7d08eaf` — C55 (mocks): wired the authoritative project portfolio stats API (C53 follow-up) end to end — `getProjectStats`/`useProjectStats` across mockApi (seed-derived zero-filled lifecycle counts, org-scoped cross-domain totals, 3-decimal averages, newest-project recency with id tie-break, deleted-asset exclusion; 422 for malformed org id + zero-filled unknown org + injectable `projectStats` failure), the stable facade, live `httpApiClient` (`GET /projects/stats?org_id=`), `queryKeys` and `useQueries`, with a shared `lib/projectStats` helper; parity guard extended to both transports; lint clean, 383 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `b8e2007` — C56 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/projects/stats` (zero-filled snapshot + lifecycle breakdown shapes, optional `org_id` scope with an unknown-but-valid org yielding a zero-filled 200, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C53/C55. No unchecked CI row remained, so C56 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (45/45 probes OK) and with YAML parse + actionlint v1.7.12; frontend lint/test (383)/build and backend pytest (609) green. Screens project-stats rendering remains a screens follow-up.
+- 2026-11-19 — `b66143a` — C57 (backend): added authoritative `GET /api/v1/providers/stats?location=&status=` deriving zero-filled status/location breakdowns, capability/operation coverage (per-operation provider + available counts) from the provider store with optional filters (invalid values → shared 422); `ProviderStats` + 3 nested contracts mirrored in TS, README synced, 6 tests × 2 backends green (621 passed, contract parity + tsc clean). Mocks/screens/CI wiring is a follow-up. My backend column had no unchecked items, so C57 was added under the Never-empty well.
