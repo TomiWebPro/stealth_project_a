@@ -7,6 +7,7 @@
  */
 
 import { buildAuditTrail } from "../audit";
+import type { AssetRelationshipRecord } from "../lineageStats";
 import type { OrganizationMemberRecord } from "../organizationStats";
 import type { PipelineChainRecord } from "../pipelineStats";
 import type {
@@ -1440,6 +1441,124 @@ export const PIPELINE_CHAINS: readonly PipelineChainRecord[] = [
     lora_asset_id: "0b5c1e2a-2000-4000-8000-000000000023",
     job_ids: ["0b5c1e2a-3000-4000-8000-000000000012"],
     created_at: isoMinutesAgo(600),
+  },
+];
+
+// --- Authoritative asset relationships (C77 / lineage stats) ----------------
+// Mirrors the backend's `ASSET_RELATIONSHIPS` store: every typed link between
+// assets, attributed to the project of its source. The derivation reproduces
+// the backend rules exactly, so the seeds deliberately include a link from an
+// unknown source (excluded entirely) and a link to an unknown target (counted
+// as a relationship but not as a linked asset). "Blank Slate" has no links so
+// mock mode also exercises the zero-filled empty state.
+
+export const ASSET_RELATIONSHIPS: readonly AssetRelationshipRecord[] = [
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000001",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000012",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    type: "derived_from",
+    created_at: isoMinutesAgo(220),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000002",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000013",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000012",
+    type: "derived_from",
+    created_at: isoMinutesAgo(210),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000003",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000016",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000013",
+    type: "derived_from",
+    created_at: isoMinutesAgo(180),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000004",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000017",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000016",
+    type: "derived_from",
+    created_at: isoMinutesAgo(150),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000005",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000017",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000014",
+    type: "uses_input",
+    created_at: isoMinutesAgo(150),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000006",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000016",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000015",
+    type: "uses_input",
+    created_at: isoMinutesAgo(178),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000007",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000014",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000013",
+    type: "variant_of",
+    created_at: isoMinutesAgo(160),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000008",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000015",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000014",
+    type: "related_to",
+    created_at: isoMinutesAgo(140),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-000000000009",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000001",
+    type: "duplicate_of",
+    created_at: isoMinutesAgo(230),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-00000000000a",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000021",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000005",
+    type: "derived_from",
+    created_at: isoMinutesAgo(560),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-00000000000b",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000023",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000021",
+    type: "derived_from",
+    created_at: isoMinutesAgo(540),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-00000000000c",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000003",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000006",
+    type: "derived_from",
+    created_at: isoMinutesAgo(120),
+  },
+  {
+    id: "0b5c1e2a-5000-4000-8000-00000000000d",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000006",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000002",
+    type: "related_to",
+    created_at: isoMinutesAgo(95),
+  },
+  // Unknown source: excluded from every bucket, like a soft-deleted source.
+  {
+    id: "0b5c1e2a-5000-4000-8000-00000000000e",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-0000000000ff",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    type: "derived_from",
+    created_at: isoMinutesAgo(1),
+  },
+  // Newest counted link; its unknown target is not added to `linked_assets`.
+  {
+    id: "0b5c1e2a-5000-4000-8000-00000000000f",
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-0000000000fe",
+    type: "related_to",
+    created_at: isoMinutesAgo(5),
   },
 ];
 

@@ -10,6 +10,7 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
+import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
@@ -32,6 +33,7 @@ import type {
   ExtensionStats,
   Job,
   JobStats,
+  LineageStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -85,6 +87,8 @@ export interface ApiClient {
   getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats>;
   /** Authoritative production-pipeline metrics derived by `/pipelines/stats`, optionally project-scoped (C73). */
   getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats>;
+  /** Authoritative asset-lineage metrics derived by `/lineage/stats`, optionally project-scoped (C77). */
+  getLineageStats(options?: LineageStatsOptions): Promise<LineageStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -144,6 +148,7 @@ export const mockApiClient: ApiClient = {
   getExtensionStats: mockApi.fetchExtensionStats,
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getPipelineStats: mockApi.fetchPipelineStats,
+  getLineageStats: mockApi.fetchLineageStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

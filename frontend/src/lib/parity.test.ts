@@ -15,6 +15,7 @@ import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionSta
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
+import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationStats } from "./operationStats";
 import {
   deriveOrganizationStats,
@@ -26,6 +27,7 @@ import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import {
   ASSETS,
+  ASSET_RELATIONSHIPS,
   AUDIT_TRAILS,
   COMMENTS,
   CONVERSATIONS,
@@ -450,6 +452,28 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return derivePipelineStats(PIPELINE_CHAINS, REFERENCE_NOW, options);
   }
 
+  // Authoritative asset-lineage stats are derived from the relationship + asset
+  // stores on every call; reproduce the router's 422 validation, unknown-project
+  // 404 and the repository derivation over the shared seeds so live and mock
+  // agree exactly.
+  if (path === "/lineage/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateLineageStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options);
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -571,6 +595,8 @@ describe("live vs mock transport parity", () => {
       ["getOrganizationStats unknown", (api) => api.getOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" })],
       ["getPipelineStats", (api) => api.getPipelineStats()],
       ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
+      ["getLineageStats", (api) => api.getLineageStats()],
+      ["getLineageStats scoped", (api) => api.getLineageStats({ projectId: filmId })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -633,6 +659,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getPipelineStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getPipelineStats({ projectId: emptyId }),
+    );
+    expect(await live.getLineageStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getLineageStats({ projectId: emptyId }),
     );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
@@ -742,6 +771,21 @@ describe("live vs mock transport parity", () => {
     expect(mockPipeStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(livePipeStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown lineage-stats project
+    // scope and reject a malformed project id with the same 422 envelope.
+    const [mockLineage404, liveLineage404] = await Promise.all([
+      mockApiClient.getLineageStats({ projectId: missingId }).catch((cause) => cause),
+      live.getLineageStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockLineage404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveLineage404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockLineage422, liveLineage422] = await Promise.all([
+      mockApiClient.getLineageStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getLineageStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockLineage422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveLineage422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill for an unknown (well-formed) org scope and
     // reject a malformed org id with the same 422 envelope.
     expect(await live.getProjectStats({ orgId: missingId })).toEqual(
@@ -843,6 +887,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getExtensionStats).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
+    expect(typeof typed.getLineageStats).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
   });
 });

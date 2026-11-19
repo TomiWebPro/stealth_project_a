@@ -1013,6 +1013,51 @@ describe("createHttpApiClient pipeline stats", () => {
   });
 });
 
+describe("createHttpApiClient lineage stats", () => {
+  const stats = {
+    total_relationships: 3,
+    total_linked_assets: 4,
+    by_type: [
+      { type: "derived_from", count: 2 },
+      { type: "variant_of", count: 0 },
+      { type: "uses_input", count: 1 },
+      { type: "related_to", count: 0 },
+      { type: "duplicate_of", count: 0 },
+    ],
+    by_project: [{ project_id: "11111111-1111-4111-8111-111111111111", relationships: 3 }],
+    newest_relationship_at: "2026-01-06T00:00:00Z",
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /lineage/stats with the project scope and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/lineage/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getLineageStats({ projectId: "11111111-1111-4111-8111-111111111111" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/lineage/stats`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getLineageStats({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient provider stats", () => {
   const stats = {
     total: 2,

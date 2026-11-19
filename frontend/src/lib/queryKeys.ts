@@ -6,6 +6,7 @@ import type { DashboardOptions } from "./dashboard";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
+import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectStatsOptions } from "./projectStats";
@@ -74,6 +75,10 @@ export const queryKeys = {
   pipelineStats: {
     summary: (options: PipelineStatsOptions = {}) =>
       ["pipeline-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  lineageStats: {
+    summary: (options: LineageStatsOptions = {}) =>
+      ["lineage-stats", "summary", options.projectId ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

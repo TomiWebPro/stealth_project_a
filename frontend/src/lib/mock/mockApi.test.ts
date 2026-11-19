@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { StreamEvent } from "../../types";
 import {
   ASSETS,
+  ASSET_RELATIONSHIPS,
   CONVERSATIONS,
   EXTENSIONS,
   ORGANIZATIONS,
@@ -34,6 +35,7 @@ import {
   fetchJob,
   fetchJobs,
   fetchJobsByProject,
+  fetchLineageStats,
   fetchMessages,
   fetchOperations,
   fetchOrganizationStats,
@@ -380,6 +382,64 @@ describe("mock API pipeline stats (C73 follow-up)", () => {
 
     setMockFailure("pipelineStats");
     await expect(fetchPipelineStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API lineage stats (C77 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a populated snapshot from the authoritative relationship seeds", async () => {
+    const stats = await fetchLineageStats();
+    // The unknown-source link is excluded; every other seed has a live source.
+    expect(stats.total_relationships).toBe(
+      ASSET_RELATIONSHIPS.filter((rel) =>
+        ASSETS.some((asset) => asset.id === rel.from_asset_id && asset.status !== "deleted"),
+      ).length,
+    );
+    expect(stats.by_type?.reduce((sum, entry) => sum + entry.count, 0)).toBe(
+      stats.total_relationships,
+    );
+    expect(stats.by_type?.map((entry) => entry.type)).toEqual([
+      "derived_from",
+      "variant_of",
+      "uses_input",
+      "related_to",
+      "duplicate_of",
+    ]);
+    expect((stats.by_project ?? []).length).toBeGreaterThan(0);
+    expect(stats.total_linked_assets).toBeGreaterThan(0);
+    expect(stats.newest_relationship_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project and zero-fills an unseeded project", async () => {
+    const scoped = await fetchLineageStats({ projectId: filmId });
+    expect(scoped.by_project).toEqual([{ project_id: filmId, relationships: scoped.total_relationships }]);
+    expect(scoped.total_relationships).toBeGreaterThan(0);
+
+    const empty = await fetchLineageStats({ projectId: emptyId });
+    expect(empty.total_relationships).toBe(0);
+    expect(empty.total_linked_assets).toBe(0);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_relationship_at).toBeNull();
+    expect(empty.by_type?.every((entry) => entry.count === 0)).toBe(true);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchLineageStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchLineageStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("lineageStats");
+    await expect(fetchLineageStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -21,6 +21,8 @@ import {
 } from "../extensionStats";
 import type { ExtensionStatsOptions } from "../extensionStats";
 import type { HomeSummary } from "../homeSummary";
+import { deriveLineageStats, validateLineageStatsArgs } from "../lineageStats";
+import type { LineageStatsOptions } from "../lineageStats";
 import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
@@ -58,6 +60,7 @@ import type {
   ExtensionStats,
   Job,
   JobStats,
+  LineageStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -79,6 +82,7 @@ import type {
 } from "../types";
 import {
   ASSETS,
+  ASSET_RELATIONSHIPS,
   AUDIT_TRAILS,
   COMMENTS,
   CONVERSATIONS,
@@ -123,8 +127,8 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `tags`, `impact`, `operationStats`, `organizationStats` and `pipelineStats`.
- * Always reset with {@link clearMockFailures} afterwards.
+ * `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats` and
+ * `lineageStats`. Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -377,6 +381,30 @@ export async function fetchPipelineStats(
     });
   }
   return delay(derivePipelineStats(PIPELINE_CHAINS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative asset-lineage metrics (C77) derived from the same relationship
+ * and asset seeds as the live `/lineage/stats` endpoint. Router-style 422 for a
+ * malformed project id, a normalized 404 for an unknown project scope and the
+ * `"lineageStats"` failure domain keep error and empty states at parity with
+ * live mode.
+ */
+export async function fetchLineageStats(
+  options?: LineageStatsOptions,
+): Promise<LineageStats> {
+  failIfEnabled("lineageStats");
+  validateLineageStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options),
+  );
 }
 
 /**

@@ -91,6 +91,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the lineage stats key by project", () => {
+    expect(queryKeys.lineageStats.summary()).toEqual(["lineage-stats", "summary", "all"]);
+    expect(queryKeys.lineageStats.summary({ projectId: "p1" })).toEqual([
+      "lineage-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes the provider stats key by location and status", () => {
     expect(queryKeys.providerStats.summary()).toEqual([
       "provider-stats",

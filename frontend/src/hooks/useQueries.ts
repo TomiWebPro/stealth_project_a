@@ -12,6 +12,7 @@ import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
+import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
@@ -34,6 +35,7 @@ import type {
   ExtensionStats,
   Job,
   JobStats,
+  LineageStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -158,6 +160,17 @@ export function usePipelineStats(
   return useQuery({
     queryKey: queryKeys.pipelineStats.summary(options),
     queryFn: () => api.getPipelineStats(options),
+  });
+}
+
+/** Authoritative asset-lineage metrics from `/lineage/stats`, optionally project-scoped (C77). */
+export function useLineageStats(
+  options?: LineageStatsOptions,
+): UseQueryResult<LineageStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.lineageStats.summary(options),
+    queryFn: () => api.getLineageStats(options),
   });
 }
 

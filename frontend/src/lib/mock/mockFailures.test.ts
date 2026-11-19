@@ -22,6 +22,7 @@ import {
   fetchJob,
   fetchJobs,
   fetchJobStats,
+  fetchLineageStats,
   fetchOperations,
   fetchOperationStats,
   fetchOrganizationStats,
@@ -77,6 +78,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchOperationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrganizationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
@@ -200,6 +202,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchPipelineStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the lineage stats domain", async () => {
+    setMockFailure("lineageStats");
+
+    await expect(fetchLineageStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchLineageStats()).resolves.toBeDefined();
   });
 
   it("exposes injectable failures for the tags and impact domains", async () => {

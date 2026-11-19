@@ -21,6 +21,8 @@ import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
 import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
+import { lineageStatsQueryParams } from "./lineageStats";
+import type { LineageStatsOptions } from "./lineageStats";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import { pipelineStatsQueryParams } from "./pipelineStats";
@@ -49,6 +51,7 @@ import type {
   ExtensionStats,
   Job,
   JobStats,
+  LineageStats,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -291,6 +294,11 @@ export function createHttpApiClient(
     /** Authoritative production-pipeline metrics derived by `/pipelines/stats`. */
     getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats> {
       return request<PipelineStats>("/pipelines/stats", pipelineStatsQueryParams(options));
+    },
+
+    /** Authoritative asset-lineage metrics derived by `/lineage/stats`. */
+    getLineageStats(options?: LineageStatsOptions): Promise<LineageStats> {
+      return request<LineageStats>("/lineage/stats", lineageStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {
