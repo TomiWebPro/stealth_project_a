@@ -151,6 +151,10 @@ All paths are prefixed with `/api/v1`.
   attribution and unknown `project_id` uses the shared 404 envelope
   `GET|POST /presence`,
   `GET|POST /comments`, `GET /storage/stats`,
+  `GET /comments/feed?project_id=&limit=` — authoritative newest-first comment
+  feed (project-name join, asset reference and whole-scope total before the
+  `limit` page) derived from the comment store; optional project scope with
+  shared 404/422 envelopes
   `GET /collaboration/stats?project_id=` — authoritative collaboration metrics
   (zero-filled presence-state breakdown, per-project activity counts, distinct
   participant count and newest-signal recency) derived from the presence/comment

@@ -154,6 +154,10 @@ from .collaboration_stats import (
     CollaborationStats,
     PresenceStateCount,
 )
+from .comment_feed import (
+    CommentFeed,
+    CommentFeedItem,
+)
 from .operation import (
     Job,
     JobCancelRequest,
@@ -428,6 +432,9 @@ __all__ = [
     "CollaborationProjectCount",
     "CollaborationStats",
     "PresenceStateCount",
+    # comment feed
+    "CommentFeed",
+    "CommentFeedItem",
     # operation
     "Job",
     "JobCancelRequest",

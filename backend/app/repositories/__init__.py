@@ -18,6 +18,7 @@ from .conversations import ConversationRepository
 from .conversation_feed import ConversationFeedRepository
 from .conversation_stats import ConversationStatsRepository
 from .collaboration_stats import CollaborationStatsRepository
+from .comment_feed import CommentFeedRepository
 from .dashboard import DashboardRepository
 from .event_stats import EventStatsRepository
 from .extensions import ExtensionRepository
@@ -65,6 +66,7 @@ class Repositories:
     conversation_feed: ConversationFeedRepository
     conversation_stats: ConversationStatsRepository
     collaboration_stats: CollaborationStatsRepository
+    comment_feed: CommentFeedRepository
     uploads: UploadRepository
     upload_feed: UploadFeedRepository
     upload_stats: UploadStatsRepository
@@ -113,6 +115,7 @@ class Repositories:
         conversation_feed = ConversationFeedRepository(store, projects, clock=clock)
         conversation_stats = ConversationStatsRepository(store, projects, clock=clock)
         collaboration_stats = CollaborationStatsRepository(store, projects, clock=clock)
+        comment_feed = CommentFeedRepository(store, projects, clock=clock)
         uploads = UploadRepository(
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
@@ -171,6 +174,7 @@ class Repositories:
             conversation_feed=conversation_feed,
             conversation_stats=conversation_stats,
             collaboration_stats=collaboration_stats,
+            comment_feed=comment_feed,
             uploads=uploads,
             upload_feed=upload_feed,
             upload_stats=upload_stats,
