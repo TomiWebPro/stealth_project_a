@@ -164,6 +164,10 @@ All paths are prefixed with `/api/v1`.
   per-project plan/run activity, plan-step and linked-job totals, newest-plan/run
   recency) derived from the plan/run stores; runs are joined to plans for project
   attribution and unknown `project_id` uses the shared 404 envelope
+  `GET /orchestration/feed?project_id=&kind=&limit=` — authoritative newest-first
+  feed of plans and runs derived from the same plan/run stores (kind + project
+  scope, joined project name, plan-step/run-job counts, whole-scope total before
+  the `limit` page; orphan runs excluded, shared 404/422 envelopes)
   `GET|POST /presence`,
   `GET|POST /comments`, `GET /storage/stats`,
   `GET /comments/feed?project_id=&limit=` — authoritative newest-first comment

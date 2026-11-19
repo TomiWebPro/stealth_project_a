@@ -231,6 +231,11 @@ from .orchestration import (
     StorageQuotaUnit,
     StorageStats,
 )
+from .orchestration_feed import (
+    OrchestrationFeed,
+    OrchestrationFeedItem,
+    OrchestrationFeedKind,
+)
 from .orchestration_stats import (
     OrchestrationProjectCount,
     OrchestrationStageCount,
@@ -528,6 +533,10 @@ __all__ = [
     "StorageQuota",
     "StorageQuotaUnit",
     "StorageStats",
+    # orchestration feed
+    "OrchestrationFeed",
+    "OrchestrationFeedItem",
+    "OrchestrationFeedKind",
     # orchestration stats
     "OrchestrationProjectCount",
     "OrchestrationStageCount",

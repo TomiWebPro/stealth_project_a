@@ -58,6 +58,7 @@ from .routers import (
     organization_feed,
     organization_stats,
     orchestration,
+    orchestration_feed,
     orchestration_stats,
     pipelines,
     projects,
@@ -305,8 +306,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/retries/stats" has no templated sibling; register it directly to keep
     # the stats path explicit.
     app.include_router(retry_stats.router, prefix=API_PREFIX)
-    # "/orchestration/stats" has no templated sibling at that segment; register
-    # it directly (before the orchestration router) to keep stats paths explicit.
+    # "/orchestration/feed" and "/orchestration/stats" have no templated sibling
+    # at that segment; register them before the orchestration router so both
+    # aggregate/feed paths stay explicit.
+    app.include_router(orchestration_feed.router, prefix=API_PREFIX)
     app.include_router(orchestration_stats.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
     # "/events/feed" and "/events/stats" have no templated sibling at that

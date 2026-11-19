@@ -47,6 +47,7 @@ from .repositories.pipeline_feed import PipelineFeedRepository
 from .repositories.organization_feed import OrganizationFeedRepository
 from .repositories.organization_stats import OrganizationStatsRepository
 from .repositories.orchestration import OrchestrationRepository
+from .repositories.orchestration_feed import OrchestrationFeedRepository
 from .repositories.orchestration_stats import OrchestrationStatsRepository
 from .repositories.projects import ProjectRepository
 from .repositories.project_feed import ProjectFeedRepository
@@ -353,6 +354,12 @@ def get_orchestration_stats_repository(
     return repositories.orchestration_stats
 
 
+def get_orchestration_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> OrchestrationFeedRepository:
+    return repositories.orchestration_feed
+
+
 def get_auth_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> AuthRepository:
@@ -524,6 +531,7 @@ __all__ = [
     "get_organization_feed_repository",
     "get_organization_stats_repository",
     "get_orchestration_repository",
+    "get_orchestration_feed_repository",
     "get_orchestration_stats_repository",
     "get_project_repository",
     "get_project_feed_repository",

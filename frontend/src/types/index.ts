@@ -25,6 +25,7 @@ export * from "./assetStats";
 export * from "./operation";
 export * from "./provider";
 export * from "./orchestration";
+export * from "./orchestrationFeed";
 export * from "./orchestrationStats";
 export * from "./search";
 export * from "./searchStats";

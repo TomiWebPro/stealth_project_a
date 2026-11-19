@@ -40,6 +40,7 @@ from .pipeline_feed import PipelineFeedRepository
 from .organization_feed import OrganizationFeedRepository
 from .organization_stats import OrganizationStatsRepository
 from .orchestration import OrchestrationRepository
+from .orchestration_feed import OrchestrationFeedRepository
 from .orchestration_stats import OrchestrationStatsRepository
 from .projects import ProjectRepository
 from .project_feed import ProjectFeedRepository
@@ -96,6 +97,7 @@ class Repositories:
     publish_stats: PublishStatsRepository
     retry_stats: RetryStatsRepository
     orchestration: OrchestrationRepository
+    orchestration_feed: OrchestrationFeedRepository
     orchestration_stats: OrchestrationStatsRepository
     auth: AuthRepository
     event_feed: EventFeedRepository
@@ -160,6 +162,7 @@ class Repositories:
             storage_quota_bytes=settings.storage_quota_bytes,
             clock=clock,
         )
+        orchestration_feed = OrchestrationFeedRepository(store, projects, clock=clock)
         orchestration_stats = OrchestrationStatsRepository(store, projects, clock=clock)
         auth = AuthRepository(
             store,
@@ -218,6 +221,7 @@ class Repositories:
             publish_stats=publish_stats,
             retry_stats=retry_stats,
             orchestration=orchestration,
+            orchestration_feed=orchestration_feed,
             orchestration_stats=orchestration_stats,
             auth=auth,
             event_feed=event_feed,
