@@ -1,15 +1,17 @@
-import { useAssets } from "../../hooks/useQueries";
+import { useAssets, useOrganizations } from "../../hooks/useQueries";
 import { errorMessage } from "../../lib/errors";
 import { PageHeader } from "../../layout/AppLayout";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
 
 export function WorkspacesScreen() {
   const { data, isPending, isError, error, refetch } = useAssets();
+  const orgId = useOrganizations().data?.[0]?.id;
   const templates = buildWorkflowTemplateCards(data ?? []);
 
   return (
@@ -25,6 +27,12 @@ export function WorkspacesScreen() {
       />
 
       <CollaborationPanel />
+
+      <ProjectStatsPanel
+        orgId={orgId}
+        title="Organization project stats"
+        description="Authoritative portfolio metrics scoped to this organization."
+      />
 
       {isPending ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading templates">

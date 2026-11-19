@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { formatProjectUpdatedAt } from "./helpers";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
+import { ProjectStatsPanel } from "./ProjectStatsPanel";
 
 function ProjectRow({
   project,
@@ -67,6 +68,11 @@ export function ProjectsScreen() {
             Refresh
           </Button>
         }
+      />
+
+      <ProjectStatsPanel
+        title="Project portfolio stats"
+        description="Authoritative lifecycle and cross-domain metrics for all projects."
       />
 
       {isPending ? <ProjectsSkeleton /> : null}

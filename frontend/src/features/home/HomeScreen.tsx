@@ -11,6 +11,7 @@ import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
+import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
 import {
   assetTypeTone,
@@ -142,6 +143,10 @@ export function HomeScreen() {
       <div className="space-y-6">
         <DashboardPanel />
         <ActivityFeedPanel />
+        <ProjectStatsPanel
+          title="Workspace project stats"
+          description="Authoritative portfolio metrics across every project in the workspace."
+        />
         <ConversationStatsPanel
           title="Workspace conversation stats"
           description="Authoritative message metrics across every project in the workspace."
