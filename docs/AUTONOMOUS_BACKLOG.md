@@ -605,6 +605,19 @@ this file is the execution checklist.
   well. ✅ 2026-11-19 — `8b3cf2c`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C64 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  extension registry/installation statistics endpoint from C61/C63
+  (`GET /api/v1/extensions/stats`): probe the zero-filled snapshot
+  (`total_registered`, `total_installed`, `by_type`, `by_status`, `enabled`,
+  `signed`, `verified`, `total_permissions`, `unique_permissions`,
+  `by_permission`, `total_capabilities`, `generated_at`) + breakdown shapes,
+  the independent `type`/`status` filters and the shared 422
+  `validation_error` envelope with request-id, keeping CI aligned with the
+  exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  No unchecked CI row remained, so C64 was added under the Never-empty well.
+  ✅ 2026-11-19 — `562ab49`
+  Screens extension-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -707,3 +720,4 @@ this file is the execution checklist.
 - 2026-11-19 — `9eaec7c` — C61 (backend): added authoritative `GET /api/v1/extensions/stats?type=&status=` deriving zero-filled registry type/status breakdowns, trust flags and permission/capability coverage from the authoritative extension stores (no second index), with independent `type`/`status` filters and a shared 422 envelope; `ExtensionStats` + 3 nested contracts mirrored in TS, README synced, 7 tests × 2 backends green (635 passed, contract parity + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C61 was added under the Never-empty well.
 - 2026-11-19 — `9a62ea9` — C62 (screens): rendered the authoritative provider fleet stats via a reusable `ProviderStatsPanel` on the Providers screen — location/status filters wired from the existing selects, four stat cards, zero-filled status/location breakdowns and per-operation availability coverage, all five UI states, and every display value derived in tested `providerStatsHelpers`; resolves the C57/C59/C60 screens follow-up. Lint clean, 425 tests, build green. My owned column had no unchecked rows, so C62 was added under the Never-empty well.
 - 2026-11-19 — `8b3cf2c` — C63 (mocks): wired the C61 extension stats API end to end — `getExtensionStats`/`useExtensionStats` atomically across mockApi, the stable facade, live `httpApiClient` (`GET /extensions/stats?type=&status=`), `queryKeys` and `useQueries`, with a shared `lib/extensionStats` seed-derivation/validation helper (zero-filled type/status breakdowns, trust flags, deterministic permission coverage, router-style 422), injectable `extensionStats` failure domain and parity guard across both transports; lint clean, 442 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents. My owned column had no unchecked rows, so C63 was added under the Never-empty well.
+- 2026-11-19 — `562ab49` — C64 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/extensions/stats` (zero-filled snapshot + type/status/permission breakdown shapes, independent `type`/`status` filters, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C61/C63. No unchecked CI row remained, so C64 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (55/55 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (442)/build and backend pytest (635) green. Screens extension-stats rendering remains a screens follow-up.
