@@ -2130,6 +2130,19 @@ this file is the execution checklist.
   under the Never-empty well.
   ✅ 2026-11-19 — `e510c4f`
 
+- [x] C174 (screens) Render the authoritative job event feed (C169/C171/C172
+  follow-up) via `useEventFeed`: a reusable `EventFeedPanel` on the Jobs screen
+  (workspace-wide) and project detail (project-scoped) with event-type and
+  page-size filter chips, newest-first rows showing event-type and status badges,
+  prettified operation label, short job id/sequence, joined project name, message/
+  error excerpt and event recency, and Open buttons deep-linking to the existing
+  project-detail route — with loading/error/missing/empty/populated states and
+  every display value derived in tested `eventFeedHelpers`. Resolves the C172
+  screens follow-up. My owned column had no unchecked rows (only the repo-wide C6
+  docs pass remains, owned by other agents), so C174 was added under the
+  Never-empty well. Lint clean, 1132 tests, build green.
+  ✅ 2026-11-19 — `4f4d25e`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2341,3 +2354,4 @@ this file is the execution checklist.
 - 2026-11-19 — `220dbaa` — C170 (screens): rendered the authoritative comment statistics (C165/C167/C168 follow-up) via `useCommentStats` — a reusable `CommentStatsPanel` on Home (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled asset/project reference and per-project/per-author breakdowns, and all five UI states; every display value derived in 13 new tested `commentStatsHelpers` cases. Resolves the C168 screens follow-up. Lint clean/1095 tests/build green on a clean worktree of HEAD + only my changes; shared tree transiently red from a sibling's uncommitted in-progress event-feed transport work in mocks-owned `src/lib` (owner: studio-mocks). My owned column had no unchecked rows, so C170 was added under the Never-empty well. C169 event-feed screens rendering remains a follow-up.
 - 2026-11-19 — `08acef1` — C171 (mocks): wired the authoritative job event feed API (C169 follow-up) end to end — `getEventFeed`/`useEventFeed` atomically across mockApi (newest-first `(timestamp, job_id, seq)` derivation over the shared `JOB_EVENTS` seeds joined to parent jobs for operation/project identity with orphan exclusion and a stable project-name fallback, `project_id`/`type` filters, whole-scope `total` before the `limit` page, router-style 422 for a malformed id / unknown type / invalid limit, unknown-project 404 + injectable `eventFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /events/feed?project_id=&type=&limit=`), queryKeys and useQueries, with a shared `lib/eventFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C169 mocks-transport follow-up; lint clean, 1115 tests, build green. My owned column had no unchecked rows, so C171 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-19 — `3da13a8` — C172 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/events/feed?project_id=&type=&limit=` job event feed (the C169/C171 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (job/seq/type/operation/project identity + joined project name/timestamp), newest-first `(timestamp, job_id, seq)` ordering, whole-scope `total` before the `limit` page with unchanged counters, `type` filter, optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid type + invalid limit) with request-id — reusing the on-demand submitted job with a real JOB_EVENTS stream so the derived feed is non-empty. No unchecked CI row remained, so C172 was added under the Never-empty well; resolves the C171 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (333 checks OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint/1115 tests/build green and backend pytest (1053) green. Screens event-feed rendering remains a screens follow-up.
+- 2026-11-19 — `4f4d25e` — C174 (screens): rendered the authoritative job event feed (C169/C171/C172 follow-up) via `useEventFeed` — a reusable `EventFeedPanel` on Jobs (workspace-wide) and project detail (project-scoped) with event-type/page-size filter chips, newest-first rows showing type/status badges, prettified operation label, short job id + seq, joined project name, message/error excerpt and recency, and Open buttons deep-linking to project detail, with all five UI states — every display value derived in 17 new tested `eventFeedHelpers` cases. Resolves the C172 screens follow-up; lint clean, 1132 tests, build green. My owned column had no unchecked rows, so C174 was added under the Never-empty well.
