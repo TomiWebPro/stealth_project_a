@@ -2225,6 +2225,26 @@ this file is the execution checklist.
   well. ✅ 2026-11-19 — `321648f`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C180 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  production-pipeline feed endpoint from C177/C179
+  (`GET /api/v1/pipelines/feed?project_id=&kind=&limit=`): create one LoRA
+  training chain on demand so the derived feed has a real item, then probe the
+  feed shape (`items`/`total`/`generated_at`), item shapes (chain/project ids +
+  joined project name, canonical kind, stats-shared job/asset counts, creator and
+  created timestamp), newest-first `(created_at, chain_id)` ordering, the
+  whole-scope `total` before the `limit` page (counters unchanged), the `kind`
+  filter, the optional `project_id` scope (unknown → shared 404
+  `project_not_found`) and the shared 422 `validation_error` envelopes (malformed
+  id + invalid kind + invalid limit) with request-id, keeping CI aligned with the
+  exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  No unchecked CI row remained, so C180 was added under the Never-empty well;
+  resolves the C177/C179 CI live-smoke follow-up. Verified the exact embedded
+  smoke script against a real ASGI server (all probes OK, dynamically chosen free
+  port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint
+  clean/1187 tests/build green and backend pytest (1093) green.
+  ✅ 2026-11-19 — `98dcf11`
+  Screens pipeline-feed rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2442,3 +2462,4 @@ this file is the execution checklist.
 - 2026-11-19 — `027d150` — C177 (backend): added authoritative `GET /api/v1/pipelines/feed?project_id=&kind=&limit=` — a newest-first workspace feed of LoRA/shot/splat chains derived fresh from the three authoritative chain collections (no second index), with joined project names, stats-shared job/asset counts, a `(created_at, chain_id)` tie-break and a whole-scope `total` before the `limit` page; optional `project_id`/`kind` filters with shared 404/422 envelopes, mirrored `PipelineFeed`/`PipelineFeedItem` in `frontend/src/types/pipelineFeed.ts` + types index, README endpoint list synced, 8 tests × 2 storage backends green (1093 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up; my owned column had no unchecked rows, so C177 was added under the Never-empty well.
 - 2026-11-19 — `94dba52` — C178 (screens): rendered the authoritative extension installation feed (C173/C175/C176 follow-up) via `useExtensionFeed` — a reusable `ExtensionFeedPanel` on the Extensions screen with type/status/page-size filter chips, newest-first rows showing extension name, publisher/version and type/status/trust badges plus install recency, with all five UI states — every display value derived in 14 new tested `extensionFeedHelpers` cases. Rows stay read-only (no extension-detail route); resolves the C176 screens follow-up. Lint clean, 1168 tests, build green. My owned column had no unchecked rows, so C178 was added under the Never-empty well.
 - 2026-11-19 — `321648f` — C179 (mocks): wired the authoritative production-pipeline feed (C177 follow-up) end to end — `getPipelineFeed`/`usePipelineFeed` atomically across mockApi (newest-first `(created_at, chain_id)` derivation over the shared three chain/project seeds, joined project names with "Unknown project" fallback, stats-shared job/asset counters, `project_id`/`kind` filters, whole-scope `total` before the `limit` page, router-style 422 for malformed project id/invalid kind/out-of-range limit, unknown-project 404 + injectable `pipelineFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /pipelines/feed?project_id=&kind=&limit=`), queryKeys and useQueries, with a shared `lib/pipelineFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C177 mocks-transport follow-up; lint clean, 1187 tests, build green. My owned column had no unchecked rows, so C179 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `98dcf11` — C180 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/pipelines/feed?project_id=&kind=&limit=` production-pipeline feed (the C177/C179 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (chain/project ids + joined project name, canonical `training` kind, stats-shared job/asset counts, creator/timestamp), newest-first `(created_at, chain_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, the `kind` filter, the optional `project_id` scope (unknown → shared 404 `project_not_found`) and the shared 422 `validation_error` envelopes (malformed id + invalid kind + invalid limit) with request-id — creating one LoRA training chain on demand so the derived feed is non-empty. No unchecked CI row remained, so C180 was added under the Never-empty well; resolves the C177/C179 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (all probes OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1187 tests/build green and backend pytest (1093) green. Screens pipeline-feed rendering remains a screens follow-up.
