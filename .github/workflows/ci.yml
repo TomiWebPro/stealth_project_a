@@ -998,6 +998,66 @@ jobs:
                 and bool(ssbadbody.get("error", {}).get("request_id")),
                 search_bad.text)
 
+          # Authoritative upload statistics (C97/C99) is the newest /api/v1 URL
+          # the live client calls (getUploadStats). Probe the zero-filled snapshot
+          # + by_status/by_project breakdown shapes, the two canonical upload
+          # statuses, the optional project scope (unknown project -> shared 404)
+          # and the shared 422 envelope, keeping CI aligned with new endpoints as
+          # they go live.
+          upload_stats = httpx.get(f"{base}/uploads/stats", timeout=5)
+          ustbody = upload_stats.json() if upload_stats.status_code == 200 else {}
+          check("uploads/stats 200 snapshot shape",
+                upload_stats.status_code == 200 and all(
+                    k in ustbody for k in ("total_tickets", "pending", "completed",
+                                           "bytes_uploaded", "by_status", "by_project",
+                                           "newest_upload_at", "generated_at")),
+                upload_stats.text)
+          check("uploads/stats breakdown shapes",
+                isinstance(ustbody.get("by_status"), list)
+                and all(isinstance(s, dict) and "status" in s and "count" in s
+                        for s in ustbody["by_status"])
+                and isinstance(ustbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "total", "completed", "bytes_uploaded"))
+                    for p in ustbody["by_project"]),
+                upload_stats.text)
+          check("uploads/stats zero-filled statuses",
+                upload_stats.status_code == 200
+                and {s.get("status") for s in ustbody["by_status"]} >= {"pending", "complete"},
+                upload_stats.text)
+          check("uploads/stats request-id header",
+                "x-request-id" in {k.lower() for k in upload_stats.headers},
+                str(dict(upload_stats.headers)))
+          if project_id:
+              upload_scoped = httpx.get(
+                  f"{base}/uploads/stats", params={"project_id": project_id}, timeout=5)
+              ussbody = upload_scoped.json() if upload_scoped.status_code == 200 else {}
+              check("uploads/stats project scope 200",
+                    upload_scoped.status_code == 200
+                    and isinstance(ussbody.get("total_tickets"), int)
+                    and isinstance(ussbody.get("by_status"), list),
+                    upload_scoped.text)
+          else:
+              check("uploads/stats project scope setup", False,
+                    "could not obtain a project id")
+          upload_missing = httpx.get(
+              f"{base}/uploads/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          us404body = upload_missing.json() if upload_missing.status_code == 404 else {}
+          check("uploads/stats 404 shared envelope",
+                upload_missing.status_code == 404
+                and us404body.get("error", {}).get("code") == "project_not_found"
+                and bool(us404body.get("error", {}).get("request_id")),
+                upload_missing.text)
+          upload_bad = httpx.get(
+              f"{base}/uploads/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          usbadbody = upload_bad.json() if upload_bad.status_code == 422 else {}
+          check("uploads/stats 422 validation envelope",
+                upload_bad.status_code == 422
+                and usbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(usbadbody.get("error", {}).get("request_id")),
+                upload_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
