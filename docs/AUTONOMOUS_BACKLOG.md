@@ -967,6 +967,19 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `8018614`
   Screens activity-stats rendering remains a screens follow-up.
 
+- [x] C93 (backend) Authoritative cross-domain search index statistics API:
+  `GET /api/v1/search/stats?project_id=` derives searchable-document counts by
+  canonical kind (project/asset/conversation), a total, newest-document recency
+  and generation time from the same authoritative stores `/search` reads (no
+  second index; soft-deleted assets excluded), with a zero-filled deterministic
+  `by_kind` breakdown and an optional `project_id` scope (unknown → shared 404
+  `project_not_found`, malformed → shared 422); `SearchStats`/`SearchKindCount`
+  mirrored in `frontend/src/types/searchStats.ts`, README endpoint list synced,
+  5 tests × 2 storage backends green (731 passed, contract parity + route-surface
+  guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up.
+  My owned backend column had no unchecked items, so C93 was added under the
+  Never-empty well. ✅ 2026-11-19 — `cc29f83`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1098,3 +1111,4 @@ this file is the execution checklist.
 - 2026-11-19 — `db504cc` — C90 (screens): rendered authoritative orchestration statistics (C85/C87/C88 follow-up) via `useOrchestrationStats` — a reusable `OrchestrationStatsPanel` on Jobs (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled plan/resolve/submit/await/collect/done stage and per-project activity breakdowns, and all five UI states; every display value derived in tested `orchestrationStatsHelpers`. Resolves the C87/C88 screens follow-up. Lint clean, 612 tests, build green. My owned column had no unchecked rows, so C90 was added under the Never-empty well.
 - 2026-11-19 — `0752a55` — C91 (mocks): wired the C89 activity stats API end to end — `getActivityStats`/`useActivityStats` atomically across mockApi (reuses `deriveActivityFeed` with an unlimited limit so feed and snapshot cannot drift; zero-filled per-kind buckets, per-project event/participant counts, distinct participant total, newest-event recency, router-style 422 + unknown-project 404 + injectable `activityStats` failure), the stable facade, live `httpApiClient` (`GET /activity/stats?project_id=`), queryKeys and useQueries, with a shared `lib/activityStats` helper; parity guard extended to both transports (raised the two 20s parity safety caps to 45s for the extra simulated-latency queries). Lint clean, 625 tests, build green. My owned column had no unchecked rows, so C91 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
 - 2026-11-19 — `8018614` — C92 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/activity/stats` (zero-filled snapshot + by_kind/by_project breakdown shapes, the four canonical activity kinds asset/publish/job/comment, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C89/C91. No unchecked CI row remained, so C92 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (94/94 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (625)/build and backend pytest (721) green. Screens activity-stats rendering remains a screens follow-up.
+- 2026-11-19 — `cc29f83` — C93 (backend): added authoritative `GET /api/v1/search/stats?project_id=` index-coverage metrics (zero-filled project/asset/conversation document counts, total, newest-document recency) derived from the same stores `/search` reads (no second index, soft-deleted assets excluded), with optional project scope (shared 404 `project_not_found` / 422 `validation_error` envelopes); contracts mirrored in `frontend/src/types/searchStats.ts`, README endpoint list synced, 5 tests × 2 backends green (731 passed, contract parity + route guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C93 was added under the Never-empty well.
