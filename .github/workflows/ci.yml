@@ -824,6 +824,66 @@ jobs:
                 and colbadbody.get("error", {}).get("code") == "validation_error"
                 and bool(colbadbody.get("error", {}).get("request_id")), collab_bad.text)
 
+          # Authoritative orchestration statistics (C85/C87) is the newest
+          # /api/v1 URL the live client calls (getOrchestrationStats). Probe the
+          # zero-filled snapshot + by_stage/by_project breakdown shapes, the six
+          # canonical lifecycle stages, the optional project scope (unknown
+          # project -> shared 404) and the shared 422 envelope, keeping CI aligned
+          # with new endpoints as they go live.
+          orchestration_stats = httpx.get(f"{base}/orchestration/stats", timeout=5)
+          ostbody = orchestration_stats.json() if orchestration_stats.status_code == 200 else {}
+          check("orchestration/stats 200 snapshot shape",
+                orchestration_stats.status_code == 200 and all(
+                    k in ostbody for k in ("total_plans", "total_runs",
+                                           "total_steps", "total_jobs_linked",
+                                           "by_stage", "by_project",
+                                           "newest_plan_at", "newest_run_at",
+                                           "generated_at")),
+                orchestration_stats.text)
+          check("orchestration/stats breakdown shapes",
+                isinstance(ostbody.get("by_stage"), list)
+                and all(isinstance(s, dict) and "stage" in s and "count" in s
+                        for s in ostbody["by_stage"])
+                and isinstance(ostbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "plans", "runs"))
+                    for p in ostbody["by_project"]),
+                orchestration_stats.text)
+          check("orchestration/stats zero-filled stages",
+                orchestration_stats.status_code == 200
+                and {s.get("stage") for s in ostbody["by_stage"]} >= {
+                    "plan", "resolve", "submit", "await", "collect", "done"},
+                orchestration_stats.text)
+          if project_id:
+              orchestration_scoped = httpx.get(
+                  f"{base}/orchestration/stats", params={"project_id": project_id}, timeout=5)
+              ossbody = orchestration_scoped.json() if orchestration_scoped.status_code == 200 else {}
+              check("orchestration/stats project scope 200",
+                    orchestration_scoped.status_code == 200
+                    and isinstance(ossbody.get("total_plans"), int)
+                    and isinstance(ossbody.get("by_stage"), list),
+                    orchestration_scoped.text)
+          else:
+              check("orchestration/stats project scope setup", False,
+                    "could not obtain a project id")
+          orchestration_missing = httpx.get(
+              f"{base}/orchestration/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          ost404body = orchestration_missing.json() if orchestration_missing.status_code == 404 else {}
+          check("orchestration/stats 404 shared envelope",
+                orchestration_missing.status_code == 404
+                and ost404body.get("error", {}).get("code") == "project_not_found"
+                and bool(ost404body.get("error", {}).get("request_id")),
+                orchestration_missing.text)
+          orchestration_bad = httpx.get(
+              f"{base}/orchestration/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          ostbadbody = orchestration_bad.json() if orchestration_bad.status_code == 422 else {}
+          check("orchestration/stats 422 validation envelope",
+                orchestration_bad.status_code == 422
+                and ostbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ostbadbody.get("error", {}).get("request_id")),
+                orchestration_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
