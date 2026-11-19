@@ -19,6 +19,7 @@ import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationFeedPanel } from "../jobs/OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
+import { RetryFeedPanel } from "../jobs/RetryFeedPanel";
 import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
@@ -311,6 +312,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project retry stats"
         description="Authoritative job retry metrics scoped to this project."
+      />
+      <RetryFeedPanel
+        projectId={projectId}
+        title="Project job retry feed"
+        description="Newest-first retried jobs from the authoritative retry ledger, scoped to this project."
       />
       <JobQueuePanel
         projectId={projectId}
