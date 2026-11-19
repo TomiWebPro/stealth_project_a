@@ -66,6 +66,10 @@ All paths are prefixed with `/api/v1`.
   `GET /assets/stats?project_id=` — inventory metrics (zero-filled type/status
   breakdowns, stored bytes, version revisions, recency) derived from the asset
   store; deleted assets are excluded
+  `GET /lineage/stats?project_id=` — authoritative lineage metrics (zero-filled
+  relationship-type breakdown, per-project link counts, distinct live-asset count
+  and newest-link recency) derived from the asset relationship store; links from
+  soft-deleted/unknown source assets are excluded
 - **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`
 - **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
   `GET /operations/stats` — authoritative catalog metrics (total/streaming/

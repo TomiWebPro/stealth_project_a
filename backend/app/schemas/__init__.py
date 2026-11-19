@@ -73,6 +73,11 @@ from .impact import (
     AssetImpact,
     ImpactNode,
 )
+from .lineage_stats import (
+    LineageProjectCount,
+    LineageStats,
+    LineageTypeCount,
+)
 from .job_stats import (
     JobStats,
     JobStatusCount,
@@ -215,6 +220,10 @@ __all__ = [
     # impact
     "AssetImpact",
     "ImpactNode",
+    # lineage stats
+    "LineageProjectCount",
+    "LineageStats",
+    "LineageTypeCount",
     # job stats
     "JobStats",
     "JobStatusCount",

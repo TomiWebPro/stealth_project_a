@@ -18,6 +18,7 @@ from .dashboard import DashboardRepository
 from .extensions import ExtensionRepository
 from .extension_stats import ExtensionStatsRepository
 from .impact import ImpactRepository
+from .lineage_stats import LineageStatsRepository
 from .job_stats import JobStatsRepository
 from .jobs import JobRepository
 from .operation_stats import OperationStatsRepository
@@ -45,6 +46,7 @@ class Repositories:
     uploads: UploadRepository
     jobs: JobRepository
     job_stats: JobStatsRepository
+    lineage_stats: LineageStatsRepository
     operation_stats: OperationStatsRepository
     pipeline_stats: PipelineStatsRepository
     organization_stats: OrganizationStatsRepository
@@ -78,6 +80,7 @@ class Repositories:
         )
         jobs = JobRepository(store, projects, clock=clock)
         job_stats = JobStatsRepository(store, projects, clock=clock)
+        lineage_stats = LineageStatsRepository(store, projects, clock=clock)
         operation_stats = OperationStatsRepository(store, clock=clock)
         pipeline_stats = PipelineStatsRepository(store, projects, clock=clock)
         organization_stats = OrganizationStatsRepository(store, clock=clock)
@@ -115,6 +118,7 @@ class Repositories:
             uploads=uploads,
             jobs=jobs,
             job_stats=job_stats,
+            lineage_stats=lineage_stats,
             operation_stats=operation_stats,
             pipeline_stats=pipeline_stats,
             organization_stats=organization_stats,
