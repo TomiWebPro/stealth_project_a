@@ -1751,6 +1751,22 @@ this file is the execution checklist.
   column had no unchecked rows, so C150 was added under the Never-empty well.
   ✅ 2026-11-19 — `e2fa8e2`
 
+- [x] C151 (mocks) Wire the authoritative comment feed API (C149 follow-up) end
+  to end: expose `getCommentFeed` / `useCommentFeed` atomically across mockApi
+  (seed-derived newest-first `(created_at, comment_id)` derivation over the
+  comment/project stores with joined project names and an "Unknown project"
+  fallback, optional `project_id` scope, normalized 404 for an unknown project,
+  `asset_id` null normalization, whole-scope `total` before the `limit` page,
+  router-style 422 for a malformed project id / out-of-range limit + injectable
+  `commentFeed` failure), the stable `ApiClient` facade, live `httpApiClient`
+  (`GET /comments/feed?project_id=&limit=`), `queryKeys` and `useQueries`, with a
+  shared `lib/commentFeed` derivation/validation helper; populated/empty/error
+  seeds and parity guard extended to both transports. My owned column had no
+  unchecked rows (only the repo-wide C6 docs pass remains, owned by other
+  agents), so C151 was added under the Never-empty well.
+  ✅ 2026-11-19 — `00b89e7`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1940,3 +1956,4 @@ this file is the execution checklist.
 - 2026-11-19 — `52246f5` — C148 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/projects/feed` project feed (the C145/C147 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined org name + active/archived lifecycle/creator/timestamps, newest-first `(created_at, project_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, `lifecycle` filter, optional `org_id` scope (unknown-but-valid org → zero-filled 200) and the shared 422 `validation_error` envelopes (malformed org + invalid lifecycle + invalid limit) with request-id — reusing the on-demand project so the derived feed is non-empty. No unchecked CI row remained, so C148 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (all probes OK, on a dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/989 tests/build green and backend pytest (935) green. Screens project-feed rendering remains a screens follow-up.
 - 2026-11-19 — `93569fd` — C149 (backend): added authoritative `GET /api/v1/comments/feed?project_id=&limit=` — a newest-first workspace comment feed derived fresh from the authoritative `COMMENTS` collection (no second index) with joined project display name (orphan fallback), optional asset reference, author id, body and created timestamp, deterministic `(created_at, comment_id)` ordering and a whole-scope `total` before the `limit` page; an optional `project_id` scope validates the project (shared 404 `project_not_found`) with shared 422 envelopes for a malformed id / invalid limit. `CommentFeed`/`CommentFeedItem` mirrored in `frontend/src/types/commentFeed.ts` + exported from the types index, README endpoint list synced, 11 tests × 2 storage backends green (955 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items, so C149 was added under the Never-empty well.
 - 2026-11-19 — `e2fa8e2` — C150 (screens): rendered the authoritative project feed (C145/C147/C148 follow-up) via `useProjectFeed` — a reusable `ProjectFeedPanel` on Projects (workspace-wide) and project detail (org-scoped) with lifecycle/page-size chips, newest-first rows showing project name, joined org name, lifecycle badge and created-at recency, and project-detail deep links, with all five UI states and every display value derived in tested `projectFeedHelpers` (11 new tests). Resolves the C148 screens follow-up. Lint clean, 1003 tests, build green. My owned column had no unchecked rows, so C150 was added under the Never-empty well.
+- 2026-11-19 — `00b89e7` — C151 (mocks): wired the authoritative comment feed (C149 follow-up) end to end — `getCommentFeed`/`useCommentFeed` atomically across mockApi (seed-derived newest-first `(created_at, comment_id)` derivation over the comment/project stores with joined project names + "Unknown project" fallback, optional `project_id` scope, normalized 404 for an unknown project, `asset_id` null normalization, whole-scope `total` before the `limit` page, router-style 422 + injectable `commentFeed` failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /comments/feed?project_id=&limit=`), `queryKeys` and `useQueries`, with a shared `lib/commentFeed` derivation/validation helper; parity guard extended to both transports (populated/scoped/limited/empty/404/422 + surface guard). Lint clean, 1011 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C151 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
