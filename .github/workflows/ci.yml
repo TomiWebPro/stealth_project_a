@@ -586,6 +586,36 @@ jobs:
                 and bool(ebadbody.get("error", {}).get("request_id")),
                 ext_bad.text)
 
+          # Authoritative operation catalog statistics (C65/C67) is the newest
+          # /api/v1 URL the live client calls (getOperationStats). It takes no
+          # query params; probe the snapshot + breakdown shapes and the
+          # provider/type splits so CI stays aligned as the catalog grows.
+          op_stats = httpx.get(f"{base}/operations/stats", timeout=5)
+          osbody = op_stats.json() if op_stats.status_code == 200 else {}
+          check("operations/stats 200 snapshot shape",
+                op_stats.status_code == 200 and all(
+                    k in osbody for k in ("total", "streaming", "with_provider",
+                                          "without_provider", "total_settings",
+                                          "unique_output_types", "by_output_type",
+                                          "by_input_type", "generated_at")),
+                op_stats.text)
+          check("operations/stats breakdown shapes",
+                isinstance(osbody.get("by_output_type"), list)
+                and all(isinstance(t, dict) and "asset_type" in t and "operations" in t
+                        for t in osbody["by_output_type"])
+                and isinstance(osbody.get("by_input_type"), list)
+                and all(isinstance(t, dict) and "asset_type" in t and "operations" in t
+                        for t in osbody["by_input_type"]),
+                op_stats.text)
+          check("operations/stats provider and type splits",
+                op_stats.status_code == 200
+                and osbody["with_provider"] + osbody["without_provider"] == osbody["total"]
+                and osbody["unique_output_types"] == len(osbody["by_output_type"]),
+                op_stats.text)
+          check("operations/stats request-id header",
+                "x-request-id" in {k.lower() for k in op_stats.headers},
+                str(dict(op_stats.headers)))
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
