@@ -1321,6 +1321,19 @@ this file is the execution checklist.
   Never-empty well. ✅ 2026-11-19 — `c7331a4`
   Screens log-console rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C120 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  per-job execution log endpoint from C117/C119
+  (`GET /api/v1/jobs/{job_id}/logs?level=&since_seq=&limit=`): submit a job on
+  demand so the `JOB_EVENTS`-derived frame has a real stream, then probe the
+  frame shape (`job_id`/`entries`/`next_seq`/`total`), derived log entries with
+  coarse levels, the `level` filter, `limit` paging and the `since_seq` resume
+  cursor (no overlap), plus the shared 404 `job_not_found` / 422
+  `validation_error` envelopes with request-id and the request-id header.
+  Keeps CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live`
+  client calls as the repo grows. No unchecked CI row remained, so C120 was
+  added under the Never-empty well. ✅ 2026-11-19 — `60e6b6e`
+  Screens log-console rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1479,3 +1492,4 @@ this file is the execution checklist.
 - 2026-11-19 — `551fac6` — C117 (backend): added authoritative `GET /api/v1/jobs/{job_id}/logs?level=&since_seq=&limit=` deriving a chronological, severity-filtered, cursor-paginated job-console log from the authoritative `JOB_EVENTS` stream (no second index) — each event projected to a `JobLogEntry` with a coarse `LogLevel` (debug/info/success/error), a resume `next_seq` cursor and a stream-wide `total`; optional `level` filter + bounds with shared 404 `job_not_found` / 422 `validation_error` envelopes. `JobLogEntry`/`JobLogFrame`/`LogLevel` mirrored in `frontend/src/types/jobLogs.ts`, README endpoint list synced, 8 tests × 2 backends green (799 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the log view is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains), so C117 was added under the Never-empty well.
 - 2026-11-19 — `068adb7` — C118 (screens): rendered authoritative publish statistics (C113/C115/C116 follow-up) via `usePublishStats` — a reusable `PublishStatsPanel` on Home (workspace-wide), the Assets browser and project detail (project-scoped) with four stat cards, ascending version and descending per-project publish/byte breakdowns, and all five UI states; every display value derived in tested `publishStatsHelpers`. Resolves the C116 screens follow-up. Lint clean, 793 tests, build green. My owned column had no unchecked rows, so C118 was added under the Never-empty well.
 - 2026-11-19 — `c7331a4` — C119 (mocks): wired the authoritative per-job execution log API (C117 follow-up) end to end — `getJobLogs`/`useJobLogs` atomically across mockApi (JOB_EVENTS-derived chronological, severity-filtered, cursor-paginated frames with coarse levels, stream-wide totals, resume cursors; router-style 422 + unknown-job 404-to-undefined + injectable `jobLogs` failure), the stable facade, live `httpApiClient` (`GET /jobs/{job_id}/logs?level=&since_seq=&limit=`), queryKeys and useQueries, with a shared `lib/jobLogs` helper and enriched event seeds; parity guard extended to both transports (populated/filtered/paged/404/422 + surface guard). Lint clean, 807 tests, build green. My owned column had no unchecked rows, so C119 was added under the Never-empty well. Screens log-console rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `60e6b6e` — C120 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/jobs/{job_id}/logs` (frame shape + derived entries with coarse levels, `level` filter, `limit` paging + `since_seq` resume cursor, shared 404 `job_not_found` / 422 `validation_error` envelopes with request-id and the request-id header), submitting a job on demand so the derived event stream is non-empty — the CI follow-up from C117/C119. No unchecked CI row remained, so C120 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (128/128 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12 (`-shellcheck=`, since shellcheck integration is pathologically slow on the large heredoc); frontend lint clean/807 tests/build green and backend pytest (799) green. Screens log-console rendering remains a screens follow-up.
