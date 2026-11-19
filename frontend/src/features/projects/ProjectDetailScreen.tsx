@@ -10,6 +10,7 @@ import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobLogConsole } from "../jobs/JobLogConsole";
+import { JobQueuePanel } from "../jobs/JobQueuePanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
@@ -237,6 +238,12 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project retry stats"
         description="Authoritative job retry metrics scoped to this project."
+      />
+      <JobQueuePanel
+        projectId={projectId}
+        projectNames={{ [projectId]: project.name }}
+        title="Project dispatch queue"
+        description="Authoritative FIFO queue of queued and running jobs in this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <JobLogConsole

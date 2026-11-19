@@ -8,6 +8,7 @@ import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { EventStatsPanel } from "./EventStatsPanel";
 import { JobLogConsole } from "./JobLogConsole";
+import { JobQueuePanel } from "./JobQueuePanel";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
@@ -80,6 +81,11 @@ export function JobsScreen() {
       <RetryStatsPanel
         title="Global job retry stats"
         description="Authoritative workspace-wide retry and retried-job metrics."
+      />
+
+      <JobQueuePanel
+        title="Global job dispatch queue"
+        description="Authoritative workspace-wide FIFO queue of queued and running jobs."
       />
 
       {data ? (
