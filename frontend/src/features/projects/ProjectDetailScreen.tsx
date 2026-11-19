@@ -17,6 +17,7 @@ import { JobLogConsole } from "../jobs/JobLogConsole";
 import { JobQueuePanel } from "../jobs/JobQueuePanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
+import { OrchestrationFeedPanel } from "../jobs/OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
 import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
@@ -290,6 +291,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project orchestration stats"
         description="Authoritative plan, run and step metrics scoped to this project."
+      />
+      <OrchestrationFeedPanel
+        projectId={projectId}
+        title="Project orchestration feed"
+        description="Newest-first plans and runs from the authoritative orchestration stores, scoped to this project."
       />
       <EventStatsPanel
         projectId={projectId}

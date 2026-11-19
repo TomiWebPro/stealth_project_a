@@ -13,6 +13,7 @@ import { JobLogConsole } from "./JobLogConsole";
 import { JobQueuePanel } from "./JobQueuePanel";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
+import { OrchestrationFeedPanel } from "./OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
 import { RetryStatsPanel } from "./RetryStatsPanel";
 import { OperationStatsPanel } from "../operations/OperationStatsPanel";
@@ -73,6 +74,11 @@ export function JobsScreen() {
       <OrchestrationStatsPanel
         title="Global orchestration stats"
         description="Authoritative workspace-wide plan, run and step metrics."
+      />
+
+      <OrchestrationFeedPanel
+        title="Global orchestration feed"
+        description="Newest-first plans and runs from the authoritative orchestration stores, with kind filters."
       />
 
       <EventStatsPanel
