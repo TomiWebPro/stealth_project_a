@@ -1057,6 +1057,60 @@ describe("createHttpApiClient project stats", () => {
   });
 });
 
+describe("createHttpApiClient project feed", () => {
+  const feed = {
+    items: [
+      {
+        project_id: "11111111-1111-4111-8111-111111111111",
+        org_id: "22222222-2222-4222-8222-222222222222",
+        org_name: "Studio Northlight",
+        name: "Moonshot",
+        description: "Short film.",
+        lifecycle: "active",
+        created_by: "33333333-3333-4333-8333-333333333333",
+        created_at: "2026-01-06T00:00:00Z",
+        updated_at: "2026-01-07T00:00:00Z",
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-08T00:00:00Z",
+  };
+
+  it("GETs /projects/feed with the org/lifecycle/limit scope and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/projects/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getProjectFeed({
+        orgId: "22222222-2222-4222-8222-222222222222",
+        lifecycle: "active",
+        limit: 5,
+      }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/projects/feed`);
+    expect(url.searchParams.get("org_id")).toBe("22222222-2222-4222-8222-222222222222");
+    expect(url.searchParams.get("lifecycle")).toBe("active");
+    expect(url.searchParams.get("limit")).toBe("5");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Invalid project lifecycle." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getProjectFeed({ lifecycle: "paused" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Invalid project lifecycle.",
+    });
+  });
+});
+
 describe("createHttpApiClient organization stats", () => {
   const stats = {
     total_organizations: 2,

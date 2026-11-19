@@ -41,6 +41,7 @@ import {
   fetchPresence,
   fetchProject,
   fetchProjectDetail,
+  fetchProjectFeed,
   fetchProjectStats,
   fetchProjects,
   fetchProvider,
@@ -103,6 +104,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchAssetFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchProjectFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviderStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchExtensionStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOperationStats()).rejects.toBeInstanceOf(ApiError);
@@ -355,6 +357,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchJobFeed()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the project feed domain", async () => {
+    setMockFailure("projectFeed");
+
+    await expect(fetchProjectFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchProjectFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the conversation feed domain", async () => {

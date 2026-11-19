@@ -133,6 +133,17 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the project feed key by organization, lifecycle and limit", () => {
+    expect(queryKeys.projectFeed.feed()).toEqual(["project-feed", "feed", "all", "all", "all"]);
+    expect(queryKeys.projectFeed.feed({ orgId: "o1", lifecycle: "archived", limit: 5 })).toEqual([
+      "project-feed",
+      "feed",
+      "o1",
+      "archived",
+      5,
+    ]);
+  });
+
   it("scopes the organization stats key by organization", () => {
     expect(queryKeys.organizationStats.summary()).toEqual(["organization-stats", "summary", "all"]);
     expect(queryKeys.organizationStats.summary({ orgId: "o1" })).toEqual([

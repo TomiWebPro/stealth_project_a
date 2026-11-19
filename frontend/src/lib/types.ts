@@ -90,6 +90,8 @@ export type {
   PresenceState,
   PresenceStateCount,
   Project,
+  ProjectFeed,
+  ProjectFeedItem,
   ProjectLifecycle,
   ProjectLifecycleCount,
   ProjectStats,

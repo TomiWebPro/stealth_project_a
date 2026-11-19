@@ -25,6 +25,7 @@ import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
+import type { ProjectFeedOptions } from "../lib/projectFeed";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { PublishFeedOptions } from "../lib/publishFeed";
@@ -71,6 +72,7 @@ import type {
   PipelineStats,
   Presence,
   Project,
+  ProjectFeed,
   ProjectStats,
   Provider,
   ProviderStats,
@@ -188,6 +190,15 @@ export function useProjectStats(options?: ProjectStatsOptions): UseQueryResult<P
   return useQuery({
     queryKey: queryKeys.projectStats.summary(options),
     queryFn: () => api.getProjectStats(options),
+  });
+}
+
+/** Newest-first authoritative project feed from `/projects/feed`, optionally org/lifecycle-scoped (C145). */
+export function useProjectFeed(options?: ProjectFeedOptions): UseQueryResult<ProjectFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.projectFeed.feed(options),
+    queryFn: () => api.getProjectFeed(options),
   });
 }
 

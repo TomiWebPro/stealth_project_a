@@ -66,6 +66,8 @@ import {
 } from "../pipelineStats";
 import type { PipelineStatsOptions } from "../pipelineStats";
 import type { ProjectDetail } from "../projectDetail";
+import { deriveProjectFeed, validateProjectFeedArgs } from "../projectFeed";
+import type { ProjectFeedOptions } from "../projectFeed";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
@@ -121,6 +123,7 @@ import type {
   PipelineStats,
   Presence,
   Project,
+  ProjectFeed,
   ProjectStats,
   Provider,
   ProviderStats,
@@ -186,7 +189,7 @@ function delay<T>(value: T): Promise<T> {
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
  * `activityStats`, `jobStats`,
- * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -421,6 +424,19 @@ export async function fetchProjectStats(
       options,
     ),
   );
+}
+
+/**
+ * Authoritative project feed (C145) derived from the same project/organization
+ * stores as the live `/projects/feed` endpoint. Router-style 422 validation for
+ * a malformed org id / invalid lifecycle / out-of-range limit, a zero-filled
+ * feed for an unknown-but-valid org scope (matching `/projects?org_id=`) and the
+ * `"projectFeed"` failure domain keep error and empty states at parity with live.
+ */
+export async function fetchProjectFeed(options?: ProjectFeedOptions): Promise<ProjectFeed> {
+  failIfEnabled("projectFeed");
+  validateProjectFeedArgs(options);
+  return delay(deriveProjectFeed(PROJECTS, ORGANIZATIONS, REFERENCE_NOW, options));
 }
 
 /**

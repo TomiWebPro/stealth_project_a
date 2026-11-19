@@ -43,6 +43,8 @@ import {
   validateOrchestrationStatsArgs,
 } from "./orchestrationStats";
 import { derivePipelineStats, validatePipelineStatsArgs } from "./pipelineStats";
+import { deriveProjectFeed, validateProjectFeedArgs } from "./projectFeed";
+import type { ProjectFeedOptions } from "./projectFeed";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
@@ -483,6 +485,33 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       throw cause;
     }
     return deriveProjectStats(PROJECTS, ASSETS, CONVERSATIONS, JOBS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative project feed derives the same newest-first view as the
+  // `/projects/feed` endpoint from the shared project/organization seeds; mirror
+  // its 422 validation, org/lifecycle scopes and repository derivation so live
+  // and mock agree exactly. This must precede the /projects branches below.
+  if (path === "/projects/feed") {
+    const org = params.get("org_id") ?? undefined;
+    const lifecycleRaw = params.get("lifecycle");
+    const limitRaw = params.get("limit");
+    const options: ProjectFeedOptions = {
+      ...(org ? { orgId: org } : {}),
+      ...(lifecycleRaw ? { lifecycle: lifecycleRaw as ProjectFeedOptions["lifecycle"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateProjectFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveProjectFeed(PROJECTS, ORGANIZATIONS, REFERENCE_NOW, options);
   }
 
   if (path === "/projects") return PROJECTS;
@@ -1036,6 +1065,14 @@ describe("live vs mock transport parity", () => {
       ],
       ["getProjectStats", (api) => api.getProjectStats()],
       ["getProjectStats scoped", (api) => api.getProjectStats({ orgId })],
+      ["getProjectFeed", (api) => api.getProjectFeed()],
+      ["getProjectFeed scoped", (api) => api.getProjectFeed({ orgId })],
+      ["getProjectFeed filtered", (api) => api.getProjectFeed({ lifecycle: "archived" })],
+      ["getProjectFeed limited", (api) => api.getProjectFeed({ limit: 2 })],
+      [
+        "getProjectFeed scoped, filtered and limited",
+        (api) => api.getProjectFeed({ orgId, lifecycle: "active", limit: 1 }),
+      ],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -1584,6 +1621,26 @@ describe("live vs mock transport parity", () => {
     expect(mockProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports zero-fill an unknown (well-formed) org scope for the
+    // project feed and reject a malformed org id, invalid lifecycle or invalid
+    // limit with the same 422 envelope.
+    expect(await live.getProjectFeed({ orgId: missingId })).toEqual(
+      await mockApiClient.getProjectFeed({ orgId: missingId }),
+    );
+    for (const bad of [
+      { orgId: "not-a-uuid" },
+      { lifecycle: "paused" as never },
+      { limit: 0 },
+      { limit: 201 },
+    ]) {
+      const [mockProjectFeed422, liveProjectFeed422] = await Promise.all([
+        mockApiClient.getProjectFeed(bad).catch((cause) => cause),
+        live.getProjectFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockProjectFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveProjectFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope and reject a
     // malformed org id with the same 422 envelope.
     expect(await live.getOrganizationStats({ orgId: missingId })).toEqual(
@@ -1683,6 +1740,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");
+    expect(typeof typed.getProjectFeed).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");

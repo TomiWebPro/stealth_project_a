@@ -46,6 +46,8 @@ import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import { pipelineStatsQueryParams } from "./pipelineStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
+import { projectFeedQueryParams } from "./projectFeed";
+import type { ProjectFeedOptions } from "./projectFeed";
 import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import { providerStatsQueryParams } from "./providerStats";
@@ -103,6 +105,7 @@ import type {
   PipelineStats,
   Presence,
   Project,
+  ProjectFeed,
   ProjectStats,
   Provider,
   ProviderStats,
@@ -347,6 +350,11 @@ export function createHttpApiClient(
     /** Authoritative project portfolio metrics derived by the backend `/projects/stats`. */
     getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats> {
       return request<ProjectStats>("/projects/stats", projectStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative project feed derived by the backend `/projects/feed` (C145). */
+    getProjectFeed(options?: ProjectFeedOptions): Promise<ProjectFeed> {
+      return request<ProjectFeed>("/projects/feed", projectFeedQueryParams(options));
     },
 
     /** Authoritative provider fleet metrics derived by the backend `/providers/stats`. */
