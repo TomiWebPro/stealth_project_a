@@ -35,6 +35,7 @@ export * from "./lineageFeed";
 export * from "./providerStats";
 export * from "./publishStats";
 export * from "./publishFeed";
+export * from "./extensionFeed";
 export * from "./extensionStats";
 export * from "./operationStats";
 export * from "./organizationFeed";

@@ -31,6 +31,7 @@ from .repositories.dashboard import DashboardRepository
 from .repositories.event_feed import EventFeedRepository
 from .repositories.event_stats import EventStatsRepository
 from .repositories.extensions import ExtensionRepository
+from .repositories.extension_feed import ExtensionFeedRepository
 from .repositories.extension_stats import ExtensionStatsRepository
 from .repositories.impact import ImpactRepository
 from .repositories.lineage_feed import LineageFeedRepository
@@ -387,6 +388,12 @@ def get_extension_repository(
     return repositories.extensions
 
 
+def get_extension_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ExtensionFeedRepository:
+    return repositories.extension_feed
+
+
 def get_extension_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ExtensionStatsRepository:
@@ -490,6 +497,7 @@ __all__ = [
     "get_event_feed_repository",
     "get_event_stats_repository",
     "get_extension_repository",
+    "get_extension_feed_repository",
     "get_extension_stats_repository",
     "get_impact_repository",
     "get_current_org_id",

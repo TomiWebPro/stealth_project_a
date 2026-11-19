@@ -24,6 +24,7 @@ from .dashboard import DashboardRepository
 from .event_feed import EventFeedRepository
 from .event_stats import EventStatsRepository
 from .extensions import ExtensionRepository
+from .extension_feed import ExtensionFeedRepository
 from .extension_stats import ExtensionStatsRepository
 from .impact import ImpactRepository
 from .lineage_feed import LineageFeedRepository
@@ -98,6 +99,7 @@ class Repositories:
     event_feed: EventFeedRepository
     event_stats: EventStatsRepository
     extensions: ExtensionRepository
+    extension_feed: ExtensionFeedRepository
     extension_stats: ExtensionStatsRepository
     audit: AuditRepository
     search: SearchRepository
@@ -165,6 +167,7 @@ class Repositories:
         event_feed = EventFeedRepository(store, projects, clock=clock)
         event_stats = EventStatsRepository(store, projects, clock=clock)
         extensions = ExtensionRepository(store, clock=clock)
+        extension_feed = ExtensionFeedRepository(store, clock=clock)
         extension_stats = ExtensionStatsRepository(store, clock=clock)
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
         search = SearchRepository(store, clock=clock)
@@ -216,6 +219,7 @@ class Repositories:
             event_feed=event_feed,
             event_stats=event_stats,
             extensions=extensions,
+            extension_feed=extension_feed,
             extension_stats=extension_stats,
             audit=audit,
             search=search,

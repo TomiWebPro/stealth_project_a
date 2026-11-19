@@ -191,6 +191,11 @@ All paths are prefixed with `/api/v1`.
 - **Extensions:** `GET /extensions/registry`, `GET /extensions`,
   `POST /extensions/install`, `GET /extensions/{id}`,
   `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`,
+  `GET /extensions/feed?type=&status=&limit=` — authoritative newest-first feed
+  of installed extensions (manifest display fields, lifecycle status, trust
+  flags and install time; whole-scope `total` before the `limit` page) derived
+  from the extension store with a deterministic `(installed_at, extension_id)`
+  tie-break and optional type/status filters; shared 422 envelope
   `GET /extensions/stats?type=&status=` — authoritative registry/installation
   metrics (zero-filled type/status breakdowns, trust flags, permission/capability
   coverage) derived from the extension stores, with optional type/status filters
