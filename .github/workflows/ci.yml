@@ -218,6 +218,84 @@ jobs:
                 and act404body.get("error", {}).get("code") == "project_not_found"
                 and bool(act404body.get("error", {}).get("request_id")), act_missing.text)
 
+          # Asset tag facets (C33) and downstream impact (C34) are the newest
+          # authoritative /api/v1 URLs the live client calls (getTags /
+          # getAssetImpact). Probe their shapes, filters + shared envelopes.
+          tag_index = httpx.get(f"{base}/tags", timeout=5)
+          tibody = tag_index.json() if tag_index.status_code == 200 else {}
+          check("tags 200 index shape",
+                tag_index.status_code == 200 and isinstance(tibody.get("tags"), list)
+                and isinstance(tibody.get("total"), int), tag_index.text)
+          tag_prefixed = httpx.get(f"{base}/tags", params={"prefix": "char"}, timeout=5)
+          tpb = tag_prefixed.json() if tag_prefixed.status_code == 200 else {}
+          check("tags prefix filter 200",
+                tag_prefixed.status_code == 200 and isinstance(tpb.get("tags"), list),
+                tag_prefixed.text)
+          tag_bad = httpx.get(f"{base}/tags", params={"limit": 0}, timeout=5)
+          tbadbody = tag_bad.json() if tag_bad.status_code == 422 else {}
+          check("tags 422 validation envelope",
+                tag_bad.status_code == 422
+                and tbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(tbadbody.get("error", {}).get("request_id")), tag_bad.text)
+          tag_missing = httpx.get(
+              f"{base}/tags",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          t404body = tag_missing.json() if tag_missing.status_code == 404 else {}
+          check("tags 404 shared envelope",
+                tag_missing.status_code == 404
+                and t404body.get("error", {}).get("code") == "project_not_found"
+                and bool(t404body.get("error", {}).get("request_id")), tag_missing.text)
+
+          # Register one tagged asset so both derived endpoints have a real
+          # root (the in-memory store does not seed projects/assets).
+          asset_id = None
+          if project_id:
+              registered = httpx.post(
+                  f"{base}/assets/register",
+                  json={
+                      "project_id": project_id,
+                      "type": "image",
+                      "name": "CI smoke impact root",
+                      "tags": ["ci-smoke"],
+                      "storage": {"backend": "local", "key": "ci/smoke.png",
+                                  "size_bytes": 1, "content_type": "image/png"},
+                  },
+                  timeout=5)
+              asset_id = registered.json().get("id") if registered.status_code == 201 else None
+
+          impact = httpx.get(
+              f"{base}/assets/00000000-0000-4000-8000-000000000000/impact", timeout=5)
+          i404body = impact.json() if impact.status_code == 404 else {}
+          check("impact 404 shared envelope",
+                impact.status_code == 404
+                and i404body.get("error", {}).get("code") == "asset_not_found"
+                and bool(i404body.get("error", {}).get("request_id")), impact.text)
+          impact_bad = httpx.get(
+              f"{base}/assets/00000000-0000-4000-8000-000000000000/impact",
+              params={"max_depth": 0}, timeout=5)
+          ibadbody = impact_bad.json() if impact_bad.status_code == 422 else {}
+          check("impact 422 validation envelope",
+                impact_bad.status_code == 422
+                and ibadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ibadbody.get("error", {}).get("request_id")), impact_bad.text)
+          if asset_id:
+              impact_ok = httpx.get(f"{base}/assets/{asset_id}/impact", timeout=5)
+              iokbody = impact_ok.json() if impact_ok.status_code == 200 else {}
+              check("impact 200 derived shape",
+                    impact_ok.status_code == 200
+                    and iokbody.get("root_asset_id") == asset_id
+                    and isinstance(iokbody.get("descendants"), list)
+                    and isinstance(iokbody.get("total"), int), impact_ok.text)
+              tag_scoped = httpx.get(f"{base}/tags", params={"project_id": project_id}, timeout=5)
+              isb = tag_scoped.json() if tag_scoped.status_code == 200 else {}
+              check("tags project-scoped facet",
+                    tag_scoped.status_code == 200
+                    and any(f.get("name") == "ci-smoke" for f in isb.get("tags", [])),
+                    tag_scoped.text)
+          else:
+              check("impact/tags seeded asset setup", False,
+                    "could not register an asset for the derived-endpoint probes")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
