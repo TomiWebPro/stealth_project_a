@@ -344,6 +344,55 @@ jobs:
                 and jbadbody.get("error", {}).get("code") == "validation_error"
                 and bool(jbadbody.get("error", {}).get("request_id")), stats_bad.text)
 
+          # Authoritative conversation and message statistics (C45/C47) is the
+          # newest /api/v1 URL the live client calls (getConversationStats).
+          # Probe the zero-filled snapshot shape, the optional project scope and
+          # the shared 404/422 envelopes, keeping CI aligned with new endpoints
+          # as they go live.
+          conv_stats = httpx.get(f"{base}/conversations/stats", timeout=5)
+          csbody = conv_stats.json() if conv_stats.status_code == 200 else {}
+          check("conversations/stats 200 snapshot shape",
+                conv_stats.status_code == 200 and all(
+                    k in csbody for k in ("total_conversations", "total_messages",
+                                          "by_role", "by_status",
+                                          "average_messages_per_conversation",
+                                          "last_activity_at", "generated_at")),
+                conv_stats.text)
+          check("conversations/stats breakdown shapes",
+                isinstance(csbody.get("by_role"), list)
+                and all(isinstance(r, dict) and "role" in r and "count" in r
+                        for r in csbody["by_role"])
+                and isinstance(csbody.get("by_status"), list)
+                and all(isinstance(s, dict) and "status" in s and "count" in s
+                        for s in csbody["by_status"]),
+                conv_stats.text)
+          if project_id:
+              conv_scoped = httpx.get(
+                  f"{base}/conversations/stats", params={"project_id": project_id}, timeout=5)
+              cbody = conv_scoped.json() if conv_scoped.status_code == 200 else {}
+              check("conversations/stats project scope 200",
+                    conv_scoped.status_code == 200
+                    and "total_conversations" in cbody,
+                    conv_scoped.text)
+          else:
+              check("conversations/stats project scope setup", False,
+                    "could not obtain a project id")
+          conv_missing = httpx.get(
+              f"{base}/conversations/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          c404body = conv_missing.json() if conv_missing.status_code == 404 else {}
+          check("conversations/stats 404 shared envelope",
+                conv_missing.status_code == 404
+                and c404body.get("error", {}).get("code") == "project_not_found"
+                and bool(c404body.get("error", {}).get("request_id")), conv_missing.text)
+          conv_bad = httpx.get(
+              f"{base}/conversations/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          cbadbody = conv_bad.json() if conv_bad.status_code == 422 else {}
+          check("conversations/stats 422 validation envelope",
+                conv_bad.status_code == 422
+                and cbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(cbadbody.get("error", {}).get("request_id")), conv_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
