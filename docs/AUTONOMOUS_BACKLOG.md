@@ -2559,6 +2559,27 @@ this file is the execution checklist.
   the Never-empty well. ✅ 2026-11-19 — `a65e12d`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C200 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  collaboration feed endpoint from C197/C199
+  (`GET /api/v1/collaboration/feed?project_id=&signal=&limit=`): upsert one presence
+  signal on demand and reuse the comment seeded in the comment-feed probe so the
+  derived feed has real presence + comment items, then probe the feed shape
+  (`items`/`total`/`generated_at`), derived item shapes (signal id/kind, actor,
+  joined project name, state/body/asset null normalization and `occurred_at`),
+  newest-first `(occurred_at, signal_id, signal, project_id)` ordering, the whole-
+  scope `total` before the `limit` page (counters unchanged), both `signal`
+  filters (presence/comment), the optional `project_id` scope and the shared 404
+  `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid
+  signal + invalid limit) with request-id, keeping CI aligned with the exact
+  `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows. No
+  unchecked CI row remained, so C200 was added under the Never-empty well; resolves
+  the C199 CI live-smoke follow-up. Verified the exact embedded smoke script against
+  a real ASGI server on a dynamically chosen free port (375 probes OK) with YAML
+  parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1364 tests/build
+  green and backend pytest (1197) green. Screens collaboration-feed rendering
+  remains a screens follow-up.
+  ✅ 2026-11-19 — `08af348`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2796,3 +2817,4 @@ this file is the execution checklist.
 - 2026-11-19 — `ca207bf` — C197 (backend): added authoritative `GET /api/v1/collaboration/feed?project_id=&signal=&limit=` — a newest-first, workspace-wide feed of collaboration signals derived fresh from the same authoritative `PRESENCE` and `COMMENTS` stores `/collaboration/stats` aggregates (no second index), the last stats domain without a complementary feed. Presence signals carry canonical state + last-seen, comment signals carry body/optional asset + created-at, both projected onto one `CollaborationFeedItem` with a coarse `CollaborationSignal` kind, joined project display name ("Unknown project" fallback) and unified `occurred_at` recency; deterministic `(occurred_at, signal_id, signal, project_id)` newest-first tie-break and a whole-scope `total` before the `limit` page. Optional `project_id` + `signal` filters use shared 404 `project_not_found` / 422 `validation_error` envelopes. `CollaborationFeed`/`CollaborationFeedItem`/`CollaborationSignal` mirrored in `frontend/src/types/collaborationFeed.ts` + exported from the types index, README endpoint list synced, 12 tests × 2 storage backends green (1197 passed, contract parity + route-surface guard + frontend tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C197 was added under the Never-empty well.
 - 2026-11-19 — `0517f23` — C198 (screens): rendered the authoritative job retry feed (C193/C195/C196 follow-up) via `useRetryFeed` — a reusable `RetryFeedPanel` on Jobs (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first rows showing a status badge, prettified operation label, joined project name, short job id, attempt and accepted-retry labels and retry recency, and Open buttons deep-linking to the existing project-detail route, with all five UI states — every display value derived in 14 new tested `retryFeedHelpers` cases. Resolves the C196 screens follow-up. Rows stay read-only (no job-detail route); no new route was added. Lint clean, 1340 tests, build green. My owned column had no unchecked rows, so C198 was added under the Never-empty well.
 - 2026-11-19 — `a65e12d` — C199 (mocks): wired the authoritative collaboration feed (C197 follow-up) end to end — `getCollaborationFeed`/`useCollaborationFeed` atomically across mockApi (newest-first `(occurred_at, signal_id, signal, project_id)` presence/comment signal projection over the shared seeds, `signal`/`project_id` filters, joined project names with an "Unknown project" fallback, whole-scope `total` before the `limit` page, router-style 422 for a malformed project id / invalid signal / out-of-range limit, unknown-project 404 + injectable `collaborationFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /collaboration/feed`), queryKeys and useQueries, with a shared `lib/collaborationFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/scoped/filtered/limited parity, empty scope, 404/422 cases + surface guard). Resolves the C197 mocks-transport follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C199 was added under the Never-empty well. Lint clean, 1364 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-19 — `08af348` — C200 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/collaboration/feed?project_id=&signal=&limit=` collaboration feed (the C197/C199 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (signal id/kind, actor, joined project name, state/body/asset null normalization and `occurred_at`), newest-first `(occurred_at, signal_id, signal, project_id)` ordering, whole-scope `total` before the `limit` page with counters unchanged, both `signal` filters (presence/comment), the optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid signal + invalid limit) with request-id — upserting one presence signal on demand and reusing the comment seeded in the comment-feed probe so both derived kinds are exercised. No unchecked CI row remained, so C200 was added under the Never-empty well; resolves the C199 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (375 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1364 tests/build green and backend pytest (1197) green. Screens collaboration-feed rendering remains a screens follow-up.
