@@ -2197,6 +2197,18 @@ this file is the execution checklist.
   Never-empty well.
   ✅ 2026-11-19 — `027d150`
 
+- [x] C178 (screens) Render the authoritative extension installation feed (C173/C175/
+  C176 follow-up) via `useExtensionFeed`: a reusable `ExtensionFeedPanel` on the
+  Extensions screen with type/status/page-size filter chips, newest-first rows
+  showing extension name, publisher/version, type/status/trust badges and
+  installation recency, with loading/error/missing/empty/populated states — every
+  display value derived in tested `extensionFeedHelpers`. Rows stay read-only
+  because there is no extension-detail route; no new route was added. Resolves the
+  C176 screens follow-up. My owned column had no unchecked rows (only the repo-wide
+  C6 docs pass remains, owned by other agents), so C178 was added under the
+  Never-empty well. Lint clean, 1168 tests, build green.
+  ✅ 2026-11-19 — `94dba52`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2412,3 +2424,4 @@ this file is the execution checklist.
 - 2026-11-19 — `60a203a` — C175 (mocks): wired the authoritative extension installation feed (C173 follow-up) end to end — `getExtensionFeed`/`useExtensionFeed` atomically across mockApi (newest-first `(installed_at, extension_id)` derivation over the `EXTENSIONS` seeds with a pure-JS uuid5 matching the backend's installation-derived id, manifest display fields + trust flags, `type`/`status` filters, whole-scope `total` before the `limit` page, no-install-time skip, router-style 422 for invalid type/status/limit + injectable `extensionFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /extensions/feed?type=&status=&limit=`), queryKeys and useQueries, with a shared `lib/extensionFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C173 mocks-transport follow-up; lint clean, 1154 tests, build green. My owned column had no unchecked rows, so C175 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `0568384` — C176 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/extensions/feed?type=&status=&limit=` extension installation feed (the C173/C175 follow-up) — feed shape (`items`/`total`/`generated_at`), full item shapes (extension id + manifest identity, name/version/publisher/type, status, signed/verified trust flags, install time), newest-first `(installed_at, extension_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, independent `type`/`status` filters and the shared 422 `validation_error` envelopes (invalid type/status/limit) with request-id — installing one extension on demand so the derived feed is non-empty. No unchecked CI row remained, so C176 was added under the Never-empty well; resolves the C175 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (296 checks OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1154 tests/build green and backend pytest (1077) green. Screens extension-feed rendering remains a screens follow-up.
 - 2026-11-19 — `027d150` — C177 (backend): added authoritative `GET /api/v1/pipelines/feed?project_id=&kind=&limit=` — a newest-first workspace feed of LoRA/shot/splat chains derived fresh from the three authoritative chain collections (no second index), with joined project names, stats-shared job/asset counts, a `(created_at, chain_id)` tie-break and a whole-scope `total` before the `limit` page; optional `project_id`/`kind` filters with shared 404/422 envelopes, mirrored `PipelineFeed`/`PipelineFeedItem` in `frontend/src/types/pipelineFeed.ts` + types index, README endpoint list synced, 8 tests × 2 storage backends green (1093 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up; my owned column had no unchecked rows, so C177 was added under the Never-empty well.
+- 2026-11-19 — `94dba52` — C178 (screens): rendered the authoritative extension installation feed (C173/C175/C176 follow-up) via `useExtensionFeed` — a reusable `ExtensionFeedPanel` on the Extensions screen with type/status/page-size filter chips, newest-first rows showing extension name, publisher/version and type/status/trust badges plus install recency, with all five UI states — every display value derived in 14 new tested `extensionFeedHelpers` cases. Rows stay read-only (no extension-detail route); resolves the C176 screens follow-up. Lint clean, 1168 tests, build green. My owned column had no unchecked rows, so C178 was added under the Never-empty well.
