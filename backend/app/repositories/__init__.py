@@ -10,6 +10,7 @@ from ..storage.base import DocumentStore
 from .activity import ActivityRepository
 from .activity_stats import ActivityStatsRepository
 from .assets import AssetRepository
+from .asset_feed import AssetFeedRepository
 from .asset_stats import AssetStatsRepository
 from .audit import AuditRepository
 from .auth import AuthRepository
@@ -55,6 +56,7 @@ class Repositories:
     projects: ProjectRepository
     project_stats: ProjectStatsRepository
     assets: AssetRepository
+    asset_feed: AssetFeedRepository
     asset_stats: AssetStatsRepository
     conversations: ConversationRepository
     conversation_feed: ConversationFeedRepository
@@ -100,6 +102,7 @@ class Repositories:
         projects = ProjectRepository(store, clock=clock)
         project_stats = ProjectStatsRepository(store, clock=clock)
         assets = AssetRepository(store, projects, clock=clock)
+        asset_feed = AssetFeedRepository(store, projects, clock=clock)
         asset_stats = AssetStatsRepository(store, projects, clock=clock)
         conversations = ConversationRepository(store, projects, assets, clock=clock)
         conversation_feed = ConversationFeedRepository(store, projects, clock=clock)
@@ -155,6 +158,7 @@ class Repositories:
             projects=projects,
             project_stats=project_stats,
             assets=assets,
+            asset_feed=asset_feed,
             asset_stats=asset_stats,
             conversations=conversations,
             conversation_feed=conversation_feed,

@@ -18,6 +18,7 @@ from .repositories.activity import ActivityRepository
 from .repositories.activity_stats import ActivityStatsRepository
 from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
+from .repositories.asset_feed import AssetFeedRepository
 from .repositories.asset_stats import AssetStatsRepository
 from .repositories.audit import AuditRepository
 from .repositories.conversations import ConversationRepository
@@ -154,6 +155,12 @@ def get_asset_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> AssetRepository:
     return repositories.assets
+
+
+def get_asset_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> AssetFeedRepository:
+    return repositories.asset_feed
 
 
 def get_asset_stats_repository(
@@ -412,6 +419,7 @@ __all__ = [
     "get_activity_stats_repository",
     "get_adapter_registry",
     "get_asset_repository",
+    "get_asset_feed_repository",
     "get_asset_stats_repository",
     "get_audit_repository",
     "get_auth_repository",

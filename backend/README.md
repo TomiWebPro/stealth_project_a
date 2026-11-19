@@ -75,6 +75,10 @@ All paths are prefixed with `/api/v1`.
   `GET|PATCH|DELETE /assets/{id}`,
   `GET|POST /assets/{id}/versions`, `GET /assets/{id}/relationships|lineage|download|content`,
   `GET|POST /assets/{id}/publish`, `GET|POST /assets/{id}/exports`,
+  `GET /assets/feed?project_id=&limit=` — newest-first asset feed (asset/project
+  identity with joined project name, type/name/status, version, byte size and
+  created/updated timestamps; whole-scope `total` before the `limit` page)
+  derived from the asset store; deleted assets are excluded
   `GET /assets/stats?project_id=` — inventory metrics (zero-filled type/status
   breakdowns, stored bytes, version revisions, recency) derived from the asset
   store; deleted assets are excluded
