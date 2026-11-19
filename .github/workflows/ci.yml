@@ -1600,6 +1600,108 @@ jobs:
                 and qblbody.get("error", {}).get("code") == "validation_error"
                 and bool(qblbody.get("error", {}).get("request_id")), q_bad_limit.text)
 
+          # Authoritative upload-ticket feed (C129/C131) is the newest /api/v1 URL
+          # the live client calls (getUploadFeed). Issue one upload ticket on demand
+          # so the derived feed has a real item, then probe the feed shape, item
+          # shape, newest-first order and whole-scope total, the `limit` page bound,
+          # the optional project scope and the shared 404/422 envelopes, keeping CI
+          # aligned with new endpoints as they go live.
+          upload_ticket = None
+          if project_id:
+              ticket = httpx.post(
+                  f"{base}/uploads",
+                  json={
+                      "project_id": project_id,
+                      "filename": "ci-smoke.bin",
+                      "content_type": "application/octet-stream",
+                      "size_bytes": 8,
+                  },
+                  timeout=5)
+              check("uploads/feed issue ticket 201", ticket.status_code == 201, ticket.text)
+              upload_ticket = ticket.json().get("upload_id") if ticket.status_code == 201 else None
+          else:
+              check("uploads/feed issue ticket setup", False,
+                    "could not obtain a project id")
+
+          upload_feed = httpx.get(f"{base}/uploads/feed", timeout=5)
+          ufbody = upload_feed.json() if upload_feed.status_code == 200 else {}
+          check("uploads/feed 200 feed shape",
+                upload_feed.status_code == 200
+                and isinstance(ufbody.get("items"), list)
+                and isinstance(ufbody.get("total"), int)
+                and "generated_at" in ufbody, upload_feed.text)
+          check("uploads/feed derived item shape",
+                upload_feed.status_code == 200
+                and ufbody.get("total", 0) >= 1
+                and len(ufbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "upload_id", "project_id", "project_name", "filename",
+                    "content_type", "status", "declared_size", "size_bytes",
+                    "created_at", "expires_at"))
+                    for item in ufbody["items"]), upload_feed.text)
+          check("uploads/feed request-id header",
+                "x-request-id" in {k.lower() for k in upload_feed.headers},
+                str(dict(upload_feed.headers)))
+          if upload_ticket:
+              derived_item = next(
+                  (i for i in ufbody.get("items", []) if i.get("upload_id") == upload_ticket),
+                  None)
+              check("uploads/feed derived ticket",
+                    upload_feed.status_code == 200 and derived_item is not None
+                    and derived_item.get("filename") == "ci-smoke.bin"
+                    and derived_item.get("content_type") == "application/octet-stream"
+                    and derived_item.get("declared_size") == 8
+                    and derived_item.get("project_id") == project_id
+                    and derived_item.get("status") == "pending"
+                    and isinstance(derived_item.get("project_name"), str),
+                    upload_feed.text)
+          else:
+              check("uploads/feed derived setup", False,
+                    "could not issue an upload ticket for the feed probe")
+          created_times = [i.get("created_at") for i in ufbody.get("items", [])]
+          check("uploads/feed newest-first order",
+                upload_feed.status_code == 200
+                and created_times == sorted(created_times, reverse=True), upload_feed.text)
+          feed_limited = httpx.get(f"{base}/uploads/feed", params={"limit": 1}, timeout=5)
+          flbody = feed_limited.json() if feed_limited.status_code == 200 else {}
+          check("uploads/feed limit bounds page not total",
+                feed_limited.status_code == 200
+                and len(flbody.get("items", [])) <= 1
+                and flbody.get("total") == ufbody.get("total"), feed_limited.text)
+          if project_id:
+              feed_scoped = httpx.get(
+                  f"{base}/uploads/feed", params={"project_id": project_id}, timeout=5)
+              fsbody = feed_scoped.json() if feed_scoped.status_code == 200 else {}
+              check("uploads/feed project scope 200",
+                    feed_scoped.status_code == 200
+                    and isinstance(fsbody.get("total"), int)
+                    and all(i.get("project_id") == project_id
+                            for i in fsbody.get("items", [])), feed_scoped.text)
+          else:
+              check("uploads/feed project scope setup", False,
+                    "could not obtain a project id")
+          feed_missing = httpx.get(
+              f"{base}/uploads/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          f404body = feed_missing.json() if feed_missing.status_code == 404 else {}
+          check("uploads/feed 404 shared envelope",
+                feed_missing.status_code == 404
+                and f404body.get("error", {}).get("code") == "project_not_found"
+                and bool(f404body.get("error", {}).get("request_id")), feed_missing.text)
+          feed_bad = httpx.get(
+              f"{base}/uploads/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          fbadbody = feed_bad.json() if feed_bad.status_code == 422 else {}
+          check("uploads/feed 422 malformed id envelope",
+                feed_bad.status_code == 422
+                and fbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(fbadbody.get("error", {}).get("request_id")), feed_bad.text)
+          feed_bad_limit = httpx.get(f"{base}/uploads/feed", params={"limit": 0}, timeout=5)
+          fblbody = feed_bad_limit.json() if feed_bad_limit.status_code == 422 else {}
+          check("uploads/feed 422 invalid limit envelope",
+                feed_bad_limit.status_code == 422
+                and fblbody.get("error", {}).get("code") == "validation_error"
+                and bool(fblbody.get("error", {}).get("request_id")), feed_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
