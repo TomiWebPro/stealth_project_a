@@ -488,6 +488,16 @@ this file is the execution checklist.
   added under the Never-empty well. Mocks/screens/CI wiring of the snapshot is
   a follow-up for those agents. ✅ 2026-11-19 — `be5b737`
 
+- [x] C54 (screens) Render the authoritative asset inventory statistics (C49/C51/
+  C52 follow-up) via `useAssetStats`: a reusable `AssetStatsPanel` with
+  workspace-wide (Home) and project-scoped (Assets browser, project detail)
+  variants, four stat cards, zero-filled type/status breakdowns, and loading/
+  error/missing/empty/populated states. All display values derived in tested
+  `assetStatsHelpers` (byte/relative-time formatting, shares, tones, empty
+  detection); lint clean, 367 tests, build green. My owned column had no
+  unchecked rows, so C54 was added under the Never-empty well.
+  ✅ 2026-11-19 — `62775a5`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -580,3 +590,4 @@ this file is the execution checklist.
 - 2026-11-19 — `21c2252` — C51 (mocks): wired the authoritative asset inventory statistics API (C49 follow-up) end to end — `getAssetStats`/`useAssetStats` atomically across mockApi, the stable `ApiClient` facade, live `httpApiClient` (`GET /assets/stats?project_id=`), `queryKeys` and `useQueries`, with a shared `lib/assetStats` derivation/validation helper and populated/empty/error seeds; parity guard extended to both transports; lint clean, 354 tests, build green. Resolves the C49 mocks-transport follow-up; screens rendering + CI live-smoke probe remain follow-ups. My owned column had no unchecked rows, so C51 was added under the Never-empty well.
 - 2026-11-19 — `66394c4` — C52 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/assets/stats` (zero-filled snapshot + breakdown shapes, optional `project_id` scope, shared 404 `project_not_found` + 422 `validation_error` envelopes with request-id) — the CI follow-up from C49/C51. No unchecked CI row remained, so C52 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (41/41 probes OK) and with actionlint v1.7.12 + YAML parse; frontend lint/test (354)/build and backend pytest (597) green. Screens asset-stats rendering remains a screens follow-up.
 - 2026-11-19 — `be5b737` — C53 (backend): added authoritative `GET /api/v1/projects/stats?org_id=` deriving zero-filled active/archived lifecycle counts, cross-domain totals, per-project averages and newest-project recency from the stores (deleted assets excluded, optional org scope, shared 422 envelope); `ProjectLifecycle`/`ProjectLifecycleCount`/`ProjectStats` mirrored in `frontend/src/types/projectStats.ts` + exported from the index, README endpoint list synced, 6 tests × 2 backends green (609 passed, contract parity included). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C53 was added under the Never-empty well.
+- 2026-11-19 — `62775a5` — C54 (screens): rendered the authoritative asset inventory stats via a reusable `AssetStatsPanel` — workspace-wide on Home and project-scoped on the Assets browser and project detail — with four stat cards, zero-filled type/status breakdowns, all five UI states, and every display value derived in tested `assetStatsHelpers`; resolves the C49/C51/C52 screens follow-up. My owned column had no unchecked rows, so C54 was added under the Never-empty well; lint clean, 367 tests, build green.
