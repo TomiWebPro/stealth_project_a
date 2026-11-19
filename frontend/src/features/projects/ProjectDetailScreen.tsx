@@ -9,6 +9,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
+import { JobFeedPanel } from "../jobs/JobFeedPanel";
 import { JobLogConsole } from "../jobs/JobLogConsole";
 import { JobQueuePanel } from "../jobs/JobQueuePanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
@@ -268,6 +269,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectNames={{ [projectId]: project.name }}
         title="Project dispatch queue"
         description="Authoritative FIFO queue of queued and running jobs in this project."
+      />
+      <JobFeedPanel
+        projectId={projectId}
+        title="Project job feed"
+        description="Newest-first jobs from the authoritative job store, scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <JobLogConsole

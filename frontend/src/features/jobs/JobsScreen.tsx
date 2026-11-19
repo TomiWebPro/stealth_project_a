@@ -7,6 +7,7 @@ import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { EventStatsPanel } from "./EventStatsPanel";
+import { JobFeedPanel } from "./JobFeedPanel";
 import { JobLogConsole } from "./JobLogConsole";
 import { JobQueuePanel } from "./JobQueuePanel";
 import { JobStatsPanel } from "./JobStatsPanel";
@@ -86,6 +87,11 @@ export function JobsScreen() {
       <JobQueuePanel
         title="Global job dispatch queue"
         description="Authoritative workspace-wide FIFO queue of queued and running jobs."
+      />
+
+      <JobFeedPanel
+        title="Global job feed"
+        description="Newest-first jobs from the authoritative job store, with status filters."
       />
 
       {data ? (
