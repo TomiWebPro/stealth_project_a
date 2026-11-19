@@ -35,6 +35,7 @@ import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionFeedPanel } from "../assets/VersionFeedPanel";
 import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
+import { PipelineFeedPanel } from "./PipelineFeedPanel";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { ProjectFeedPanel } from "./ProjectFeedPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
@@ -274,6 +275,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project pipeline stats"
         description="Authoritative training, shot and splat chain metrics scoped to this project."
+      />
+      <PipelineFeedPanel
+        projectId={projectId}
+        title="Project pipeline feed"
+        description="Newest-first training, shot and splat chains from the authoritative stores, scoped to this project."
       />
       <CollaborationStatsPanel
         projectId={projectId}

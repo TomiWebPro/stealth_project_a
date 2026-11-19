@@ -8,6 +8,7 @@ import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { formatProjectUpdatedAt } from "./helpers";
+import { PipelineFeedPanel } from "./PipelineFeedPanel";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { LineageFeedPanel } from "../lineage/LineageFeedPanel";
 import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
@@ -87,6 +88,11 @@ export function ProjectsScreen() {
       <PipelineStatsPanel
         title="Production pipeline stats"
         description="Authoritative training, shot and splat chain metrics across the workspace."
+      />
+
+      <PipelineFeedPanel
+        title="Global production pipeline feed"
+        description="Newest-first training, shot and splat chains from the authoritative chain stores, with kind filters."
       />
 
       <LineageStatsPanel
