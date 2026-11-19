@@ -121,6 +121,9 @@ All paths are prefixed with `/api/v1`.
   `GET /jobs/queue?project_id=&limit=` — authoritative dispatch queue (active
   queued/running jobs in FIFO order with positions, whole-queue waiting/running
   counters and a bounded page) derived from the job store; shared 404/422 envelopes
+  `GET /jobs/feed?project_id=&status=&limit=` — authoritative newest-first job
+  feed (project-name join, lifecycle fields and whole-scope total before the
+  bounded page) derived from the job store; shared 404/422 envelopes
   `GET /events/stats?project_id=` — authoritative job-event stream metrics
   (zero-filled event-type breakdown, per-job event counts with recency and
   newest-event recency) derived from the authoritative job event store; an

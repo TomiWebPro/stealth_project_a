@@ -41,5 +41,6 @@ export * from "./uploadFeed";
 export * from "./eventStats";
 export * from "./jobLogs";
 export * from "./jobQueue";
+export * from "./jobFeed";
 export * from "./retryStats";
 export * from "./versionStats";
