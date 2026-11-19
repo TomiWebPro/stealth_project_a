@@ -592,6 +592,88 @@ describe("createHttpApiClient project audit", () => {
   });
 });
 
+describe("createHttpApiClient project overview (C201)", () => {
+  const overview = {
+    project_id: project.id,
+    project_name: project.name,
+    lifecycle: "active",
+    created_at: project.created_at,
+    counts: {
+      assets: 1,
+      conversations: 2,
+      jobs: 3,
+      comments: 4,
+      publishes: 5,
+      versions: 6,
+      collaborators: 7,
+    },
+    recent_jobs: jobs,
+    recent_assets: [asset("a1", "frame", "2026-01-05T00:00:00Z")],
+    generated_at: "2026-01-07T00:00:00Z",
+  };
+
+  it("GETs the overview path with the recent limit and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/projects/${project.id}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getProjectOverview(project.id, { recentLimit: 3 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/projects/${project.id}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("3");
+  });
+
+  it("omits the query string when no recent limit is supplied", async () => {
+    const { fetchImpl, calls } = router({
+      [`/projects/${project.id}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+    await expect(api.getProjectOverview(project.id)).resolves.toEqual(overview);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces validation and other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getProjectOverview(project.id)).resolves.toBeUndefined();
+
+    const invalid = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          {
+            error: {
+              code: "validation_error",
+              message: "Invalid project id.",
+              details: [{ field: "project_id", message: "must be a UUID" }],
+            },
+          },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(invalid.getProjectOverview("bad")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getProjectOverview(project.id)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient workspace activity (C29)", () => {
   const feed = {
     events: [

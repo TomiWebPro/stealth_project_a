@@ -44,6 +44,7 @@ import {
   fetchOrganizationStats,
   fetchPipelineFeed,
   fetchPipelineStats,
+  fetchProjectOverview,
   fetchOrchestrationFeed,
   fetchOrchestrationRun,
   fetchOrchestrationStats,
@@ -130,6 +131,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchOrganizationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchProjectOverview(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
@@ -382,6 +384,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchCollaborationFeed()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the project overview domain", async () => {
+    const overviewProjectId = PROJECTS[0]?.id ?? "";
+    setMockFailure("projectOverview");
+
+    await expect(fetchProjectOverview(overviewProjectId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchProjectOverview(overviewProjectId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the activity stats domain", async () => {

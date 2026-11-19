@@ -55,6 +55,7 @@ import {
   fetchOperations,
   fetchOrganizationStats,
   fetchPipelineStats,
+  fetchProjectOverview,
   openConversationStream,
   sendMessage,
   setMockFailure,
@@ -1878,6 +1879,77 @@ describe("mock API job dispatch queue (C121 follow-up)", () => {
 
     setMockFailure("jobQueue");
     await expect(fetchJobQueue()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API project overview (C201 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a populated snapshot with identity, counts and recent lists", async () => {
+    const overview = await fetchProjectOverview(filmId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.project_id).toBe(filmId);
+    expect(overview?.project_name).toBeTruthy();
+    expect(["active", "archived"]).toContain(overview?.lifecycle);
+    expect(overview?.counts.assets).toBeGreaterThan(0);
+    expect(overview?.counts.jobs).toBeGreaterThan(0);
+    expect(overview?.counts.assets).toBe(
+      ASSETS.filter((a) => a.project_id === filmId && a.status !== "deleted").length,
+    );
+    // Newest-first by (created_at, id).
+    for (const list of [overview?.recent_jobs ?? [], overview?.recent_assets ?? []]) {
+      const keys = list.map((item) => `${item.created_at}|${item.id}`);
+      expect(keys).toEqual([...keys].sort().reverse());
+    }
+    expect((overview?.recent_jobs ?? []).every((item) => item.project_id === filmId)).toBe(true);
+    expect((overview?.recent_assets ?? []).every((item) => item.project_id === filmId)).toBe(true);
+  });
+
+  it("zero-fills an unseeded project and bounds the recent lists", async () => {
+    const empty = await fetchProjectOverview(emptyId);
+    // "Blank Slate" has no assets/jobs but does seed a conversation; assert the
+    // counts against the authoritative seeds rather than hard-coding zeros.
+    expect(empty?.counts).toEqual({
+      assets: 0,
+      conversations: CONVERSATIONS.filter((c) => c.project_id === emptyId).length,
+      jobs: 0,
+      comments: COMMENTS.filter((c) => c.project_id === emptyId).length,
+      publishes: 0,
+      versions: 0,
+      collaborators: new Set(
+        PRESENCE.filter((p) => p.project_id === emptyId).map((p) => p.user_id),
+      ).size,
+    });
+    expect(empty?.recent_jobs).toEqual([]);
+    expect(empty?.recent_assets).toEqual([]);
+
+    const whole = await fetchProjectOverview(filmId);
+    const limited = await fetchProjectOverview(filmId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.recent_jobs).toHaveLength(1);
+    expect(limited?.recent_assets).toHaveLength(1);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchProjectOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchProjectOverview(filmId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchProjectOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+
+    setMockFailure("projectOverview");
+    await expect(fetchProjectOverview(filmId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

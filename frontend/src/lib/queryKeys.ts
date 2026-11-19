@@ -29,6 +29,7 @@ import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectFeedOptions } from "./projectFeed";
+import type { ProjectOverviewOptions } from "./projectOverview";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
@@ -124,6 +125,10 @@ export const queryKeys = {
         options.lifecycle ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  projectOverview: {
+    detail: (projectId: string, options: ProjectOverviewOptions = {}) =>
+      ["project-overview", "detail", projectId, options.recentLimit ?? "all"] as const,
   },
   providerStats: {
     summary: (options: ProviderStatsOptions = {}) =>

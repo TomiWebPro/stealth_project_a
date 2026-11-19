@@ -34,6 +34,7 @@ import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
 import type { ProjectFeedOptions } from "./projectFeed";
+import type { ProjectOverviewOptions } from "./projectOverview";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
@@ -94,6 +95,7 @@ import type {
   Presence,
   Project,
   ProjectFeed,
+  ProjectOverview,
   ProjectStats,
   Provider,
   ProviderFeed,
@@ -204,6 +206,15 @@ export interface ApiClient {
    */
   getJobQueue(options?: JobQueueOptions): Promise<JobQueueView>;
   getProjectDetail(projectId: string): Promise<ProjectDetail | undefined>;
+  /**
+   * Authoritative single-project snapshot (identity, cross-domain counts and a
+   * bounded newest-first jobs/assets list) from `/projects/{id}/overview`;
+   * unknown projects resolve to `undefined` (C201).
+   */
+  getProjectOverview(
+    projectId: string,
+    options?: ProjectOverviewOptions,
+  ): Promise<ProjectOverview | undefined>;
   /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
@@ -305,6 +316,7 @@ export const mockApiClient: ApiClient = {
   getJobLogs: mockApi.fetchJobLogs,
   getJobQueue: mockApi.fetchJobQueue,
   getProjectDetail: mockApi.fetchProjectDetail,
+  getProjectOverview: mockApi.fetchProjectOverview,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,

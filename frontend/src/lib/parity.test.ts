@@ -70,6 +70,11 @@ import type { PipelineFeedOptions } from "./pipelineFeed";
 import { derivePipelineStats, validatePipelineStatsArgs } from "./pipelineStats";
 import { deriveProjectFeed, validateProjectFeedArgs } from "./projectFeed";
 import type { ProjectFeedOptions } from "./projectFeed";
+import {
+  deriveProjectOverview,
+  validateProjectOverviewArgs,
+} from "./projectOverview";
+import type { ProjectOverviewOptions } from "./projectOverview";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderFeed, validateProviderFeedArgs } from "./providerFeed";
 import type { ProviderFeedOptions } from "./providerFeed";
@@ -624,6 +629,44 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       throw cause;
     }
     return deriveProjectFeed(PROJECTS, ORGANIZATIONS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative single-project overview derives a compact snapshot from the
+  // same asset/job/conversation/comment/presence/version stores on every call;
+  // mirror the router's 422 validation, unknown-project 404 and repository
+  // derivation (including the shared publish receipt parser) over the seeds.
+  // This must precede the dynamic /projects/{id} detail branch below.
+  if (/^\/projects\/[^/]+\/overview$/.test(path)) {
+    const projectId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options: ProjectOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateProjectOverviewArgs(projectId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveProjectOverview(
+      projectId,
+      {
+        projects: PROJECTS,
+        assets: ASSETS,
+        assetVersions: ASSET_VERSIONS,
+        conversations: CONVERSATIONS,
+        jobs: JOBS,
+        comments: COMMENTS,
+        presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
   }
 
   if (path === "/projects") return PROJECTS;
@@ -1463,6 +1506,8 @@ describe("live vs mock transport parity", () => {
         "getProjectFeed scoped, filtered and limited",
         (api) => api.getProjectFeed({ orgId, lifecycle: "active", limit: 1 }),
       ],
+      ["getProjectOverview", (api) => api.getProjectOverview(filmId)],
+      ["getProjectOverview limited", (api) => api.getProjectOverview(filmId, { recentLimit: 2 })],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -1737,6 +1782,15 @@ describe("live vs mock transport parity", () => {
     expect(await live.getProjectAudit("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getProjectAudit("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The overview zero-fills an empty-but-valid project and resolves an unknown
+    // project to undefined on both transports.
+    expect(await live.getProjectOverview(emptyId)).toEqual(
+      await mockApiClient.getProjectOverview(emptyId),
+    );
+    expect(await live.getProjectOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getProjectOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
@@ -2285,6 +2339,22 @@ describe("live vs mock transport parity", () => {
     expect(mockProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports reject a malformed project id or an out-of-range
+    // recent_limit with the same 422 envelope for the single-project overview.
+    const badOverviewOptions: Array<[string, string, ProjectOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [filmId, filmId, { recentLimit: 0 }],
+      [filmId, filmId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getProjectOverview(mockId, options).catch((cause) => cause),
+        live.getProjectOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -2460,6 +2530,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProjectFeed).toBe("function");
+    expect(typeof typed.getProjectOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");

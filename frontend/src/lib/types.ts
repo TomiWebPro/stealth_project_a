@@ -119,6 +119,8 @@ export type {
   ProjectFeedItem,
   ProjectLifecycle,
   ProjectLifecycleCount,
+  ProjectOverview,
+  ProjectOverviewCounts,
   ProjectStats,
   Provider,
   RoleMessageCount,

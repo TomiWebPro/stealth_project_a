@@ -36,6 +36,7 @@ import type { PipelineFeedOptions } from "../lib/pipelineFeed";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectFeedOptions } from "../lib/projectFeed";
+import type { ProjectOverviewOptions } from "../lib/projectOverview";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderFeedOptions } from "../lib/providerFeed";
 import type { ProviderStatsOptions } from "../lib/providerStats";
@@ -96,6 +97,7 @@ import type {
   Presence,
   Project,
   ProjectFeed,
+  ProjectOverview,
   ProjectStats,
   Provider,
   ProviderFeed,
@@ -417,6 +419,21 @@ export function useProjectDetail(projectId: string): UseQueryResult<ProjectDetai
   return useQuery({
     queryKey: queryKeys.projects.detail(projectId),
     queryFn: () => api.getProjectDetail(projectId),
+  });
+}
+
+/**
+ * Authoritative single-project snapshot (counts + recent jobs/assets) from
+ * `/projects/{id}/overview`, optionally bounding the recent lists (C201).
+ */
+export function useProjectOverview(
+  projectId: string,
+  options?: ProjectOverviewOptions,
+): UseQueryResult<ProjectOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.projectOverview.detail(projectId, options),
+    queryFn: () => api.getProjectOverview(projectId, options),
   });
 }
 

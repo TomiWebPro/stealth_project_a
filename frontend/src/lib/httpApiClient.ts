@@ -66,6 +66,8 @@ import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
 import { projectFeedQueryParams } from "./projectFeed";
 import type { ProjectFeedOptions } from "./projectFeed";
+import { projectOverviewQueryParams } from "./projectOverview";
+import type { ProjectOverviewOptions } from "./projectOverview";
 import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import { providerFeedQueryParams } from "./providerFeed";
@@ -142,6 +144,7 @@ import type {
   Presence,
   Project,
   ProjectFeed,
+  ProjectOverview,
   ProjectStats,
   Provider,
   ProviderFeed,
@@ -569,6 +572,25 @@ export function createHttpApiClient(
         optional(() => listJobs({ project_id: projectId }), [] as readonly Job[]),
       ]);
       return { project, assets, jobs };
+    },
+
+    /**
+     * Authoritative single-project overview; the backend 404s on an unknown
+     * project, which is normalized to `undefined` like the other detail lookups.
+     */
+    async getProjectOverview(
+      projectId: string,
+      options?: ProjectOverviewOptions,
+    ): Promise<ProjectOverview | undefined> {
+      try {
+        return await request<ProjectOverview>(
+          `/projects/${encodeURIComponent(projectId)}/overview`,
+          projectOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     async getProjectAudit(

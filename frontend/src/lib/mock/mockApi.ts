@@ -94,6 +94,11 @@ import type { PipelineStatsOptions } from "../pipelineStats";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveProjectFeed, validateProjectFeedArgs } from "../projectFeed";
 import type { ProjectFeedOptions } from "../projectFeed";
+import {
+  deriveProjectOverview,
+  validateProjectOverviewArgs,
+} from "../projectOverview";
+import type { ProjectOverviewOptions } from "../projectOverview";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
 import { deriveProviderFeed, validateProviderFeedArgs } from "../providerFeed";
@@ -166,6 +171,7 @@ import type {
   Presence,
   Project,
   ProjectFeed,
+  ProjectOverview,
   ProjectStats,
   Provider,
   ProviderFeed,
@@ -240,7 +246,7 @@ function delay<T>(value: T): Promise<T> {
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
- * `jobLogs`, `jobFeed` and `jobQueue`.
+ * `projectOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -902,6 +908,40 @@ export async function fetchProjectDetail(projectId: string): Promise<ProjectDeta
       b.created_at.localeCompare(a.created_at),
     ),
   });
+}
+
+/**
+ * Authoritative single-project overview (C201) derived from the same stores as
+ * the live `/projects/{id}/overview` endpoint. Router-style 422 validation
+ * (project id / recent_limit), a normalized 404-to-`undefined` for an unknown
+ * project and the `"projectOverview"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchProjectOverview(
+  projectId: string,
+  options?: ProjectOverviewOptions,
+): Promise<ProjectOverview | undefined> {
+  failIfEnabled("projectOverview");
+  validateProjectOverviewArgs(projectId, options);
+  if (!PROJECTS.some((project) => project.id === projectId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveProjectOverview(
+      projectId,
+      {
+        projects: PROJECTS,
+        assets: ASSETS,
+        assetVersions: ASSET_VERSIONS,
+        conversations: CONVERSATIONS,
+        jobs: JOBS,
+        comments: COMMENTS,
+        presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
 }
 
 /**

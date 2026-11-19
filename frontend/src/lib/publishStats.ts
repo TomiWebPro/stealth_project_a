@@ -70,6 +70,16 @@ function parseReceipt(receipt: unknown): ParsedReceipt | undefined {
 }
 
 /**
+ * Whether a raw `metadata.publish_receipt` is well-formed. Exported so other
+ * authoritative snapshots (e.g. the single-project overview) can count live
+ * published assets with exactly the same parser and never drift from
+ * `/publishes/stats`.
+ */
+export function hasValidPublishReceipt(receipt: unknown): boolean {
+  return parseReceipt(receipt) !== undefined;
+}
+
+/**
  * Derive publish metrics exactly as the backend repository does: read the
  * publish receipt of each live asset, drop soft-deleted assets and malformed
  * receipts, group by receipt version (ascending) and per project (descending
