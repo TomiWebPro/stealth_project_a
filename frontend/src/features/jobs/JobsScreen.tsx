@@ -7,6 +7,7 @@ import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { EventStatsPanel } from "./EventStatsPanel";
+import { JobLogConsole } from "./JobLogConsole";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
@@ -88,6 +89,12 @@ export function JobsScreen() {
           description="All jobs from useJobs with progress and retry affordances."
         />
       ) : null}
+
+      <JobLogConsole
+        jobs={data ?? []}
+        title="Global job log console"
+        description="Select a job to inspect its authoritative execution events."
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
+import { JobLogConsole } from "../jobs/JobLogConsole";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
@@ -238,6 +239,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         description="Authoritative job retry metrics scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
+      <JobLogConsole
+        jobs={jobs}
+        title="Project job log console"
+        description="Select a project job to inspect its authoritative execution events."
+      />
       <VersionPanel assets={assets} />
       <LineageView assets={assets} />
       <LineageGraph assets={assets} />
