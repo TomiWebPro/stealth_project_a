@@ -3504,6 +3504,172 @@ jobs:
                 and rfblbody.get("error", {}).get("code") == "validation_error"
                 and bool(rfblbody.get("error", {}).get("request_id")), rf_bad_limit.text)
 
+          # Authoritative collaboration feed (C197/C199) is the newest /api/v1 URL
+          # the live client calls (getCollaborationFeed). Upsert one presence signal
+          # on demand and reuse the comment seeded in the comment-feed probe so the
+          # derived feed has real presence + comment items, then probe the feed shape,
+          # item shapes, newest-first (occurred_at, signal_id, signal, project_id)
+          # ordering, whole-scope total before the limit page, both signal filters,
+          # the optional project scope and the shared 404/422 envelopes, keeping CI
+          # aligned with the exact /api/v1 URLs the VITE_API_MODE=live client calls
+          # as the repo grows.
+          collabfeed_user_id = "00000000-0000-4000-8000-0000000000cf"
+          collabfeed_presence = None
+          if project_id:
+              collabfeed_presence = httpx.post(
+                  f"{base}/presence",
+                  json={"user_id": collabfeed_user_id,
+                        "project_id": project_id,
+                        "state": "online",
+                        "last_seen_at": "2026-11-19T00:00:00+00:00"},
+                  timeout=5)
+              check("collaboration/feed upsert presence 201",
+                    collabfeed_presence.status_code == 201, collabfeed_presence.text)
+
+          collabfeed = httpx.get(f"{base}/collaboration/feed", timeout=5)
+          cfeedbody = collabfeed.json() if collabfeed.status_code == 200 else {}
+          check("collaboration/feed 200 feed shape",
+                collabfeed.status_code == 200
+                and isinstance(cfeedbody.get("items"), list)
+                and isinstance(cfeedbody.get("total"), int)
+                and "generated_at" in cfeedbody, collabfeed.text)
+          check("collaboration/feed derived item shape",
+                collabfeed.status_code == 200
+                and cfeedbody.get("total", 0) >= 2
+                and len(cfeedbody.get("items", [])) >= 2
+                and all(all(k in item for k in (
+                    "signal_id", "signal", "project_id", "project_name", "actor_id",
+                    "state", "body", "asset_id", "occurred_at"))
+                    and item.get("signal") in ("presence", "comment")
+                    for item in cfeedbody["items"]), collabfeed.text)
+          check("collaboration/feed request-id header",
+                "x-request-id" in {k.lower() for k in collabfeed.headers},
+                str(dict(collabfeed.headers)))
+          if collabfeed_presence is not None and collabfeed_presence.status_code == 201:
+              derived_presence = next(
+                  (i for i in cfeedbody.get("items", [])
+                   if i.get("signal_id") == collabfeed_user_id), None)
+              check("collaboration/feed derived presence signal",
+                    collabfeed.status_code == 200 and derived_presence is not None
+                    and derived_presence.get("signal") == "presence"
+                    and derived_presence.get("state") == "online"
+                    and derived_presence.get("project_id") == project_id
+                    and derived_presence.get("actor_id") == collabfeed_user_id
+                    and derived_presence.get("body") is None
+                    and derived_presence.get("asset_id") is None
+                    and isinstance(derived_presence.get("project_name"), str)
+                    and bool(derived_presence.get("project_name"))
+                    and isinstance(derived_presence.get("occurred_at"), str),
+                    collabfeed.text)
+          else:
+              check("collaboration/feed derived presence setup", False,
+                    "could not upsert a presence signal for the feed probe")
+          if comment_id:
+              derived_comment = next(
+                  (i for i in cfeedbody.get("items", [])
+                   if i.get("signal_id") == comment_id), None)
+              check("collaboration/feed derived comment signal",
+                    collabfeed.status_code == 200 and derived_comment is not None
+                    and derived_comment.get("signal") == "comment"
+                    and derived_comment.get("body") == "ci smoke comment"
+                    and derived_comment.get("project_id") == project_id
+                    and derived_comment.get("state") is None
+                    and derived_comment.get("asset_id") is None
+                    and isinstance(derived_comment.get("project_name"), str)
+                    and bool(derived_comment.get("project_name")),
+                    collabfeed.text)
+          else:
+              check("collaboration/feed derived comment setup", False,
+                    "could not obtain a comment for the feed probe")
+          collabfeed_keys = [
+              (i.get("occurred_at"), i.get("signal_id"), i.get("signal"), i.get("project_id"))
+              for i in cfeedbody.get("items", [])]
+          check("collaboration/feed newest-first order",
+                collabfeed.status_code == 200
+                and collabfeed_keys == sorted(collabfeed_keys, reverse=True),
+                collabfeed.text)
+          collabfeed_limited = httpx.get(
+              f"{base}/collaboration/feed", params={"limit": 1}, timeout=5)
+          cfllbody = (collabfeed_limited.json()
+                      if collabfeed_limited.status_code == 200 else {})
+          check("collaboration/feed limit bounds page not total",
+                collabfeed_limited.status_code == 200
+                and len(cfllbody.get("items", [])) <= 1
+                and cfllbody.get("total") == cfeedbody.get("total"),
+                collabfeed_limited.text)
+          collabfeed_cmt = httpx.get(
+              f"{base}/collaboration/feed", params={"signal": "comment"}, timeout=5)
+          cfcbody = (collabfeed_cmt.json()
+                     if collabfeed_cmt.status_code == 200 else {})
+          check("collaboration/feed signal=comment filter 200",
+                collabfeed_cmt.status_code == 200
+                and isinstance(cfcbody.get("total"), int)
+                and 0 < cfcbody.get("total", 0) <= cfeedbody.get("total", 0)
+                and all(i.get("signal") == "comment" for i in cfcbody.get("items", [])),
+                collabfeed_cmt.text)
+          collabfeed_pres = httpx.get(
+              f"{base}/collaboration/feed", params={"signal": "presence"}, timeout=5)
+          cfpbody = (collabfeed_pres.json()
+                     if collabfeed_pres.status_code == 200 else {})
+          check("collaboration/feed signal=presence filter 200",
+                collabfeed_pres.status_code == 200
+                and isinstance(cfpbody.get("total"), int)
+                and 0 < cfpbody.get("total", 0) <= cfeedbody.get("total", 0)
+                and all(i.get("signal") == "presence" for i in cfpbody.get("items", [])),
+                collabfeed_pres.text)
+          if project_id:
+              collabfeed_scoped = httpx.get(
+                  f"{base}/collaboration/feed", params={"project_id": project_id}, timeout=5)
+              cfsbody2 = (collabfeed_scoped.json()
+                          if collabfeed_scoped.status_code == 200 else {})
+              check("collaboration/feed project scope 200",
+                    collabfeed_scoped.status_code == 200
+                    and isinstance(cfsbody2.get("total"), int)
+                    and cfsbody2.get("total", 0) >= 2
+                    and all(i.get("project_id") == project_id
+                            for i in cfsbody2.get("items", [])),
+                    collabfeed_scoped.text)
+          else:
+              check("collaboration/feed project scope setup", False,
+                    "could not obtain a project id")
+          collabfeed_missing = httpx.get(
+              f"{base}/collaboration/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          cf404body2 = (collabfeed_missing.json()
+                        if collabfeed_missing.status_code == 404 else {})
+          check("collaboration/feed 404 shared envelope",
+                collabfeed_missing.status_code == 404
+                and cf404body2.get("error", {}).get("code") == "project_not_found"
+                and bool(cf404body2.get("error", {}).get("request_id")),
+                collabfeed_missing.text)
+          collabfeed_bad = httpx.get(
+              f"{base}/collaboration/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          cfbadbody2 = (collabfeed_bad.json()
+                        if collabfeed_bad.status_code == 422 else {})
+          check("collaboration/feed 422 malformed id envelope",
+                collabfeed_bad.status_code == 422
+                and cfbadbody2.get("error", {}).get("code") == "validation_error"
+                and bool(cfbadbody2.get("error", {}).get("request_id")),
+                collabfeed_bad.text)
+          collabfeed_bad_signal = httpx.get(
+              f"{base}/collaboration/feed", params={"signal": "mystery"}, timeout=5)
+          cfbsbody = (collabfeed_bad_signal.json()
+                      if collabfeed_bad_signal.status_code == 422 else {})
+          check("collaboration/feed 422 invalid signal envelope",
+                collabfeed_bad_signal.status_code == 422
+                and cfbsbody.get("error", {}).get("code") == "validation_error"
+                and bool(cfbsbody.get("error", {}).get("request_id")),
+                collabfeed_bad_signal.text)
+          collabfeed_bad_limit = httpx.get(
+              f"{base}/collaboration/feed", params={"limit": 0}, timeout=5)
+          cfblbody2 = (collabfeed_bad_limit.json()
+                       if collabfeed_bad_limit.status_code == 422 else {})
+          check("collaboration/feed 422 invalid limit envelope",
+                collabfeed_bad_limit.status_code == 422
+                and cfblbody2.get("error", {}).get("code") == "validation_error"
+                and bool(cfblbody2.get("error", {}).get("request_id")),
+                collabfeed_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
