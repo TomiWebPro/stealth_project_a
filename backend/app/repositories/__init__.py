@@ -39,6 +39,7 @@ from .search_stats import SearchStatsRepository
 from .tags import TagRepository
 from .uploads import UploadRepository
 from .upload_stats import UploadStatsRepository
+from .version_stats import VersionStatsRepository
 
 
 @dataclass(slots=True)
@@ -75,6 +76,7 @@ class Repositories:
     dashboard: DashboardRepository
     tags: TagRepository
     impact: ImpactRepository
+    version_stats: VersionStatsRepository
 
     @classmethod
     def build(
@@ -128,6 +130,7 @@ class Repositories:
         activity_stats = ActivityStatsRepository(activity, clock=clock)
         tags = TagRepository(store, projects, clock=clock)
         impact = ImpactRepository(store, assets, clock=clock)
+        version_stats = VersionStatsRepository(store, projects, clock=clock)
         return cls(
             activity=activity,
             activity_stats=activity_stats,
@@ -161,6 +164,7 @@ class Repositories:
             dashboard=dashboard,
             tags=tags,
             impact=impact,
+            version_stats=version_stats,
         )
 
 

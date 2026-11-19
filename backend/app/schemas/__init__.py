@@ -235,6 +235,11 @@ from .upload_stats import (
     UploadStatus,
     UploadStatusCount,
 )
+from .version_stats import (
+    VersionNumberCount,
+    VersionProjectCount,
+    VersionStats,
+)
 
 __all__ = [
     "API_PREFIX",
@@ -438,4 +443,8 @@ __all__ = [
     "UploadStatusCount",
     "UploadProjectCount",
     "UploadStats",
+    # version stats
+    "VersionNumberCount",
+    "VersionProjectCount",
+    "VersionStats",
 ]
