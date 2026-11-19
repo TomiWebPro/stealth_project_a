@@ -1346,6 +1346,93 @@ jobs:
                 and bool(pubsbadbody.get("error", {}).get("request_id")),
                 pub_bad.text)
 
+          # Authoritative per-job execution log (C117/C119) is the newest /api/v1
+          # URL the live client calls (getJobLogs). Submit a job on demand so the
+          # derived frame has a real event stream, then probe the frame shape,
+          # level filter, resume cursor and the shared 404/422 envelopes, keeping
+          # CI aligned with new endpoints as they go live.
+          job_id = None
+          if project_id:
+              submitted = httpx.post(
+                  f"{base}/jobs",
+                  json={
+                      "operation_id": "text-to-image",
+                      "schema_version": "1.0.0",
+                      "project_id": project_id,
+                      "prompt": "ci smoke logs",
+                  },
+                  timeout=5)
+              job_id = submitted.json().get("id") if submitted.status_code == 201 else None
+
+          if job_id:
+              logs = httpx.get(f"{base}/jobs/{job_id}/logs", timeout=5)
+              jlbody = logs.json() if logs.status_code == 200 else {}
+              check("jobs/{id}/logs 200 frame shape",
+                    logs.status_code == 200
+                    and jlbody.get("job_id") == job_id
+                    and isinstance(jlbody.get("entries"), list)
+                    and isinstance(jlbody.get("next_seq"), int)
+                    and isinstance(jlbody.get("total"), int), logs.text)
+              check("jobs/{id}/logs derived entries",
+                    logs.status_code == 200
+                    and jlbody.get("total", 0) >= 1
+                    and len(jlbody.get("entries", [])) >= 1
+                    and all(all(k in e for k in ("seq", "type", "level", "timestamp"))
+                            for e in jlbody["entries"]), logs.text)
+              check("jobs/{id}/logs request-id header",
+                    "x-request-id" in {k.lower() for k in logs.headers},
+                    str(dict(logs.headers)))
+              info_logs = httpx.get(
+                  f"{base}/jobs/{job_id}/logs", params={"level": "info"}, timeout=5)
+              ilbody = info_logs.json() if info_logs.status_code == 200 else {}
+              check("jobs/{id}/logs level filter 200",
+                    info_logs.status_code == 200
+                    and all(e.get("level") == "info" for e in ilbody.get("entries", [])),
+                    info_logs.text)
+              paged = httpx.get(
+                  f"{base}/jobs/{job_id}/logs", params={"limit": 1}, timeout=5)
+              pbody = paged.json() if paged.status_code == 200 else {}
+              check("jobs/{id}/logs limit page 200",
+                    paged.status_code == 200 and len(pbody.get("entries", [])) <= 1,
+                    paged.text)
+              if pbody.get("entries"):
+                  resumed = httpx.get(
+                      f"{base}/jobs/{job_id}/logs",
+                      params={"since_seq": pbody["next_seq"]}, timeout=5)
+                  rbody = resumed.json() if resumed.status_code == 200 else {}
+                  check("jobs/{id}/logs since_seq resume 200",
+                        resumed.status_code == 200
+                        and all(e.get("seq", 0) >= pbody["next_seq"]
+                                for e in rbody.get("entries", [])), resumed.text)
+              bad_filter = httpx.get(
+                  f"{base}/jobs/{job_id}/logs", params={"limit": 0}, timeout=5)
+              jbadbody = bad_filter.json() if bad_filter.status_code == 422 else {}
+              check("jobs/{id}/logs 422 validation envelope",
+                    bad_filter.status_code == 422
+                    and jbadbody.get("error", {}).get("code") == "validation_error"
+                    and bool(jbadbody.get("error", {}).get("request_id")),
+                    bad_filter.text)
+          else:
+              check("jobs/{id}/logs setup", False,
+                    "could not submit a job for the log probe")
+
+          logs_missing = httpx.get(
+              f"{base}/jobs/00000000-0000-4000-8000-000000000000/logs", timeout=5)
+          jl404body = logs_missing.json() if logs_missing.status_code == 404 else {}
+          check("jobs/{id}/logs 404 shared envelope",
+                logs_missing.status_code == 404
+                and jl404body.get("error", {}).get("code") == "job_not_found"
+                and bool(jl404body.get("error", {}).get("request_id")),
+                logs_missing.text)
+
+          logs_bad = httpx.get(f"{base}/jobs/not-a-uuid/logs", timeout=5)
+          jlbadbody = logs_bad.json() if logs_bad.status_code == 422 else {}
+          check("jobs/{id}/logs 422 malformed id envelope",
+                logs_bad.status_code == 422
+                and jlbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(jlbadbody.get("error", {}).get("request_id")),
+                logs_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
