@@ -3391,6 +3391,119 @@ jobs:
                 and bool(opfblbody.get("error", {}).get("request_id")),
                 opf_bad_limit.text)
 
+          # Authoritative retry feed (C193/C195) is the newest /api/v1 URL the
+          # live client calls (getRetryFeed). Create a job, cancel and retry it on
+          # demand so the ledger has a real item, then probe the feed shape, item
+          # shape, newest-first (retried_at, job_id) ordering, whole-scope total
+          # before the limit page, the optional project_id scope and the shared
+          # 404/422 envelopes, keeping CI aligned with the exact URLs the
+          # VITE_API_MODE=live client calls as the repo grows.
+          retry_job_id = None
+          if project_id:
+              rf_seed = httpx.post(
+                  f"{base}/jobs",
+                  json={
+                      "operation_id": "text-to-image",
+                      "schema_version": "1.0.0",
+                      "project_id": project_id,
+                      "prompt": "ci smoke retry seed",
+                  },
+                  timeout=5)
+              retry_job_id = rf_seed.json().get("id") if rf_seed.status_code == 201 else None
+              check("retries/feed create seed job 201",
+                    rf_seed.status_code == 201 and retry_job_id is not None, rf_seed.text)
+              if retry_job_id:
+                  rf_cancel = httpx.post(f"{base}/jobs/{retry_job_id}/cancel", timeout=5)
+                  check("retries/feed cancel seed job 200", rf_cancel.status_code == 200,
+                        rf_cancel.text)
+                  rf_retry = httpx.post(
+                      f"{base}/jobs/{retry_job_id}/retry",
+                      json={"idempotency_key": "ci-smoke-retry-key"}, timeout=5)
+                  check("retries/feed retry seed job 200", rf_retry.status_code == 200,
+                        rf_retry.text)
+          else:
+              check("retries/feed create seed setup", False,
+                    "could not obtain a project id")
+
+          retry_feed = httpx.get(f"{base}/retries/feed", timeout=5)
+          rfbody = retry_feed.json() if retry_feed.status_code == 200 else {}
+          check("retries/feed 200 feed shape",
+                retry_feed.status_code == 200
+                and isinstance(rfbody.get("items"), list)
+                and isinstance(rfbody.get("total"), int)
+                and "generated_at" in rfbody, retry_feed.text)
+          check("retries/feed derived item shape",
+                retry_feed.status_code == 200
+                and rfbody.get("total", 0) >= 1
+                and len(rfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "job_id", "project_id", "project_name", "operation_id",
+                    "status", "attempt", "retries", "retried_at"))
+                    and item.get("retries", 0) >= 1
+                    and item.get("attempt", 0) >= 1
+                    and item.get("status") in (
+                        "queued", "running", "succeeded", "failed", "canceled")
+                    for item in rfbody["items"]), retry_feed.text)
+          check("retries/feed request-id header",
+                "x-request-id" in {k.lower() for k in retry_feed.headers},
+                str(dict(retry_feed.headers)))
+          if retry_job_id:
+              rf_item = next(
+                  (i for i in rfbody.get("items", []) if i.get("job_id") == retry_job_id),
+                  None)
+              check("retries/feed derived retried job",
+                    retry_feed.status_code == 200 and rf_item is not None
+                    and rf_item.get("retries", 0) >= 1
+                    and rf_item.get("operation_id") == "text-to-image"
+                    and rf_item.get("project_id") == project_id
+                    and isinstance(rf_item.get("project_name"), str), retry_feed.text)
+          else:
+              check("retries/feed derived setup", False,
+                    "could not create a retried job for the feed probe")
+          rf_times = [i.get("retried_at") for i in rfbody.get("items", [])]
+          check("retries/feed newest-first order",
+                retry_feed.status_code == 200
+                and rf_times == sorted(rf_times, reverse=True), retry_feed.text)
+          rf_limited = httpx.get(f"{base}/retries/feed", params={"limit": 1}, timeout=5)
+          rflbody = rf_limited.json() if rf_limited.status_code == 200 else {}
+          check("retries/feed limit bounds page not total",
+                rf_limited.status_code == 200
+                and len(rflbody.get("items", [])) <= 1
+                and rflbody.get("total") == rfbody.get("total"), rf_limited.text)
+          if project_id:
+              rf_scoped = httpx.get(
+                  f"{base}/retries/feed", params={"project_id": project_id}, timeout=5)
+              rfsbody = rf_scoped.json() if rf_scoped.status_code == 200 else {}
+              check("retries/feed project scope 200",
+                    rf_scoped.status_code == 200
+                    and isinstance(rfsbody.get("total"), int)
+                    and all(i.get("project_id") == project_id
+                            for i in rfsbody.get("items", [])), rf_scoped.text)
+          else:
+              check("retries/feed project scope setup", False,
+                    "could not obtain a project id")
+          rf_missing = httpx.get(
+              f"{base}/retries/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          rf404body = rf_missing.json() if rf_missing.status_code == 404 else {}
+          check("retries/feed 404 shared envelope",
+                rf_missing.status_code == 404
+                and rf404body.get("error", {}).get("code") == "project_not_found"
+                and bool(rf404body.get("error", {}).get("request_id")), rf_missing.text)
+          rf_bad_id = httpx.get(
+              f"{base}/retries/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          rfbadbody = rf_bad_id.json() if rf_bad_id.status_code == 422 else {}
+          check("retries/feed 422 malformed id envelope",
+                rf_bad_id.status_code == 422
+                and rfbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(rfbadbody.get("error", {}).get("request_id")), rf_bad_id.text)
+          rf_bad_limit = httpx.get(f"{base}/retries/feed", params={"limit": 0}, timeout=5)
+          rfblbody = rf_bad_limit.json() if rf_bad_limit.status_code == 422 else {}
+          check("retries/feed 422 invalid limit envelope",
+                rf_bad_limit.status_code == 422
+                and rfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(rfblbody.get("error", {}).get("request_id")), rf_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
