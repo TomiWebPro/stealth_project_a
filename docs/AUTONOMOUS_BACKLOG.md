@@ -1978,6 +1978,23 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `9c27c69`
   Screens organization-feed rendering remains a screens follow-up.
 
+- [x] C165 (backend) Authoritative comment statistics API:
+  `GET /api/v1/comments/stats?project_id=` derives comment totals, distinct
+  author/project counts, a zero-filled asset/project reference breakdown,
+  deterministic per-project (comments, authors) and per-author (comments)
+  breakdowns and newest-comment recency from the authoritative `COMMENTS` store
+  (no second index), with an optional `project_id` scope (unknown → shared 404
+  `project_not_found`, malformed → shared 422 `validation_error`) and a literal
+  path registered alongside `/comments/feed`. `CommentStats`/
+  `CommentReferenceCount`/`CommentProjectCount`/`CommentAuthorCount`/
+  `CommentReference` mirrored in `frontend/src/types/commentStats.ts` + exported
+  from the types index, README endpoint list synced, 5 tests × 2 storage
+  backends green (1025 passed, contract parity + route-surface guard + tsc
+  clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned
+  backend column had no unchecked items (only the repo-wide C6 docs pass
+  remains, owned by other agents), so C165 was added under the Never-empty
+  well. ✅ 2026-11-19 — `84d82b3`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2181,3 +2198,4 @@ this file is the execution checklist.
 - 2026-11-19 — `0ab0bb3` — C162 (screens): rendered the authoritative asset lineage feed (C157/C159/C160 follow-up) via `useLineageFeed` — a reusable `LineageFeedPanel` on Projects (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first typed relationship rows showing source → target asset names, joined project name, a relationship-type badge and creation recency, with source and (live-target-only) target deep links that scope the assets browser first, plus loading/error/missing/empty/populated states — every display value derived in tested `lineageFeedHelpers` (8 new tests). Resolves the C160 screens follow-up; lint clean, 1056 tests, build green. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C162 was added under the Never-empty well.
 - 2026-11-19 — `2b9c330` — C163 (mocks): wired the authoritative organization feed (C161 follow-up) end to end — `getOrganizationFeed`/`useOrganizationFeed` atomically across mockApi (newest-first `(created_at, id)` organization derivation with joined member/project activity counts, orphan-member/unknown-org-project exclusion, whole-scope `total` before the `limit` page, router-style 422 for an invalid limit + injectable `organizationFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /orgs/feed?limit=`), queryKeys and useQueries, with a shared `lib/organizationFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C161 mocks-transport follow-up; lint clean, 1063 tests, build green. My owned column had no unchecked rows, so C163 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
 - 2026-11-19 — `9c27c69` — C164 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/orgs/feed?limit=` organization feed (the C161/C163 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (org id/name/slug + joined member/project activity counts and created timestamp), newest-first `(created_at, org_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, the `limit` page bound, the `/organizations/feed` alias and the shared 422 `validation_error` envelope with request-id — creating one organization on demand so the derived feed is non-empty. No unchecked CI row remained (only the repo-wide C6 docs pass remains, owned by other agents), so C164 was added under the Never-empty well; resolves the C163 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (264 probes OK, on a dynamically chosen free port because :8000 is held by another service) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1063 tests/build green and backend pytest (1015) green. Screens organization-feed rendering remains a screens follow-up.
+- 2026-11-19 — `84d82b3` — C165 (backend): added authoritative `GET /api/v1/comments/stats?project_id=` deriving comment totals, distinct author/project counts, a zero-filled asset/project reference breakdown, deterministic per-project (comments, authors) and per-author (comments) breakdowns and newest-comment recency from the authoritative `COMMENTS` store (no second index), with an optional project scope (shared 404 `project_not_found` / 422 `validation_error` envelopes) and a literal path registered alongside `/comments/feed`; `CommentStats`/`CommentReferenceCount`/`CommentProjectCount`/`CommentAuthorCount`/`CommentReference` mirrored in `frontend/src/types/commentStats.ts` + exported from the types index, README endpoint list synced, 5 tests × 2 storage backends green (1025 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C165 was added under the Never-empty well.
