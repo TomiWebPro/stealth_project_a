@@ -2092,6 +2092,24 @@ this file is the execution checklist.
    ✅ 2026-11-19 — `08acef1`
    Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C172 (CI) Extend the live-mode HTTP smoke job with the authoritative job
+  event feed endpoint from C169/C171 (`GET /api/v1/events/feed?project_id=&type=&limit=`):
+  reuse the on-demand submitted job (which carries a real JOB_EVENTS stream from
+  the log probe) so the derived feed has real items, then probe the feed shape
+  (`items`/`total`/`generated_at`), derived item shapes (job/seq/type/operation/project
+  identity and joined project name/timestamp), newest-first `(timestamp, job_id, seq)`
+  ordering, the whole-scope `total` before the `limit` page (counters unchanged), the
+  `type` filter, the optional `project_id` scope and the shared 404 `project_not_found`
+  / 422 `validation_error` envelopes (malformed id + invalid type + invalid limit)
+  with request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row remained,
+  so C172 was added under the Never-empty well. Resolves the C171 CI live-smoke
+  follow-up. Verified the exact embedded smoke script against a real ASGI server
+  (333 checks OK, dynamically chosen free port) with YAML parse + actionlint
+  v1.7.12 (`-shellcheck=`); frontend lint/1115 tests/build green and backend
+  pytest (1053) green. Screens event-feed rendering remains a screens follow-up.
+  ✅ 2026-11-19 — `3da13a8`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2302,3 +2320,4 @@ this file is the execution checklist.
 - 2026-11-19 — `48484b7` — C169 (backend): added authoritative `GET /api/v1/events/feed?project_id=&type=&limit=` — a newest-first workspace feed of job events derived fresh from the authoritative `JOB_EVENTS` stream (no second index; the same store `/events/stats` aggregates), with event identity + joined operation/project identity and display name, all lifecycle fields (status/progress/message/asset_id/error/timestamp), a deterministic `(timestamp, job_id, seq)` tie-break and a whole-scope `total` before the `limit` page; orphan events with a missing parent job are excluded (matching the event-stats project-scope join), and optional `project_id`/`type` filters use shared 404 `project_not_found` / 422 `validation_error` envelopes with request-id. `EventFeed`/`EventFeedItem` mirrored in `frontend/src/types/eventFeed.ts` + exported from the types index, README endpoint list synced, 14 tests × 2 storage backends green (1053 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items, so C169 was added under the Never-empty well.
 - 2026-11-19 — `220dbaa` — C170 (screens): rendered the authoritative comment statistics (C165/C167/C168 follow-up) via `useCommentStats` — a reusable `CommentStatsPanel` on Home (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled asset/project reference and per-project/per-author breakdowns, and all five UI states; every display value derived in 13 new tested `commentStatsHelpers` cases. Resolves the C168 screens follow-up. Lint clean/1095 tests/build green on a clean worktree of HEAD + only my changes; shared tree transiently red from a sibling's uncommitted in-progress event-feed transport work in mocks-owned `src/lib` (owner: studio-mocks). My owned column had no unchecked rows, so C170 was added under the Never-empty well. C169 event-feed screens rendering remains a follow-up.
 - 2026-11-19 — `08acef1` — C171 (mocks): wired the authoritative job event feed API (C169 follow-up) end to end — `getEventFeed`/`useEventFeed` atomically across mockApi (newest-first `(timestamp, job_id, seq)` derivation over the shared `JOB_EVENTS` seeds joined to parent jobs for operation/project identity with orphan exclusion and a stable project-name fallback, `project_id`/`type` filters, whole-scope `total` before the `limit` page, router-style 422 for a malformed id / unknown type / invalid limit, unknown-project 404 + injectable `eventFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /events/feed?project_id=&type=&limit=`), queryKeys and useQueries, with a shared `lib/eventFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C169 mocks-transport follow-up; lint clean, 1115 tests, build green. My owned column had no unchecked rows, so C171 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-19 — `3da13a8` — C172 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/events/feed?project_id=&type=&limit=` job event feed (the C169/C171 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (job/seq/type/operation/project identity + joined project name/timestamp), newest-first `(timestamp, job_id, seq)` ordering, whole-scope `total` before the `limit` page with unchanged counters, `type` filter, optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid type + invalid limit) with request-id — reusing the on-demand submitted job with a real JOB_EVENTS stream so the derived feed is non-empty. No unchecked CI row remained, so C172 was added under the Never-empty well; resolves the C171 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (333 checks OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint/1115 tests/build green and backend pytest (1053) green. Screens event-feed rendering remains a screens follow-up.
