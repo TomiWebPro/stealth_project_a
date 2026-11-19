@@ -19,6 +19,7 @@ import { VersionPanel } from "../assets/VersionPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
+import { CollaborationStatsPanel } from "../workspaces/CollaborationStatsPanel";
 import { formatProjectUpdatedAtLong } from "./helpers";
 
 function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
@@ -182,6 +183,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project pipeline stats"
         description="Authoritative training, shot and splat chain metrics scoped to this project."
+      />
+      <CollaborationStatsPanel
+        projectId={projectId}
+        title="Project collaboration stats"
+        description="Authoritative presence and comment metrics scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <VersionPanel assets={assets} />

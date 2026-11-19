@@ -7,6 +7,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { CollaborationPanel } from "./CollaborationPanel";
+import { CollaborationStatsPanel } from "./CollaborationStatsPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
 import { OrganizationStatsPanel } from "./OrganizationStatsPanel";
 
@@ -39,6 +40,11 @@ export function WorkspacesScreen() {
         orgId={orgId}
         title="Organization membership stats"
         description="Authoritative membership metrics scoped to this organization."
+      />
+
+      <CollaborationStatsPanel
+        title="Workspace collaboration stats"
+        description="Authoritative presence and comment metrics across the workspace."
       />
 
       {isPending ? (
