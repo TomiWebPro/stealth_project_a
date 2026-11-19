@@ -9,8 +9,10 @@ import {
   fetchHomeSummary,
   fetchJobs,
   fetchOrchestrationRun,
+  fetchAssetImpact,
   fetchProjects,
   fetchProviders,
+  fetchTags,
   setMockFailure,
 } from "./mockApi";
 
@@ -51,5 +53,24 @@ describe("mock error-state fakes", () => {
 
     await expect(fetchAssets()).resolves.toBeDefined();
     await expect(fetchJobs()).rejects.toMatchObject({ code: "mock_failure" });
+  });
+
+  it("exposes injectable failures for the tags and impact domains", async () => {
+    const assetId = "0b5c1e2a-2000-4000-8000-000000000011";
+    setMockFailure("tags");
+    setMockFailure("impact");
+
+    await expect(fetchTags()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+    await expect(fetchAssetImpact(assetId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchTags()).resolves.toBeDefined();
+    await expect(fetchAssetImpact(assetId)).resolves.toBeDefined();
   });
 });

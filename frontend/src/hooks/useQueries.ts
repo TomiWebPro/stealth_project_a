@@ -7,11 +7,14 @@ import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { HomeSummary } from "../lib/homeSummary";
+import type { ImpactOptions } from "../lib/impact";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { SearchOptions } from "../lib/search";
+import type { TagOptions } from "../lib/tags";
 import type {
   ActivityFeed,
   Asset,
+  AssetImpact,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -30,6 +33,7 @@ import type {
   SearchResponse,
   StorageStats,
   StreamEvent,
+  TagIndex,
   User,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
@@ -362,5 +366,26 @@ export function useSearch(
     queryKey: queryKeys.search.results(query, options),
     queryFn: () => api.search(query, options),
     enabled: query.trim().length > 0,
+  });
+}
+
+/** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
+export function useTags(options?: TagOptions): UseQueryResult<TagIndex> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.tags.index(options),
+    queryFn: () => api.getTags(options),
+  });
+}
+
+/** Transitive downstream impact of an asset; unknown roots resolve to undefined (C34). */
+export function useAssetImpact(
+  assetId: string,
+  options?: ImpactOptions,
+): UseQueryResult<AssetImpact | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.impact.asset(assetId, options),
+    queryFn: () => api.getAssetImpact(assetId, options),
   });
 }

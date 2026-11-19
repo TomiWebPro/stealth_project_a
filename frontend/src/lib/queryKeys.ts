@@ -1,7 +1,9 @@
 import type { ActivityOptions } from "./activity";
 import type { AuditQuery } from "./audit";
 import type { DashboardOptions } from "./dashboard";
+import type { ImpactOptions } from "./impact";
 import type { SearchOptions } from "./search";
+import type { TagOptions } from "./tags";
 
 /**
  * Centralised TanStack Query keys.
@@ -105,5 +107,19 @@ export const queryKeys = {
   search: {
     results: (query: string, options: SearchOptions = {}) =>
       ["search", "results", query, options.kind ?? "all", options.limit ?? "all"] as const,
+  },
+  tags: {
+    index: (options: TagOptions = {}) =>
+      [
+        "tags",
+        "index",
+        options.projectId ?? "all",
+        options.prefix ?? "all",
+        options.limit ?? "all",
+      ] as const,
+  },
+  impact: {
+    asset: (assetId: string, options: ImpactOptions = {}) =>
+      ["impact", "asset", assetId, options.maxDepth ?? "all"] as const,
   },
 } as const;

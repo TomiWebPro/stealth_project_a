@@ -173,6 +173,27 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the tag index key by project, prefix and limit", () => {
+    expect(queryKeys.tags.index()).toEqual(["tags", "index", "all", "all", "all"]);
+    expect(queryKeys.tags.index({ projectId: "p1", prefix: "lora", limit: 5 })).toEqual([
+      "tags",
+      "index",
+      "p1",
+      "lora",
+      5,
+    ]);
+  });
+
+  it("scopes the asset impact key by id and max depth", () => {
+    expect(queryKeys.impact.asset("a1")).toEqual(["impact", "asset", "a1", "all"]);
+    expect(queryKeys.impact.asset("a1", { maxDepth: 2 })).toEqual([
+      "impact",
+      "asset",
+      "a1",
+      2,
+    ]);
+  });
+
   it("returns a new array per call so cache keys compare by value", () => {
     expect(queryKeys.providers.all()).toEqual(queryKeys.providers.all());
     expect(queryKeys.providers.all()).not.toBe(queryKeys.providers.all());

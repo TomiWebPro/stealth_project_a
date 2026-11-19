@@ -9,6 +9,8 @@ import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
+import { deriveAssetImpact, validateImpactArgs } from "./impact";
+import type { ImpactOptions } from "./impact";
 import {
   ASSETS,
   AUDIT_TRAILS,
@@ -30,6 +32,8 @@ import {
 import { createHttpApiClient } from "./httpApiClient";
 import { deriveSearchResponse, validateSearchArgs } from "./search";
 import type { SearchOptions } from "./search";
+import { deriveTagIndex, validateTagArgs } from "./tags";
+import type { TagOptions } from "./tags";
 
 /**
  * C2 parity guard: the live and mock transports must return identical payloads
@@ -157,6 +161,56 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative tag facets are derived from the asset store on every call;
+  // reproduce the router's 422 validation, unknown-project 404 and repository
+  // derivation over the shared seeds so live and mock agree exactly.
+  if (path === "/tags") {
+    const projectId = params.get("project_id") ?? undefined;
+    const prefixRaw = params.get("prefix");
+    const limitRaw = params.get("limit");
+    const options: TagOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(prefixRaw !== null ? { prefix: prefixRaw } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateTagArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (options.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+      return NOT_FOUND;
+    }
+    return deriveTagIndex(ASSETS, options);
+  }
+
+  // Authoritative downstream impact is derived from lineage relationships;
+  // reproduce the router's 422 validation, unknown-root 404 and BFS derivation.
+  if (/^\/assets\/[^/]+\/impact$/.test(path)) {
+    const assetId = pathParts[2] ?? "";
+    const depthRaw = params.get("max_depth");
+    const options: ImpactOptions = depthRaw !== null ? { maxDepth: Number(depthRaw) } : {};
+    try {
+      validateImpactArgs(assetId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ASSETS.some((asset) => asset.id === assetId)) return NOT_FOUND;
+    return deriveAssetImpact(assetId, ASSETS, options);
+  }
+
   if (path === "/projects") return PROJECTS;
   if (path.startsWith("/projects/")) return PROJECTS.find((p) => p.id === id) ?? NOT_FOUND;
 
@@ -269,6 +323,8 @@ const failedJobId = JOBS.find((j) => j.status === "failed")?.id ?? "";
 const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ?? "";
 const runId = ORCHESTRATION_RUNS[0]?.run_id ?? "";
 const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
+/** Moonshot concept asset whose descendants exercise the full impact chain. */
+const impactRootId = "0b5c1e2a-2000-4000-8000-000000000011";
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -318,6 +374,11 @@ describe("live vs mock transport parity", () => {
       ["getExtension", (api) => api.getExtension(extensionId)],
       ["search", (api) => api.search("moon")],
       ["search filtered", (api) => api.search("moon", { kind: "asset", limit: 3 })],
+      ["getTags", (api) => api.getTags()],
+      ["getTags scoped", (api) => api.getTags({ projectId: filmId })],
+      ["getTags filtered", (api) => api.getTags({ projectId: filmId, prefix: "lora", limit: 3 })],
+      ["getAssetImpact", (api) => api.getAssetImpact(impactRootId)],
+      ["getAssetImpact limited", (api) => api.getAssetImpact(impactRootId, { maxDepth: 2 })],
     ];
 
     for (const [name, run] of cases) {
@@ -372,6 +433,33 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockActivityErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveActivityErr).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown project tag scope.
+    const [mockTags404, liveTags404] = await Promise.all([
+      mockApiClient.getTags({ projectId: missingId }).catch((cause) => cause),
+      live.getTags({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockTags404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveTags404).toMatchObject({ status: 404, code: "not_found" });
+
+    // Both resolve an unknown impact root to undefined.
+    expect(await live.getAssetImpact(missingId)).toEqual(
+      await mockApiClient.getAssetImpact(missingId),
+    );
+
+    // Both reject an out-of-range tag limit and impact depth identically.
+    const [mockTagErr, liveTagErr] = await Promise.all([
+      mockApiClient.getTags({ limit: 0 }).catch((cause) => cause),
+      live.getTags({ limit: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockTagErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveTagErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [mockImpactErr, liveImpactErr] = await Promise.all([
+      mockApiClient.getAssetImpact(impactRootId, { maxDepth: 0 }).catch((cause) => cause),
+      live.getAssetImpact(impactRootId, { maxDepth: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockImpactErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveImpactErr).toMatchObject({ status: 422, code: "validation_error" });
   });
 
   it("still normalizes a backend failure into an ApiError in live mode", async () => {
@@ -397,5 +485,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
+    expect(typeof typed.getTags).toBe("function");
+    expect(typeof typed.getAssetImpact).toBe("function");
   });
 });

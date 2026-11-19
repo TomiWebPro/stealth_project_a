@@ -5,11 +5,14 @@ import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
 import type { HomeSummary } from "./homeSummary";
+import type { ImpactOptions } from "./impact";
 import type { ProjectDetail } from "./projectDetail";
 import type { SearchOptions } from "./search";
+import type { TagOptions } from "./tags";
 import type {
   ActivityFeed,
   Asset,
+  AssetImpact,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -27,6 +30,7 @@ import type {
   Provider,
   SearchResponse,
   StorageStats,
+  TagIndex,
   User,
 } from "./types";
 import * as mockApi from "./mock/mockApi";
@@ -86,6 +90,10 @@ export interface ApiClient {
   getExtension(extensionId: string): Promise<Extension | undefined>;
   /** Ranked cross-domain (project/asset/conversation) matches (C22). */
   search(query: string, options?: SearchOptions): Promise<SearchResponse>;
+  /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
+  getTags(options?: TagOptions): Promise<TagIndex>;
+  /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
+  getAssetImpact(assetId: string, options?: ImpactOptions): Promise<AssetImpact | undefined>;
 }
 
 /** In-memory implementation of {@link ApiClient} backed by `lib/mock`. */
@@ -124,4 +132,6 @@ export const mockApiClient: ApiClient = {
   listExtensions: mockApi.fetchExtensions,
   getExtension: mockApi.fetchExtension,
   search: mockApi.fetchSearch,
+  getTags: mockApi.fetchTags,
+  getAssetImpact: mockApi.fetchAssetImpact,
 };

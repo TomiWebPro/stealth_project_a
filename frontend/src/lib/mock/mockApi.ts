@@ -9,11 +9,16 @@ import { deriveDashboardSummary, validateDashboardArgs } from "../dashboard";
 import type { DashboardOptions } from "../dashboard";
 import { env } from "../env";
 import type { HomeSummary } from "../homeSummary";
+import type { ImpactOptions } from "../impact";
+import { deriveAssetImpact, validateImpactArgs } from "../impact";
 import type { ProjectDetail } from "../projectDetail";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
 import type { SearchOptions } from "../search";
+import { deriveTagIndex, validateTagArgs } from "../tags";
+import type { TagOptions } from "../tags";
 import type {
   Asset,
+  AssetImpact,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -31,6 +36,7 @@ import type {
   SearchResponse,
   StorageStats,
   StreamEvent,
+  TagIndex,
   User,
 } from "../types";
 import {
@@ -540,4 +546,39 @@ export async function fetchSearch(
       options,
     ),
   );
+}
+
+/**
+ * Authoritative tag facets (C33) derived from the same asset store as the live
+ * `/tags` endpoint. Router-style 422 validation, a 404 for an unknown project
+ * scope and the `"tags"` failure domain keep empty/error states at parity.
+ */
+export async function fetchTags(options?: TagOptions): Promise<TagIndex> {
+  failIfEnabled("tags");
+  validateTagArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveTagIndex(ASSETS.map(withAssetOverrides), options));
+}
+
+/**
+ * Authoritative downstream impact (C34) derived from the same asset/lineage
+ * seeds as the live `/assets/{id}/impact` endpoint. An unknown root resolves to
+ * `undefined` (mirroring the live 404-to-undefined mapping); router-style 422
+ * validation and the `"impact"` failure domain keep error states at parity.
+ */
+export async function fetchAssetImpact(
+  assetId: string,
+  options?: ImpactOptions,
+): Promise<AssetImpact | undefined> {
+  failIfEnabled("impact");
+  validateImpactArgs(assetId, options);
+  const asset = ASSETS.find((candidate) => candidate.id === assetId);
+  if (!asset) return delay(undefined);
+  return delay(deriveAssetImpact(assetId, ASSETS.map(withAssetOverrides), options));
 }

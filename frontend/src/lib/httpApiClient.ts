@@ -11,12 +11,17 @@ import type { ConversationStream } from "./conversationStream";
 import { dashboardQueryParams } from "./dashboard";
 import type { DashboardOptions } from "./dashboard";
 import type { HomeSummary } from "./homeSummary";
+import { impactQueryParams } from "./impact";
+import type { ImpactOptions } from "./impact";
 import type { ProjectDetail } from "./projectDetail";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
+import { tagQueryParams } from "./tags";
+import type { TagOptions } from "./tags";
 import type {
   ActivityFeed,
   Asset,
+  AssetImpact,
   AssetUpdate,
   AuditTrail,
   Comment,
@@ -34,6 +39,7 @@ import type {
   Provider,
   SearchResponse,
   StorageStats,
+  TagIndex,
   User,
 } from "./types";
 
@@ -441,6 +447,27 @@ export function createHttpApiClient(
 
     search(query: string, options?: SearchOptions): Promise<SearchResponse> {
       return request<SearchResponse>("/search", searchQueryParams(query, options));
+    },
+
+    getTags(options?: TagOptions): Promise<TagIndex> {
+      return request<TagIndex>("/tags", tagQueryParams(options));
+    },
+
+    async getAssetImpact(
+      assetId: string,
+      options?: ImpactOptions,
+    ): Promise<AssetImpact | undefined> {
+      try {
+        return await request<AssetImpact>(
+          `/assets/${encodeURIComponent(assetId)}/impact`,
+          impactQueryParams(options),
+        );
+      } catch (cause) {
+        // The authoritative endpoint 404s on unknown roots; detail lookups
+        // resolve to undefined, but every other failure is surfaced to the hook.
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
   };
 }
