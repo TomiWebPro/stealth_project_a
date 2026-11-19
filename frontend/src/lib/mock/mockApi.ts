@@ -37,6 +37,8 @@ import { deriveEventFeed, validateEventFeedArgs } from "../eventFeed";
 import type { EventFeedOptions } from "../eventFeed";
 import { deriveEventStats, validateEventStatsArgs } from "../eventStats";
 import type { EventStatsOptions } from "../eventStats";
+import { deriveExtensionFeed, validateExtensionFeedArgs } from "../extensionFeed";
+import type { ExtensionFeedOptions } from "../extensionFeed";
 import {
   deriveExtensionStats,
   validateExtensionStatsArgs,
@@ -120,6 +122,7 @@ import type {
   EventFeed,
   EventStats,
   Extension,
+  ExtensionFeed,
   ExtensionStats,
   Job,
   JobFeed,
@@ -211,7 +214,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -523,6 +526,20 @@ export async function fetchExtensionStats(
   failIfEnabled("extensionStats");
   validateExtensionStatsArgs(options);
   return delay(deriveExtensionStats(EXTENSIONS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative extension installation feed (C173) derived from the same
+ * `EXTENSIONS` store as the live `/extensions/feed` endpoint. Router-style 422
+ * validation (type / status / limit) and the `"extensionFeed"` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchExtensionFeed(
+  options?: ExtensionFeedOptions,
+): Promise<ExtensionFeed> {
+  failIfEnabled("extensionFeed");
+  validateExtensionFeedArgs(options);
+  return delay(deriveExtensionFeed(EXTENSIONS, REFERENCE_NOW, options));
 }
 
 /**

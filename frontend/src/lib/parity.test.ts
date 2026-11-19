@@ -26,6 +26,8 @@ import { deriveCommentStats, validateCommentStatsArgs } from "./commentStats";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
+import { deriveExtensionFeed, validateExtensionFeedArgs } from "./extensionFeed";
+import type { ExtensionFeedOptions } from "./extensionFeed";
 import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
@@ -1130,6 +1132,28 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     return deriveExtensionStats(EXTENSIONS, REFERENCE_NOW, options);
   }
+  if (path === "/extensions/feed") {
+    const typeRaw = params.get("type");
+    const statusRaw = params.get("status");
+    const limitRaw = params.get("limit");
+    const options: ExtensionFeedOptions = {
+      ...(typeRaw !== null ? { type: typeRaw as ExtensionFeedOptions["type"] } : {}),
+      ...(statusRaw !== null ? { status: statusRaw as ExtensionFeedOptions["status"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateExtensionFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveExtensionFeed(EXTENSIONS, REFERENCE_NOW, options);
+  }
 
   if (path === "/extensions") return EXTENSIONS;
   if (path.startsWith("/extensions/")) {
@@ -1249,6 +1273,14 @@ describe("live vs mock transport parity", () => {
       ["getExtensionStats", (api) => api.getExtensionStats()],
       ["getExtensionStats scoped", (api) => api.getExtensionStats({ type: "ui" })],
       ["getExtensionStats filtered", (api) => api.getExtensionStats({ type: "ui", status: "enabled" })],
+      ["getExtensionFeed", (api) => api.getExtensionFeed()],
+      ["getExtensionFeed scoped", (api) => api.getExtensionFeed({ type: "provider" })],
+      ["getExtensionFeed filtered", (api) => api.getExtensionFeed({ status: "enabled" })],
+      ["getExtensionFeed limited", (api) => api.getExtensionFeed({ limit: 2 })],
+      [
+        "getExtensionFeed filtered and limited",
+        (api) => api.getExtensionFeed({ type: "ui", status: "disabled", limit: 1 }),
+      ],
       ["getOrganizationFeed", (api) => api.getOrganizationFeed()],
       ["getOrganizationFeed limited", (api) => api.getOrganizationFeed({ limit: 1 })],
       ["getOrganizationStats", (api) => api.getOrganizationStats()],
@@ -1986,6 +2018,18 @@ describe("live vs mock transport parity", () => {
     expect(mockExtensionStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveExtensionStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both narrow the extension feed to an empty page and reject invalid filters
+    // and page bounds with the same 422 envelope.
+    expect(await live.getExtensionFeed({ type: "bundle", status: "enabled" })).toEqual(
+      await mockApiClient.getExtensionFeed({ type: "bundle", status: "enabled" }),
+    );
+    const [mockExtensionFeed422, liveExtensionFeed422] = await Promise.all([
+      mockApiClient.getExtensionFeed({ limit: 0 }).catch((cause) => cause),
+      live.getExtensionFeed({ limit: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockExtensionFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveExtensionFeed422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both resolve an unknown impact root to undefined.
     expect(await live.getAssetImpact(missingId)).toEqual(
       await mockApiClient.getAssetImpact(missingId),
@@ -2056,6 +2100,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectFeed).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
+    expect(typeof typed.getExtensionFeed).toBe("function");
     expect(typeof typed.getOrganizationFeed).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");

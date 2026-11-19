@@ -1910,6 +1910,65 @@ describe("createHttpApiClient extension stats", () => {
   });
 });
 
+describe("createHttpApiClient /extensions/feed", () => {
+  const feed = {
+    items: [
+      {
+        extension_id: "f9c71eba-e91c-5724-ad4e-367cfdb0ad80",
+        manifest_id: "comfyui-local-adapter",
+        name: "Local ComfyUI adapter",
+        version: "1.2.0",
+        publisher: "Studio Core",
+        type: "provider",
+        status: "enabled",
+        signed: true,
+        verified: true,
+        installed_at: "2026-01-06T00:00:00Z",
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /extensions/feed with filters and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/extensions/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getExtensionFeed({ type: "provider", status: "enabled", limit: 2 }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/extensions/feed`);
+    expect(url.searchParams.get("type")).toBe("provider");
+    expect(url.searchParams.get("status")).toBe("enabled");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no filters or page are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/extensions/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getExtensionFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Feed limit must be between 1 and 200." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getExtensionFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Feed limit must be between 1 and 200.",
+    });
+  });
+});
+
 describe("createHttpApiClient operation stats", () => {
   const stats = {
     total: 10,

@@ -11,6 +11,7 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { EventFeedOptions } from "./eventFeed";
 import type { EventStatsOptions } from "./eventStats";
+import type { ExtensionFeedOptions } from "./extensionFeed";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
 import type { JobFeedOptions } from "./jobFeed";
@@ -130,6 +131,16 @@ export const queryKeys = {
   extensionStats: {
     summary: (options: ExtensionStatsOptions = {}) =>
       ["extension-stats", "summary", options.type ?? "all", options.status ?? "all"] as const,
+  },
+  extensionFeed: {
+    feed: (options: ExtensionFeedOptions = {}) =>
+      [
+        "extension-feed",
+        "feed",
+        options.type ?? "all",
+        options.status ?? "all",
+        options.limit ?? "all",
+      ] as const,
   },
   organizationFeed: {
     feed: (options: OrganizationFeedOptions = {}) =>

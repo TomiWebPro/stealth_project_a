@@ -24,6 +24,7 @@ import {
   fetchEventFeed,
   fetchEventStats,
   fetchExtension,
+  fetchExtensionFeed,
   fetchExtensions,
   fetchExtensionStats,
   fetchHomeSummary,
@@ -131,6 +132,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchCapabilities()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchExtensions()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchExtensionFeed()).rejects.toBeInstanceOf(ApiError);
   });
 
   it("can be switched off per domain without clearing the rest", async () => {
@@ -237,6 +239,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchExtensionStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the extension feed domain", async () => {
+    setMockFailure("extensionFeed");
+
+    await expect(fetchExtensionFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchExtensionFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the operation stats domain", async () => {

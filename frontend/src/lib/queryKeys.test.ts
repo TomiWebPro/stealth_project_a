@@ -261,6 +261,17 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the extension feed key by type, status and limit", () => {
+    expect(queryKeys.extensionFeed.feed()).toEqual(["extension-feed", "feed", "all", "all", "all"]);
+    expect(queryKeys.extensionFeed.feed({ type: "ui", status: "enabled", limit: 5 })).toEqual([
+      "extension-feed",
+      "feed",
+      "ui",
+      "enabled",
+      5,
+    ]);
+  });
+
   it("scopes the search stats key by project", () => {
     expect(queryKeys.searchStats.summary()).toEqual(["search-stats", "summary", "all"]);
     expect(queryKeys.searchStats.summary({ projectId: "p1" })).toEqual([

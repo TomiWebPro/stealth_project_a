@@ -30,6 +30,8 @@ import { eventFeedQueryParams } from "./eventFeed";
 import type { EventFeedOptions } from "./eventFeed";
 import { eventStatsQueryParams } from "./eventStats";
 import type { EventStatsOptions } from "./eventStats";
+import { extensionFeedQueryParams } from "./extensionFeed";
+import type { ExtensionFeedOptions } from "./extensionFeed";
 import { extensionStatsQueryParams } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
@@ -102,6 +104,7 @@ import type {
   EventFeed,
   EventStats,
   Extension,
+  ExtensionFeed,
   ExtensionStats,
   Job,
   JobFeed,
@@ -393,6 +396,11 @@ export function createHttpApiClient(
     /** Authoritative extension registry/installation metrics derived by `/extensions/stats`. */
     getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats> {
       return request<ExtensionStats>("/extensions/stats", extensionStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative extension installation feed derived by `/extensions/feed` (C173). */
+    getExtensionFeed(options?: ExtensionFeedOptions): Promise<ExtensionFeed> {
+      return request<ExtensionFeed>("/extensions/feed", extensionFeedQueryParams(options));
     },
 
     /** Newest-first authoritative organization feed derived by `/orgs/feed` (C161). */

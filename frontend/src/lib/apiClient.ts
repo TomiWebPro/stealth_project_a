@@ -14,6 +14,7 @@ export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
 import type { EventFeedOptions } from "./eventFeed";
 import type { EventStatsOptions } from "./eventStats";
+import type { ExtensionFeedOptions } from "./extensionFeed";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
@@ -61,6 +62,7 @@ import type {
   EventFeed,
   EventStats,
   Extension,
+  ExtensionFeed,
   ExtensionStats,
   Job,
   JobFeed,
@@ -143,6 +145,8 @@ export interface ApiClient {
   getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats>;
   /** Authoritative extension registry/installation metrics derived by `/extensions/stats`, optionally filtered (C61). */
   getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats>;
+  /** Newest-first authoritative extension installation feed derived by `/extensions/feed`, optionally filtered/limited (C173). */
+  getExtensionFeed(options?: ExtensionFeedOptions): Promise<ExtensionFeed>;
   /** Newest-first authoritative organization feed derived by `/orgs/feed`, with joined member/project counts (C161). */
   getOrganizationFeed(options?: OrganizationFeedOptions): Promise<OrganizationFeed>;
   /** Authoritative organization/membership metrics derived by `/orgs/stats`, optionally org-scoped (C69). */
@@ -252,6 +256,7 @@ export const mockApiClient: ApiClient = {
   getProjectFeed: mockApi.fetchProjectFeed,
   getProviderStats: mockApi.fetchProviderStats,
   getExtensionStats: mockApi.fetchExtensionStats,
+  getExtensionFeed: mockApi.fetchExtensionFeed,
   getOrganizationFeed: mockApi.fetchOrganizationFeed,
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getPipelineStats: mockApi.fetchPipelineStats,

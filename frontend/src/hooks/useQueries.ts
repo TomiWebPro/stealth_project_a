@@ -16,6 +16,7 @@ import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { EventFeedOptions } from "../lib/eventFeed";
 import type { EventStatsOptions } from "../lib/eventStats";
+import type { ExtensionFeedOptions } from "../lib/extensionFeed";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
@@ -63,6 +64,7 @@ import type {
   EventFeed,
   EventStats,
   Extension,
+  ExtensionFeed,
   ExtensionStats,
   Job,
   JobFeed,
@@ -249,6 +251,17 @@ export function useExtensionStats(
   return useQuery({
     queryKey: queryKeys.extensionStats.summary(options),
     queryFn: () => api.getExtensionStats(options),
+  });
+}
+
+/** Newest-first authoritative extension installation feed from `/extensions/feed`, optionally filtered/limited (C173). */
+export function useExtensionFeed(
+  options?: ExtensionFeedOptions,
+): UseQueryResult<ExtensionFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.extensionFeed.feed(options),
+    queryFn: () => api.getExtensionFeed(options),
   });
 }
 

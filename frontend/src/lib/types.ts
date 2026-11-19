@@ -50,6 +50,8 @@ export type {
   EventStats,
   EventTypeCount,
   Extension,
+  ExtensionFeed,
+  ExtensionFeedItem,
   ExtensionPermissionStat,
   ExtensionStatus,
   ExtensionStatusCount,
