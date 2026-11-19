@@ -2138,6 +2138,127 @@ jobs:
                 and pfbltbody.get("error", {}).get("code") == "validation_error"
                 and bool(pfbltbody.get("error", {}).get("request_id")), pf_bad_limit.text)
 
+          # Authoritative comment feed (C149/C151) is the newest /api/v1 URL the
+          # live client calls (getCommentFeed). Add one comment to the on-demand
+          # project so the derived feed has a real item, then probe the feed shape,
+          # item shape, newest-first order and whole-scope total, the `limit` page
+          # bound, the optional project scope and the shared 404/422 envelopes,
+          # keeping CI aligned with new endpoints as they go live.
+          comment_id = None
+          if project_id:
+              comment_created = httpx.post(
+                  f"{base}/comments",
+                  json={"project_id": project_id, "body": "ci smoke comment"},
+                  timeout=5)
+              check("comments/feed add comment 201",
+                    comment_created.status_code == 201, comment_created.text)
+              comment_id = (
+                  comment_created.json().get("id")
+                  if comment_created.status_code == 201 else None)
+          else:
+              check("comments/feed add comment setup", False,
+                    "could not obtain a project id")
+
+          comment_feed = httpx.get(f"{base}/comments/feed", timeout=5)
+          comment_feed_body = (comment_feed.json()
+                               if comment_feed.status_code == 200 else {})
+          check("comments/feed 200 feed shape",
+                comment_feed.status_code == 200
+                and isinstance(comment_feed_body.get("items"), list)
+                and isinstance(comment_feed_body.get("total"), int)
+                and "generated_at" in comment_feed_body, comment_feed.text)
+          check("comments/feed derived item shape",
+                comment_feed.status_code == 200
+                and comment_feed_body.get("total", 0) >= 1
+                and len(comment_feed_body.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "comment_id", "project_id", "project_name", "asset_id",
+                    "author_id", "body", "created_at"))
+                    for item in comment_feed_body["items"]), comment_feed.text)
+          check("comments/feed request-id header",
+                "x-request-id" in {k.lower() for k in comment_feed.headers},
+                str(dict(comment_feed.headers)))
+          if comment_id:
+              derived_comment_item = next(
+                  (i for i in comment_feed_body.get("items", [])
+                   if i.get("comment_id") == comment_id),
+                  None)
+              check("comments/feed derived comment",
+                    comment_feed.status_code == 200 and derived_comment_item is not None
+                    and derived_comment_item.get("body") == "ci smoke comment"
+                    and derived_comment_item.get("project_id") == project_id
+                    and derived_comment_item.get("asset_id") is None
+                    and isinstance(derived_comment_item.get("author_id"), str)
+                    and isinstance(derived_comment_item.get("project_name"), str)
+                    and bool(derived_comment_item.get("project_name"))
+                    and isinstance(derived_comment_item.get("created_at"), str),
+                    comment_feed.text)
+          else:
+              check("comments/feed derived setup", False,
+                    "could not add a comment for the feed probe")
+          comment_created_times = [
+              (i.get("created_at"), i.get("comment_id"))
+              for i in comment_feed_body.get("items", [])]
+          check("comments/feed newest-first order",
+                comment_feed.status_code == 200
+                and comment_created_times == sorted(comment_created_times, reverse=True),
+                comment_feed.text)
+          comment_feed_limited = httpx.get(
+              f"{base}/comments/feed", params={"limit": 1}, timeout=5)
+          comment_feed_limited_body = (comment_feed_limited.json()
+                                       if comment_feed_limited.status_code == 200 else {})
+          check("comments/feed limit bounds page not total",
+                comment_feed_limited.status_code == 200
+                and len(comment_feed_limited_body.get("items", [])) <= 1
+                and comment_feed_limited_body.get("total") == comment_feed_body.get("total"),
+                comment_feed_limited.text)
+          if project_id:
+              comment_feed_scoped = httpx.get(
+                  f"{base}/comments/feed",
+                  params={"project_id": project_id}, timeout=5)
+              comment_feed_scoped_body = (comment_feed_scoped.json()
+                                          if comment_feed_scoped.status_code == 200 else {})
+              check("comments/feed project scope 200",
+                    comment_feed_scoped.status_code == 200
+                    and isinstance(comment_feed_scoped_body.get("total"), int)
+                    and comment_feed_scoped_body.get("total", 0) >= 1
+                    and all(i.get("project_id") == project_id
+                            for i in comment_feed_scoped_body.get("items", [])),
+                    comment_feed_scoped.text)
+          else:
+              check("comments/feed project scope setup", False,
+                    "could not obtain a project id")
+          comment_feed_missing = httpx.get(
+              f"{base}/comments/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          comment_feed_404_body = (comment_feed_missing.json()
+                                   if comment_feed_missing.status_code == 404 else {})
+          check("comments/feed 404 shared envelope",
+                comment_feed_missing.status_code == 404
+                and comment_feed_404_body.get("error", {}).get("code") == "project_not_found"
+                and bool(comment_feed_404_body.get("error", {}).get("request_id")),
+                comment_feed_missing.text)
+          comment_feed_bad = httpx.get(
+              f"{base}/comments/feed",
+              params={"project_id": "not-a-uuid"}, timeout=5)
+          comment_feed_bad_body = (comment_feed_bad.json()
+                                   if comment_feed_bad.status_code == 422 else {})
+          check("comments/feed 422 malformed id envelope",
+                comment_feed_bad.status_code == 422
+                and comment_feed_bad_body.get("error", {}).get("code") == "validation_error"
+                and bool(comment_feed_bad_body.get("error", {}).get("request_id")),
+                comment_feed_bad.text)
+          comment_feed_bad_limit = httpx.get(
+              f"{base}/comments/feed", params={"limit": 0}, timeout=5)
+          comment_feed_bad_limit_body = (comment_feed_bad_limit.json()
+                                         if comment_feed_bad_limit.status_code == 422 else {})
+          check("comments/feed 422 invalid limit envelope",
+                comment_feed_bad_limit.status_code == 422
+                and comment_feed_bad_limit_body.get("error", {}).get("code") == "validation_error"
+                and bool(comment_feed_bad_limit_body.get("error", {}).get("request_id")),
+                comment_feed_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
