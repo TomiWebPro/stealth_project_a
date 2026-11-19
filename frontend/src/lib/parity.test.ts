@@ -64,6 +64,8 @@ import { derivePipelineStats, validatePipelineStatsArgs } from "./pipelineStats"
 import { deriveProjectFeed, validateProjectFeedArgs } from "./projectFeed";
 import type { ProjectFeedOptions } from "./projectFeed";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
+import { deriveProviderFeed, validateProviderFeedArgs } from "./providerFeed";
+import type { ProviderFeedOptions } from "./providerFeed";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
@@ -796,6 +798,34 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveProviderStats(PROVIDERS, REFERENCE_NOW, options);
   }
 
+  // Authoritative provider feed derives the deterministic ascending
+  // (name, provider_id) view from the same provider store as `/providers/stats`.
+  // Mirror the router's 422 validation (location / status / limit) over the
+  // shared seeds so live and mock agree. This must precede the dynamic
+  // /providers/{id} detail branch below.
+  if (path === "/providers/feed") {
+    const locationRaw = params.get("location");
+    const statusRaw = params.get("status");
+    const limitRaw = params.get("limit");
+    const options: ProviderFeedOptions = {
+      ...(locationRaw !== null ? { location: locationRaw as ProviderFeedOptions["location"] } : {}),
+      ...(statusRaw !== null ? { status: statusRaw as ProviderFeedOptions["status"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateProviderFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveProviderFeed(PROVIDERS, REFERENCE_NOW, options);
+  }
+
   if (path === "/providers") return PROVIDERS;
   if (path.startsWith("/providers/")) return PROVIDERS.find((p) => p.id === id) ?? NOT_FOUND;
   if (path === "/capabilities") {
@@ -1334,6 +1364,10 @@ describe("live vs mock transport parity", () => {
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
+      ["getProviderFeed", (api) => api.getProviderFeed()],
+      ["getProviderFeed scoped", (api) => api.getProviderFeed({ location: "cloud" })],
+      ["getProviderFeed filtered", (api) => api.getProviderFeed({ location: "cloud", status: "degraded" })],
+      ["getProviderFeed limited", (api) => api.getProviderFeed({ limit: 2 })],
       ["getExtensionStats", (api) => api.getExtensionStats()],
       ["getExtensionStats scoped", (api) => api.getExtensionStats({ type: "ui" })],
       ["getExtensionStats filtered", (api) => api.getExtensionStats({ type: "ui", status: "enabled" })],
@@ -1466,7 +1500,9 @@ describe("live vs mock transport parity", () => {
       const [mockValue, liveValue] = await Promise.all([run(mockApiClient), run(live)]);
       expect(liveValue, `${name} differs between mock and live`).toEqual(mockValue);
     }
-  }, 45_000);
+    // Each mock call carries 300ms simulated latency; the parity surface grows
+    // with every newly wired transport (provider feed added 4 more cases here).
+  }, 60_000);
 
   it("returns identical empty/not-found shapes for both transports", async () => {
     expect(await live.listAssetsByProject(emptyId)).toEqual(
@@ -2136,6 +2172,18 @@ describe("live vs mock transport parity", () => {
     expect(mockProviderStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProviderStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both narrow the provider feed to an empty page and reject invalid filters
+    // and page bounds with the same 422 envelope.
+    expect(await live.getProviderFeed({ location: "local", status: "degraded" })).toEqual(
+      await mockApiClient.getProviderFeed({ location: "local", status: "degraded" }),
+    );
+    const [mockProviderFeed422, liveProviderFeed422] = await Promise.all([
+      mockApiClient.getProviderFeed({ status: "busy" as never }).catch((cause) => cause),
+      live.getProviderFeed({ status: "busy" as never }).catch((cause) => cause),
+    ]);
+    expect(mockProviderFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveProviderFeed422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both zero-fill an empty extension-stats filter and reject invalid filters
     // with the same 422 envelope.
     expect(await live.getExtensionStats({ type: "bundle" })).toEqual(
@@ -2229,6 +2277,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProjectFeed).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
+    expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
     expect(typeof typed.getExtensionFeed).toBe("function");
     expect(typeof typed.getOrganizationFeed).toBe("function");

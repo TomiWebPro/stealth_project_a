@@ -33,6 +33,7 @@ import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
 import type { ProjectFeedOptions } from "./projectFeed";
 import type { ProjectStatsOptions } from "./projectStats";
+import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishStatsOptions } from "./publishStats";
@@ -90,6 +91,7 @@ import type {
   ProjectFeed,
   ProjectStats,
   Provider,
+  ProviderFeed,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -147,6 +149,8 @@ export interface ApiClient {
   getProjectFeed(options?: ProjectFeedOptions): Promise<ProjectFeed>;
   /** Authoritative provider fleet metrics derived by `/providers/stats`, optionally filtered (C57). */
   getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats>;
+  /** Deterministic authoritative provider feed derived by `/providers/feed`, optionally filtered/limited (C185). */
+  getProviderFeed(options?: ProviderFeedOptions): Promise<ProviderFeed>;
   /** Authoritative extension registry/installation metrics derived by `/extensions/stats`, optionally filtered (C61). */
   getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats>;
   /** Newest-first authoritative extension installation feed derived by `/extensions/feed`, optionally filtered/limited (C173). */
@@ -263,6 +267,7 @@ export const mockApiClient: ApiClient = {
   getProjectStats: mockApi.fetchProjectStats,
   getProjectFeed: mockApi.fetchProjectFeed,
   getProviderStats: mockApi.fetchProviderStats,
+  getProviderFeed: mockApi.fetchProviderFeed,
   getExtensionStats: mockApi.fetchExtensionStats,
   getExtensionFeed: mockApi.fetchExtensionFeed,
   getOrganizationFeed: mockApi.fetchOrganizationFeed,

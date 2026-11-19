@@ -68,6 +68,7 @@ import {
   fetchProjects,
   fetchProvider,
   fetchProviders,
+  fetchProviderFeed,
   fetchProviderStats,
   fetchPublishFeed,
   fetchRecentAssets,
@@ -700,6 +701,60 @@ describe("mock API provider stats (C57 follow-up)", () => {
 
     setMockFailure("providerStats");
     await expect(fetchProviderStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API provider feed (C185 follow-up)", () => {
+  it("derives a deterministic feed from the authoritative provider seeds", async () => {
+    const feed = await fetchProviderFeed();
+    expect(feed.total).toBe(PROVIDERS.length);
+    expect(feed.items).toHaveLength(PROVIDERS.length);
+    expect((feed.items ?? []).map((item) => item.name)).toEqual(
+      [...PROVIDERS].map((provider) => provider.name).sort(),
+    );
+    const local = feed.items?.find((item) => item.provider_id === "prov_local");
+    expect(local).toMatchObject({
+      provider_id: "prov_local",
+      name: "Local Runtime",
+      location: "local",
+      status: "available",
+      operation_ids: ["image-to-image", "text-to-image", "upscale"],
+      capability_count: 3,
+    });
+    expect(feed.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("filters, pages and keeps the whole-scope total", async () => {
+    const cloud = await fetchProviderFeed({ location: "cloud" });
+    expect(cloud.total).toBe(2);
+    const paged = await fetchProviderFeed({ limit: 1 });
+    expect(paged.total).toBe(PROVIDERS.length);
+    expect(paged.items).toHaveLength(1);
+    expect(await fetchProviderFeed({ location: "local", status: "degraded" })).toMatchObject({
+      items: [],
+      total: 0,
+    });
+  });
+
+  it("mirrors router validation and surfaces the injected failure", async () => {
+    await expect(fetchProviderFeed({ location: "moon" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchProviderFeed({ status: "busy" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchProviderFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("providerFeed");
+    await expect(fetchProviderFeed()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

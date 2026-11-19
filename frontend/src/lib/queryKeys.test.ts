@@ -274,6 +274,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the provider feed key by location, status and limit", () => {
+    expect(queryKeys.providerFeed.feed()).toEqual([
+      "provider-feed",
+      "feed",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.providerFeed.feed({ location: "cloud", status: "degraded", limit: 5 })).toEqual([
+      "provider-feed",
+      "feed",
+      "cloud",
+      "degraded",
+      5,
+    ]);
+  });
+
   it("scopes the extension stats key by type and status", () => {
     expect(queryKeys.extensionStats.summary()).toEqual([
       "extension-stats",

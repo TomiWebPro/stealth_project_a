@@ -28,6 +28,7 @@ import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectFeedOptions } from "./projectFeed";
 import type { ProjectStatsOptions } from "./projectStats";
+import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishStatsOptions } from "./publishStats";
@@ -128,6 +129,16 @@ export const queryKeys = {
         "summary",
         options.location ?? "all",
         options.status ?? "all",
+      ] as const,
+  },
+  providerFeed: {
+    feed: (options: ProviderFeedOptions = {}) =>
+      [
+        "provider-feed",
+        "feed",
+        options.location ?? "all",
+        options.status ?? "all",
+        options.limit ?? "all",
       ] as const,
   },
   extensionStats: {

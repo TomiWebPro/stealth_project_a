@@ -54,6 +54,7 @@ import {
   fetchProjects,
   fetchProvider,
   fetchProviders,
+  fetchProviderFeed,
   fetchProviderStats,
   fetchPublishFeed,
   fetchPublishStats,
@@ -231,6 +232,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchProviderStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the provider feed domain", async () => {
+    setMockFailure("providerFeed");
+
+    await expect(fetchProviderFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchProviderFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the extension stats domain", async () => {
@@ -620,6 +633,7 @@ describe("mock error-state fakes", () => {
         ["jobs", () => fetchJob(jobId)],
         ["providers", () => fetchProvider(providerId)],
         ["providerStats", () => fetchProviderStats()],
+        ["providerFeed", () => fetchProviderFeed()],
         ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],

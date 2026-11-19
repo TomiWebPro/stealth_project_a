@@ -1963,6 +1963,61 @@ describe("createHttpApiClient provider stats", () => {
   });
 });
 
+describe("createHttpApiClient provider feed", () => {
+  const feed = {
+    items: [
+      {
+        provider_id: "prov_a",
+        name: "Alpha Runtime",
+        location: "local",
+        status: "available",
+        operation_ids: ["text-to-image"],
+        capability_count: 1,
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /providers/feed with filters and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/providers/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getProviderFeed({ location: "local", status: "available", limit: 2 }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/providers/feed`);
+    expect(url.searchParams.get("location")).toBe("local");
+    expect(url.searchParams.get("status")).toBe("available");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no filters or page are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/providers/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getProviderFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Feed limit must be between 1 and 200." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getProviderFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Feed limit must be between 1 and 200.",
+    });
+  });
+});
+
 describe("createHttpApiClient extension stats", () => {
   const stats = {
     total_registered: 3,

@@ -35,6 +35,7 @@ import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectFeedOptions } from "../lib/projectFeed";
 import type { ProjectStatsOptions } from "../lib/projectStats";
+import type { ProviderFeedOptions } from "../lib/providerFeed";
 import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { PublishFeedOptions } from "../lib/publishFeed";
 import type { PublishStatsOptions } from "../lib/publishStats";
@@ -92,6 +93,7 @@ import type {
   ProjectFeed,
   ProjectStats,
   Provider,
+  ProviderFeed,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -244,6 +246,15 @@ export function useProviderStats(options?: ProviderStatsOptions): UseQueryResult
   return useQuery({
     queryKey: queryKeys.providerStats.summary(options),
     queryFn: () => api.getProviderStats(options),
+  });
+}
+
+/** Deterministic authoritative provider feed from `/providers/feed`, optionally filtered/limited (C185). */
+export function useProviderFeed(options?: ProviderFeedOptions): UseQueryResult<ProviderFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.providerFeed.feed(options),
+    queryFn: () => api.getProviderFeed(options),
   });
 }
 

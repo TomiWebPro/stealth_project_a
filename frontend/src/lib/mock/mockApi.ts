@@ -89,6 +89,8 @@ import { deriveProjectFeed, validateProjectFeedArgs } from "../projectFeed";
 import type { ProjectFeedOptions } from "../projectFeed";
 import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
 import type { ProjectStatsOptions } from "../projectStats";
+import { deriveProviderFeed, validateProviderFeedArgs } from "../providerFeed";
+import type { ProviderFeedOptions } from "../providerFeed";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
 import type { ProviderStatsOptions } from "../providerStats";
 import { derivePublishFeed, validatePublishFeedArgs } from "../publishFeed";
@@ -155,6 +157,7 @@ import type {
   ProjectFeed,
   ProjectStats,
   Provider,
+  ProviderFeed,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -219,7 +222,7 @@ function delay<T>(value: T): Promise<T> {
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
  * `activityStats`, `jobStats`,
- * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `providerFeed`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -521,6 +524,18 @@ export async function fetchProviderStats(
   failIfEnabled("providerStats");
   validateProviderStatsArgs(options);
   return delay(deriveProviderStats(PROVIDERS, REFERENCE_NOW, options));
+}
+
+/**
+ * Deterministic authoritative provider feed (C185) derived from the same
+ * provider seeds as the live `/providers/feed` endpoint. Router-style 422
+ * validation (location / status / limit) and the `"providerFeed"` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchProviderFeed(options?: ProviderFeedOptions): Promise<ProviderFeed> {
+  failIfEnabled("providerFeed");
+  validateProviderFeedArgs(options);
+  return delay(deriveProviderFeed(PROVIDERS, REFERENCE_NOW, options));
 }
 
 /**

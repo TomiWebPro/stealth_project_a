@@ -64,6 +64,8 @@ import { projectFeedQueryParams } from "./projectFeed";
 import type { ProjectFeedOptions } from "./projectFeed";
 import { projectStatsQueryParams } from "./projectStats";
 import type { ProjectStatsOptions } from "./projectStats";
+import { providerFeedQueryParams } from "./providerFeed";
+import type { ProviderFeedOptions } from "./providerFeed";
 import { providerStatsQueryParams } from "./providerStats";
 import type { ProviderStatsOptions } from "./providerStats";
 import { publishFeedQueryParams } from "./publishFeed";
@@ -134,6 +136,7 @@ import type {
   ProjectFeed,
   ProjectStats,
   Provider,
+  ProviderFeed,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -397,6 +400,11 @@ export function createHttpApiClient(
     /** Authoritative provider fleet metrics derived by the backend `/providers/stats`. */
     getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats> {
       return request<ProviderStats>("/providers/stats", providerStatsQueryParams(options));
+    },
+
+    /** Deterministic authoritative provider feed derived by the backend `/providers/feed` (C185). */
+    getProviderFeed(options?: ProviderFeedOptions): Promise<ProviderFeed> {
+      return request<ProviderFeed>("/providers/feed", providerFeedQueryParams(options));
     },
 
     /** Authoritative extension registry/installation metrics derived by `/extensions/stats`. */

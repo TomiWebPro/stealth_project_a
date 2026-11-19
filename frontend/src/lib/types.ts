@@ -118,6 +118,8 @@ export type {
   Provider,
   RoleMessageCount,
   ProviderCapability,
+  ProviderFeed,
+  ProviderFeedItem,
   ProviderLocation,
   ProviderLocationCount,
   ProviderOperationStat,
