@@ -29,6 +29,11 @@ const STATUS_TONE: Readonly<Record<ExtensionStatus, BadgeTone>> = {
   update_available: "warning",
 };
 
+/** Badge tone shared by registry cards and the authoritative stats panel. */
+export function extensionStatusTone(status: ExtensionStatus): BadgeTone {
+  return STATUS_TONE[status];
+}
+
 export function buildExtensionCards(extensions: readonly Extension[]): readonly ExtensionCard[] {
   return extensions.map((extension) => {
     const manifest = extension.manifest;
@@ -40,7 +45,7 @@ export function buildExtensionCards(extensions: readonly Extension[]): readonly 
       publisher: manifest.publisher,
       type: manifest.type,
       status: extension.status,
-      statusTone: STATUS_TONE[extension.status],
+      statusTone: extensionStatusTone(extension.status),
       permissions: (requirements.permissions ?? []).map((permission) => permission.name),
       capabilities: requirements.capabilities ?? [],
       providerIds: requirements.provider_ids ?? [],

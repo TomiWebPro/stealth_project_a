@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useExtensions } from "../../hooks/useQueries";
 import { errorMessage } from "../../lib/errors";
+import type { ExtensionStatus, ExtensionType } from "../../lib/types";
 import { PageHeader } from "../../layout/AppLayout";
 import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ExtensionStatsPanel } from "./ExtensionStatsPanel";
 import { buildExtensionCards, extensionSummary, SDK_EXAMPLES } from "./helpers";
 
 function RegistryCard() {
@@ -143,11 +145,52 @@ function ExamplesCard() {
 }
 
 export function ExtensionsScreen() {
+  const [type, setType] = useState<ExtensionType | "all">("all");
+  const [status, setStatus] = useState<ExtensionStatus | "all">("all");
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Extensions"
         description="Permissioned connectors and capability packages, with SDK examples."
+      />
+      <Card className="p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1 text-xs text-content-muted">
+            Type
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value as ExtensionType | "all")}
+              className="h-9 rounded-md border border-line bg-surface px-3 text-sm text-content"
+            >
+              <option value="all">All types</option>
+              <option value="capability">Capability</option>
+              <option value="ui">UI</option>
+              <option value="provider">Provider</option>
+              <option value="runtime">Runtime</option>
+              <option value="bundle">Bundle</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-content-muted">
+            Status
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value as ExtensionStatus | "all")}
+              className="h-9 rounded-md border border-line bg-surface px-3 text-sm text-content"
+            >
+              <option value="all">All statuses</option>
+              <option value="installed">Installed</option>
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+              <option value="update_available">Update available</option>
+            </select>
+          </label>
+        </div>
+      </Card>
+
+      <ExtensionStatsPanel
+        type={type === "all" ? undefined : type}
+        status={status === "all" ? undefined : status}
       />
       <RegistryCard />
       <ExamplesCard />
