@@ -8,6 +8,7 @@ import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
+import { OperationStatsPanel } from "../operations/OperationStatsPanel";
 
 /**
  * Global tasks/jobs screen for routes without a dedicated Phase 1b view.
@@ -59,6 +60,8 @@ export function JobsScreen() {
         title="Global job execution stats"
         description="Authoritative workspace-wide lifecycle, outcome and timing metrics."
       />
+
+      <OperationStatsPanel />
 
       {data ? (
         <JobsPanel
