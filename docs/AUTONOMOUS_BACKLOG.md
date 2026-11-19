@@ -1296,6 +1296,16 @@ this file is the execution checklist.
   C6 docs pass remains, owned by other agents), so C117 was added under the
   Never-empty well. ✅ 2026-11-19 — `551fac6`
 
+- [x] C118 (screens) Render the authoritative publish statistics (C113/C115/C116
+  follow-up) via `usePublishStats`: a reusable `PublishStatsPanel` with workspace-wide
+  (Home) and project-scoped (Assets browser, project detail) variants, four stat cards,
+  ascending version and descending per-project publish/byte breakdowns, and loading/
+  error/missing/empty/populated states — every display value derived in tested
+  `publishStatsHelpers` (byte-size/relative-time formatting, shares, empty detection).
+  Resolves the C116 screens follow-up. My owned column had no unchecked rows, so C118
+  was added under the Never-empty well.
+  ✅ 2026-11-19 — `068adb7`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1452,3 +1462,4 @@ this file is the execution checklist.
 - 2026-11-19 — `91afa99` — C115 (mocks): wired the authoritative publish statistics API (C113 follow-up) end to end — `getPublishStats`/`usePublishStats` atomically across mockApi (receipt-derived totals, delivered bytes, ascending by-version buckets, per-project publish/byte counts sorted by descending publishes then id, newest-publish recency, soft-deleted/malformed-receipt exclusion, router-style 422 + unknown-project 404 + injectable `publishStats` failure), the stable facade, live `httpApiClient` (`GET /publishes/stats?project_id=`), queryKeys and useQueries, with a shared `lib/publishStats` derivation/validation helper + quantitative publish-receipt seeds; parity guard extended to both transports (populated/scoped/empty/404/422 + surface guard). Lint clean, 781 tests, build green. My owned column had no unchecked rows, so C115 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `8cc2730` — C116 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/publishes/stats?project_id=` (snapshot shape + by-version/by-project breakdown shapes, an on-demand `publish_receipt` PATCH on the registered asset so the derived 200 shape is exercised, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found` and a malformed id yields 422 `validation_error`, and the request-id header) — the CI follow-up from C113/C115. No unchecked CI row remained, so C116 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (all probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12; frontend lint clean/781 tests/build green and backend pytest (783) green. Screens publish-stats rendering remains a screens follow-up.
 - 2026-11-19 — `551fac6` — C117 (backend): added authoritative `GET /api/v1/jobs/{job_id}/logs?level=&since_seq=&limit=` deriving a chronological, severity-filtered, cursor-paginated job-console log from the authoritative `JOB_EVENTS` stream (no second index) — each event projected to a `JobLogEntry` with a coarse `LogLevel` (debug/info/success/error), a resume `next_seq` cursor and a stream-wide `total`; optional `level` filter + bounds with shared 404 `job_not_found` / 422 `validation_error` envelopes. `JobLogEntry`/`JobLogFrame`/`LogLevel` mirrored in `frontend/src/types/jobLogs.ts`, README endpoint list synced, 8 tests × 2 backends green (799 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the log view is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains), so C117 was added under the Never-empty well.
+- 2026-11-19 — `068adb7` — C118 (screens): rendered authoritative publish statistics (C113/C115/C116 follow-up) via `usePublishStats` — a reusable `PublishStatsPanel` on Home (workspace-wide), the Assets browser and project detail (project-scoped) with four stat cards, ascending version and descending per-project publish/byte breakdowns, and all five UI states; every display value derived in tested `publishStatsHelpers`. Resolves the C116 screens follow-up. Lint clean, 793 tests, build green. My owned column had no unchecked rows, so C118 was added under the Never-empty well.
