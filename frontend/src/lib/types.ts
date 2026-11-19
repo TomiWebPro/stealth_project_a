@@ -47,6 +47,8 @@ export type {
   Conversation,
   ConversationFeed,
   ConversationFeedItem,
+  ConversationOverview,
+  ConversationOverviewCounts,
   ConversationStats,
   DashboardCounts,
   DashboardSummary,

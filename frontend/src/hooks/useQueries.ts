@@ -14,6 +14,7 @@ import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { CommentStatsOptions } from "../lib/commentStats";
 import type { CommentFeedOptions } from "../lib/commentFeed";
 import type { ConversationFeedOptions } from "../lib/conversationFeed";
+import type { ConversationOverviewOptions } from "../lib/conversationOverview";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { EventFeedOptions } from "../lib/eventFeed";
@@ -69,6 +70,7 @@ import type {
   CommentStats,
   Conversation,
   ConversationFeed,
+  ConversationOverview,
   ConversationStats,
   DashboardSummary,
   EventFeed,
@@ -436,6 +438,22 @@ export function useAssetOverview(
   return useQuery({
     queryKey: queryKeys.assetOverview.detail(assetId, options),
     queryFn: () => api.getAssetOverview(assetId, options),
+  });
+}
+
+/**
+ * Authoritative single-conversation snapshot (identity, zero-filled message
+ * counts, last-message preview and a bounded newest-message list) from
+ * `/conversations/{id}/overview` (C209).
+ */
+export function useConversationOverview(
+  conversationId: string,
+  options?: ConversationOverviewOptions,
+): UseQueryResult<ConversationOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.conversationOverview.detail(conversationId, options),
+    queryFn: () => api.getConversationOverview(conversationId, options),
   });
 }
 

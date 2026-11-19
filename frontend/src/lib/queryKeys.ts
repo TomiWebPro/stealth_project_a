@@ -9,6 +9,7 @@ import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
+import type { ConversationOverviewOptions } from "./conversationOverview";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { EventFeedOptions } from "./eventFeed";
@@ -108,6 +109,10 @@ export const queryKeys = {
   conversationFeed: {
     feed: (options: ConversationFeedOptions = {}) =>
       ["conversation-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
+  },
+  conversationOverview: {
+    detail: (conversationId: string, options: ConversationOverviewOptions = {}) =>
+      ["conversation-overview", "detail", conversationId, options.recentLimit ?? "all"] as const,
   },
   commentFeed: {
     feed: (options: CommentFeedOptions = {}) =>

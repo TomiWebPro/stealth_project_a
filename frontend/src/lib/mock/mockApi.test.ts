@@ -11,6 +11,7 @@ import {
   JOBS,
   JOB_EVENTS,
   JOB_RETRIES,
+  MESSAGES,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_PLANS,
@@ -40,6 +41,7 @@ import {
   fetchConversations,
   fetchConversationStats,
   fetchConversationFeed,
+  fetchConversationOverview,
   fetchCurrentUser,
   fetchDashboard,
   fetchEventStats,
@@ -1933,6 +1935,70 @@ describe("mock API asset overview (C205 follow-up)", () => {
 
     setMockFailure("assetOverview");
     await expect(fetchAssetOverview(assetId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API conversation overview (C209 follow-up)", () => {
+  const film = CONVERSATIONS.find((conversation) => conversation.message_count && conversation.message_count > 0);
+  const empty = CONVERSATIONS.find((conversation) => conversation.message_count === 0);
+  const conversationId = film?.id ?? "";
+
+  it("derives a populated snapshot with identity, counts and a last-message preview", async () => {
+    const overview = await fetchConversationOverview(conversationId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.conversation_id).toBe(conversationId);
+    expect(overview?.title).toBe(film?.title);
+    expect(overview?.message_count).toBe(film?.message_count);
+    expect(overview?.counts.total).toBe(
+      MESSAGES.filter((message) => message.conversation_id === conversationId).length,
+    );
+    expect((overview?.counts.by_role ?? []).reduce((sum, row) => sum + row.count, 0)).toBe(
+      overview?.counts.total,
+    );
+    expect((overview?.counts.by_status ?? []).reduce((sum, row) => sum + row.count, 0)).toBe(
+      overview?.counts.total,
+    );
+    expect(overview?.last_message_role).toBe("assistant");
+    expect(overview?.last_message_excerpt).toContain("Dataset prep");
+  });
+
+  it("derives a zero-filled snapshot for an empty conversation", async () => {
+    const overview = await fetchConversationOverview(empty?.id ?? "");
+    expect(overview?.counts.total).toBe(0);
+    expect((overview?.counts.by_role ?? []).every((row) => row.count === 0)).toBe(true);
+    expect((overview?.counts.by_status ?? []).every((row) => row.count === 0)).toBe(true);
+    expect(overview?.last_message_role).toBeNull();
+    expect(overview?.last_message_excerpt).toBeNull();
+    expect(overview?.recent_messages).toEqual([]);
+  });
+
+  it("bounds the recent-message list without changing the totals", async () => {
+    const whole = await fetchConversationOverview(conversationId);
+    const limited = await fetchConversationOverview(conversationId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.recent_messages).toHaveLength(1);
+    expect(limited?.last_message_excerpt).toBe(whole?.last_message_excerpt);
+  });
+
+  it("mirrors router validation, the unknown-conversation 404 and the injected failure", async () => {
+    await expect(fetchConversationOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchConversationOverview(conversationId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchConversationOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+
+    setMockFailure("conversationOverview");
+    await expect(fetchConversationOverview(conversationId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

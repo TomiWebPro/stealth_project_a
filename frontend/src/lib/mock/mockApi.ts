@@ -35,6 +35,11 @@ import {
 } from "../conversationFeed";
 import type { ConversationFeedOptions } from "../conversationFeed";
 import {
+  deriveConversationOverview,
+  validateConversationOverviewArgs,
+} from "../conversationOverview";
+import type { ConversationOverviewOptions } from "../conversationOverview";
+import {
   deriveConversationStats,
   validateConversationStatsArgs,
 } from "../conversationStats";
@@ -148,6 +153,7 @@ import type {
   CommentStats,
   Conversation,
   ConversationFeed,
+  ConversationOverview,
   ConversationStats,
   EventFeed,
   EventStats,
@@ -252,7 +258,8 @@ function delay<T>(value: T): Promise<T> {
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
- * `projectOverview`, `assetOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
+ * `projectOverview`, `assetOverview`, `conversationOverview`, `jobLogs`, `jobFeed`
+ * and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -975,6 +982,36 @@ export async function fetchProjectOverview(
         jobs: JOBS,
         comments: COMMENTS,
         presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-conversation overview (C209) derived from the same stores
+ * as the live `/conversations/{id}/overview` endpoint. Router-style 422
+ * validation (conversation id / recent_limit), a normalized 404-to-`undefined`
+ * for an unknown conversation and the `"conversationOverview"` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchConversationOverview(
+  conversationId: string,
+  options?: ConversationOverviewOptions,
+): Promise<ConversationOverview | undefined> {
+  failIfEnabled("conversationOverview");
+  validateConversationOverviewArgs(conversationId, options);
+  if (!CONVERSATIONS.some((conversation) => conversation.id === conversationId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveConversationOverview(
+      conversationId,
+      {
+        conversations: CONVERSATIONS,
+        messages: MESSAGES,
+        projects: PROJECTS,
         now: REFERENCE_NOW,
       },
       options,

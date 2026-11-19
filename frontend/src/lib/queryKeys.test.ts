@@ -168,6 +168,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the conversation overview key by conversation and recent limit", () => {
+    expect(queryKeys.conversationOverview.detail("c1")).toEqual([
+      "conversation-overview",
+      "detail",
+      "c1",
+      "all",
+    ]);
+    expect(queryKeys.conversationOverview.detail("c1", { recentLimit: 3 })).toEqual([
+      "conversation-overview",
+      "detail",
+      "c1",
+      3,
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

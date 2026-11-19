@@ -26,6 +26,11 @@ import type { AssetOverviewOptions } from "./assetOverview";
 import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationFeed, validateConversationFeedArgs } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
+import {
+  deriveConversationOverview,
+  validateConversationOverviewArgs,
+} from "./conversationOverview";
+import type { ConversationOverviewOptions } from "./conversationOverview";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import { deriveCommentFeed, validateCommentFeedArgs } from "./commentFeed";
 import type { CommentFeedOptions } from "./commentFeed";
@@ -1049,6 +1054,34 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveConversationStats(CONVERSATIONS, MESSAGES, REFERENCE_NOW, options);
   }
 
+  // Authoritative single-conversation overview derives a compact snapshot from
+  // the same conversation/message/project stores on every call; mirror the
+  // router's 422 validation, unknown-conversation 404 and repository derivation
+  // over the seeds. This must precede the dynamic /conversations/{id} branch.
+  if (/^\/conversations\/[^/]+\/overview$/.test(path)) {
+    const conversationId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options: ConversationOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateConversationOverviewArgs(conversationId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!CONVERSATIONS.some((conversation) => conversation.id === conversationId)) return NOT_FOUND;
+    return deriveConversationOverview(
+      conversationId,
+      { conversations: CONVERSATIONS, messages: MESSAGES, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+  }
+
   if (path === "/conversations") {
     return CONVERSATIONS.filter((c) => c.project_id === params.get("project_id"));
   }
@@ -1547,6 +1580,11 @@ describe("live vs mock transport parity", () => {
       ["getProjectOverview limited", (api) => api.getProjectOverview(filmId, { recentLimit: 2 })],
       ["getAssetOverview", (api) => api.getAssetOverview(impactRootId)],
       ["getAssetOverview limited", (api) => api.getAssetOverview(impactRootId, { recentLimit: 2 })],
+      ["getConversationOverview", (api) => api.getConversationOverview(conversationId)],
+      [
+        "getConversationOverview limited",
+        (api) => api.getConversationOverview(conversationId, { recentLimit: 2 }),
+      ],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -1839,6 +1877,15 @@ describe("live vs mock transport parity", () => {
     expect(await live.getAssetOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getAssetOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The conversation overview resolves an unknown conversation to undefined
+    // on both transports and returns a zero-filled snapshot for the empty seed.
+    expect(await live.getConversationOverview(conversationId)).toEqual(
+      await mockApiClient.getConversationOverview(conversationId),
+    );
+    expect(await live.getConversationOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getConversationOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
@@ -2419,6 +2466,24 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed conversation id or an out-of-range
+    // recent_limit with the same 422 envelope for the conversation overview.
+    const badConversationOverviewOptions: Array<
+      [string, string, ConversationOverviewOptions | undefined]
+    > = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [conversationId, conversationId, { recentLimit: 0 }],
+      [conversationId, conversationId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badConversationOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getConversationOverview(mockId, options).catch((cause) => cause),
+        live.getConversationOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -2596,6 +2661,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectFeed).toBe("function");
     expect(typeof typed.getProjectOverview).toBe("function");
     expect(typeof typed.getAssetOverview).toBe("function");
+    expect(typeof typed.getConversationOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");

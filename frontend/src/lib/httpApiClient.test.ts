@@ -679,6 +679,102 @@ describe("createHttpApiClient asset overview (C205)", () => {
   });
 });
 
+describe("createHttpApiClient conversation overview (C209)", () => {
+  const conversationId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const overview = {
+    conversation_id: conversationId,
+    project_id: project.id,
+    project_name: project.name,
+    title: "Shot review",
+    created_by: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    created_at: "2026-01-02T00:00:00Z",
+    updated_at: "2026-01-03T00:00:00Z",
+    message_count: 2,
+    last_message_role: "assistant",
+    last_message_excerpt: "Looks good",
+    counts: {
+      total: 2,
+      by_role: [
+        { role: "system", count: 0 },
+        { role: "user", count: 1 },
+        { role: "assistant", count: 1 },
+        { role: "tool", count: 0 },
+      ],
+      by_status: [
+        { status: "pending", count: 0 },
+        { status: "streaming", count: 0 },
+        { status: "complete", count: 2 },
+        { status: "error", count: 0 },
+      ],
+    },
+    recent_messages: [],
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the conversation overview path with the recent limit and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/conversations/${conversationId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getConversationOverview(conversationId, { recentLimit: 3 })).resolves.toEqual(
+      overview,
+    );
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/conversations/${conversationId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("3");
+  });
+
+  it("omits the query string when no recent limit is supplied", async () => {
+    const { fetchImpl, calls } = router({
+      [`/conversations/${conversationId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+    await expect(api.getConversationOverview(conversationId)).resolves.toEqual(overview);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces validation and other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getConversationOverview(conversationId)).resolves.toBeUndefined();
+
+    const invalid = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          {
+            error: {
+              code: "validation_error",
+              message: "Invalid conversation id.",
+              details: [{ field: "conversation_id", message: "must be a UUID" }],
+            },
+          },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(invalid.getConversationOverview("bad")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getConversationOverview(conversationId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient project overview (C201)", () => {
   const overview = {
     project_id: project.id,

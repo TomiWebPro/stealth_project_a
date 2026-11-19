@@ -65,7 +65,7 @@ export function validateConversationFeedArgs(options: ConversationFeedOptions = 
 }
 
 /** Trim and collapse whitespace, then truncate to the backend's fixed excerpt width. */
-function excerpt(content: string): string {
+export function excerpt(content: string): string {
   const cleaned = content.trim().split(/\s+/).join(" ");
   return cleaned.length <= EXCERPT_CHARS ? cleaned : cleaned.slice(0, EXCERPT_CHARS) + "…";
 }

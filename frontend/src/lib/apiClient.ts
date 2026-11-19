@@ -10,6 +10,7 @@ import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
+import type { ConversationOverviewOptions } from "./conversationOverview";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
@@ -67,6 +68,7 @@ import type {
   CommentStats,
   Conversation,
   ConversationFeed,
+  ConversationOverview,
   ConversationStats,
   DashboardSummary,
   EventFeed,
@@ -226,6 +228,16 @@ export interface ApiClient {
     projectId: string,
     options?: ProjectOverviewOptions,
   ): Promise<ProjectOverview | undefined>;
+  /**
+   * Authoritative single-conversation snapshot (identity, zero-filled message
+   * role/status counts, a last-message preview and a bounded newest-message
+   * list) from `/conversations/{id}/overview`; unknown conversations resolve to
+   * `undefined` (C209).
+   */
+  getConversationOverview(
+    conversationId: string,
+    options?: ConversationOverviewOptions,
+  ): Promise<ConversationOverview | undefined>;
   /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
@@ -329,6 +341,7 @@ export const mockApiClient: ApiClient = {
   getProjectDetail: mockApi.fetchProjectDetail,
   getAssetOverview: mockApi.fetchAssetOverview,
   getProjectOverview: mockApi.fetchProjectOverview,
+  getConversationOverview: mockApi.fetchConversationOverview,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,

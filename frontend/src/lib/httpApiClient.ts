@@ -25,6 +25,8 @@ import { commentStatsQueryParams } from "./commentStats";
 import type { CommentStatsOptions } from "./commentStats";
 import { conversationFeedQueryParams } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
+import { conversationOverviewQueryParams } from "./conversationOverview";
+import type { ConversationOverviewOptions } from "./conversationOverview";
 import { conversationStatsQueryParams } from "./conversationStats";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
@@ -117,6 +119,7 @@ import type {
   CommentStats,
   Conversation,
   ConversationFeed,
+  ConversationOverview,
   ConversationStats,
   DashboardSummary,
   EventFeed,
@@ -608,6 +611,26 @@ export function createHttpApiClient(
         return await request<ProjectOverview>(
           `/projects/${encodeURIComponent(projectId)}/overview`,
           projectOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-conversation overview; the backend 404s on an
+     * unknown conversation, which is normalized to `undefined` like the other
+     * detail lookups.
+     */
+    async getConversationOverview(
+      conversationId: string,
+      options?: ConversationOverviewOptions,
+    ): Promise<ConversationOverview | undefined> {
+      try {
+        return await request<ConversationOverview>(
+          `/conversations/${encodeURIComponent(conversationId)}/overview`,
+          conversationOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

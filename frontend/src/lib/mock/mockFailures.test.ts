@@ -22,6 +22,7 @@ import {
   fetchConversations,
   fetchConversationStats,
   fetchConversationFeed,
+  fetchConversationOverview,
   fetchCurrentUser,
   fetchEventFeed,
   fetchEventStats,
@@ -134,6 +135,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchPipelineFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectOverview(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchAssetOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchConversationOverview(CONVERSATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
@@ -399,6 +401,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchAssetOverview(overviewAssetId)).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the conversation overview domain", async () => {
+    const overviewConversationId = CONVERSATIONS[0]?.id ?? "";
+    setMockFailure("conversationOverview");
+
+    await expect(fetchConversationOverview(overviewConversationId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchConversationOverview(overviewConversationId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the project overview domain", async () => {
