@@ -72,6 +72,7 @@ from .routers import (
     upload_feed,
     upload_stats,
     uploads,
+    version_feed,
     version_stats,
 )
 from .schemas.common import API_PREFIX, ErrorBody, ErrorDetail, ErrorResponse, HealthResponse
@@ -334,8 +335,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(tags.router, prefix=API_PREFIX)
     app.include_router(impact.router, prefix=API_PREFIX)
     app.include_router(lineage_stats.router, prefix=API_PREFIX)
-    # "/versions/stats" is a literal path with no templated sibling; register it
-    # directly to keep the version-stats path explicit.
+    # "/versions/feed" and "/versions/stats" are literal paths with no templated
+    # sibling; register them directly to keep both version paths explicit.
+    app.include_router(version_feed.router, prefix=API_PREFIX)
     app.include_router(version_stats.router, prefix=API_PREFIX)
 
     # Backwards-compatible unprefixed probe from the original scaffold.

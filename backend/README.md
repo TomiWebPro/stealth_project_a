@@ -94,6 +94,11 @@ All paths are prefixed with `/api/v1`.
   per-project activity and newest-version recency) derived from the asset version
   store; versions of soft-deleted/unknown assets are excluded, optional project
   scope with shared 404/422 envelopes
+  `GET /versions/feed?project_id=&limit=` — newest-first asset version feed
+  (asset/project identity with joined project name, asset name/type, version
+  number, creator and creation time; whole-scope `total` before the `limit` page)
+  derived from the version store with a deterministic `(created_at, asset_id,
+  version)` tie-break; versions of soft-deleted/unknown assets are excluded
   `GET /publishes?project_id=&limit=` — newest-first publish feed of published
   deliverables (asset/project id + name, type, receipt version/bytes, publish
   time) derived from the same authoritative receipts; soft-deleted/unpublished

@@ -277,6 +277,10 @@ from .upload_stats import (
     UploadStatus,
     UploadStatusCount,
 )
+from .version_feed import (
+    VersionFeed,
+    VersionFeedItem,
+)
 from .version_stats import (
     VersionNumberCount,
     VersionProjectCount,
@@ -517,6 +521,9 @@ __all__ = [
     "UploadStatusCount",
     "UploadProjectCount",
     "UploadStats",
+    # version feed
+    "VersionFeed",
+    "VersionFeedItem",
     # version stats
     "VersionNumberCount",
     "VersionProjectCount",

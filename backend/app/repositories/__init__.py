@@ -49,6 +49,7 @@ from .tags import TagRepository
 from .uploads import UploadRepository
 from .upload_feed import UploadFeedRepository
 from .upload_stats import UploadStatsRepository
+from .version_feed import VersionFeedRepository
 from .version_stats import VersionStatsRepository
 
 
@@ -96,6 +97,7 @@ class Repositories:
     dashboard: DashboardRepository
     tags: TagRepository
     impact: ImpactRepository
+    version_feed: VersionFeedRepository
     version_stats: VersionStatsRepository
 
     @classmethod
@@ -160,6 +162,7 @@ class Repositories:
         activity_stats = ActivityStatsRepository(activity, clock=clock)
         tags = TagRepository(store, projects, clock=clock)
         impact = ImpactRepository(store, assets, clock=clock)
+        version_feed = VersionFeedRepository(store, projects, clock=clock)
         version_stats = VersionStatsRepository(store, projects, clock=clock)
         return cls(
             activity=activity,
@@ -204,6 +207,7 @@ class Repositories:
             dashboard=dashboard,
             tags=tags,
             impact=impact,
+            version_feed=version_feed,
             version_stats=version_stats,
         )
 
