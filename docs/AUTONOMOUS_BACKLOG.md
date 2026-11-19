@@ -1189,6 +1189,16 @@ this file is the execution checklist.
   the repo-wide C6 docs pass remains, owned by other agents), so C109 was added
   under the Never-empty well. ✅ 2026-11-19 — `7711aec`
 
+- [x] C110 (screens) Render the authoritative job retry statistics (C105/C107/
+  C108 follow-up) via `useRetryStats`: a reusable `RetryStatsPanel` with
+  workspace-wide (Jobs) and project-scoped (project detail) variants, four stat
+  cards, zero-filled queued/running/succeeded/failed/canceled status and
+  per-project retry/job breakdowns, and loading/error/missing/empty/populated
+  states — every display value derived in tested `retryStatsHelpers`.
+  Resolves the C108 screens follow-up. My owned column had no unchecked rows,
+  so C110 was added under the Never-empty well.
+  ✅ 2026-11-19 — `75f0b3b`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1337,3 +1347,4 @@ this file is the execution checklist.
 - 2026-11-19 — `87ae1e5` — C107 (mocks): wired the authoritative job retry statistics API (C105 follow-up) end to end — `getRetryStats`/`useRetryStats` atomically across mockApi (seed-derived zero-filled status buckets, duplicate-ledger retry counts, per-project retry/job activity sorted by retries then id, orphan exclusion, joined-job recency; router-style 422 + unknown-project 404 + injectable `retryStats` failure), the stable facade, live `httpApiClient` (`GET /retries/stats?project_id=`), queryKeys and useQueries, with a shared `lib/retryStats` derivation/validation helper + ledger seeds and parity extended to both transports; lint clean, 733 tests, build green. My owned column had no unchecked rows, so C107 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `d88537d` — C108 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/retries/stats` (zero-filled snapshot + by_status/by_project breakdown shapes, the five canonical job statuses queued/running/succeeded/failed/canceled, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found`, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C105/C107. No unchecked CI row remained, so C108 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (115/115 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12; frontend lint/test (733)/build and backend pytest (761) green. Screens retry-stats rendering remains a screens follow-up.
 - 2026-11-19 — `7711aec` — C109 (backend): added authoritative `GET /api/v1/versions/stats?project_id=` deriving version-record totals, distinct versioned assets, revision count, by-version and per-project breakdowns and newest-version recency from the authoritative `ASSET_VERSIONS` store joined to assets (deleted/unknown assets excluded, no second index, shared 404/422 envelopes); `VersionStats`/`VersionNumberCount`/`VersionProjectCount` mirrored in `frontend/src/types/versionStats.ts`, README endpoint list synced, 5 tests × 2 backends green (771 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C109 was added under the Never-empty well.
+- 2026-11-19 — `75f0b3b` — C110 (screens): rendered the authoritative job retry statistics (C105/C107/C108 follow-up) via `useRetryStats` — a reusable `RetryStatsPanel` on Jobs (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled queued/running/succeeded/failed/canceled status and per-project retry/job breakdowns, and all five UI states; every display value derived in tested `retryStatsHelpers`. Resolves the C108 screens follow-up. Lint clean, 747 tests, build green. My owned column had no unchecked rows, so C110 was added under the Never-empty well.
