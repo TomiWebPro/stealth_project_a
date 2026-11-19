@@ -41,6 +41,7 @@ from .repositories.lineage_feed import LineageFeedRepository
 from .repositories.lineage_stats import LineageStatsRepository
 from .repositories.job_stats import JobStatsRepository
 from .repositories.job_feed import JobFeedRepository
+from .repositories.job_overview import JobOverviewRepository
 from .repositories.job_logs import JobLogsRepository
 from .repositories.job_queue import JobQueueRepository
 from .repositories.jobs import JobRepository
@@ -287,6 +288,12 @@ def get_job_feed_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> JobFeedRepository:
     return repositories.job_feed
+
+
+def get_job_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> JobOverviewRepository:
+    return repositories.job_overview
 
 
 def get_job_logs_repository(
@@ -572,6 +579,7 @@ __all__ = [
     "get_job_repository",
     "get_job_stats_repository",
     "get_job_feed_repository",
+    "get_job_overview_repository",
     "get_job_logs_repository",
     "get_job_queue_repository",
     "get_lineage_feed_repository",

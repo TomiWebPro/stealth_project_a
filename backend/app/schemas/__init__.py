@@ -117,6 +117,10 @@ from .job_feed import (
     JobFeed,
     JobFeedItem,
 )
+from .job_overview import (
+    JobOverview,
+    JobOverviewCounts,
+)
 from .job_logs import (
     JobLogEntry,
     JobLogFrame,
@@ -395,6 +399,9 @@ __all__ = [
     # job feed
     "JobFeed",
     "JobFeedItem",
+    # job overview
+    "JobOverview",
+    "JobOverviewCounts",
     # job logs
     "JobLogEntry",
     "JobLogFrame",

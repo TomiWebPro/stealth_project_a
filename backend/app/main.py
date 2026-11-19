@@ -49,6 +49,7 @@ from .routers import (
     impact,
     job_feed,
     job_logs,
+    job_overview,
     job_queue,
     job_stats,
     jobs,
@@ -322,6 +323,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/jobs/feed" is a literal path; register it before the UUID-templated
     # "/jobs/{job_id}" route so "feed" is never parsed as a job id.
     app.include_router(job_feed.router, prefix=API_PREFIX)
+    # "/jobs/{job_id}/overview" is a nested single-job view; mount it beside the
+    # job routers and before jobs so its literal suffix stays explicit.
+    app.include_router(job_overview.router, prefix=API_PREFIX)
     app.include_router(jobs.router, prefix=API_PREFIX)
     # "/providers/stats" and "/providers/feed" must be registered before
     # "/providers/{provider_id}" so the literal paths win over the dynamic one.
