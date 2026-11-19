@@ -22,6 +22,7 @@ export * from "./collaborationFeed";
 export * from "./commentFeed";
 export * from "./commentStats";
 export * from "./asset";
+export * from "./assetOverview";
 export * from "./assetFeed";
 export * from "./assetStats";
 export * from "./operation";

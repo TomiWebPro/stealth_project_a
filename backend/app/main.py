@@ -25,6 +25,7 @@ from .routers import (
     adapters,
     asset_feed,
     asset_stats,
+    asset_overview,
     assets,
     audit,
     auth,
@@ -292,6 +293,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/assets/feed" is a literal path; register it before the UUID-templated
     # "/assets/{asset_id}" route so "feed" is never parsed as an asset id.
     app.include_router(asset_feed.router, prefix=API_PREFIX)
+    # "/assets/{asset_id}/overview" is a nested single-asset view; mount it
+    # beside the asset routers and before the assets router so its literal
+    # suffix stays explicit.
+    app.include_router(asset_overview.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
     # "/uploads/stats" must be registered before "/uploads/{id}" so the literal
     # stats path wins over the upload-id-templated one.

@@ -12,6 +12,7 @@ from .activity_stats import ActivityStatsRepository
 from .assets import AssetRepository
 from .asset_feed import AssetFeedRepository
 from .asset_stats import AssetStatsRepository
+from .asset_overview import AssetOverviewRepository
 from .audit import AuditRepository
 from .auth import AuthRepository
 from .conversations import ConversationRepository
@@ -76,6 +77,7 @@ class Repositories:
     assets: AssetRepository
     asset_feed: AssetFeedRepository
     asset_stats: AssetStatsRepository
+    asset_overview: AssetOverviewRepository
     conversations: ConversationRepository
     conversation_feed: ConversationFeedRepository
     conversation_stats: ConversationStatsRepository
@@ -138,6 +140,7 @@ class Repositories:
         assets = AssetRepository(store, projects, clock=clock)
         asset_feed = AssetFeedRepository(store, projects, clock=clock)
         asset_stats = AssetStatsRepository(store, projects, clock=clock)
+        asset_overview = AssetOverviewRepository(store, assets, projects, clock=clock)
         conversations = ConversationRepository(store, projects, assets, clock=clock)
         conversation_feed = ConversationFeedRepository(store, projects, clock=clock)
         conversation_stats = ConversationStatsRepository(store, projects, clock=clock)
@@ -210,6 +213,7 @@ class Repositories:
             assets=assets,
             asset_feed=asset_feed,
             asset_stats=asset_stats,
+            asset_overview=asset_overview,
             conversations=conversations,
             conversation_feed=conversation_feed,
             conversation_stats=conversation_stats,

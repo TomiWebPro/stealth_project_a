@@ -89,6 +89,11 @@ All paths are prefixed with `/api/v1`.
   `GET /assets/stats?project_id=` — inventory metrics (zero-filled type/status
   breakdowns, stored bytes, version revisions, recency) derived from the asset
   store; deleted assets are excluded
+  `GET /assets/{id}/overview?recent_limit=` — single-asset snapshot (identity +
+  joined project name, current version, published flag, cross-domain counts for
+  versions/upstream/downstream/comments/tags and the newest version records)
+  derived from the authoritative stores; lineage counts reuse the relationship
+  set and the published flag reuses the publish receipt parser
   `GET /lineage/stats?project_id=` — authoritative lineage metrics (zero-filled
   relationship-type breakdown, per-project link counts, distinct live-asset count
   and newest-link recency) derived from the asset relationship store; links from

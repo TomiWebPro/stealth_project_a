@@ -53,6 +53,10 @@ from .asset import (
     UploadRequest,
     UploadTicket,
 )
+from .asset_overview import (
+    AssetOverview,
+    AssetOverviewCounts,
+)
 from .auth import (
     LoginRequest,
     Member,
@@ -428,6 +432,9 @@ __all__ = [
     "StorageRef",
     "UploadRequest",
     "UploadTicket",
+    # asset overview
+    "AssetOverview",
+    "AssetOverviewCounts",
     # project feed
     "ProjectFeed",
     "ProjectFeedItem",
