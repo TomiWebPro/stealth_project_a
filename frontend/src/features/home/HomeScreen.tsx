@@ -15,6 +15,7 @@ import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
+import { VersionFeedPanel } from "../assets/VersionFeedPanel";
 import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
@@ -189,6 +190,10 @@ export function HomeScreen() {
         <VersionStatsPanel
           title="Workspace version stats"
           description="Authoritative asset version metrics across every project in the workspace."
+        />
+        <VersionFeedPanel
+          title="Workspace asset versions"
+          description="Newest-first asset version records across every project in the workspace."
         />
         <PublishFeedPanel
           title="Workspace published deliverables"
