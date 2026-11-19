@@ -2259,6 +2259,112 @@ jobs:
                 and bool(comment_feed_bad_limit_body.get("error", {}).get("request_id")),
                 comment_feed_bad_limit.text)
 
+          # Authoritative asset version feed (C153/C155) is the newest /api/v1
+          # URL the live client calls (getVersionFeed). Reuse the on-demand
+          # registered asset (which now has the v1 from registration plus the
+          # v2 appended in the versions/stats probe) so the derived feed has real
+          # items. Probe the feed shape, item shapes, newest-first
+          # (created_at, asset_id, version) order and whole-scope total, the
+          # `limit` page bound, the optional project scope and the shared 404/422
+          # envelopes, keeping CI aligned with new endpoints as they go live.
+          version_feed = httpx.get(f"{base}/versions/feed", timeout=5)
+          vfbody = version_feed.json() if version_feed.status_code == 200 else {}
+          check("versions/feed 200 feed shape",
+                version_feed.status_code == 200
+                and isinstance(vfbody.get("items"), list)
+                and isinstance(vfbody.get("total"), int)
+                and "generated_at" in vfbody, version_feed.text)
+          check("versions/feed derived item shape",
+                version_feed.status_code == 200
+                and vfbody.get("total", 0) >= 1
+                and len(vfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "asset_id", "project_id", "project_name", "asset_name",
+                    "asset_type", "version", "created_by", "created_at"))
+                    for item in vfbody["items"]), version_feed.text)
+          check("versions/feed request-id header",
+                "x-request-id" in {k.lower() for k in version_feed.headers},
+                str(dict(version_feed.headers)))
+          if asset_id:
+              derived_item = next(
+                  (i for i in vfbody.get("items", [])
+                   if i.get("asset_id") == asset_id),
+                  None)
+              check("versions/feed derived asset versions",
+                    version_feed.status_code == 200 and derived_item is not None
+                    and derived_item.get("asset_name") == "CI smoke impact root"
+                    and derived_item.get("project_id") == project_id
+                    and derived_item.get("asset_type") == "image"
+                    and isinstance(derived_item.get("project_name"), str)
+                    and bool(derived_item.get("project_name"))
+                    and any(i.get("asset_id") == asset_id
+                            and i.get("version", 0) >= 2
+                            for i in vfbody.get("items", [])),
+                    version_feed.text)
+          else:
+              check("versions/feed derived setup", False,
+                    "could not register an asset for the feed probe")
+          version_created_keys = [
+              (i.get("created_at"), i.get("asset_id"), i.get("version"))
+              for i in vfbody.get("items", [])]
+          check("versions/feed newest-first order",
+                version_feed.status_code == 200
+                and version_created_keys == sorted(version_created_keys, reverse=True),
+                version_feed.text)
+          version_feed_limited = httpx.get(
+              f"{base}/versions/feed", params={"limit": 1}, timeout=5)
+          vflbody = (version_feed_limited.json()
+                     if version_feed_limited.status_code == 200 else {})
+          check("versions/feed limit bounds page not total",
+                version_feed_limited.status_code == 200
+                and len(vflbody.get("items", [])) <= 1
+                and vflbody.get("total") == vfbody.get("total"),
+                version_feed_limited.text)
+          if project_id:
+              version_feed_scoped = httpx.get(
+                  f"{base}/versions/feed", params={"project_id": project_id}, timeout=5)
+              vfsbody = (version_feed_scoped.json()
+                         if version_feed_scoped.status_code == 200 else {})
+              check("versions/feed project scope 200",
+                    version_feed_scoped.status_code == 200
+                    and isinstance(vfsbody.get("total"), int)
+                    and vfsbody.get("total", 0) >= 2
+                    and all(i.get("project_id") == project_id
+                            for i in vfsbody.get("items", [])),
+                    version_feed_scoped.text)
+          else:
+              check("versions/feed project scope setup", False,
+                    "could not obtain a project id")
+          version_feed_missing = httpx.get(
+              f"{base}/versions/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          vf404body = (version_feed_missing.json()
+                       if version_feed_missing.status_code == 404 else {})
+          check("versions/feed 404 shared envelope",
+                version_feed_missing.status_code == 404
+                and vf404body.get("error", {}).get("code") == "project_not_found"
+                and bool(vf404body.get("error", {}).get("request_id")),
+                version_feed_missing.text)
+          version_feed_bad = httpx.get(
+              f"{base}/versions/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          vfbadbody = (version_feed_bad.json()
+                       if version_feed_bad.status_code == 422 else {})
+          check("versions/feed 422 malformed id envelope",
+                version_feed_bad.status_code == 422
+                and vfbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(vfbadbody.get("error", {}).get("request_id")),
+                version_feed_bad.text)
+          version_feed_bad_limit = httpx.get(
+              f"{base}/versions/feed", params={"limit": 0}, timeout=5)
+          vfblbody = (version_feed_bad_limit.json()
+                      if version_feed_bad_limit.status_code == 422 else {})
+          check("versions/feed 422 invalid limit envelope",
+                version_feed_bad_limit.status_code == 422
+                and vfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(vfblbody.get("error", {}).get("request_id")),
+                version_feed_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
