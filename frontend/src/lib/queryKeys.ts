@@ -5,6 +5,7 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
+import type { ProjectStatsOptions } from "./projectStats";
 import type { SearchOptions } from "./search";
 import type { TagOptions } from "./tags";
 
@@ -44,6 +45,10 @@ export const queryKeys = {
   conversationStats: {
     summary: (options: ConversationStatsOptions = {}) =>
       ["conversation-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  projectStats: {
+    summary: (options: ProjectStatsOptions = {}) =>
+      ["project-stats", "summary", options.orgId ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

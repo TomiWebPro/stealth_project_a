@@ -14,6 +14,7 @@ import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import type { ImpactOptions } from "./impact";
+import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import {
   ASSETS,
   AUDIT_TRAILS,
@@ -214,6 +215,27 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveAssetImpact(assetId, ASSETS, options);
   }
 
+  // Authoritative project portfolio stats are derived from the project/asset/
+  // conversation/job stores on every call; reproduce the router's 422 validation
+  // and repository derivation over the shared seeds so live and mock agree.
+  // This must precede the dynamic /projects/{id} detail branch below.
+  if (path === "/projects/stats") {
+    const org = params.get("org_id") ?? undefined;
+    const options = org ? { orgId: org } : {};
+    try {
+      validateProjectStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveProjectStats(PROJECTS, ASSETS, CONVERSATIONS, JOBS, REFERENCE_NOW, options);
+  }
+
   if (path === "/projects") return PROJECTS;
   if (path.startsWith("/projects/")) return PROJECTS.find((p) => p.id === id) ?? NOT_FOUND;
 
@@ -385,6 +407,7 @@ function seedFetch(): typeof fetch {
 }
 
 const filmId = PROJECTS.find((p) => p.name.startsWith("Moonshot"))?.id ?? "";
+const orgId = PROJECTS[0]?.org_id ?? "";
 const emptyId = PROJECTS.find((p) => p.name.startsWith("Blank Slate"))?.id ?? "";
 const failedJobId = JOBS.find((j) => j.status === "failed")?.id ?? "";
 const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ?? "";
@@ -418,6 +441,8 @@ describe("live vs mock transport parity", () => {
       ["getAssetStats scoped", (api) => api.getAssetStats({ projectId: filmId })],
       ["getConversationStats", (api) => api.getConversationStats()],
       ["getConversationStats scoped", (api) => api.getConversationStats({ projectId: filmId })],
+      ["getProjectStats", (api) => api.getProjectStats()],
+      ["getProjectStats scoped", (api) => api.getProjectStats({ orgId })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -570,6 +595,18 @@ describe("live vs mock transport parity", () => {
     expect(mockAssetStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveAssetStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports zero-fill for an unknown (well-formed) org scope and
+    // reject a malformed org id with the same 422 envelope.
+    expect(await live.getProjectStats({ orgId: missingId })).toEqual(
+      await mockApiClient.getProjectStats({ orgId: missingId }),
+    );
+    const [mockProjectStats422, liveProjectStats422] = await Promise.all([
+      mockApiClient.getProjectStats({ orgId: "not-a-uuid" }).catch((cause) => cause),
+      live.getProjectStats({ orgId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveProjectStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both resolve an unknown impact root to undefined.
     expect(await live.getAssetImpact(missingId)).toEqual(
       await mockApiClient.getAssetImpact(missingId),
@@ -618,5 +655,6 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
+    expect(typeof typed.getProjectStats).toBe("function");
   });
 });

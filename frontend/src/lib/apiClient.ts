@@ -10,6 +10,7 @@ import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
 import type { ProjectDetail } from "./projectDetail";
+import type { ProjectStatsOptions } from "./projectStats";
 import type { SearchOptions } from "./search";
 import type { TagOptions } from "./tags";
 import type {
@@ -33,6 +34,7 @@ import type {
   OrchestrationRun,
   Presence,
   Project,
+  ProjectStats,
   Provider,
   SearchResponse,
   StorageStats,
@@ -64,6 +66,8 @@ export interface ApiClient {
   getAssetStats(options?: AssetStatsOptions): Promise<AssetStats>;
   /** Authoritative conversation/message metrics derived by `/conversations/stats`, optionally project-scoped (C45). */
   getConversationStats(options?: ConversationStatsOptions): Promise<ConversationStats>;
+  /** Authoritative project portfolio metrics derived by `/projects/stats`, optionally org-scoped (C53). */
+  getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -116,6 +120,7 @@ export const mockApiClient: ApiClient = {
   getJobStats: mockApi.fetchJobStats,
   getAssetStats: mockApi.fetchAssetStats,
   getConversationStats: mockApi.fetchConversationStats,
+  getProjectStats: mockApi.fetchProjectStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

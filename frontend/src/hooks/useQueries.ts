@@ -12,6 +12,7 @@ import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { ProjectDetail } from "../lib/projectDetail";
+import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { SearchOptions } from "../lib/search";
 import type { TagOptions } from "../lib/tags";
 import type {
@@ -35,6 +36,7 @@ import type {
   OrchestrationRun,
   Presence,
   Project,
+  ProjectStats,
   Provider,
   SearchResponse,
   StorageStats,
@@ -96,6 +98,15 @@ export function useConversationStats(
   return useQuery({
     queryKey: queryKeys.conversationStats.summary(options),
     queryFn: () => api.getConversationStats(options),
+  });
+}
+
+/** Authoritative project portfolio metrics from `/projects/stats`, optionally org-scoped (C53). */
+export function useProjectStats(options?: ProjectStatsOptions): UseQueryResult<ProjectStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.projectStats.summary(options),
+    queryFn: () => api.getProjectStats(options),
   });
 }
 

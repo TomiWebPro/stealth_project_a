@@ -21,6 +21,8 @@ import { deriveAssetImpact, validateImpactArgs } from "../impact";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
 import type { ProjectDetail } from "../projectDetail";
+import { deriveProjectStats, validateProjectStatsArgs } from "../projectStats";
+import type { ProjectStatsOptions } from "../projectStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
 import type { SearchOptions } from "../search";
 import { deriveTagIndex, validateTagArgs } from "../tags";
@@ -44,6 +46,7 @@ import type {
   OrchestrationRun,
   Presence,
   Project,
+  ProjectStats,
   Provider,
   SearchResponse,
   StorageStats,
@@ -90,7 +93,7 @@ function delay<T>(value: T): Promise<T> {
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
- * `assetStats`, `conversationStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `conversationStats`, `projectStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -256,6 +259,30 @@ export async function fetchConversationStats(
     });
   }
   return delay(deriveConversationStats(CONVERSATIONS, MESSAGES, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative project portfolio metrics (C53) derived from the same
+ * project/asset/conversation/job seeds as the live `/projects/stats` endpoint.
+ * Router-style 422 validation for a malformed org id, a zero-filled snapshot
+ * for an unknown (well-formed) org and the `"projectStats"` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchProjectStats(
+  options?: ProjectStatsOptions,
+): Promise<ProjectStats> {
+  failIfEnabled("projectStats");
+  validateProjectStatsArgs(options);
+  return delay(
+    deriveProjectStats(
+      PROJECTS,
+      ASSETS.map(withAssetOverrides),
+      CONVERSATIONS,
+      JOBS,
+      REFERENCE_NOW,
+      options,
+    ),
+  );
 }
 
 /**

@@ -20,6 +20,8 @@ import type { ImpactOptions } from "./impact";
 import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
 import type { ProjectDetail } from "./projectDetail";
+import { projectStatsQueryParams } from "./projectStats";
+import type { ProjectStatsOptions } from "./projectStats";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
 import { tagQueryParams } from "./tags";
@@ -45,6 +47,7 @@ import type {
   OrchestrationRun,
   Presence,
   Project,
+  ProjectStats,
   Provider,
   SearchResponse,
   StorageStats,
@@ -250,6 +253,11 @@ export function createHttpApiClient(
         "/conversations/stats",
         conversationStatsQueryParams(options),
       );
+    },
+
+    /** Authoritative project portfolio metrics derived by the backend `/projects/stats`. */
+    getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats> {
+      return request<ProjectStats>("/projects/stats", projectStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

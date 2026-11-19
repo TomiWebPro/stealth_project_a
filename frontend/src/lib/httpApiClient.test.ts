@@ -880,3 +880,50 @@ describe("createHttpApiClient asset stats", () => {
     });
   });
 });
+
+describe("createHttpApiClient project stats", () => {
+  const stats = {
+    total: 2,
+    by_lifecycle: [
+      { lifecycle: "active", count: 1 },
+      { lifecycle: "archived", count: 1 },
+    ],
+    active: 1,
+    archived: 1,
+    total_assets: 3,
+    total_conversations: 2,
+    total_jobs: 4,
+    average_assets_per_project: 1.5,
+    average_jobs_per_project: 2.0,
+    newest_project_at: "2026-01-06T00:00:00Z",
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /projects/stats with the org scope and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/projects/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getProjectStats({ orgId: "11111111-1111-4111-8111-111111111111" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/projects/stats`);
+    expect(url.searchParams.get("org_id")).toBe("11111111-1111-4111-8111-111111111111");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Invalid organization id." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getProjectStats({ orgId: "bad" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Invalid organization id.",
+    });
+  });
+});

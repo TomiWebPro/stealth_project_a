@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
-import { ASSETS, CONVERSATIONS, PROJECTS } from "./data";
+import { ASSETS, CONVERSATIONS, PROJECTS, REFERENCE_NOW } from "./data";
 import {
   clearMockFailures,
   fetchActivity,
@@ -33,6 +33,7 @@ import {
   fetchProject,
   fetchProjectAudit,
   fetchProjectDetail,
+  fetchProjectStats,
   fetchProjects,
   fetchProvider,
   fetchProviders,
@@ -220,6 +221,51 @@ describe("mock API asset stats (C49 follow-up)", () => {
 
     setMockFailure("assetStats");
     await expect(fetchAssetStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API project stats (C53 follow-up)", () => {
+  const orgId = PROJECTS[0]?.org_id ?? "";
+
+  it("derives a populated snapshot from the authoritative seeds", async () => {
+    const stats = await fetchProjectStats();
+    expect(stats.total).toBe(PROJECTS.length);
+    expect(stats.active + stats.archived).toBe(PROJECTS.length);
+    expect(stats.by_lifecycle).toEqual([
+      { lifecycle: "active", count: stats.active },
+      { lifecycle: "archived", count: stats.archived },
+    ]);
+    expect(stats.total_assets).toBeGreaterThan(0);
+    expect(stats.total_conversations).toBeGreaterThan(0);
+    expect(stats.total_jobs).toBeGreaterThan(0);
+    expect(stats.newest_project_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes every metric to one organization and zeroes an unknown org", async () => {
+    const scoped = await fetchProjectStats({ orgId });
+    expect(scoped.total).toBe(PROJECTS.filter((project) => project.org_id === orgId).length);
+
+    const unknown = await fetchProjectStats({ orgId: "00000000-0000-4000-8000-000000000000" });
+    expect(unknown.total).toBe(0);
+    expect(unknown.by_lifecycle).toEqual([
+      { lifecycle: "active", count: 0 },
+      { lifecycle: "archived", count: 0 },
+    ]);
+    expect(unknown.newest_project_at).toBeNull();
+  });
+
+  it("mirrors router validation and surfaces the injected failure", async () => {
+    await expect(fetchProjectStats({ orgId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("projectStats");
+    await expect(fetchProjectStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
