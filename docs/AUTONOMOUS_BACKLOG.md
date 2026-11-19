@@ -411,6 +411,19 @@ this file is the execution checklist.
   My owned rows had no unchecked items, so C46 was added under the Never-empty well.
   ✅ 2026-11-19 — `453f3c9`
 
+- [x] C47 (mocks) Wire the authoritative conversation statistics API (C45
+  follow-up) end to end: expose `getConversationStats` / `useConversationStats`
+  atomically across mockApi (seed-derived zero-filled role/status breakdowns,
+  message/conversation totals, 3-decimal average and newest-activity recency;
+  router-style 422 for a malformed project id + unknown-project 404 + injectable
+  `conversationStats` failure), the stable `ApiClient` facade, live
+  `httpApiClient` (`GET /conversations/stats?project_id=`), `queryKeys` and
+  `useQueries`, with a shared `lib/conversationStats` derivation/validation
+  helper and populated/empty/error seeds; parity guard extended to both
+  transports. My owned column had no unchecked items, so C47 was added under the
+  Never-empty well. ✅ 2026-11-19 — `662d88b`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -496,3 +509,4 @@ this file is the execution checklist.
 - 2026-11-19 — `2f4cfa0` — C44 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/jobs/stats` (zero-filled snapshot + breakdown shapes, optional `project_id` scope, shared 404 `project_not_found` + 422 `validation_error` envelopes with request-id) — the CI follow-up from C40/C43. No unchecked CI row remained, so C44 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (31/31 probes OK) and with pinned actionlint; frontend lint/test (294)/build and backend pytest (575) green. Screens job-stats rendering remains a screens follow-up.
 - 2026-11-19 — `60e1404` — C45 (backend): added authoritative `GET /api/v1/conversations/stats` deriving zero-filled role/status message breakdowns, totals, average messages per conversation and last activity from the conversation/message stores (optional `project_id` scope, shared 404/422 envelopes); contracts mirrored in `frontend/src/types/conversationStats.ts` and exported from the types index, 5 tests × 2 backends green (585 passed), tsc --noEmit clean. Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C45 was added under the Never-empty well.
 - 2026-11-19 — `453f3c9` — C46 (screens): rendered authoritative `useJobStats` metrics on the Jobs screen (workspace-wide) and project detail (project-scoped) with a reusable `JobStatsPanel` — five stat cards, zero-filled status/operation breakdown bars, all five UI states, and every display value derived in tested `jobStatsHelpers`; lint clean, 307 tests, build green. Resolves the C43/C44 screens follow-up; C45 conversation stats remains a mocks transport follow-up.
+- 2026-11-19 — `662d88b` — C47 (mocks): wired the authoritative conversation statistics API (C45 follow-up) end to end — `getConversationStats`/`useConversationStats` across mockApi (seed-derived zero-filled role/status breakdowns, totals, 3-decimal average + recency; router-style 422 + unknown-project 404 + injectable `conversationStats` failure), the stable facade, live `httpApiClient` (`GET /conversations/stats?project_id=`), `queryKeys` and `useQueries`, with a shared `lib/conversationStats` helper; parity guard extended to both transports; lint clean, 325 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
