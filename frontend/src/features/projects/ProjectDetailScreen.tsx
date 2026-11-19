@@ -23,6 +23,7 @@ import { StoragePanel } from "../storage/StoragePanel";
 import { LineageView } from "../lineage/LineageView";
 import { VersionPanel } from "../assets/VersionPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
+import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
@@ -183,6 +184,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project version stats"
         description="Authoritative asset version metrics scoped to this project."
+      />
+      <PublishFeedPanel
+        projectId={projectId}
+        title="Project published deliverables"
+        description="Newest-first published assets scoped to this project."
       />
       <PublishStatsPanel
         projectId={projectId}
