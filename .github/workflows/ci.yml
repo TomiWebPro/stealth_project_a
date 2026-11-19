@@ -2493,6 +2493,90 @@ jobs:
                 and bool(lfblbody.get("error", {}).get("request_id")),
                 lineage_feed_bad_limit.text)
 
+          # Authoritative organization feed (C161/C163) is the newest /api/v1
+          # URL the live client calls (getOrganizationFeed). Create one
+          # organization on demand so the derived feed has a real item, then
+          # probe the feed shape, item shapes, newest-first (created_at, org_id)
+          # order and whole-scope total, the `limit` page bound, the
+          # /organizations/feed alias and the shared 422 envelope, keeping CI
+          # aligned with new endpoints as they go live.
+          org_created = httpx.post(
+              f"{base}/orgs",
+              json={"name": "CI smoke org", "slug": "ci-smoke-org"},
+              timeout=5)
+          check("orgs/feed create org 201", org_created.status_code == 201,
+                org_created.text)
+          created_org_id = (
+              org_created.json().get("id")
+              if org_created.status_code == 201 else None)
+
+          org_feed = httpx.get(f"{base}/orgs/feed", timeout=5)
+          ogbdy = org_feed.json() if org_feed.status_code == 200 else {}
+          check("orgs/feed 200 feed shape",
+                org_feed.status_code == 200
+                and isinstance(ogbdy.get("items"), list)
+                and isinstance(ogbdy.get("total"), int)
+                and "generated_at" in ogbdy, org_feed.text)
+          check("orgs/feed derived item shape",
+                org_feed.status_code == 200
+                and ogbdy.get("total", 0) >= 1
+                and len(ogbdy.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "org_id", "name", "slug", "member_count",
+                    "project_count", "created_at"))
+                    for item in ogbdy["items"]), org_feed.text)
+          check("orgs/feed request-id header",
+                "x-request-id" in {k.lower() for k in org_feed.headers},
+                str(dict(org_feed.headers)))
+          if created_org_id:
+              derived_item = next(
+                  (i for i in ogbdy.get("items", [])
+                   if i.get("org_id") == created_org_id),
+                  None)
+              check("orgs/feed derived organization",
+                    org_feed.status_code == 200 and derived_item is not None
+                    and derived_item.get("name") == "CI smoke org"
+                    and derived_item.get("slug") == "ci-smoke-org"
+                    and derived_item.get("member_count", -1) >= 0
+                    and derived_item.get("project_count", -1) >= 0
+                    and isinstance(derived_item.get("created_at"), str),
+                    org_feed.text)
+          else:
+              check("orgs/feed derived setup", False,
+                    "could not create an organization for the feed probe")
+          org_created_keys = [
+              (i.get("created_at"), i.get("org_id"))
+              for i in ogbdy.get("items", [])]
+          check("orgs/feed newest-first order",
+                org_feed.status_code == 200
+                and org_created_keys == sorted(org_created_keys, reverse=True),
+                org_feed.text)
+          org_feed_limited = httpx.get(
+              f"{base}/orgs/feed", params={"limit": 1}, timeout=5)
+          oflbody = (org_feed_limited.json()
+                     if org_feed_limited.status_code == 200 else {})
+          check("orgs/feed limit bounds page not total",
+                org_feed_limited.status_code == 200
+                and len(oflbody.get("items", [])) <= 1
+                and oflbody.get("total") == ogbdy.get("total"),
+                org_feed_limited.text)
+          org_alias = httpx.get(f"{base}/organizations/feed", timeout=5)
+          oabody = org_alias.json() if org_alias.status_code == 200 else {}
+          check("organizations/feed alias 200",
+                org_alias.status_code == 200
+                and isinstance(oabody.get("items"), list)
+                and oabody.get("total") == ogbdy.get("total"),
+                org_alias.text)
+          org_feed_bad = httpx.get(
+              f"{base}/orgs/feed", params={"limit": 0}, timeout=5)
+          ofbadbody = (org_feed_bad.json()
+                       if org_feed_bad.status_code == 422 else {})
+          check("orgs/feed 422 invalid limit envelope",
+                org_feed_bad.status_code == 422
+                and ofbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(ofbadbody.get("error", {}).get("request_id")),
+                org_feed_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
