@@ -132,6 +132,10 @@ from .conversation import (
     StreamEvent,
     StreamEventType,
 )
+from .conversation_feed import (
+    ConversationFeed,
+    ConversationFeedItem,
+)
 from .conversation_stats import (
     ConversationStats,
     RoleMessageCount,
@@ -392,6 +396,9 @@ __all__ = [
     "MessageStatus",
     "StreamEvent",
     "StreamEventType",
+    # conversation feed
+    "ConversationFeed",
+    "ConversationFeedItem",
     # conversation stats
     "ConversationStats",
     "RoleMessageCount",

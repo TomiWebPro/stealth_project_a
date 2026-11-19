@@ -28,6 +28,7 @@ from .routers import (
     audit,
     auth,
     conversations,
+    conversation_feed,
     conversation_stats,
     collaboration_stats,
     dashboard,
@@ -242,6 +243,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/conversations/stats" must be registered before "/conversations/{id}" so
     # the literal path wins over the UUID-templated one.
     app.include_router(conversation_stats.router, prefix=API_PREFIX)
+    # "/conversations/feed" is a literal path; register it before the
+    # UUID-templated "/conversations/{conversation_id}" route so "feed" is never
+    # parsed as a conversation id.
+    app.include_router(conversation_feed.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
     # "/collaboration/stats" has no templated sibling; register it directly.
     app.include_router(collaboration_stats.router, prefix=API_PREFIX)

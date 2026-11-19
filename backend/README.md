@@ -62,7 +62,15 @@ All paths are prefixed with `/api/v1`.
   `POST /projects/{id}/links/{plan|apply}`, `GET /projects/{id}/links`
 - **Conversations:** `GET /conversations?project_id=`,
   `POST /projects/{id}/conversations`, `GET /conversations/{id}`,
-  `GET|POST /conversations/{id}/messages`
+  `GET|POST /conversations/{id}/messages`,
+  `GET /conversations/feed?project_id=&limit=` — newest-first conversation feed
+  (conversation/project identity with joined project name, title, message count
+  and a last-message role/excerpt preview) derived from the authoritative
+  conversation/message stores, with a whole-scope `total` before the `limit` page
+  and a deterministic `(updated_at, conversation_id)` tie-break;
+  `GET /conversations/stats?project_id=` — authoritative conversation metrics
+  (zero-filled role/status breakdowns, totals, average and recency) derived from
+  the conversation/message stores; optional project scope with shared 404/422 envelopes
 - **Assets:** `GET /assets`, `POST /assets/register`,
   `GET|PATCH|DELETE /assets/{id}`,
   `GET|POST /assets/{id}/versions`, `GET /assets/{id}/relationships|lineage|download|content`,
