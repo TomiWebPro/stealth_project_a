@@ -370,6 +370,16 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the retry feed key by project and limit", () => {
+    expect(queryKeys.retryFeed.feed()).toEqual(["retry-feed", "feed", "all", "all"]);
+    expect(queryKeys.retryFeed.feed({ projectId: "p1", limit: 5 })).toEqual([
+      "retry-feed",
+      "feed",
+      "p1",
+      5,
+    ]);
+  });
+
   it("scopes the version stats key by project", () => {
     expect(queryKeys.versionStats.summary()).toEqual(["version-stats", "summary", "all"]);
     expect(queryKeys.versionStats.summary({ projectId: "p1" })).toEqual([

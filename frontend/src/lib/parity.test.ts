@@ -72,6 +72,8 @@ import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats"
 import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
 import { derivePublishStats, validatePublishStatsArgs } from "./publishStats";
+import { deriveRetryFeed, validateRetryFeedArgs } from "./retryFeed";
+import type { RetryFeedOptions } from "./retryFeed";
 import { deriveRetryStats, validateRetryStatsArgs } from "./retryStats";
 import {
   ASSETS,
@@ -319,6 +321,33 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return deriveEventStats(JOB_EVENTS, JOBS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative job retry feed derives the same ledger the `/retries/feed`
+  // endpoint reads, joined to jobs/projects over the shared seeds; mirror its
+  // 422 validation, unknown-project 404, page bound and newest-first repository
+  // derivation so live and mock agree exactly. This must precede any dynamic
+  // /retries/{...} branch below.
+  if (path === "/retries/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const rawLimit = params.get("limit");
+    const options: RetryFeedOptions = {
+      projectId,
+      limit: rawLimit !== null ? Number(rawLimit) : undefined,
+    };
+    try {
+      validateRetryFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveRetryFeed(JOB_RETRIES, JOBS, PROJECTS, REFERENCE_NOW, options);
   }
 
   // Authoritative job retry statistics derive the same ledger the
@@ -1510,6 +1539,13 @@ describe("live vs mock transport parity", () => {
       ],
       ["getRetryStats", (api) => api.getRetryStats()],
       ["getRetryStats scoped", (api) => api.getRetryStats({ projectId: filmId })],
+      ["getRetryFeed", (api) => api.getRetryFeed()],
+      ["getRetryFeed scoped", (api) => api.getRetryFeed({ projectId: filmId })],
+      ["getRetryFeed limited", (api) => api.getRetryFeed({ limit: 2 })],
+      [
+        "getRetryFeed scoped and limited",
+        (api) => api.getRetryFeed({ projectId: filmId, limit: 1 }),
+      ],
       ["getVersionStats", (api) => api.getVersionStats()],
       ["getVersionStats scoped", (api) => api.getVersionStats({ projectId: filmId })],
       ["getVersionFeed", (api) => api.getVersionFeed()],
@@ -1622,6 +1658,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getRetryStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getRetryStats({ projectId: emptyId }),
+    );
+    expect(await live.getRetryFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getRetryFeed({ projectId: emptyId }),
     );
     expect(await live.getVersionStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getVersionStats({ projectId: emptyId }),
@@ -1865,6 +1904,24 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockRetryStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveRetryStats422).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown retry-feed project scope
+    // and reject a malformed project id / invalid limit with the same 422 envelope.
+    const [mockRetryFeed404, liveRetryFeed404] = await Promise.all([
+      mockApiClient.getRetryFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getRetryFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockRetryFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveRetryFeed404).toMatchObject({ status: 404, code: "not_found" });
+    const badRetryFeedOptions = [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }];
+    for (const bad of badRetryFeedOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getRetryFeed(bad).catch((cause) => cause),
+        live.getRetryFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
 
     // Both transports 404 identically for an unknown version-stats project scope
     // and reject a malformed project id with the same 422 envelope.
@@ -2322,6 +2379,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getEventStats).toBe("function");
     expect(typeof typed.getEventFeed).toBe("function");
     expect(typeof typed.getRetryStats).toBe("function");
+    expect(typeof typed.getRetryFeed).toBe("function");
     expect(typeof typed.getVersionStats).toBe("function");
     expect(typeof typed.getVersionFeed).toBe("function");
     expect(typeof typed.getPublishStats).toBe("function");

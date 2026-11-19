@@ -74,6 +74,8 @@ import { publishFeedQueryParams } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
 import { publishStatsQueryParams } from "./publishStats";
 import type { PublishStatsOptions } from "./publishStats";
+import { retryFeedQueryParams } from "./retryFeed";
+import type { RetryFeedOptions } from "./retryFeed";
 import { retryStatsQueryParams } from "./retryStats";
 import type { RetryStatsOptions } from "./retryStats";
 import { lineageFeedQueryParams } from "./lineageFeed";
@@ -143,6 +145,7 @@ import type {
   ProviderStats,
   PublishFeed,
   PublishStats,
+  RetryFeed,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -749,6 +752,11 @@ export function createHttpApiClient(
     /** Authoritative job retry metrics derived by the backend `/retries/stats`. */
     getRetryStats(options?: RetryStatsOptions): Promise<RetryStats> {
       return request<RetryStats>("/retries/stats", retryStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative job retry feed derived by `/retries/feed` (C193). */
+    getRetryFeed(options?: RetryFeedOptions): Promise<RetryFeed> {
+      return request<RetryFeed>("/retries/feed", retryFeedQueryParams(options));
     },
 
     /** Authoritative asset version metrics derived by the backend `/versions/stats`. */

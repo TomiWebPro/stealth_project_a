@@ -38,6 +38,7 @@ import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishStatsOptions } from "./publishStats";
+import type { RetryFeedOptions } from "./retryFeed";
 import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
@@ -97,6 +98,7 @@ import type {
   ProviderStats,
   PublishFeed,
   PublishStats,
+  RetryFeed,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -240,6 +242,8 @@ export interface ApiClient {
   getEventFeed(options?: EventFeedOptions): Promise<EventFeed>;
   /** Authoritative job retry metrics derived by `/retries/stats`, optionally project-scoped (C105). */
   getRetryStats(options?: RetryStatsOptions): Promise<RetryStats>;
+  /** Newest-first authoritative job retry feed derived by `/retries/feed`, optionally project-scoped (C193). */
+  getRetryFeed(options?: RetryFeedOptions): Promise<RetryFeed>;
   /** Authoritative asset version metrics derived by `/versions/stats`, optionally project-scoped (C109). */
   getVersionStats(options?: VersionStatsOptions): Promise<VersionStats>;
   /** Newest-first authoritative asset version feed derived by `/versions/feed`, optionally project-scoped (C153). */
@@ -324,6 +328,7 @@ export const mockApiClient: ApiClient = {
   getEventStats: mockApi.fetchEventStats,
   getEventFeed: mockApi.fetchEventFeed,
   getRetryStats: mockApi.fetchRetryStats,
+  getRetryFeed: mockApi.fetchRetryFeed,
   getVersionStats: mockApi.fetchVersionStats,
   getVersionFeed: mockApi.fetchVersionFeed,
   getPublishStats: mockApi.fetchPublishStats,

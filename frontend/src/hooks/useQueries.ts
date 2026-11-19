@@ -40,6 +40,7 @@ import type { ProviderFeedOptions } from "../lib/providerFeed";
 import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { PublishFeedOptions } from "../lib/publishFeed";
 import type { PublishStatsOptions } from "../lib/publishStats";
+import type { RetryFeedOptions } from "../lib/retryFeed";
 import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
@@ -99,6 +100,7 @@ import type {
   ProviderStats,
   PublishFeed,
   PublishStats,
+  RetryFeed,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -787,6 +789,17 @@ export function useRetryStats(
   return useQuery({
     queryKey: queryKeys.retryStats.summary(options),
     queryFn: () => api.getRetryStats(options),
+  });
+}
+
+/** Newest-first authoritative job retry feed from `/retries/feed`, optionally project-scoped (C193). */
+export function useRetryFeed(
+  options?: RetryFeedOptions,
+): UseQueryResult<RetryFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.retryFeed.feed(options),
+    queryFn: () => api.getRetryFeed(options),
   });
 }
 

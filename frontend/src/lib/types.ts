@@ -134,6 +134,8 @@ export type {
   PublishStats,
   PublishVersionCount,
   RelationshipType,
+  RetryFeed,
+  RetryFeedItem,
   RetryProjectCount,
   RetryStats,
   RetryStatusCount,

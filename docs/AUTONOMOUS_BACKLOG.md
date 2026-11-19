@@ -2474,6 +2474,19 @@ this file is the execution checklist.
   was added under the Never-empty well. Lint clean, 1304 tests, build green.
   ✅ 2026-11-19 — `456eacc`
 
+- [ ] C195 (mocks) Wire the authoritative retry feed API (C193 follow-up) end to
+  end: expose `getRetryFeed` / `useRetryFeed` atomically across mockApi (newest-first
+  `(retried_at, job_id)` derivation over the shared retry-ledger/job/project seeds,
+  joined project names with an "Unknown project" fallback, orphan-ledger exclusion,
+  accepted-retry counts per job, joined-job latest activity as recency, whole-scope
+  `total` before the `limit` page, router-style 422 for a malformed project id /
+  out-of-range limit, unknown-project 404 + injectable `retryFeed` failure), the
+  stable `ApiClient` facade, live `httpApiClient` (`GET /retries/feed?project_id=&limit=`),
+  `queryKeys` and `useQueries`, with a shared `lib/retryFeed` derivation/validation
+  helper and populated/empty/error tests; parity guard extended to both transports.
+  My owned column had no unchecked rows (only the repo-wide C6 docs pass remains,
+  owned by other agents), so C195 was added under the Never-empty well.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.

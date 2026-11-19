@@ -33,6 +33,7 @@ import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishStatsOptions } from "./publishStats";
+import type { RetryFeedOptions } from "./retryFeed";
 import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
@@ -339,6 +340,10 @@ export const queryKeys = {
   retryStats: {
     summary: (options: RetryStatsOptions = {}) =>
       ["retry-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  retryFeed: {
+    feed: (options: RetryFeedOptions = {}) =>
+      ["retry-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   versionStats: {
     summary: (options: VersionStatsOptions = {}) =>

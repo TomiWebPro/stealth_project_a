@@ -72,6 +72,7 @@ import {
   fetchProviderStats,
   fetchPublishFeed,
   fetchRecentAssets,
+  fetchRetryFeed,
   fetchRetryStats,
   fetchSearch,
   fetchSearchStats,
@@ -1938,6 +1939,79 @@ describe("mock API job retry statistics (C105 follow-up)", () => {
 
     setMockFailure("retryStats");
     await expect(fetchRetryStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API job retry feed (C193 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a newest-first retry feed with joined project names and whole-scope totals", async () => {
+    const feed = await fetchRetryFeed();
+    const jobById = new Map(JOBS.map((job) => [job.id, job]));
+    const attributed = JOB_RETRIES.filter((entry) => jobById.has(entry.job_id));
+    const expectedJobs = new Set(attributed.map((entry) => entry.job_id));
+
+    expect(feed.generated_at).toBe(REFERENCE_NOW);
+    expect(feed.total).toBe(expectedJobs.size);
+    expect((feed.items ?? []).map((item) => item.job_id).length).toBeLessThanOrEqual(feed.total);
+    for (const item of feed.items ?? []) {
+      const job = jobById.get(item.job_id)!;
+      expect(item.project_id).toBe(job.project_id);
+      expect(item.operation_id).toBe(job.operation_id);
+      expect(item.retries).toBeGreaterThan(0);
+      expect(item.project_name).toBeTruthy();
+      expect(item.retried_at).toBeTruthy();
+    }
+    // Newest-first by (retried_at, job_id).
+    const keys = (feed.items ?? []).map((item) => `${item.retried_at}|${item.job_id}`);
+    expect(keys).toEqual([...keys].sort().reverse());
+  });
+
+  it("counts duplicate ledger entries as retries for one job", async () => {
+    const feed = await fetchRetryFeed();
+    const twice = JOB_RETRIES.filter(
+      (entry) => entry.job_id === "0b5c1e2a-3000-4000-8000-000000000016",
+    ).length;
+    const item = feed.items?.find(
+      (row) => row.job_id === "0b5c1e2a-3000-4000-8000-000000000016",
+    );
+    expect(twice).toBeGreaterThan(1);
+    expect(item?.retries).toBe(twice);
+  });
+
+  it("scopes to one project, zero-fills an unseeded project and bounds the page", async () => {
+    const scoped = await fetchRetryFeed({ projectId: filmId });
+    expect(scoped.total).toBeGreaterThan(0);
+    expect(scoped.items?.every((item) => item.project_id === filmId)).toBe(true);
+
+    const empty = await fetchRetryFeed({ projectId: emptyId });
+    expect(empty).toEqual({ items: [], total: 0, generated_at: REFERENCE_NOW });
+
+    const whole = await fetchRetryFeed();
+    const limited = await fetchRetryFeed({ limit: 1 });
+    expect(limited.total).toBe(whole.total);
+    expect(limited.items ?? []).toHaveLength(1);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchRetryFeed({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchRetryFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchRetryFeed({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("retryFeed");
+    await expect(fetchRetryFeed()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

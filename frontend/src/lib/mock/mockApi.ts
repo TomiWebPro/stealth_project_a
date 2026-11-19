@@ -99,6 +99,8 @@ import { derivePublishFeed, validatePublishFeedArgs } from "../publishFeed";
 import type { PublishFeedOptions } from "../publishFeed";
 import { derivePublishStats, validatePublishStatsArgs } from "../publishStats";
 import type { PublishStatsOptions } from "../publishStats";
+import { deriveRetryFeed, validateRetryFeedArgs } from "../retryFeed";
+import type { RetryFeedOptions } from "../retryFeed";
 import { deriveRetryStats, validateRetryStatsArgs } from "../retryStats";
 import type { RetryStatsOptions } from "../retryStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
@@ -164,6 +166,7 @@ import type {
   ProviderStats,
   PublishFeed,
   PublishStats,
+  RetryFeed,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -229,7 +232,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`, `orchestrationFeed`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1378,6 +1381,26 @@ export async function fetchRetryStats(options?: RetryStatsOptions): Promise<Retr
     });
   }
   return delay(deriveRetryStats(JOB_RETRIES, JOBS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative job retry feed (C193) derived from the same retry ledger as the
+ * live `/retries/feed` endpoint, joined to jobs/projects over the shared seeds.
+ * Router-style 422 validation (project id / limit), a normalized 404 for an
+ * unknown project scope and the `"retryFeed"` failure domain keep error and
+ * empty states at parity.
+ */
+export async function fetchRetryFeed(options?: RetryFeedOptions): Promise<RetryFeed> {
+  failIfEnabled("retryFeed");
+  validateRetryFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveRetryFeed(JOB_RETRIES, JOBS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

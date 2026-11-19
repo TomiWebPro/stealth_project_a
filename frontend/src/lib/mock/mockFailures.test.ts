@@ -60,6 +60,7 @@ import {
   fetchPublishFeed,
   fetchPublishStats,
   fetchRecentAssets,
+  fetchRetryFeed,
   fetchRetryStats,
   fetchSearchStats,
   fetchStorageStats,
@@ -102,6 +103,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchUploadFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchRetryStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchRetryFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchVersionStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchVersionFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishStats()).rejects.toBeInstanceOf(ApiError);
@@ -510,6 +512,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchRetryStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the retry feed domain", async () => {
+    setMockFailure("retryFeed");
+
+    await expect(fetchRetryFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchRetryFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the version stats domain", async () => {
