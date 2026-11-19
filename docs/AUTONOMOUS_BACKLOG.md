@@ -2245,6 +2245,25 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `98dcf11`
   Screens pipeline-feed rendering remains a screens follow-up.
 
+- [x] C181 (backend) Authoritative orchestration feed API:
+  `GET /api/v1/orchestration/feed?project_id=&kind=&limit=` derives a newest-first,
+  workspace-wide feed of plans and runs from the same authoritative
+  `ORCHESTRATION_PLANS`/`ORCHESTRATION_RUNS` stores `/orchestration/stats` aggregates
+  (no second index) — each item carries plan/run identity (`kind`, `id`, `plan_id`,
+  `run_id`), joined project id/name, plan goal or run stage, plan-step/run-job counts
+  and creation time, with a deterministic `(created_at, kind, id)` newest-first
+  tie-break and a whole-scope `total` counted before the `limit` page; a run is
+  joined to its plan for project attribution (orphan runs excluded), with optional
+  `project_id` (unknown → shared 404 `project_not_found`) and `kind` (plan/run)
+  filters plus shared 422 envelopes for a malformed id / invalid kind / invalid
+  limit. `OrchestrationFeed`/`OrchestrationFeedItem`/`OrchestrationFeedKind` mirrored
+  in `frontend/src/types/orchestrationFeed.ts` + exported from the types index,
+  README endpoint list synced, 12 tests × 2 storage backends green (1117 passed,
+  contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the
+  feed is a follow-up. My owned backend column had no unchecked items (only the
+  repo-wide C6 docs pass remains, owned by other agents), so C181 was added under
+  the Never-empty well. ✅ 2026-11-19 — `3d88446`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2463,3 +2482,4 @@ this file is the execution checklist.
 - 2026-11-19 — `94dba52` — C178 (screens): rendered the authoritative extension installation feed (C173/C175/C176 follow-up) via `useExtensionFeed` — a reusable `ExtensionFeedPanel` on the Extensions screen with type/status/page-size filter chips, newest-first rows showing extension name, publisher/version and type/status/trust badges plus install recency, with all five UI states — every display value derived in 14 new tested `extensionFeedHelpers` cases. Rows stay read-only (no extension-detail route); resolves the C176 screens follow-up. Lint clean, 1168 tests, build green. My owned column had no unchecked rows, so C178 was added under the Never-empty well.
 - 2026-11-19 — `321648f` — C179 (mocks): wired the authoritative production-pipeline feed (C177 follow-up) end to end — `getPipelineFeed`/`usePipelineFeed` atomically across mockApi (newest-first `(created_at, chain_id)` derivation over the shared three chain/project seeds, joined project names with "Unknown project" fallback, stats-shared job/asset counters, `project_id`/`kind` filters, whole-scope `total` before the `limit` page, router-style 422 for malformed project id/invalid kind/out-of-range limit, unknown-project 404 + injectable `pipelineFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /pipelines/feed?project_id=&kind=&limit=`), queryKeys and useQueries, with a shared `lib/pipelineFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C177 mocks-transport follow-up; lint clean, 1187 tests, build green. My owned column had no unchecked rows, so C179 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `98dcf11` — C180 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/pipelines/feed?project_id=&kind=&limit=` production-pipeline feed (the C177/C179 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (chain/project ids + joined project name, canonical `training` kind, stats-shared job/asset counts, creator/timestamp), newest-first `(created_at, chain_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, the `kind` filter, the optional `project_id` scope (unknown → shared 404 `project_not_found`) and the shared 422 `validation_error` envelopes (malformed id + invalid kind + invalid limit) with request-id — creating one LoRA training chain on demand so the derived feed is non-empty. No unchecked CI row remained, so C180 was added under the Never-empty well; resolves the C177/C179 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (all probes OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1187 tests/build green and backend pytest (1093) green. Screens pipeline-feed rendering remains a screens follow-up.
+- 2026-11-19 — `3d88446` — C181 (backend): added authoritative `GET /api/v1/orchestration/feed?project_id=&kind=&limit=` — a newest-first workspace feed of plans and runs derived fresh from the same authoritative `ORCHESTRATION_PLANS`/`ORCHESTRATION_RUNS` stores `/orchestration/stats` aggregates (no second index) — with plan/run identity (`kind`/`id`/`plan_id`/`run_id`), joined project id/name, plan goal or run stage, plan-step/run-job counts and creation time, a deterministic `(created_at, kind, id)` tie-break and a whole-scope `total` before the `limit` page; runs are joined to their plan for project attribution (orphan runs excluded), with optional `project_id` (unknown → shared 404 `project_not_found`) and `kind` (plan/run) filters plus shared 422 envelopes (malformed id / invalid kind / invalid limit) and request-id. `OrchestrationFeed`/`OrchestrationFeedItem`/`OrchestrationFeedKind` mirrored in `frontend/src/types/orchestrationFeed.ts` + types index, README endpoint list synced, 12 tests × 2 storage backends green (1117 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C181 was added under the Never-empty well.
