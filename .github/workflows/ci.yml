@@ -2773,6 +2773,104 @@ jobs:
                 and efblbody.get("error", {}).get("code") == "validation_error"
                 and bool(efblbody.get("error", {}).get("request_id")), ef_bad_limit.text)
 
+          # Authoritative extension installation feed (C173/C175) is the newest
+          # /api/v1 URL the live client calls (getExtensionFeed). Install one
+          # extension on demand so the derived feed has a real item, then probe
+          # the feed shape, full item shape, newest-first (installed_at, id)
+          # order and whole-scope total, the `type`/`status` filters, the `limit`
+          # page bound and the shared 422 envelopes, keeping CI aligned with new
+          # endpoints as they go live.
+          ext_install = httpx.post(
+              f"{base}/extensions/install",
+              json={"source": "registry",
+                    "extension_id": "com.studio.comfyui-bridge",
+                    "accepted_permissions": ["provider.access"]},
+              timeout=5)
+          check("extensions/feed install setup",
+                ext_install.status_code in (201, 409), ext_install.text)
+
+          ext_feed = httpx.get(f"{base}/extensions/feed", timeout=5)
+          xfbody = ext_feed.json() if ext_feed.status_code == 200 else {}
+          check("extensions/feed 200 feed shape",
+                ext_feed.status_code == 200
+                and isinstance(xfbody.get("items"), list)
+                and isinstance(xfbody.get("total"), int)
+                and "generated_at" in xfbody, ext_feed.text)
+          check("extensions/feed derived item shape",
+                ext_feed.status_code == 200
+                and xfbody.get("total", 0) >= 1
+                and len(xfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "extension_id", "manifest_id", "name", "version",
+                    "publisher", "type", "status", "signed", "verified",
+                    "installed_at"))
+                    for item in xfbody["items"]), ext_feed.text)
+          check("extensions/feed request-id header",
+                "x-request-id" in {k.lower() for k in ext_feed.headers},
+                str(dict(ext_feed.headers)))
+          derived_ext = next(
+              (i for i in xfbody.get("items", [])
+               if i.get("manifest_id") == "com.studio.comfyui-bridge"),
+              None)
+          check("extensions/feed derived installed extension",
+                ext_feed.status_code == 200 and derived_ext is not None
+                and derived_ext.get("name") == "ComfyUI Bridge"
+                and derived_ext.get("version") == "1.2.0"
+                and derived_ext.get("publisher") == "Studio Platform"
+                and derived_ext.get("type") == "provider"
+                and derived_ext.get("status") == "installed"
+                and derived_ext.get("signed") is True
+                and derived_ext.get("verified") is True
+                and isinstance(derived_ext.get("extension_id"), str),
+                ext_feed.text)
+          ext_created_keys = [
+              (i.get("installed_at"), i.get("extension_id"))
+              for i in xfbody.get("items", [])]
+          check("extensions/feed newest-first order",
+                ext_feed.status_code == 200
+                and ext_created_keys == sorted(ext_created_keys, reverse=True),
+                ext_feed.text)
+          xf_limited = httpx.get(f"{base}/extensions/feed", params={"limit": 1}, timeout=5)
+          xflbody = xf_limited.json() if xf_limited.status_code == 200 else {}
+          check("extensions/feed limit bounds page not total",
+                xf_limited.status_code == 200
+                and len(xflbody.get("items", [])) <= 1
+                and xflbody.get("total") == xfbody.get("total"), xf_limited.text)
+          xf_type = httpx.get(f"{base}/extensions/feed", params={"type": "provider"}, timeout=5)
+          xftbody = xf_type.json() if xf_type.status_code == 200 else {}
+          check("extensions/feed type filter 200",
+                xf_type.status_code == 200
+                and isinstance(xftbody.get("total"), int)
+                and xftbody.get("total", 0) >= 1
+                and all(i.get("type") == "provider" for i in xftbody.get("items", [])),
+                xf_type.text)
+          xf_status = httpx.get(f"{base}/extensions/feed", params={"status": "installed"}, timeout=5)
+          xfsbody = xf_status.json() if xf_status.status_code == 200 else {}
+          check("extensions/feed status filter 200",
+                xf_status.status_code == 200
+                and isinstance(xfsbody.get("total"), int)
+                and xfsbody.get("total", 0) >= 1
+                and all(i.get("status") == "installed" for i in xfsbody.get("items", [])),
+                xf_status.text)
+          xf_bad_type = httpx.get(f"{base}/extensions/feed", params={"type": "mystery"}, timeout=5)
+          xfbtbody = xf_bad_type.json() if xf_bad_type.status_code == 422 else {}
+          check("extensions/feed 422 invalid type envelope",
+                xf_bad_type.status_code == 422
+                and xfbtbody.get("error", {}).get("code") == "validation_error"
+                and bool(xfbtbody.get("error", {}).get("request_id")), xf_bad_type.text)
+          xf_bad_status = httpx.get(f"{base}/extensions/feed", params={"status": "mystery"}, timeout=5)
+          xfbsbody = xf_bad_status.json() if xf_bad_status.status_code == 422 else {}
+          check("extensions/feed 422 invalid status envelope",
+                xf_bad_status.status_code == 422
+                and xfbsbody.get("error", {}).get("code") == "validation_error"
+                and bool(xfbsbody.get("error", {}).get("request_id")), xf_bad_status.text)
+          xf_bad_limit = httpx.get(f"{base}/extensions/feed", params={"limit": 0}, timeout=5)
+          xfblbody = xf_bad_limit.json() if xf_bad_limit.status_code == 422 else {}
+          check("extensions/feed 422 invalid limit envelope",
+                xf_bad_limit.status_code == 422
+                and xfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(xfblbody.get("error", {}).get("request_id")), xf_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
