@@ -62,6 +62,11 @@ from .impact import (
     AssetImpact,
     ImpactNode,
 )
+from .job_stats import (
+    JobStats,
+    JobStatusCount,
+    OperationJobStat,
+)
 from .common import (
     API_PREFIX,
     API_VERSION,
@@ -163,6 +168,10 @@ __all__ = [
     # impact
     "AssetImpact",
     "ImpactNode",
+    # job stats
+    "JobStats",
+    "JobStatusCount",
+    "OperationJobStat",
     # audit
     "AuditEvent",
     "AuditEventKind",

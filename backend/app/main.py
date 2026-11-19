@@ -32,6 +32,7 @@ from .routers import (
     extensions,
     health,
     impact,
+    job_stats,
     jobs,
     links,
     orchestration,
@@ -209,6 +210,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(conversations.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
+    # "/jobs/stats" must be registered before "/jobs/{job_id}" so the literal
+    # path wins over the UUID-templated one.
+    app.include_router(job_stats.router, prefix=API_PREFIX)
     app.include_router(jobs.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)

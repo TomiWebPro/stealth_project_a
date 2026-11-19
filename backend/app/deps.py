@@ -22,6 +22,7 @@ from .repositories.conversations import ConversationRepository
 from .repositories.dashboard import DashboardRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.impact import ImpactRepository
+from .repositories.job_stats import JobStatsRepository
 from .repositories.jobs import JobRepository
 from .repositories.orchestration import OrchestrationRepository
 from .repositories.projects import ProjectRepository
@@ -144,6 +145,12 @@ def get_job_repository(
     return repositories.jobs
 
 
+def get_job_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> JobStatsRepository:
+    return repositories.job_stats
+
+
 def get_provider_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ProviderRepository:
@@ -254,6 +261,7 @@ __all__ = [
     "get_export_service",
     "get_current_user_id",
     "get_job_repository",
+    "get_job_stats_repository",
     "get_link_service",
     "get_orchestration_repository",
     "get_project_repository",

@@ -15,6 +15,7 @@ from .conversations import ConversationRepository
 from .dashboard import DashboardRepository
 from .extensions import ExtensionRepository
 from .impact import ImpactRepository
+from .job_stats import JobStatsRepository
 from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
@@ -32,6 +33,7 @@ class Repositories:
     conversations: ConversationRepository
     uploads: UploadRepository
     jobs: JobRepository
+    job_stats: JobStatsRepository
     providers: ProviderRepository
     orchestration: OrchestrationRepository
     auth: AuthRepository
@@ -56,6 +58,7 @@ class Repositories:
             store, projects, upload_dir=settings.upload_dir, clock=clock
         )
         jobs = JobRepository(store, projects, clock=clock)
+        job_stats = JobStatsRepository(store, projects, clock=clock)
         providers = ProviderRepository(store, clock=clock)
         orchestration = OrchestrationRepository(
             store,
@@ -84,6 +87,7 @@ class Repositories:
             conversations=conversations,
             uploads=uploads,
             jobs=jobs,
+            job_stats=job_stats,
             providers=providers,
             orchestration=orchestration,
             auth=auth,
