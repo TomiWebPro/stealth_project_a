@@ -33,6 +33,7 @@ from .routers import (
     conversation_stats,
     collaboration_stats,
     comment_feed,
+    comment_stats,
     dashboard,
     events,
     event_stats,
@@ -264,6 +265,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/comments/feed" is a literal path; register it before the orchestration
     # router (which owns "/comments") so the feed path stays explicit.
     app.include_router(comment_feed.router, prefix=API_PREFIX)
+    # "/comments/stats" is a literal path with no templated sibling; register it
+    # alongside the feed router so both comment aggregates stay explicit.
+    app.include_router(comment_stats.router, prefix=API_PREFIX)
     # "/assets/stats" must be registered before "/assets/{asset_id}" so the
     # literal path wins over the UUID-templated one.
     app.include_router(asset_stats.router, prefix=API_PREFIX)

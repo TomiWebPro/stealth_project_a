@@ -162,6 +162,13 @@ from .comment_feed import (
     CommentFeed,
     CommentFeedItem,
 )
+from .comment_stats import (
+    CommentAuthorCount,
+    CommentProjectCount,
+    CommentReference,
+    CommentReferenceCount,
+    CommentStats,
+)
 from .operation import (
     Job,
     JobCancelRequest,
@@ -450,6 +457,12 @@ __all__ = [
     # comment feed
     "CommentFeed",
     "CommentFeedItem",
+    # comment stats
+    "CommentAuthorCount",
+    "CommentProjectCount",
+    "CommentReference",
+    "CommentReferenceCount",
+    "CommentStats",
     # operation
     "Job",
     "JobCancelRequest",

@@ -169,6 +169,10 @@ All paths are prefixed with `/api/v1`.
   (zero-filled presence-state breakdown, per-project activity counts, distinct
   participant count and newest-signal recency) derived from the presence/comment
   stores; optional project scope with shared 404/422 envelopes
+  `GET /comments/stats?project_id=` — authoritative comment metrics (zero-filled
+  asset/project reference breakdown, per-project and per-author comment counts,
+  distinct author/project totals and newest-comment recency) derived from the
+  comment store; optional project scope with shared 404/422 envelopes
 - **Auth/orgs:** `POST /auth/login|refresh`, `GET /auth/session|me`,
   `GET|POST /orgs` (alias `/organizations`), `GET /orgs/{id}`,
   `GET|POST /orgs/{id}/members`,
