@@ -7,6 +7,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ExtensionFeedPanel } from "./ExtensionFeedPanel";
 import { ExtensionStatsPanel } from "./ExtensionStatsPanel";
 import { buildExtensionCards, extensionSummary, SDK_EXAMPLES } from "./helpers";
 
@@ -192,6 +193,7 @@ export function ExtensionsScreen() {
         type={type === "all" ? undefined : type}
         status={status === "all" ? undefined : status}
       />
+      <ExtensionFeedPanel />
       <RegistryCard />
       <ExamplesCard />
     </div>
