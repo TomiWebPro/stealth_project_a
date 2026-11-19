@@ -36,5 +36,6 @@ export * from "./lineageStats";
 export * from "./uploadStats";
 export * from "./eventStats";
 export * from "./jobLogs";
+export * from "./jobQueue";
 export * from "./retryStats";
 export * from "./versionStats";

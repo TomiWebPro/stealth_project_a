@@ -98,6 +98,9 @@ All paths are prefixed with `/api/v1`.
   `GET /jobs/{id}/logs?level=&since_seq=&limit=` — authoritative per-job
   execution log (chronological, severity-filtered, cursor-paginated entries with
   a total) derived from the job event store; shared 404/422 envelopes
+  `GET /jobs/queue?project_id=&limit=` — authoritative dispatch queue (active
+  queued/running jobs in FIFO order with positions, whole-queue waiting/running
+  counters and a bounded page) derived from the job store; shared 404/422 envelopes
   `GET /events/stats?project_id=` — authoritative job-event stream metrics
   (zero-filled event-type breakdown, per-job event counts with recency and
   newest-event recency) derived from the authoritative job event store; an

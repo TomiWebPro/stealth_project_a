@@ -31,6 +31,7 @@ from .repositories.impact import ImpactRepository
 from .repositories.lineage_stats import LineageStatsRepository
 from .repositories.job_stats import JobStatsRepository
 from .repositories.job_logs import JobLogsRepository
+from .repositories.job_queue import JobQueueRepository
 from .repositories.jobs import JobRepository
 from .repositories.operation_stats import OperationStatsRepository
 from .repositories.pipeline_stats import PipelineStatsRepository
@@ -204,6 +205,12 @@ def get_job_logs_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> JobLogsRepository:
     return repositories.job_logs
+
+
+def get_job_queue_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> JobQueueRepository:
+    return repositories.job_queue
 
 
 def get_lineage_stats_repository(
@@ -402,6 +409,7 @@ __all__ = [
     "get_job_repository",
     "get_job_stats_repository",
     "get_job_logs_repository",
+    "get_job_queue_repository",
     "get_lineage_stats_repository",
     "get_link_service",
     "get_operation_stats_repository",

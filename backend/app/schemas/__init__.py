@@ -98,6 +98,10 @@ from .job_logs import (
     JobLogFrame,
     LogLevel,
 )
+from .job_queue import (
+    JobQueueEntry,
+    JobQueueView,
+)
 from .common import (
     API_PREFIX,
     API_VERSION,
@@ -290,6 +294,9 @@ __all__ = [
     "JobLogEntry",
     "JobLogFrame",
     "LogLevel",
+    # job queue
+    "JobQueueEntry",
+    "JobQueueView",
     # audit
     "AuditEvent",
     "AuditEventKind",
