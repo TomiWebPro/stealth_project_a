@@ -2667,6 +2667,112 @@ jobs:
                 and bool(ofbadbody.get("error", {}).get("request_id")),
                 org_feed_bad.text)
 
+          # Authoritative job event feed (C169/C171) is the newest /api/v1 URL
+          # the live client calls (getEventFeed). Reuse the on-demand submitted
+          # job (which carries a real JOB_EVENTS stream from the log probe) so
+          # the derived feed has real items, then probe the feed shape, item
+          # shapes, newest-first (timestamp, job_id, seq) order and whole-scope
+          # total, the `type` filter, the `limit` page bound, the optional project
+          # scope and the shared 404/422 envelopes, keeping CI aligned with new
+          # endpoints as they go live.
+          event_feed = httpx.get(f"{base}/events/feed", timeout=5)
+          efbody = event_feed.json() if event_feed.status_code == 200 else {}
+          check("events/feed 200 feed shape",
+                event_feed.status_code == 200
+                and isinstance(efbody.get("items"), list)
+                and isinstance(efbody.get("total"), int)
+                and "generated_at" in efbody, event_feed.text)
+          check("events/feed derived item shape",
+                event_feed.status_code == 200
+                and efbody.get("total", 0) >= 1
+                and len(efbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "job_id", "seq", "type", "operation_id", "project_id",
+                    "project_name", "timestamp"))
+                    for item in efbody["items"]), event_feed.text)
+          check("events/feed request-id header",
+                "x-request-id" in {k.lower() for k in event_feed.headers},
+                str(dict(event_feed.headers)))
+          if job_id:
+              derived_event = next(
+                  (i for i in efbody.get("items", []) if i.get("job_id") == job_id),
+                  None)
+              check("events/feed derived submitted-job events",
+                    event_feed.status_code == 200 and derived_event is not None
+                    and derived_event.get("operation_id") == "text-to-image"
+                    and derived_event.get("project_id") == project_id
+                    and isinstance(derived_event.get("project_name"), str)
+                    and bool(derived_event.get("project_name"))
+                    and isinstance(derived_event.get("seq"), int)
+                    and isinstance(derived_event.get("type"), str),
+                    event_feed.text)
+          else:
+              check("events/feed derived setup", False,
+                    "could not submit a job for the event-feed probe")
+          event_created_keys = [
+              (i.get("timestamp"), i.get("job_id"), i.get("seq"))
+              for i in efbody.get("items", [])]
+          check("events/feed newest-first order",
+                event_feed.status_code == 200
+                and event_created_keys == sorted(event_created_keys, reverse=True),
+                event_feed.text)
+          ef_limited = httpx.get(f"{base}/events/feed", params={"limit": 1}, timeout=5)
+          eflbody = ef_limited.json() if ef_limited.status_code == 200 else {}
+          check("events/feed limit bounds page not total",
+                ef_limited.status_code == 200
+                and len(eflbody.get("items", [])) <= 1
+                and eflbody.get("total") == efbody.get("total"), ef_limited.text)
+          ef_type = httpx.get(f"{base}/events/feed", params={"type": "status"}, timeout=5)
+          eftbody = ef_type.json() if ef_type.status_code == 200 else {}
+          check("events/feed type filter 200",
+                ef_type.status_code == 200
+                and isinstance(eftbody.get("total"), int)
+                and eftbody.get("total", 0) <= efbody.get("total", 0)
+                and all(i.get("type") == "status" for i in eftbody.get("items", [])),
+                ef_type.text)
+          if project_id:
+              ef_scoped = httpx.get(
+                  f"{base}/events/feed", params={"project_id": project_id}, timeout=5)
+              efsbody = ef_scoped.json() if ef_scoped.status_code == 200 else {}
+              check("events/feed project scope 200",
+                    ef_scoped.status_code == 200
+                    and isinstance(efsbody.get("total"), int)
+                    and efsbody.get("total", 0) >= 1
+                    and all(i.get("project_id") == project_id
+                            for i in efsbody.get("items", [])), ef_scoped.text)
+          else:
+              check("events/feed project scope setup", False,
+                    "could not obtain a project id")
+          ef_missing = httpx.get(
+              f"{base}/events/feed",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"},
+              timeout=5)
+          ef404body = ef_missing.json() if ef_missing.status_code == 404 else {}
+          check("events/feed 404 shared envelope",
+                ef_missing.status_code == 404
+                and ef404body.get("error", {}).get("code") == "project_not_found"
+                and bool(ef404body.get("error", {}).get("request_id")),
+                ef_missing.text)
+          ef_bad = httpx.get(
+              f"{base}/events/feed", params={"project_id": "not-a-uuid"}, timeout=5)
+          efbadbody = ef_bad.json() if ef_bad.status_code == 422 else {}
+          check("events/feed 422 malformed id envelope",
+                ef_bad.status_code == 422
+                and efbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(efbadbody.get("error", {}).get("request_id")), ef_bad.text)
+          ef_bad_type = httpx.get(f"{base}/events/feed", params={"type": "mystery"}, timeout=5)
+          efbtbody = ef_bad_type.json() if ef_bad_type.status_code == 422 else {}
+          check("events/feed 422 invalid type envelope",
+                ef_bad_type.status_code == 422
+                and efbtbody.get("error", {}).get("code") == "validation_error"
+                and bool(efbtbody.get("error", {}).get("request_id")), ef_bad_type.text)
+          ef_bad_limit = httpx.get(f"{base}/events/feed", params={"limit": 0}, timeout=5)
+          efblbody = ef_bad_limit.json() if ef_bad_limit.status_code == 422 else {}
+          check("events/feed 422 invalid limit envelope",
+                ef_bad_limit.status_code == 422
+                and efblbody.get("error", {}).get("code") == "validation_error"
+                and bool(efblbody.get("error", {}).get("request_id")), ef_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
