@@ -3171,6 +3171,104 @@ jobs:
                 and ofblbody.get("error", {}).get("code") == "validation_error"
                 and bool(ofblbody.get("error", {}).get("request_id")), of_bad_limit.text)
 
+          # Authoritative provider feed (C185/C187) is the newest /api/v1 URL the
+          # live client calls (getProviderFeed). Derive a deterministic, bounded
+          # feed fresh from the authoritative provider registry (no registration
+          # timestamp, so ascending (name, provider_id) order). Probe the feed
+          # shape, item shapes/canonical enums, the location/status filters, the
+          # `limit` page bound (whole-scope total unchanged) and the shared 422
+          # envelopes (invalid filter value or limit), keeping CI aligned with the
+          # exact /api/v1 URLs the live client calls as the repo grows.
+          provfeed = httpx.get(f"{base}/providers/feed", timeout=5)
+          provfbody = provfeed.json() if provfeed.status_code == 200 else {}
+          check("providers/feed 200 feed shape",
+                provfeed.status_code == 200
+                and isinstance(provfbody.get("items"), list)
+                and isinstance(provfbody.get("total"), int)
+                and "generated_at" in provfbody, provfeed.text)
+          check("providers/feed derived item shape",
+                provfeed.status_code == 200
+                and provfbody.get("total", 0) >= 1
+                and len(provfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "provider_id", "name", "location", "status",
+                    "operation_ids", "capability_count"))
+                    and item.get("location") in ("local", "studio", "cloud")
+                    and item.get("status") in ("available", "unavailable", "degraded")
+                    and isinstance(item.get("operation_ids"), list)
+                    and all(isinstance(op, str) for op in item["operation_ids"])
+                    and item["operation_ids"] == sorted(item["operation_ids"])
+                    and isinstance(item.get("capability_count"), int)
+                    and item["capability_count"] >= 0
+                    for item in provfbody["items"]), provfeed.text)
+          check("providers/feed request-id header",
+                "x-request-id" in {k.lower() for k in provfeed.headers},
+                str(dict(provfeed.headers)))
+          provf_keys = [
+              (i.get("name"), i.get("provider_id"))
+              for i in provfbody.get("items", [])]
+          check("providers/feed ascending name/id order",
+                provfeed.status_code == 200
+                and provf_keys == sorted(provf_keys), provfeed.text)
+          provf_limited = httpx.get(
+              f"{base}/providers/feed", params={"limit": 1}, timeout=5)
+          provflbody = (provf_limited.json()
+                        if provf_limited.status_code == 200 else {})
+          check("providers/feed limit bounds page not total",
+                provf_limited.status_code == 200
+                and len(provflbody.get("items", [])) <= 1
+                and provflbody.get("total") == provfbody.get("total"),
+                provf_limited.text)
+          provf_location = httpx.get(
+              f"{base}/providers/feed", params={"location": "local"}, timeout=5)
+          provflocbody = (provf_location.json()
+                          if provf_location.status_code == 200 else {})
+          check("providers/feed location filter 200",
+                provf_location.status_code == 200
+                and isinstance(provflocbody.get("total"), int)
+                and provflocbody.get("total", 0) <= provfbody.get("total", 0)
+                and all(i.get("location") == "local"
+                        for i in provflocbody.get("items", [])),
+                provf_location.text)
+          provf_status = httpx.get(
+              f"{base}/providers/feed", params={"status": "available"}, timeout=5)
+          provfstbody = (provf_status.json()
+                         if provf_status.status_code == 200 else {})
+          check("providers/feed status filter 200",
+                provf_status.status_code == 200
+                and isinstance(provfstbody.get("total"), int)
+                and provfstbody.get("total", 0) <= provfbody.get("total", 0)
+                and all(i.get("status") == "available"
+                        for i in provfstbody.get("items", [])),
+                provf_status.text)
+          provf_bad_loc = httpx.get(
+              f"{base}/providers/feed", params={"location": "mars"}, timeout=5)
+          provfblbody = (provf_bad_loc.json()
+                         if provf_bad_loc.status_code == 422 else {})
+          check("providers/feed 422 invalid location envelope",
+                provf_bad_loc.status_code == 422
+                and provfblbody.get("error", {}).get("code") == "validation_error"
+                and bool(provfblbody.get("error", {}).get("request_id")),
+                provf_bad_loc.text)
+          provf_bad_status = httpx.get(
+              f"{base}/providers/feed", params={"status": "mystery"}, timeout=5)
+          provfbsbody = (provf_bad_status.json()
+                         if provf_bad_status.status_code == 422 else {})
+          check("providers/feed 422 invalid status envelope",
+                provf_bad_status.status_code == 422
+                and provfbsbody.get("error", {}).get("code") == "validation_error"
+                and bool(provfbsbody.get("error", {}).get("request_id")),
+                provf_bad_status.text)
+          provf_bad_limit = httpx.get(
+              f"{base}/providers/feed", params={"limit": 0}, timeout=5)
+          provfbllbody = (provf_bad_limit.json()
+                          if provf_bad_limit.status_code == 422 else {})
+          check("providers/feed 422 invalid limit envelope",
+                provf_bad_limit.status_code == 422
+                and provfbllbody.get("error", {}).get("code") == "validation_error"
+                and bool(provfbllbody.get("error", {}).get("request_id")),
+                provf_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
