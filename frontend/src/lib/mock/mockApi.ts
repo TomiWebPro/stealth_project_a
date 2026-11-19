@@ -22,6 +22,8 @@ import type { ConversationStream } from "../conversationStream";
 import { deriveDashboardSummary, validateDashboardArgs } from "../dashboard";
 import type { DashboardOptions } from "../dashboard";
 import { env } from "../env";
+import { deriveEventStats, validateEventStatsArgs } from "../eventStats";
+import type { EventStatsOptions } from "../eventStats";
 import {
   deriveExtensionStats,
   validateExtensionStatsArgs,
@@ -74,6 +76,7 @@ import type {
   Comment,
   Conversation,
   ConversationStats,
+  EventStats,
   Extension,
   ExtensionStats,
   Job,
@@ -110,6 +113,7 @@ import {
   CURRENT_USER,
   EXTENSIONS,
   JOBS,
+  JOB_EVENTS,
   MESSAGES,
   OPERATION_CATALOG,
   ORGANIZATIONS,
@@ -151,7 +155,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `eventStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
  * with {@link clearMockFailures} afterwards.
  */
@@ -950,6 +954,25 @@ export async function fetchUploadStats(options?: UploadStatsOptions): Promise<Up
     });
   }
   return delay(deriveUploadStats(UPLOADS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative job event stream metrics (C101) derived from the same event
+ * store as the live `/events/stats` endpoint. Router-style 422 validation, a
+ * normalized 404 for an unknown project scope and the `"eventStats"` failure
+ * domain keep error and empty states at parity.
+ */
+export async function fetchEventStats(options?: EventStatsOptions): Promise<EventStats> {
+  failIfEnabled("eventStats");
+  validateEventStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveEventStats(JOB_EVENTS, JOBS, REFERENCE_NOW, options));
 }
 
 /**

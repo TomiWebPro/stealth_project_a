@@ -18,6 +18,8 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 import { dashboardQueryParams } from "./dashboard";
 import type { DashboardOptions } from "./dashboard";
+import { eventStatsQueryParams } from "./eventStats";
+import type { EventStatsOptions } from "./eventStats";
 import { extensionStatsQueryParams } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
@@ -59,6 +61,7 @@ import type {
   Conversation,
   ConversationStats,
   DashboardSummary,
+  EventStats,
   Extension,
   ExtensionStats,
   Job,
@@ -572,6 +575,11 @@ export function createHttpApiClient(
     /** Authoritative upload-ticket metrics derived by the backend `/uploads/stats`. */
     getUploadStats(options?: UploadStatsOptions): Promise<UploadStats> {
       return request<UploadStats>("/uploads/stats", uploadStatsQueryParams(options));
+    },
+
+    /** Authoritative job event stream metrics derived by the backend `/events/stats`. */
+    getEventStats(options?: EventStatsOptions): Promise<EventStats> {
+      return request<EventStats>("/events/stats", eventStatsQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

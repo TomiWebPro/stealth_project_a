@@ -5,6 +5,7 @@ import type { AuditQuery } from "./audit";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
+import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
@@ -185,6 +186,10 @@ export const queryKeys = {
   uploadStats: {
     summary: (options: UploadStatsOptions = {}) =>
       ["upload-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  eventStats: {
+    summary: (options: EventStatsOptions = {}) =>
+      ["event-stats", "summary", options.projectId ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>

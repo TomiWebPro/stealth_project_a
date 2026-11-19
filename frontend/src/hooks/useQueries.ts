@@ -10,6 +10,7 @@ import type { CapabilityMatch } from "../lib/catalog";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
+import type { EventStatsOptions } from "../lib/eventStats";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
@@ -38,6 +39,7 @@ import type {
   Conversation,
   ConversationStats,
   DashboardSummary,
+  EventStats,
   Extension,
   ExtensionStats,
   Job,
@@ -550,6 +552,17 @@ export function useUploadStats(
   return useQuery({
     queryKey: queryKeys.uploadStats.summary(options),
     queryFn: () => api.getUploadStats(options),
+  });
+}
+
+/** Authoritative job event stream metrics from `/events/stats`, optionally project-scoped (C101). */
+export function useEventStats(
+  options?: EventStatsOptions,
+): UseQueryResult<EventStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.eventStats.summary(options),
+    queryFn: () => api.getEventStats(options),
   });
 }
 

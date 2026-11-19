@@ -18,6 +18,7 @@ import type {
   Conversation,
   Extension,
   Job,
+  JobEvent,
   Message,
   OperationCatalog,
   Organization,
@@ -1672,5 +1673,46 @@ export const UPLOADS: readonly UploadRecord[] = [
     size_bytes: 250_000,
     created_at: isoMinutesAgo(2_000),
   },
+];
+
+// --- Authoritative job events (C101 / event stream statistics) ---------------
+// Mirrors the backend `JOB_EVENTS` collection read by `/events/stats`. Events
+// reference seeded jobs so a project scope can join them to their parent job;
+// one orphan event (Job 0fff, not in JOBS) is counted globally but skipped by
+// every project scope, matching the backend's join. All six canonical types and
+// the recency max are exercised.
+
+function jobEvent(
+  jobId: string,
+  type: JobEvent["type"],
+  seq: number,
+  minutesAgo: number,
+): JobEvent {
+  return { type, job_id: jobId, seq, timestamp: isoMinutesAgo(minutesAgo) };
+}
+
+export const JOB_EVENTS: readonly JobEvent[] = [
+  // Job 001 (brand): status -> progress x2 -> log.
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "status", 0, 30),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "progress", 1, 28),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "progress", 2, 25),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000001", "log", 3, 24),
+  // Job 002 (character): status -> progress -> intermediate.
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "status", 0, 20),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "progress", 1, 18),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000002", "intermediate", 2, 15),
+  // Job 011 (moonshot, dataset-prep): status -> progress.
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000011", "status", 0, 12),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000011", "progress", 1, 10),
+  // Job 016 (moonshot, failed lora-train): status -> progress -> error.
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "status", 0, 90),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "progress", 1, 60),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000016", "error", 2, 20),
+  // Job 017 (moonshot, succeeded): status -> progress -> result.
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "status", 0, 200),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "progress", 1, 180),
+  jobEvent("0b5c1e2a-3000-4000-8000-000000000017", "result", 2, 150),
+  // Orphan (newest event globally, excluded from every project scope).
+  jobEvent("0b5c1e2a-3000-4000-8000-0000000000ff", "status", 0, 2),
 ];
 

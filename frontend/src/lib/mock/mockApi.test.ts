@@ -8,6 +8,7 @@ import {
   CONVERSATIONS,
   EXTENSIONS,
   JOBS,
+  JOB_EVENTS,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_PLANS,
@@ -36,6 +37,7 @@ import {
   fetchConversationStats,
   fetchCurrentUser,
   fetchDashboard,
+  fetchEventStats,
   fetchExtension,
   fetchExtensions,
   fetchExtensionStats,
@@ -1517,6 +1519,66 @@ describe("mock API upload statistics (C97 follow-up)", () => {
 
     setMockFailure("uploadStats");
     await expect(fetchUploadStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API event stream statistics (C101 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives the authoritative snapshot from the job event seeds", async () => {
+    const stats = await fetchEventStats();
+    const jobIds = new Set(JOB_EVENTS.map((entry) => entry.job_id));
+
+    expect(stats.total_events).toBe(JOB_EVENTS.length);
+    expect(stats.total_jobs).toBe(jobIds.size);
+    expect(stats.by_type?.map((bucket) => bucket.type)).toEqual([
+      "status",
+      "progress",
+      "intermediate",
+      "result",
+      "error",
+      "log",
+    ]);
+    expect(stats.by_type?.reduce((sum, bucket) => sum + bucket.count, 0)).toBe(JOB_EVENTS.length);
+    expect(stats.by_job?.length).toBeGreaterThan(0);
+    expect(stats.newest_event_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes events to one project (skipping orphan jobs) and zero-fills an unseeded project", async () => {
+    const jobProjects = new Map(JOBS.map((job) => [job.id, job.project_id]));
+    const filmEventCount = JOB_EVENTS.filter(
+      (entry) => jobProjects.get(entry.job_id) === filmId,
+    ).length;
+
+    const scoped = await fetchEventStats({ projectId: filmId });
+    expect(scoped.total_events).toBe(filmEventCount);
+    expect(scoped.total_jobs).toBeGreaterThan(0);
+    expect(scoped.by_job?.every((entry) => jobProjects.get(entry.job_id) === filmId)).toBe(true);
+
+    const empty = await fetchEventStats({ projectId: emptyId });
+    expect(empty.total_events).toBe(0);
+    expect(empty.total_jobs).toBe(0);
+    expect(empty.by_type?.every((bucket) => bucket.count === 0)).toBe(true);
+    expect(empty.by_job).toEqual([]);
+    expect(empty.newest_event_at).toBeNull();
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchEventStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchEventStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("eventStats");
+    await expect(fetchEventStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

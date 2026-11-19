@@ -8,6 +8,7 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
+import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
@@ -36,6 +37,7 @@ import type {
   Conversation,
   ConversationStats,
   DashboardSummary,
+  EventStats,
   Extension,
   ExtensionStats,
   Job,
@@ -149,6 +151,8 @@ export interface ApiClient {
   getSearchStats(options?: SearchStatsOptions): Promise<SearchStats>;
   /** Authoritative upload-ticket metrics derived by `/uploads/stats`, optionally project-scoped (C97). */
   getUploadStats(options?: UploadStatsOptions): Promise<UploadStats>;
+  /** Authoritative job event stream metrics derived by `/events/stats`, optionally project-scoped (C101). */
+  getEventStats(options?: EventStatsOptions): Promise<EventStats>;
   /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
   getTags(options?: TagOptions): Promise<TagIndex>;
   /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
@@ -206,6 +210,7 @@ export const mockApiClient: ApiClient = {
   search: mockApi.fetchSearch,
   getSearchStats: mockApi.fetchSearchStats,
   getUploadStats: mockApi.fetchUploadStats,
+  getEventStats: mockApi.fetchEventStats,
   getTags: mockApi.fetchTags,
   getAssetImpact: mockApi.fetchAssetImpact,
 };

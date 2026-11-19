@@ -16,6 +16,7 @@ import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
+import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
 import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
@@ -43,6 +44,7 @@ import {
   CURRENT_USER,
   EXTENSIONS,
   JOBS,
+  JOB_EVENTS,
   MESSAGES,
   OPERATION_CATALOG,
   ORGANIZATIONS,
@@ -198,6 +200,27 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return deriveUploadStats(UPLOADS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative job event statistics derive the same event collection the
+  // `/events/stats` endpoint reads; mirror its 422 validation, unknown-project
+  // 404 and repository aggregation (with the job join) over the shared seeds.
+  if (path === "/events/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateEventStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveEventStats(JOB_EVENTS, JOBS, REFERENCE_NOW, options);
   }
 
   // Authoritative cross-domain search is derived from the same document stores
@@ -762,6 +785,8 @@ describe("live vs mock transport parity", () => {
       ["getSearchStats scoped", (api) => api.getSearchStats({ projectId: filmId })],
       ["getUploadStats", (api) => api.getUploadStats()],
       ["getUploadStats scoped", (api) => api.getUploadStats({ projectId: filmId })],
+      ["getEventStats", (api) => api.getEventStats()],
+      ["getEventStats scoped", (api) => api.getEventStats({ projectId: filmId })],
       ["getTags", (api) => api.getTags()],
       ["getTags scoped", (api) => api.getTags({ projectId: filmId })],
       ["getTags filtered", (api) => api.getTags({ projectId: filmId, prefix: "lora", limit: 3 })],
@@ -818,6 +843,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getUploadStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getUploadStats({ projectId: emptyId }),
+    );
+    expect(await live.getEventStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getEventStats({ projectId: emptyId }),
     );
     // Both transports 404 identically for an unknown project scope.
     const missingId = "00000000-0000-4000-8000-000000000000";
@@ -897,6 +925,21 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockUploadStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveUploadStats422).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown event-stats project scope
+    // and reject a malformed project id with the same 422 envelope.
+    const [mockEventStats404, liveEventStats404] = await Promise.all([
+      mockApiClient.getEventStats({ projectId: missingId }).catch((cause) => cause),
+      live.getEventStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockEventStats404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveEventStats404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockEventStats422, liveEventStats422] = await Promise.all([
+      mockApiClient.getEventStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getEventStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockEventStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveEventStats422).toMatchObject({ status: 422, code: "validation_error" });
 
     // Both transports 404 identically for an unknown project tag scope.
     const [mockTags404, liveTags404] = await Promise.all([
@@ -1108,6 +1151,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getSearchStats).toBe("function");
     expect(typeof typed.getUploadStats).toBe("function");
+    expect(typeof typed.getEventStats).toBe("function");
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");

@@ -199,6 +199,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the event stats key by project", () => {
+    expect(queryKeys.eventStats.summary()).toEqual(["event-stats", "summary", "all"]);
+    expect(queryKeys.eventStats.summary({ projectId: "p1" })).toEqual([
+      "event-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);
