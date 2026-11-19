@@ -1593,6 +1593,21 @@ this file is the execution checklist.
   well. ✅ 2026-11-19 — `a0c1671`
   Screens feed rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C140 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  asset feed endpoint from C137/C139 (`GET /api/v1/assets/feed?project_id=&limit=`):
+  reuse the on-demand registered asset so the derived feed has a real item, then
+  probe the feed shape (`items`/`total`/`generated_at`), derived item shapes
+  (asset/project ids + joined project name, type/name/status, version, byte size
+  and created/updated timestamps), newest-first `(created_at, asset_id)` ordering,
+  the whole-scope `total` before the `limit` page (counters unchanged), the
+  optional `project_id` scope and the shared 404 `project_not_found` / 422
+  `validation_error` envelopes (malformed id + invalid limit) with request-id,
+  keeping CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live`
+  client calls as the repo grows. No unchecked CI row remained, so C140 was
+  added under the Never-empty well. Screens asset-feed rendering remains a
+  screens follow-up.
+  ✅ 2026-11-19 — `1e2f64b`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1771,3 +1786,4 @@ this file is the execution checklist.
 - 2026-11-19 — `503f143` — C137 (backend): added authoritative `GET /api/v1/assets/feed?project_id=&limit=` — a newest-first workspace asset feed derived fresh from the authoritative `ASSETS` collection (no second index) — asset/project identity with a joined project display name, type/name/status, current version, recorded byte size and created/updated timestamps, deterministic `(created_at, asset_id)` order and a whole-scope `total` before the `limit` page, excluding soft-deleted assets (matching `/assets` and `/assets/stats`), with an optional `project_id` scope using shared 404 `project_not_found` / 422 `validation_error` envelopes; `AssetFeed`/`AssetFeedItem` mirrored in `frontend/src/types/assetFeed.ts`, README endpoint list synced, 10 tests × 2 storage backends green (889 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C137 was added under the Never-empty well.
 - 2026-11-19 — `7c62ff2` — C138 (screens): rendered the authoritative conversation feed via `useConversationFeed` — a reusable `ConversationFeedPanel` on Home (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first rows showing conversation title, joined project name, message count and a last-message role badge + excerpt, and Open buttons that deep-link to the chat route with the selected conversation, plus loading/error/missing/empty/populated states — every display value derived in tested `conversationFeedHelpers` (15 new tests). My owned column had no unchecked rows, so C138 was added under the Never-empty well. Lint clean, 923 tests, build green.
 - 2026-11-19 — `a0c1671` — C139 (mocks): wired the authoritative asset feed (C137 follow-up) end to end — `getAssetFeed`/`useAssetFeed` atomically across mockApi (newest-first `(created_at, asset_id)` derivation over live assets with joined project names + "Unknown project" fallback, soft-deleted exclusion, status/version defaults, whole-scope `total` before the `limit` page, router-style 422 + unknown-project 404 + injectable `assetFeed` failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /assets/feed?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/assetFeed` derivation/validation helper; parity guard extended to both transports (populated/scoped/limited/empty/404/422 + surface guard). Lint clean, 936 tests, build green. Screens feed rendering + CI live-smoke probe remain follow-ups. My owned column had no unchecked rows, so C139 was added under the Never-empty well.
+- 2026-11-19 — `1e2f64b` — C140 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/assets/feed` asset feed (the C137/C139 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes with joined project name + type/name/status/version/byte size/timestamps, newest-first `(created_at, asset_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — reusing the on-demand registered asset so the derived feed is non-empty. No unchecked CI row remained, so C140 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (all probes OK, on a dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`, since shellcheck integration is pathologically slow on the large heredoc); frontend lint clean/936 tests/build green and backend pytest (889) green. Screens asset-feed rendering remains a screens follow-up.
