@@ -66,6 +66,7 @@ from .routers import (
     projects,
     project_feed,
     project_stats,
+    project_overview,
     provider_feed,
     provider_stats,
     providers,
@@ -253,6 +254,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(activity_stats.router, prefix=API_PREFIX)
     app.include_router(activity.router, prefix=API_PREFIX)
     app.include_router(audit.router, prefix=API_PREFIX)
+    # "/projects/{project_id}/overview" is a nested single-project view; mount it
+    # beside the audit router and before the projects router so its literal
+    # suffix stays explicit.
+    app.include_router(project_overview.router, prefix=API_PREFIX)
     app.include_router(adapters.router, prefix=API_PREFIX)
     # "/projects/stats" must be registered before "/projects/{project_id}" so
     # the literal path wins over the UUID-templated one.

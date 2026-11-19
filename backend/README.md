@@ -59,7 +59,11 @@ All paths are prefixed with `/api/v1`.
   page) derived fresh from the project store;
   `GET /projects/stats?org_id=` — authoritative portfolio metrics (lifecycle
   breakdown, cross-domain totals/averages, recency) derived from the stores;
-  soft-deleted assets are excluded
+  soft-deleted assets are excluded;
+  `GET /projects/{id}/overview?recent_limit=` — authoritative single-project
+  snapshot (identity + lifecycle, cross-domain counts and the newest jobs/assets)
+  derived fresh from the stores; soft-deleted assets are excluded; unknown project
+  uses the shared 404 envelope
 
 - **Project tree:** `GET|POST /projects/{id}/tree`,
   `POST /projects/{id}/links/{plan|apply}`, `GET /projects/{id}/links`

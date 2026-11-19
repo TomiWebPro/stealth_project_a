@@ -47,6 +47,7 @@ from .orchestration_stats import OrchestrationStatsRepository
 from .projects import ProjectRepository
 from .project_feed import ProjectFeedRepository
 from .project_stats import ProjectStatsRepository
+from .project_overview import ProjectOverviewRepository
 from .provider_feed import ProviderFeedRepository
 from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
@@ -71,6 +72,7 @@ class Repositories:
     projects: ProjectRepository
     project_feed: ProjectFeedRepository
     project_stats: ProjectStatsRepository
+    project_overview: ProjectOverviewRepository
     assets: AssetRepository
     asset_feed: AssetFeedRepository
     asset_stats: AssetStatsRepository
@@ -132,6 +134,7 @@ class Repositories:
         projects = ProjectRepository(store, clock=clock)
         project_feed = ProjectFeedRepository(store, clock=clock)
         project_stats = ProjectStatsRepository(store, clock=clock)
+        project_overview = ProjectOverviewRepository(store, projects, clock=clock)
         assets = AssetRepository(store, projects, clock=clock)
         asset_feed = AssetFeedRepository(store, projects, clock=clock)
         asset_stats = AssetStatsRepository(store, projects, clock=clock)
@@ -203,6 +206,7 @@ class Repositories:
             projects=projects,
             project_feed=project_feed,
             project_stats=project_stats,
+            project_overview=project_overview,
             assets=assets,
             asset_feed=asset_feed,
             asset_stats=asset_stats,

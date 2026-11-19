@@ -13,6 +13,7 @@ export * from "./audit";
 export * from "./auth";
 export * from "./projectFeed";
 export * from "./projectStats";
+export * from "./projectOverview";
 export * from "./conversation";
 export * from "./conversationFeed";
 export * from "./conversationStats";

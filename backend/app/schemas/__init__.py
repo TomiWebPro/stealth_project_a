@@ -259,6 +259,10 @@ from .project_stats import (
     ProjectLifecycleCount,
     ProjectStats,
 )
+from .project_overview import (
+    ProjectOverview,
+    ProjectOverviewCounts,
+)
 from .provider_feed import (
     ProviderFeed,
     ProviderFeedItem,
@@ -431,6 +435,9 @@ __all__ = [
     "ProjectLifecycle",
     "ProjectLifecycleCount",
     "ProjectStats",
+    # project overview
+    "ProjectOverview",
+    "ProjectOverviewCounts",
     # provider feed
     "ProviderFeed",
     "ProviderFeedItem",
