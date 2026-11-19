@@ -3889,6 +3889,137 @@ jobs:
                 and bool(aovbadbody.get("error", {}).get("request_id")),
                 aov_bad_id.text)
 
+          # Authoritative single-conversation overview (C209/C211) is the newest
+          # /api/v1 URL the live client calls (getConversationOverview). Reuse the
+          # conversation created in the conversation-feed probe above — it carries
+          # a seed user message plus an appended assistant reply — so the derived
+          # snapshot has real counts and a last-message preview. Probe the identity
+          # + project join, the zero-filled role/status buckets and last-message
+          # preview, the recent-message shape and newest-first recency, the
+          # recent_limit bound (counts/preview never bounded), the 404
+          # unknown-conversation envelope and the shared 422 validation envelope,
+          # keeping CI aligned with the exact /api/v1 URLs the VITE_API_MODE=live
+          # client calls as the repo grows.
+          if conversation_id:
+              cov = httpx.get(
+                  f"{base}/conversations/{conversation_id}/overview", timeout=5)
+              covbody = cov.json() if cov.status_code == 200 else {}
+              check("conversations/{id}/overview 200 snapshot shape",
+                    cov.status_code == 200 and all(
+                        k in covbody for k in ("conversation_id", "project_id",
+                                              "project_name", "title", "created_by",
+                                              "created_at", "updated_at",
+                                              "message_count", "last_message_role",
+                                              "last_message_excerpt", "counts",
+                                              "recent_messages", "generated_at")),
+                    cov.text)
+              check("conversations/{id}/overview identity + project join",
+                    cov.status_code == 200
+                    and covbody.get("conversation_id") == conversation_id
+                    and covbody.get("project_id") == project_id
+                    and isinstance(covbody.get("project_name"), str)
+                    and bool(covbody.get("project_name"))
+                    and covbody.get("title") == "CI smoke conversation"
+                    and isinstance(covbody.get("created_by"), str)
+                    and bool(covbody.get("created_by"))
+                    and isinstance(covbody.get("created_at"), str)
+                    and isinstance(covbody.get("updated_at"), str)
+                    and isinstance(covbody.get("message_count"), int)
+                    and isinstance(covbody.get("generated_at"), str),
+                    cov.text)
+              check("conversations/{id}/overview last-message preview",
+                    cov.status_code == 200
+                    and covbody.get("last_message_role") == "assistant"
+                    and covbody.get("last_message_excerpt") == "ci smoke reply",
+                    cov.text)
+              check("conversations/{id}/overview counts shape",
+                    cov.status_code == 200
+                    and isinstance(covbody.get("counts"), dict)
+                    and isinstance(covbody["counts"].get("total"), int)
+                    and covbody["counts"]["total"] >= 0
+                    and isinstance(covbody["counts"].get("by_role"), list)
+                    and isinstance(covbody["counts"].get("by_status"), list)
+                    and all(all(k in r for k in ("role", "count"))
+                            for r in covbody["counts"]["by_role"])
+                    and all(all(k in s for k in ("status", "count"))
+                            for s in covbody["counts"]["by_status"]),
+                    cov.text)
+              check("conversations/{id}/overview derived counts",
+                    cov.status_code == 200
+                    and covbody["counts"].get("total", 0) >= 2
+                    and covbody.get("message_count", 0) >= 2
+                    and {r.get("role"): r.get("count")
+                         for r in covbody["counts"].get("by_role", [])}.get("user", 0) >= 1
+                    and {r.get("role"): r.get("count")
+                         for r in covbody["counts"].get("by_role", [])}.get("assistant", 0) >= 1
+                    and {s.get("status"): s.get("count")
+                         for s in covbody["counts"].get("by_status", [])}.get("complete", 0) >= 2,
+                    cov.text)
+              check("conversations/{id}/overview recent message shapes",
+                    cov.status_code == 200
+                    and len(covbody.get("recent_messages", [])) >= 1
+                    and all(all(k in m for k in ("id", "conversation_id", "role",
+                                                 "content", "status", "created_at"))
+                            for m in covbody.get("recent_messages", [])),
+                    cov.text)
+              check("conversations/{id}/overview recent newest-first",
+                    cov.status_code == 200
+                    and all(m.get("conversation_id") == conversation_id
+                            for m in covbody.get("recent_messages", []))
+                    and [m.get("created_at") for m in covbody.get("recent_messages", [])]
+                    == sorted((m.get("created_at")
+                               for m in covbody.get("recent_messages", [])), reverse=True),
+                    cov.text)
+              check("conversations/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in cov.headers},
+                    str(dict(cov.headers)))
+              cov_limited = httpx.get(
+                  f"{base}/conversations/{conversation_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              covlbody = (cov_limited.json()
+                          if cov_limited.status_code == 200 else {})
+              check("conversations/{id}/overview recent_limit bounds page only",
+                    cov_limited.status_code == 200
+                    and len(covlbody.get("recent_messages", [])) <= 1
+                    and covlbody.get("counts", {}).get("total")
+                    == covbody.get("counts", {}).get("total")
+                    and covlbody.get("last_message_excerpt")
+                    == covbody.get("last_message_excerpt"),
+                    cov_limited.text)
+              cov_bad_limit = httpx.get(
+                  f"{base}/conversations/{conversation_id}/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              covblbody = (cov_bad_limit.json()
+                           if cov_bad_limit.status_code == 422 else {})
+              check("conversations/{id}/overview 422 invalid limit envelope",
+                    cov_bad_limit.status_code == 422
+                    and covblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(covblbody.get("error", {}).get("request_id")),
+                    cov_bad_limit.text)
+          else:
+              check("conversations/{id}/overview setup", False,
+                    "could not obtain a conversation id")
+
+          cov_missing = httpx.get(
+              f"{base}/conversations/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          cov404body = (cov_missing.json()
+                        if cov_missing.status_code == 404 else {})
+          check("conversations/{id}/overview 404 shared envelope",
+                cov_missing.status_code == 404
+                and cov404body.get("error", {}).get("code") == "conversation_not_found"
+                and bool(cov404body.get("error", {}).get("request_id")),
+                cov_missing.text)
+          cov_bad_id = httpx.get(
+              f"{base}/conversations/not-a-uuid/overview", timeout=5)
+          covbadbody = (cov_bad_id.json()
+                        if cov_bad_id.status_code == 422 else {})
+          check("conversations/{id}/overview 422 malformed id envelope",
+                cov_bad_id.status_code == 422
+                and covbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(covbadbody.get("error", {}).get("request_id")),
+                cov_bad_id.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
