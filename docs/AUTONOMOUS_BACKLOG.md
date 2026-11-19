@@ -756,6 +756,21 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `e779f84`
   Screens pipeline-stats rendering remains a screens follow-up.
 
+- [x] C77 (backend) Authoritative asset lineage statistics API:
+  `GET /api/v1/lineage/stats?project_id=` derives zero-filled relationship-type
+  breakdowns (derived_from/variant_of/uses_input/related_to/duplicate_of),
+  per-project link counts, distinct live-asset count and newest-link recency from
+  the authoritative `ASSET_RELATIONSHIPS` store (joined to assets for project
+  attribution; links from soft-deleted/unknown source assets excluded, no second
+  index), with an optional `project_id` scope (unknown → shared 404
+  `project_not_found`, malformed → shared 422) and deterministic cross-backend
+  ordering; `LineageStats`/`LineageTypeCount`/`LineageProjectCount` mirrored in
+  `frontend/src/types/lineageStats.ts`, README endpoint list synced, 6 tests × 2
+  storage backends green (683 passed, contract parity + route-surface guard +
+  frontend tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend
+  column had no unchecked items, so C77 was added under the Never-empty well.
+  ✅ 2026-11-19 — `d8f08a0`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -871,3 +886,4 @@ this file is the execution checklist.
 - 2026-11-19 — `82c5f45` — C74 (screens): rendered the authoritative organization/membership stats (C69/C71/C72 follow-up) via `useOrganizationStats` — a reusable `OrganizationStatsPanel` on Home (workspace-wide) and Workspaces (org-scoped) with four stat cards, zero-filled member-role and per-org breakdowns, friendly org names and all five UI states; every display value derived in tested `organizationStatsHelpers`; lint clean, 507 tests, build green. My owned column had no unchecked rows, so C74 was added under the Never-empty well.
 - 2026-11-19 — `70bd66b` — C75 (mocks): wired the C73 production-pipeline stats API end to end — `getPipelineStats`/`usePipelineStats` atomically across mockApi (seed-derived zero-filled per-kind/per-project breakdowns, totals + recency, router-style 422/unknown-project 404 + injectable `pipelineStats` failure), the stable facade, live `httpApiClient` (`GET /pipelines/stats?project_id=`), queryKeys and useQueries, with a shared `lib/pipelineStats` helper + chain seeds; parity guard extended to both transports; lint clean, 521 tests, build green. Screens rendering + CI live-smoke probe are follow-ups. My owned column had no unchecked rows, so C75 was added under the Never-empty well.
 - 2026-11-19 — `e779f84` — C76 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/pipelines/stats` (zero-filled snapshot + per-kind/per-project breakdown shapes, the three canonical pipeline kinds, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C73/C75. No unchecked CI row remained, so C76 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (69/69 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (521)/build and backend pytest (671) green. Screens pipeline-stats rendering remains a screens follow-up.
+- 2026-11-19 — `d8f08a0` — C77 (backend): added authoritative `GET /api/v1/lineage/stats?project_id=` deriving zero-filled relationship-type breakdowns (derived_from/variant_of/uses_input/related_to/duplicate_of), per-project link counts, distinct live-asset count and newest-link recency from the authoritative `ASSET_RELATIONSHIPS` store (joined to assets for project attribution; links from soft-deleted/unknown source assets excluded, no second index), with an optional `project_id` scope (unknown → shared 404 `project_not_found`, malformed → shared 422) and deterministic cross-backend ordering; `LineageStats`/`LineageTypeCount`/`LineageProjectCount` mirrored in `frontend/src/types/lineageStats.ts`, README endpoint list synced, 6 tests × 2 backends green (683 passed, contract parity + route-surface guard + frontend tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C77 was added under the Never-empty well.
