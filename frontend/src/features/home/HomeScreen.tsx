@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
+import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
@@ -144,6 +145,10 @@ export function HomeScreen() {
       <div className="space-y-6">
         <DashboardPanel />
         <ActivityFeedPanel />
+        <ActivityStatsPanel
+          title="Workspace activity stats"
+          description="Authoritative event metrics across every project in the workspace."
+        />
         <ProjectStatsPanel
           title="Workspace project stats"
           description="Authoritative portfolio metrics across every project in the workspace."

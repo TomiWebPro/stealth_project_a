@@ -6,6 +6,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
@@ -160,6 +161,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
       </Card>
 
       <StoragePanel projectId={projectId} />
+      <ActivityStatsPanel
+        projectId={projectId}
+        title="Project activity stats"
+        description="Authoritative event metrics scoped to this project."
+      />
       <AssetStatsPanel
         projectId={projectId}
         title="Project asset stats"
