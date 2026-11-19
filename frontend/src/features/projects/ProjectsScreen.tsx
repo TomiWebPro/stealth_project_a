@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { formatProjectUpdatedAt } from "./helpers";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
+import { LineageFeedPanel } from "../lineage/LineageFeedPanel";
 import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
 import { ProjectFeedPanel } from "./ProjectFeedPanel";
@@ -91,6 +92,11 @@ export function ProjectsScreen() {
       <LineageStatsPanel
         title="Asset lineage stats"
         description="Authoritative asset relationship metrics across the workspace."
+      />
+
+      <LineageFeedPanel
+        title="Workspace asset lineage"
+        description="Newest-first typed asset relationships across every project in the workspace."
       />
 
       {isPending ? <ProjectsSkeleton /> : null}

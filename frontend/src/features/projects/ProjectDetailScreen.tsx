@@ -20,6 +20,7 @@ import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
+import { LineageFeedPanel } from "../lineage/LineageFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
 import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { StoragePanel } from "../storage/StoragePanel";
@@ -236,6 +237,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project lineage stats"
         description="Authoritative asset relationship metrics scoped to this project."
+      />
+      <LineageFeedPanel
+        projectId={projectId}
+        title="Project lineage feed"
+        description="Newest-first typed asset relationships scoped to this project."
       />
       <JobStatsPanel
         projectId={projectId}
