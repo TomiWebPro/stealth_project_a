@@ -90,6 +90,12 @@ All paths are prefixed with `/api/v1`.
   (zero-filled event-type breakdown, per-job event counts with recency and
   newest-event recency) derived from the authoritative job event store; an
   optional project scope joins events to jobs with shared 404/422 envelopes
+  `GET /retries/stats?project_id=` — authoritative job retry metrics
+  (zero-filled retried-jobs-by-status breakdown, per-project retry/job counts,
+  accepted-retry totals and newest retried-job activity) derived from the
+  authoritative `JOB_RETRIES` idempotency ledger joined to jobs; orphaned
+  entries are excluded and an optional project scope uses shared 404/422
+  envelopes
 - **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
   `GET /providers/stats?location=&status=` — authoritative fleet metrics
   (zero-filled health/location breakdowns, capability/operation coverage) derived

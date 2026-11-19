@@ -33,6 +33,7 @@ from .projects import ProjectRepository
 from .project_stats import ProjectStatsRepository
 from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
+from .retry_stats import RetryStatsRepository
 from .search import SearchRepository
 from .search_stats import SearchStatsRepository
 from .tags import TagRepository
@@ -61,6 +62,7 @@ class Repositories:
     organization_stats: OrganizationStatsRepository
     providers: ProviderRepository
     provider_stats: ProviderStatsRepository
+    retry_stats: RetryStatsRepository
     orchestration: OrchestrationRepository
     orchestration_stats: OrchestrationStatsRepository
     auth: AuthRepository
@@ -100,6 +102,7 @@ class Repositories:
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
+        retry_stats = RetryStatsRepository(store, projects, clock=clock)
         orchestration = OrchestrationRepository(
             store,
             projects,
@@ -145,6 +148,7 @@ class Repositories:
             organization_stats=organization_stats,
             providers=providers,
             provider_stats=provider_stats,
+            retry_stats=retry_stats,
             orchestration=orchestration,
             orchestration_stats=orchestration_stats,
             auth=auth,

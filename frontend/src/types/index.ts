@@ -34,3 +34,4 @@ export * from "./pipelineStats";
 export * from "./lineageStats";
 export * from "./uploadStats";
 export * from "./eventStats";
+export * from "./retryStats";

@@ -195,6 +195,11 @@ from .provider_stats import (
     ProviderStats,
     ProviderStatusCount,
 )
+from .retry_stats import (
+    RetryProjectCount,
+    RetryStats,
+    RetryStatusCount,
+)
 from .provider import (
     CapabilityQuery,
     Extension,
@@ -414,6 +419,10 @@ __all__ = [
     "ProviderCapability",
     "ProviderLocation",
     "ProviderStatus",
+    # retry stats
+    "RetryProjectCount",
+    "RetryStats",
+    "RetryStatusCount",
     # search
     "SearchResponse",
     "SearchResult",

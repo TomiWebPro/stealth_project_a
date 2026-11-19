@@ -53,6 +53,7 @@ from .routers import (
     provider_stats,
     providers,
     publish,
+    retry_stats,
     search,
     search_stats,
     shots,
@@ -254,6 +255,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # the literal path wins over the dynamic one.
     app.include_router(provider_stats.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
+    # "/retries/stats" has no templated sibling; register it directly to keep
+    # the stats path explicit.
+    app.include_router(retry_stats.router, prefix=API_PREFIX)
     # "/orchestration/stats" has no templated sibling at that segment; register
     # it directly (before the orchestration router) to keep stats paths explicit.
     app.include_router(orchestration_stats.router, prefix=API_PREFIX)
