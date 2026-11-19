@@ -2159,6 +2159,25 @@ this file is the execution checklist.
    ✅ 2026-11-19 — `60a203a`
    Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C176 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  extension installation feed endpoint from C173/C175
+  (`GET /api/v1/extensions/feed?type=&status=&limit=`): install one extension on
+  demand so the derived feed has a real item, then probe the feed shape
+  (`items`/`total`/`generated_at`), the full item shape (extension id + manifest
+  identity, name/version/publisher/type, status, trust flags, install time),
+  newest-first `(installed_at, extension_id)` ordering, the whole-scope `total`
+  before the `limit` page (counters unchanged), the `type`/`status` filters and
+  the shared 422 `validation_error` envelopes (invalid type/status/limit) with
+  request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C176 was added under the Never-empty well; resolves the C175 CI
+  live-smoke follow-up. Verified the exact embedded smoke script against a real
+  ASGI server (296 checks OK, dynamically chosen free port) with YAML parse +
+  actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1154 tests/build
+  green and backend pytest (1077) green.
+  ✅ 2026-11-19 — `0568384`
+  Screens extension-feed rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2372,3 +2391,4 @@ this file is the execution checklist.
 - 2026-11-19 — `3da13a8` — C172 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/events/feed?project_id=&type=&limit=` job event feed (the C169/C171 follow-up) — feed shape (`items`/`total`/`generated_at`), derived item shapes (job/seq/type/operation/project identity + joined project name/timestamp), newest-first `(timestamp, job_id, seq)` ordering, whole-scope `total` before the `limit` page with unchanged counters, `type` filter, optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid type + invalid limit) with request-id — reusing the on-demand submitted job with a real JOB_EVENTS stream so the derived feed is non-empty. No unchecked CI row remained, so C172 was added under the Never-empty well; resolves the C171 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (333 checks OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint/1115 tests/build green and backend pytest (1053) green. Screens event-feed rendering remains a screens follow-up.
 - 2026-11-19 — `4f4d25e` — C174 (screens): rendered the authoritative job event feed (C169/C171/C172 follow-up) via `useEventFeed` — a reusable `EventFeedPanel` on Jobs (workspace-wide) and project detail (project-scoped) with event-type/page-size filter chips, newest-first rows showing type/status badges, prettified operation label, short job id + seq, joined project name, message/error excerpt and recency, and Open buttons deep-linking to project detail, with all five UI states — every display value derived in 17 new tested `eventFeedHelpers` cases. Resolves the C172 screens follow-up; lint clean, 1132 tests, build green. My owned column had no unchecked rows, so C174 was added under the Never-empty well.
 - 2026-11-19 — `60a203a` — C175 (mocks): wired the authoritative extension installation feed (C173 follow-up) end to end — `getExtensionFeed`/`useExtensionFeed` atomically across mockApi (newest-first `(installed_at, extension_id)` derivation over the `EXTENSIONS` seeds with a pure-JS uuid5 matching the backend's installation-derived id, manifest display fields + trust flags, `type`/`status` filters, whole-scope `total` before the `limit` page, no-install-time skip, router-style 422 for invalid type/status/limit + injectable `extensionFeed` failure), the stable ApiClient facade, live `httpApiClient` (`GET /extensions/feed?type=&status=&limit=`), queryKeys and useQueries, with a shared `lib/extensionFeed` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports. Resolves the C173 mocks-transport follow-up; lint clean, 1154 tests, build green. My owned column had no unchecked rows, so C175 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `0568384` — C176 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/extensions/feed?type=&status=&limit=` extension installation feed (the C173/C175 follow-up) — feed shape (`items`/`total`/`generated_at`), full item shapes (extension id + manifest identity, name/version/publisher/type, status, signed/verified trust flags, install time), newest-first `(installed_at, extension_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, independent `type`/`status` filters and the shared 422 `validation_error` envelopes (invalid type/status/limit) with request-id — installing one extension on demand so the derived feed is non-empty. No unchecked CI row remained, so C176 was added under the Never-empty well; resolves the C175 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server (296 checks OK, dynamically chosen free port) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1154 tests/build green and backend pytest (1077) green. Screens extension-feed rendering remains a screens follow-up.
