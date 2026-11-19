@@ -1118,6 +1118,67 @@ jobs:
                 and bool(evbadbody.get("error", {}).get("request_id")),
                 event_bad.text)
 
+          # Authoritative job retry statistics (C105/C107) is the newest /api/v1
+          # URL the live client calls (getRetryStats). Probe the zero-filled
+          # snapshot + by_status/by_project breakdown shapes, the five canonical
+          # job statuses, the optional project scope (unknown project -> shared
+          # 404) and the shared 422 envelope, keeping CI aligned with new
+          # endpoints as they go live.
+          retry_stats = httpx.get(f"{base}/retries/stats", timeout=5)
+          rtbody = retry_stats.json() if retry_stats.status_code == 200 else {}
+          check("retries/stats 200 snapshot shape",
+                retry_stats.status_code == 200 and all(
+                    k in rtbody for k in ("total_retries", "total_jobs", "by_status",
+                                          "by_project", "newest_retry_at", "generated_at")),
+                retry_stats.text)
+          check("retries/stats breakdown shapes",
+                isinstance(rtbody.get("by_status"), list)
+                and all(isinstance(s, dict) and all(
+                    k in s for k in ("status", "jobs"))
+                    for s in rtbody["by_status"])
+                and isinstance(rtbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "retries", "jobs"))
+                    for p in rtbody["by_project"]),
+                retry_stats.text)
+          check("retries/stats zero-filled statuses",
+                retry_stats.status_code == 200
+                and {s.get("status") for s in rtbody["by_status"]} >= {
+                    "queued", "running", "succeeded", "failed", "canceled"},
+                retry_stats.text)
+          check("retries/stats request-id header",
+                "x-request-id" in {k.lower() for k in retry_stats.headers},
+                str(dict(retry_stats.headers)))
+          if project_id:
+              retry_scoped = httpx.get(
+                  f"{base}/retries/stats", params={"project_id": project_id}, timeout=5)
+              rtsbody = retry_scoped.json() if retry_scoped.status_code == 200 else {}
+              check("retries/stats project scope 200",
+                    retry_scoped.status_code == 200
+                    and isinstance(rtsbody.get("total_retries"), int)
+                    and isinstance(rtsbody.get("by_status"), list),
+                    retry_scoped.text)
+          else:
+              check("retries/stats project scope setup", False,
+                    "could not obtain a project id")
+          retry_missing = httpx.get(
+              f"{base}/retries/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          rt404body = retry_missing.json() if retry_missing.status_code == 404 else {}
+          check("retries/stats 404 shared envelope",
+                retry_missing.status_code == 404
+                and rt404body.get("error", {}).get("code") == "project_not_found"
+                and bool(rt404body.get("error", {}).get("request_id")),
+                retry_missing.text)
+          retry_bad = httpx.get(
+              f"{base}/retries/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          rtbadbody = retry_bad.json() if retry_bad.status_code == 422 else {}
+          check("retries/stats 422 validation envelope",
+                retry_bad.status_code == 422
+                and rtbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(rtbadbody.get("error", {}).get("request_id")),
+                retry_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
