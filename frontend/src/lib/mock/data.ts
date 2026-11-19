@@ -10,6 +10,7 @@ import { buildAuditTrail } from "../audit";
 import type { AssetRelationshipRecord } from "../lineageStats";
 import type { OrganizationMemberRecord } from "../organizationStats";
 import type { PipelineChainRecord } from "../pipelineStats";
+import type { UploadRecord } from "../uploadStats";
 import type {
   Asset,
   AuditTrail,
@@ -1597,6 +1598,79 @@ export const ASSET_RELATIONSHIPS: readonly AssetRelationshipRecord[] = [
     to_asset_id: "0b5c1e2a-2000-4000-8000-0000000000fe",
     type: "related_to",
     created_at: isoMinutesAgo(5),
+  },
+];
+
+// --- Authoritative upload tickets (C97 / upload statistics) -----------------
+// Mirrors the backend `UPLOADS` collection used by `/uploads/stats`. The "empty"
+// and archived projects intentionally have no tickets so a scoped snapshot for
+// them is zero-filled, matching the other authoritative statistics endpoints.
+
+export const UPLOADS: readonly UploadRecord[] = [
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000001",
+    project_id: PROJECT_IDS.moonshot,
+    status: "complete",
+    size_bytes: 1_200_000,
+    created_at: isoMinutesAgo(500),
+  },
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000002",
+    project_id: PROJECT_IDS.moonshot,
+    status: "complete",
+    size_bytes: 3_400_000,
+    created_at: isoMinutesAgo(420),
+  },
+  // Pending tickets carry a declared size but must not contribute bytes.
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000003",
+    project_id: PROJECT_IDS.moonshot,
+    status: "pending",
+    size_bytes: 2_500_000,
+    created_at: isoMinutesAgo(30),
+  },
+  // Newest ticket in the store; also exercises the recency max.
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000004",
+    project_id: PROJECT_IDS.moonshot,
+    status: "pending",
+    size_bytes: 700_000,
+    created_at: isoMinutesAgo(5),
+  },
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000005",
+    project_id: PROJECT_IDS.brand,
+    status: "complete",
+    size_bytes: 900_000,
+    created_at: isoMinutesAgo(1_200),
+  },
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000006",
+    project_id: PROJECT_IDS.brand,
+    status: "complete",
+    size_bytes: 150_000,
+    created_at: isoMinutesAgo(1_100),
+  },
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000007",
+    project_id: PROJECT_IDS.brand,
+    status: "pending",
+    size_bytes: 500_000,
+    created_at: isoMinutesAgo(600),
+  },
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000008",
+    project_id: PROJECT_IDS.character,
+    status: "complete",
+    size_bytes: 2_000_000,
+    created_at: isoMinutesAgo(1_500),
+  },
+  {
+    upload_id: "0b5c1e2a-7000-4000-8000-000000000009",
+    project_id: PROJECT_IDS.environment,
+    status: "complete",
+    size_bytes: 250_000,
+    created_at: isoMinutesAgo(2_000),
   },
 ];
 

@@ -61,6 +61,8 @@ import { deriveSearchStats, validateSearchStatsArgs } from "../searchStats";
 import type { SearchStatsOptions } from "../searchStats";
 import { deriveTagIndex, validateTagArgs } from "../tags";
 import type { TagOptions } from "../tags";
+import { deriveUploadStats, validateUploadStatsArgs } from "../uploadStats";
+import type { UploadStatsOptions } from "../uploadStats";
 import type {
   Asset,
   AssetImpact,
@@ -96,6 +98,7 @@ import type {
   StorageStats,
   StreamEvent,
   TagIndex,
+  UploadStats,
   User,
 } from "../types";
 import {
@@ -119,6 +122,7 @@ import {
   PROVIDERS,
   REFERENCE_NOW,
   STORAGE_STATS,
+  UPLOADS,
   USERS,
 } from "./data";
 
@@ -147,7 +151,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
  * with {@link clearMockFailures} afterwards.
  */
@@ -927,6 +931,25 @@ export async function fetchSearchStats(options?: SearchStatsOptions): Promise<Se
       options,
     ),
   );
+}
+
+/**
+ * Authoritative upload metrics (C97) derived from the same ticket store as the
+ * live `/uploads/stats` endpoint. Router-style 422 validation, a normalized 404
+ * for an unknown project scope and the `"uploadStats"` failure domain keep error
+ * and empty states at parity.
+ */
+export async function fetchUploadStats(options?: UploadStatsOptions): Promise<UploadStats> {
+  failIfEnabled("uploadStats");
+  validateUploadStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveUploadStats(UPLOADS, REFERENCE_NOW, options));
 }
 
 /**

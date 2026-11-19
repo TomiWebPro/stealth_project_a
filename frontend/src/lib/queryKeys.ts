@@ -17,6 +17,7 @@ import type { ProviderStatsOptions } from "./providerStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
+import type { UploadStatsOptions } from "./uploadStats";
 
 /**
  * Centralised TanStack Query keys.
@@ -180,6 +181,10 @@ export const queryKeys = {
   searchStats: {
     summary: (options: SearchStatsOptions = {}) =>
       ["search-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  uploadStats: {
+    summary: (options: UploadStatsOptions = {}) =>
+      ["upload-stats", "summary", options.projectId ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>

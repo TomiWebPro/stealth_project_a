@@ -22,6 +22,7 @@ import type { ProviderStatsOptions } from "./providerStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
+import type { UploadStatsOptions } from "./uploadStats";
 import type {
   ActivityFeed,
   ActivityStats,
@@ -58,6 +59,7 @@ import type {
   SearchStats,
   StorageStats,
   TagIndex,
+  UploadStats,
   User,
 } from "./types";
 import * as mockApi from "./mock/mockApi";
@@ -145,6 +147,8 @@ export interface ApiClient {
   search(query: string, options?: SearchOptions): Promise<SearchResponse>;
   /** Authoritative search-index metrics derived by `/search/stats`, optionally project-scoped (C93). */
   getSearchStats(options?: SearchStatsOptions): Promise<SearchStats>;
+  /** Authoritative upload-ticket metrics derived by `/uploads/stats`, optionally project-scoped (C97). */
+  getUploadStats(options?: UploadStatsOptions): Promise<UploadStats>;
   /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
   getTags(options?: TagOptions): Promise<TagIndex>;
   /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
@@ -201,6 +205,7 @@ export const mockApiClient: ApiClient = {
   getExtension: mockApi.fetchExtension,
   search: mockApi.fetchSearch,
   getSearchStats: mockApi.fetchSearchStats,
+  getUploadStats: mockApi.fetchUploadStats,
   getTags: mockApi.fetchTags,
   getAssetImpact: mockApi.fetchAssetImpact,
 };

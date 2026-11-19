@@ -101,6 +101,10 @@ export type {
   TagFacet,
   TagIndex,
   Timestamp,
+  UploadProjectCount,
+  UploadStats,
+  UploadStatus,
+  UploadStatusCount,
   User,
   Uuid,
 } from "../types";

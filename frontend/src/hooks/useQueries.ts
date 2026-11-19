@@ -24,6 +24,7 @@ import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
+import type { UploadStatsOptions } from "../lib/uploadStats";
 import type {
   ActivityFeed,
   ActivityStats,
@@ -61,6 +62,7 @@ import type {
   StorageStats,
   StreamEvent,
   TagIndex,
+  UploadStats,
   User,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
@@ -537,6 +539,17 @@ export function useSearchStats(
   return useQuery({
     queryKey: queryKeys.searchStats.summary(options),
     queryFn: () => api.getSearchStats(options),
+  });
+}
+
+/** Authoritative upload-ticket metrics from `/uploads/stats`, optionally project-scoped (C97). */
+export function useUploadStats(
+  options?: UploadStatsOptions,
+): UseQueryResult<UploadStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.uploadStats.summary(options),
+    queryFn: () => api.getUploadStats(options),
   });
 }
 

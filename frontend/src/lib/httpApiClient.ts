@@ -44,6 +44,8 @@ import { searchStatsQueryParams } from "./searchStats";
 import type { SearchStatsOptions } from "./searchStats";
 import { tagQueryParams } from "./tags";
 import type { TagOptions } from "./tags";
+import { uploadStatsQueryParams } from "./uploadStats";
+import type { UploadStatsOptions } from "./uploadStats";
 import type {
   ActivityFeed,
   ActivityStats,
@@ -80,6 +82,7 @@ import type {
   SearchStats,
   StorageStats,
   TagIndex,
+  UploadStats,
   User,
 } from "./types";
 
@@ -564,6 +567,11 @@ export function createHttpApiClient(
     /** Authoritative search-index metrics derived by the backend `/search/stats`. */
     getSearchStats(options?: SearchStatsOptions): Promise<SearchStats> {
       return request<SearchStats>("/search/stats", searchStatsQueryParams(options));
+    },
+
+    /** Authoritative upload-ticket metrics derived by the backend `/uploads/stats`. */
+    getUploadStats(options?: UploadStatsOptions): Promise<UploadStats> {
+      return request<UploadStats>("/uploads/stats", uploadStatsQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

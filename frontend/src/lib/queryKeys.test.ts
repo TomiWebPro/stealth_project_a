@@ -190,6 +190,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the upload stats key by project", () => {
+    expect(queryKeys.uploadStats.summary()).toEqual(["upload-stats", "summary", "all"]);
+    expect(queryKeys.uploadStats.summary({ projectId: "p1" })).toEqual([
+      "upload-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

@@ -17,6 +17,7 @@ import {
   PROJECTS,
   PROVIDERS,
   REFERENCE_NOW,
+  UPLOADS,
   USERS,
 } from "./data";
 import {
@@ -66,6 +67,7 @@ import {
   fetchSearch,
   fetchSearchStats,
   fetchStorageStats,
+  fetchUploadStats,
   fetchWorkflowTemplates,
   resetMockAssets,
   updateAsset,
@@ -1459,6 +1461,62 @@ describe("mock API search index stats (C93 follow-up)", () => {
 
     setMockFailure("searchStats");
     await expect(fetchSearchStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API upload statistics (C97 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives the authoritative snapshot from the upload ticket seeds", async () => {
+    const stats = await fetchUploadStats();
+    const completed = UPLOADS.filter((ticket) => ticket.status === "complete");
+    const pending = UPLOADS.filter((ticket) => ticket.status === "pending");
+
+    expect(stats.total_tickets).toBe(UPLOADS.length);
+    expect(stats.pending).toBe(pending.length);
+    expect(stats.completed).toBe(completed.length);
+    expect(stats.bytes_uploaded).toBe(
+      completed.reduce((sum, ticket) => sum + ticket.size_bytes, 0),
+    );
+    expect(stats.by_status).toEqual([
+      { status: "pending", count: pending.length },
+      { status: "complete", count: completed.length },
+    ]);
+    expect(stats.by_project?.length).toBeGreaterThan(0);
+    expect(stats.newest_upload_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project and zero-fills an unseeded project", async () => {
+    const scoped = await fetchUploadStats({ projectId: filmId });
+    expect(scoped.total_tickets).toBe(
+      UPLOADS.filter((ticket) => ticket.project_id === filmId).length,
+    );
+    expect(scoped.by_project).toHaveLength(1);
+
+    const empty = await fetchUploadStats({ projectId: emptyId });
+    expect(empty.total_tickets).toBe(0);
+    expect(empty.bytes_uploaded).toBe(0);
+    expect(empty.by_status?.every((bucket) => bucket.count === 0)).toBe(true);
+    expect(empty.by_project).toEqual([]);
+    expect(empty.newest_upload_at).toBeNull();
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchUploadStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchUploadStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("uploadStats");
+    await expect(fetchUploadStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
