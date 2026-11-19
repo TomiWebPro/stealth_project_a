@@ -341,6 +341,14 @@ this file is the execution checklist.
   shapes are exercised. Keeps CI aligned with the exact `/api/v1` URLs as the
   repo grows. ✅ 2026-11-19 — `85eecce`
 
+- [x] C39 (mocks) Extend injectable error-state fakes to every remaining mock
+  query so error paths can be exercised for all domains in mock mode (C2
+  parity): add `failIfEnabled` guards for project detail/recent/by-project,
+  asset detail/templates, job/provider detail, operations, capabilities, single
+  conversation, auth (user + orgs), presence, comments, storage and extensions,
+  document the complete domain list, and cover all 18 with a failure+recovery
+  test while extending the wildcard guard. ✅ 2026-11-19 — `1d4c9b6`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -418,3 +426,4 @@ this file is the execution checklist.
 - 2026-11-19 — `7ef46c8` — C35 (screens): Home now renders the authoritative `useActivity` workspace feed with kind/limit filters, all five UI states, project-detail deep links and tested `activityHelpers`; lint clean, 245 tests, build green.
 - 2026-11-19 — `cfcdab6` — C36/C37 (mocks): wired the authoritative tag-facets (C33) and downstream impact (C34) APIs end to end — `getTags`/`useTags` and `getAssetImpact`/`useAssetImpact` across mockApi, the stable facade, live httpApiClient, queryKeys and useQueries, with shared `lib/tags` + `lib/impact` derivation/validation helpers, populated/empty/404/422 injection tests and parity extended to both transports; lint clean, 265 tests, build green. Screens rendering + CI smoke probes remain follow-ups.
 - 2026-11-19 — `85eecce` — C38 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/tags` (index shape, `prefix` filter, `limit` 422 + unknown-project `project_not_found` 404 envelopes) and `GET /api/v1/assets/{id}/impact` (derived shape, `asset_not_found` 404 + `max_depth` 422 envelopes), registering one tagged asset on demand so both derived 200 shapes are exercised — the CI follow-up from C33/C34 and C36/C37. No unchecked CI row remained, so C38 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (28/28 probes OK) and with pinned actionlint; frontend lint/test (265)/build and backend pytest (565) green. README CI endpoint list is a docs-accuracy follow-up (C6).
+- 2026-11-19 — `1d4c9b6` — C39 (mocks): extended injectable error-state fakes to every remaining mock query (project detail/recent/by-project, asset detail/templates, job/provider detail, operations, capabilities, single conversation, auth, presence, comments, storage, extensions), documented the full domain list, and added a table-driven failure+recovery test across all 18 newly guarded queries plus wildcard coverage; lint clean, 266 tests, build green.
