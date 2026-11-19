@@ -77,7 +77,12 @@ function delay<T>(value: T): Promise<T> {
 /**
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
- * every guarded query. Always reset with {@link clearMockFailures} afterwards.
+ * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
+ * `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
+ * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
+ * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
+ * `tags` and `impact`. Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
 
@@ -202,12 +207,14 @@ export async function fetchProjects(): Promise<readonly Project[]> {
 }
 
 export async function fetchProject(projectId: string): Promise<Project | undefined> {
+  failIfEnabled("projects");
   return delay(PROJECTS.find((project) => project.id === projectId));
 }
 
 export async function fetchRecentAssets(
   limit = 6,
 ): Promise<readonly Asset[]> {
+  failIfEnabled("assets");
   const assets = ASSETS.map(withAssetOverrides)
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, limit);
@@ -215,6 +222,7 @@ export async function fetchRecentAssets(
 }
 
 export async function fetchAssetsByProject(projectId: string): Promise<readonly Asset[]> {
+  failIfEnabled("assets");
   const assets = ASSETS.map(withAssetOverrides)
     .filter((asset) => asset.project_id === projectId)
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -239,6 +247,7 @@ export async function fetchJobsByProject(projectId: string): Promise<readonly Jo
 }
 
 export async function fetchProjectDetail(projectId: string): Promise<ProjectDetail | undefined> {
+  failIfEnabled("projects");
   const project = PROJECTS.find((candidate) => candidate.id === projectId);
   if (!project) {
     return delay(undefined);
@@ -282,6 +291,7 @@ export async function fetchAssets(): Promise<readonly Asset[]> {
 }
 
 export async function fetchAsset(assetId: string): Promise<Asset | undefined> {
+  failIfEnabled("assets");
   const asset = ASSETS.find((candidate) => candidate.id === assetId);
   return delay(asset ? withAssetOverrides(asset) : undefined);
 }
@@ -329,15 +339,18 @@ export async function updateAsset(assetId: string, body: AssetUpdate): Promise<A
 }
 
 export async function fetchJob(jobId: string): Promise<Job | undefined> {
+  failIfEnabled("jobs");
   return delay(JOBS.find((job) => job.id === jobId));
 }
 
 export async function fetchProvider(providerId: string): Promise<Provider | undefined> {
+  failIfEnabled("providers");
   return delay(PROVIDERS.find((provider) => provider.id === providerId));
 }
 
 
 export async function fetchWorkflowTemplates(projectId?: string): Promise<readonly Asset[]> {
+  failIfEnabled("assets");
   const templates = ASSETS.map(withAssetOverrides).filter((asset) => {
     if (asset.type !== "resource") return false;
     const meta = asset.metadata ?? {};
@@ -350,11 +363,13 @@ export async function fetchWorkflowTemplates(projectId?: string): Promise<readon
 
 /** Static operation catalog (pipeline stages 1-9). */
 export async function fetchOperations(): Promise<OperationCatalog> {
+  failIfEnabled("operations");
   return delay(OPERATION_CATALOG);
 }
 
 /** Flattened capability rows, optionally filtered to one operation id. */
 export async function fetchCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]> {
+  failIfEnabled("capabilities");
   const matches: CapabilityMatch[] = [];
   for (const provider of PROVIDERS) {
     for (const capability of provider.capabilities ?? []) {
@@ -384,6 +399,7 @@ export async function fetchConversations(projectId: string): Promise<readonly Co
 export async function fetchConversation(
   conversationId: string,
 ): Promise<Conversation | undefined> {
+  failIfEnabled("conversations");
   return delay(CONVERSATIONS.find((conversation) => conversation.id === conversationId));
 }
 
@@ -475,10 +491,12 @@ export function openConversationStream(
 
 /** Current dev-local session user. */
 export async function fetchCurrentUser(): Promise<User> {
+  failIfEnabled("auth");
   return delay(CURRENT_USER);
 }
 
 export async function fetchOrganizations(): Promise<readonly Organization[]> {
+  failIfEnabled("auth");
   return delay(ORGANIZATIONS);
 }
 
@@ -491,6 +509,7 @@ export async function fetchOrchestrationRun(
 }
 
 export async function fetchPresence(projectId: string): Promise<readonly Presence[]> {
+  failIfEnabled("presence");
   return delay(PRESENCE.filter((entry) => entry.project_id === projectId));
 }
 
@@ -498,6 +517,7 @@ export async function fetchComments(
   projectId: string,
   assetId?: string,
 ): Promise<readonly Comment[]> {
+  failIfEnabled("comments");
   return delay(
     COMMENTS.filter((comment) => {
       if (comment.project_id !== projectId) return false;
@@ -508,6 +528,7 @@ export async function fetchComments(
 
 /** Empty stats for an unknown project mirror the live API's default shape. */
 export async function fetchStorageStats(projectId: string): Promise<StorageStats> {
+  failIfEnabled("storage");
   const stats = STORAGE_STATS.find((entry) => entry.project_id === projectId);
   return delay(
     stats ?? {
@@ -519,10 +540,12 @@ export async function fetchStorageStats(projectId: string): Promise<StorageStats
 }
 
 export async function fetchExtensions(): Promise<readonly Extension[]> {
+  failIfEnabled("extensions");
   return delay(EXTENSIONS);
 }
 
 export async function fetchExtension(extensionId: string): Promise<Extension | undefined> {
+  failIfEnabled("extensions");
   return delay(EXTENSIONS.find((extension) => extension.manifest.id === extensionId));
 }
 

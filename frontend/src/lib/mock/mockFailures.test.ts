@@ -1,18 +1,36 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiError } from "../../api/client";
-import { PROJECTS } from "./data";
+import { ASSETS, CONVERSATIONS, EXTENSIONS, JOBS, PROJECTS, PROVIDERS } from "./data";
 import {
   clearMockFailures,
-  fetchAssets,
-  fetchConversations,
-  fetchHomeSummary,
-  fetchJobs,
-  fetchOrchestrationRun,
+  fetchAsset,
   fetchAssetImpact,
+  fetchAssets,
+  fetchAssetsByProject,
+  fetchCapabilities,
+  fetchComments,
+  fetchConversation,
+  fetchConversations,
+  fetchCurrentUser,
+  fetchExtension,
+  fetchExtensions,
+  fetchHomeSummary,
+  fetchJob,
+  fetchJobs,
+  fetchOperations,
+  fetchOrchestrationRun,
+  fetchOrganizations,
+  fetchPresence,
+  fetchProject,
+  fetchProjectDetail,
   fetchProjects,
+  fetchProvider,
   fetchProviders,
+  fetchRecentAssets,
+  fetchStorageStats,
   fetchTags,
+  fetchWorkflowTemplates,
   setMockFailure,
 } from "./mockApi";
 
@@ -44,6 +62,9 @@ describe("mock error-state fakes", () => {
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
+    // Newly guarded domains must honour the wildcard too.
+    await expect(fetchCapabilities()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchExtensions()).rejects.toBeInstanceOf(ApiError);
   });
 
   it("can be switched off per domain without clearing the rest", async () => {
@@ -73,4 +94,49 @@ describe("mock error-state fakes", () => {
     await expect(fetchTags()).resolves.toBeDefined();
     await expect(fetchAssetImpact(assetId)).resolves.toBeDefined();
   });
+
+  it(
+    "exposes injectable failures for every remaining query domain",
+    async () => {
+      const projectId = PROJECTS[0]?.id ?? "";
+      const assetId = ASSETS[0]?.id ?? "";
+      const jobId = JOBS[0]?.id ?? "";
+      const providerId = PROVIDERS[0]?.id ?? "";
+      const conversationId = CONVERSATIONS[0]?.id ?? "";
+      const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
+
+      const guarded: Array<[string, () => Promise<unknown>]> = [
+        ["projects", () => fetchProject(projectId)],
+        ["projects", () => fetchProjectDetail(projectId)],
+        ["assets", () => fetchAsset(assetId)],
+        ["assets", () => fetchRecentAssets()],
+        ["assets", () => fetchAssetsByProject(projectId)],
+        ["assets", () => fetchWorkflowTemplates()],
+        ["jobs", () => fetchJob(jobId)],
+        ["providers", () => fetchProvider(providerId)],
+        ["operations", () => fetchOperations()],
+        ["capabilities", () => fetchCapabilities()],
+        ["conversations", () => fetchConversation(conversationId)],
+        ["auth", () => fetchCurrentUser()],
+        ["auth", () => fetchOrganizations()],
+        ["presence", () => fetchPresence(projectId)],
+        ["comments", () => fetchComments(projectId)],
+        ["storage", () => fetchStorageStats(projectId)],
+        ["extensions", () => fetchExtensions()],
+        ["extensions", () => fetchExtension(extensionId)],
+      ];
+
+      for (const [domain, run] of guarded) {
+        setMockFailure(domain);
+        await expect(run(), `${domain} query should fail`).rejects.toMatchObject({
+          name: "ApiError",
+          status: 503,
+          code: "mock_failure",
+        });
+        clearMockFailures();
+        await expect(run(), `${domain} query should recover`).resolves.not.toBeInstanceOf(ApiError);
+      }
+    },
+    20_000,
+  );
 });
