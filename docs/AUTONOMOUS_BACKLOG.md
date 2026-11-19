@@ -1229,6 +1229,22 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `8da0578`
   Screens version-stats rendering remains a screens follow-up.
 
+- [x] C113 (backend) Authoritative publish statistics API:
+  `GET /api/v1/publishes/stats?project_id=` derives published-asset counts,
+  delivered byte totals, a deterministic by-version distribution (ascending)
+  and per-project publish activity (descending count then project id), plus
+  newest-publish recency and generated-at, from publish receipts in the
+  authoritative asset store (no second index); soft-deleted/unpublished assets
+  and malformed receipts are excluded, with an optional `project_id` scope
+  (unknown → shared 404 `project_not_found`, malformed → shared 422), mirrored
+  `PublishStats`/`PublishVersionCount`/`PublishProjectCount` in
+  `frontend/src/types/publishStats.ts`, README endpoint list synced, 6 tests ×
+  2 storage backends green (783 passed, contract parity + route-surface guard +
+  tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned
+  backend column had no unchecked items (only the repo-wide C6 docs pass remains,
+  owned by other agents), so C113 was added under the Never-empty well.
+  ✅ 2026-11-19 — `207d242`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1380,3 +1396,4 @@ this file is the execution checklist.
 - 2026-11-19 — `75f0b3b` — C110 (screens): rendered the authoritative job retry statistics (C105/C107/C108 follow-up) via `useRetryStats` — a reusable `RetryStatsPanel` on Jobs (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled queued/running/succeeded/failed/canceled status and per-project retry/job breakdowns, and all five UI states; every display value derived in tested `retryStatsHelpers`. Resolves the C108 screens follow-up. Lint clean, 747 tests, build green. My owned column had no unchecked rows, so C110 was added under the Never-empty well.
 - 2026-11-19 — `28bac8a` — C111 (mocks): wired the authoritative asset version statistics API (C109 follow-up) end to end — `getVersionStats`/`useVersionStats` atomically across mockApi (seed-derived version records from `ASSETS` with one v1 per asset plus revisions, ascending by-version buckets, per-project version/asset counts sorted by descending versions then id, distinct live-asset total, newest `(created_at, asset_id)` recency, soft-deleted/unknown-asset exclusion, router-style 422 + unknown-project 404 + injectable `versionStats` failure), the stable facade, live `httpApiClient` (`GET /versions/stats?project_id=`), queryKeys and useQueries, with a shared `lib/versionStats` derivation/validation helper + seeds and parity extended to both transports; lint clean, 759 tests, build green. My owned column had no unchecked rows, so C111 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
 - 2026-11-19 — `8da0578` — C112 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/versions/stats` (zero-filled snapshot + by_version/by_project breakdown shapes, an on-demand v2 revision so the derived 200 shape is exercised, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found`, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C109/C111. No unchecked CI row remained, so C112 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (129/129 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12; frontend lint clean/759 tests/build green and backend pytest (771) green. Screens version-stats rendering remains a screens follow-up.
+- 2026-11-19 — `207d242` — C113 (backend): added authoritative `GET /api/v1/publishes/stats?project_id=` deriving published-asset totals, delivered bytes, deterministic by-version/by-project breakdowns and newest-publish recency from publish receipts in the authoritative asset store (no second index; soft-deleted/unpublished assets and malformed receipts excluded, shared 404/422 envelopes); `PublishStats`/`PublishVersionCount`/`PublishProjectCount` mirrored in `frontend/src/types/publishStats.ts`, README endpoint list synced, 6 tests × 2 backends green (783 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C113 was added under the Never-empty well.
