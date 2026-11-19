@@ -1552,6 +1552,23 @@ this file is the execution checklist.
   the Never-empty well. ✅ 2026-11-19 — `edeb8cb`
   Screens conversation-feed rendering remains a screens follow-up.
 
+- [x] C137 (backend) Authoritative asset feed API:
+  `GET /assets/feed?project_id=&limit=` derives a newest-first, workspace-wide
+  feed of live assets from the authoritative `ASSETS` collection (no second
+  index) — asset/project identity with a joined project display name, type/name/
+  status, current version, recorded byte size and created/updated timestamps,
+  with a deterministic `(created_at, asset_id)` newest-first tie-break and a
+  whole-scope `total` counted before the `limit` page; soft-deleted assets are
+  excluded (matching `/assets` and `/assets/stats`), with an optional
+  `project_id` scope using shared 404 `project_not_found` / 422
+  `validation_error` envelopes. `AssetFeed`/`AssetFeedItem` mirrored in
+  `frontend/src/types/assetFeed.ts`, README endpoint list synced, 10 tests × 2
+  storage backends green (889 passed, contract parity + route-surface guard +
+  tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned
+  backend column had no unchecked items (only the repo-wide C6 docs pass remains,
+  owned by other agents), so C137 was added under the Never-empty well.
+  ✅ 2026-11-19 — `503f143`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1727,3 +1744,4 @@ this file is the execution checklist.
 - 2026-11-19 — `be151cd` — C134 (screens): rendered the authoritative upload-ticket feed (C129/C131/C132 follow-up) via `useUploadFeed` — a reusable `UploadFeedPanel` on Home (workspace-wide) and project detail (project-scoped) with page-size chips, newest-first rows showing filenames, joined project names, status badges, declared/uploaded byte sizes and created/expiry labels, project-detail deep links, and all five UI states; every display value derived in tested `uploadFeedHelpers`, with `uploadStatusTone` shared from `uploadStatsHelpers`. Resolves the C132 screens follow-up. Lint clean, 892 tests, build green. My owned column had no unchecked rows, so C134 was added under the Never-empty well.
 - 2026-11-19 — `f28c707` — C135 (mocks): wired the authoritative conversation feed (C133 follow-up) end to end — `getConversationFeed`/`useConversationFeed` atomically across mockApi (newest-first `(updated_at, conversation_id)` derivation, joined project names with "Unknown project" fallback, last-message role + whitespace-normalized/truncated excerpt preview from `MESSAGES` with an `(created_at, id)` tie-break and null previews for empty conversations, whole-scope `total` before the `limit` page, router-style 422 + unknown-project 404 + injectable `conversationFeed` failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /conversations/feed?project_id=&limit=`), queryKeys and useQueries, with a shared `lib/conversationFeed` derivation/validation helper; parity guard extended to both transports. Lint clean, 908 tests, build green. My owned column had no unchecked rows, so C135 was added under the Never-empty well. Screens feed rendering + CI live-smoke probe remain follow-ups.
 - 2026-11-19 — `edeb8cb` — C136 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/conversations/feed` conversation feed (the C133/C135 follow-up) — feed shape, derived item shapes with the last-message role/excerpt preview, newest-first `(updated_at, conversation_id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, optional `project_id` scope and the shared 404 `project_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit) with request-id — creating one conversation with an initial message plus an assistant reply on demand so the derived feed is non-empty. No unchecked CI row remained, so C136 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (189/189 probes OK, on a dynamically chosen free port because :8000 and :8123 are held by other services) with YAML parse + actionlint v1.7.12 (no findings); frontend lint clean/908 tests/build green and backend pytest (869) green. Screens conversation-feed rendering remains a screens follow-up.
+- 2026-11-19 — `503f143` — C137 (backend): added authoritative `GET /api/v1/assets/feed?project_id=&limit=` — a newest-first workspace asset feed derived fresh from the authoritative `ASSETS` collection (no second index) — asset/project identity with a joined project display name, type/name/status, current version, recorded byte size and created/updated timestamps, deterministic `(created_at, asset_id)` order and a whole-scope `total` before the `limit` page, excluding soft-deleted assets (matching `/assets` and `/assets/stats`), with an optional `project_id` scope using shared 404 `project_not_found` / 422 `validation_error` envelopes; `AssetFeed`/`AssetFeedItem` mirrored in `frontend/src/types/assetFeed.ts`, README endpoint list synced, 10 tests × 2 storage backends green (889 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C137 was added under the Never-empty well.
