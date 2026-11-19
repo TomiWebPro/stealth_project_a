@@ -31,6 +31,7 @@ from .routers import (
     dashboard,
     events,
     exports,
+    extension_stats,
     extensions,
     health,
     impact,
@@ -234,6 +235,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(orchestration.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
+    # "/extensions/stats" must be registered before "/extensions/{extension_id}"
+    # so the literal path wins over the UUID-templated one.
+    app.include_router(extension_stats.router, prefix=API_PREFIX)
     app.include_router(extensions.router, prefix=API_PREFIX)
     app.include_router(tree.router, prefix=API_PREFIX)
     app.include_router(publish.router, prefix=API_PREFIX)

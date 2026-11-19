@@ -16,6 +16,7 @@ from .conversations import ConversationRepository
 from .conversation_stats import ConversationStatsRepository
 from .dashboard import DashboardRepository
 from .extensions import ExtensionRepository
+from .extension_stats import ExtensionStatsRepository
 from .impact import ImpactRepository
 from .job_stats import JobStatsRepository
 from .jobs import JobRepository
@@ -46,6 +47,7 @@ class Repositories:
     orchestration: OrchestrationRepository
     auth: AuthRepository
     extensions: ExtensionRepository
+    extension_stats: ExtensionStatsRepository
     audit: AuditRepository
     search: SearchRepository
     dashboard: DashboardRepository
@@ -86,6 +88,7 @@ class Repositories:
             clock=clock,
         )
         extensions = ExtensionRepository(store, clock=clock)
+        extension_stats = ExtensionStatsRepository(store, clock=clock)
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
         search = SearchRepository(store, clock=clock)
         dashboard = DashboardRepository(store, clock=clock)
@@ -108,6 +111,7 @@ class Repositories:
             orchestration=orchestration,
             auth=auth,
             extensions=extensions,
+            extension_stats=extension_stats,
             audit=audit,
             search=search,
             dashboard=dashboard,

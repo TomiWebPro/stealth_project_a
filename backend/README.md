@@ -85,7 +85,10 @@ All paths are prefixed with `/api/v1`.
   `GET|POST /orgs/{id}/members`
 - **Extensions:** `GET /extensions/registry`, `GET /extensions`,
   `POST /extensions/install`, `GET /extensions/{id}`,
-  `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`
+  `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`,
+  `GET /extensions/stats?type=&status=` — authoritative registry/installation
+  metrics (zero-filled type/status breakdowns, trust flags, permission/capability
+  coverage) derived from the extension stores, with optional type/status filters
 - **Pipelines:** `GET|POST /pipelines/lora`, `/pipelines/shot`, `/pipelines/splat`
   (each with `GET /pipelines/<kind>/{id}`)
 - **Exports:** `GET /projects/{id}/exports`, `GET /assets/{id}/exports`

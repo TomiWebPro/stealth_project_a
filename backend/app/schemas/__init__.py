@@ -63,6 +63,12 @@ from .dashboard import (
     DashboardCounts,
     DashboardSummary,
 )
+from .extension_stats import (
+    ExtensionPermissionStat,
+    ExtensionStats,
+    ExtensionStatusCount,
+    ExtensionTypeCount,
+)
 from .impact import (
     AssetImpact,
     ImpactNode,
@@ -186,6 +192,11 @@ __all__ = [
     # dashboard
     "DashboardCounts",
     "DashboardSummary",
+    # extension stats
+    "ExtensionPermissionStat",
+    "ExtensionStats",
+    "ExtensionStatusCount",
+    "ExtensionTypeCount",
     # impact
     "AssetImpact",
     "ImpactNode",

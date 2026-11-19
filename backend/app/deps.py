@@ -23,6 +23,7 @@ from .repositories.conversations import ConversationRepository
 from .repositories.conversation_stats import ConversationStatsRepository
 from .repositories.dashboard import DashboardRepository
 from .repositories.extensions import ExtensionRepository
+from .repositories.extension_stats import ExtensionStatsRepository
 from .repositories.impact import ImpactRepository
 from .repositories.job_stats import JobStatsRepository
 from .repositories.jobs import JobRepository
@@ -215,6 +216,12 @@ def get_extension_repository(
     return repositories.extensions
 
 
+def get_extension_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ExtensionStatsRepository:
+    return repositories.extension_stats
+
+
 def get_search_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> SearchRepository:
@@ -286,6 +293,7 @@ __all__ = [
     "get_conversation_stats_repository",
     "get_dashboard_repository",
     "get_extension_repository",
+    "get_extension_stats_repository",
     "get_impact_repository",
     "get_current_org_id",
     "get_export_service",
