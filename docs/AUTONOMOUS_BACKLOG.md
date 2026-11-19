@@ -674,6 +674,14 @@ this file is the execution checklist.
   My owned backend column had no unchecked items, so C69 was added under the
   Never-empty well. ✅ 2026-11-19 — `e1a7531`
 
+- [x] C70 (screens) Render the authoritative operation catalog statistics (C65/C67/
+  C68 follow-up) via `useOperationStats`: an `OperationStatsPanel` on the Jobs
+  screen with five stat cards, provider-binding coverage, zero-filled deterministic
+  input/output asset-type breakdowns, and loading/error/missing/empty/populated
+  states — all display values derived in tested `operationStatsHelpers`. Resolves
+  the C68 screens follow-up. My owned column had no unchecked rows, so C70 was
+  added under the Never-empty well. ✅ 2026-11-19 — `9395f52`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -782,3 +790,4 @@ this file is the execution checklist.
 - 2026-11-19 — `e9aebe3` — C67 (mocks): wired the C65 operations stats API end to end — `getOperationStats`/`useOperationStats` atomically across mockApi (seed-derived catalog coverage + deterministic asset-type input/output breakdowns, injectable `operationStats` failure), the stable facade, live `httpApiClient` (`GET /operations/stats`, no query params), `queryKeys` and `useQueries`, with a shared `lib/operationStats` helper; parity guard extended to both transports; lint clean, 466 tests, build green. Screens rendering + CI live-smoke probe are follow-ups. My owned column had no unchecked rows, so C67 was added under the Never-empty well.
 - 2026-11-19 — `da42ae8` — C68 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/operations/stats` (catalog snapshot + asset-type breakdown shapes, provider/type split invariants, request-id header) — the CI follow-up from C65/C67. No unchecked CI row remained, so C68 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (59/59 executed probes OK) with actionlint v1.7.12 + YAML parse; frontend lint/test (466)/build and backend pytest (647) green. Screens operation-stats rendering remains a screens follow-up.
 - 2026-11-19 — `e1a7531` — C69 (backend): added authoritative `GET /api/v1/orgs/stats?org_id=` (alias `/organizations/stats`) deriving organization/member/user totals, zero-filled role breakdowns, per-organization member counts, average and recency from the auth store, with optional org scope (unknown org → zero-filled 200, malformed id → shared 422); contracts mirrored in TS, README synced, 7 tests × 2 backends green (661 passed), tsc/contract parity/route guard clean. Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C69 was added under the Never-empty well.
+- 2026-11-19 — `9395f52` — C70 (screens): rendered authoritative operation catalog stats via `useOperationStats` — an `OperationStatsPanel` on the Jobs screen with five stat cards, provider-binding coverage, zero-filled deterministic input/output asset-type breakdowns, and all five UI states; every display value derived in tested `operationStatsHelpers`; resolves the C68 screens follow-up. Lint clean, 478 tests, build green. My owned column had no unchecked rows, so C70 was added under the Never-empty well.
