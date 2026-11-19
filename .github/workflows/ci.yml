@@ -442,6 +442,45 @@ jobs:
                 and abadbody.get("error", {}).get("code") == "validation_error"
                 and bool(abadbody.get("error", {}).get("request_id")), asset_stats_bad.text)
 
+          # Authoritative project portfolio statistics (C53/C55) is the newest
+          # /api/v1 URL the live client calls (getProjectStats). Probe the
+          # zero-filled snapshot shape, the optional org scope (an unknown but
+          # well-formed org yields a zero-filled snapshot, matching
+          # GET /projects?org_id=) and the shared 422 envelope, keeping CI aligned
+          # with new endpoints as they go live.
+          project_stats = httpx.get(f"{base}/projects/stats", timeout=5)
+          psbody = project_stats.json() if project_stats.status_code == 200 else {}
+          check("projects/stats 200 snapshot shape",
+                project_stats.status_code == 200 and all(
+                    k in psbody for k in ("total", "by_lifecycle", "active", "archived",
+                                          "total_assets", "total_conversations",
+                                          "total_jobs", "average_assets_per_project",
+                                          "average_jobs_per_project", "newest_project_at",
+                                          "generated_at")),
+                project_stats.text)
+          check("projects/stats lifecycle breakdown shape",
+                isinstance(psbody.get("by_lifecycle"), list)
+                and all(isinstance(l, dict) and "lifecycle" in l and "count" in l
+                        for l in psbody["by_lifecycle"]),
+                project_stats.text)
+          project_scoped = httpx.get(
+              f"{base}/projects/stats",
+              params={"org_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          psbody_scoped = project_scoped.json() if project_scoped.status_code == 200 else {}
+          check("projects/stats unknown org zero-filled 200",
+                project_scoped.status_code == 200
+                and psbody_scoped.get("total") == 0
+                and isinstance(psbody_scoped.get("by_lifecycle"), list),
+                project_scoped.text)
+          project_stats_bad = httpx.get(
+              f"{base}/projects/stats", params={"org_id": "not-a-uuid"}, timeout=5)
+          psbadbody = project_stats_bad.json() if project_stats_bad.status_code == 422 else {}
+          check("projects/stats 422 validation envelope",
+                project_stats_bad.status_code == 422
+                and psbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(psbadbody.get("error", {}).get("request_id")),
+                project_stats_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
