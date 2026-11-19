@@ -40,6 +40,7 @@ import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from 
 import { PipelineFeedPanel } from "./PipelineFeedPanel";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { ProjectFeedPanel } from "./ProjectFeedPanel";
+import { ProjectOverviewPanel } from "./ProjectOverviewPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
 import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
@@ -183,6 +184,7 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         )}
       </Card>
 
+      <ProjectOverviewPanel projectId={projectId} />
       <ProjectFeedPanel
         orgId={project.org_id}
         title="Organization project feed"
