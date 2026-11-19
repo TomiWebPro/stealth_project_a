@@ -2032,6 +2032,112 @@ jobs:
                 and jfblbody.get("error", {}).get("code") == "validation_error"
                 and bool(jfblbody.get("error", {}).get("request_id")), jf_bad_limit.text)
 
+          # Authoritative project feed (C145/C147) is the newest /api/v1 URL the
+          # live client calls (getProjectFeed). Reuse the on-demand project so
+          # the derived feed has a real item, then probe the feed shape, item
+          # shapes, newest-first order, lifecycle filter, `limit` page bound,
+          # optional org scope (an unknown-but-valid org yields a zero-filled
+          # 200) and the shared 422 envelopes, keeping CI aligned with new
+          # endpoints as they go live.
+          project_feed = httpx.get(f"{base}/projects/feed", timeout=5)
+          pfbody = project_feed.json() if project_feed.status_code == 200 else {}
+          check("projects/feed 200 feed shape",
+                project_feed.status_code == 200
+                and isinstance(pfbody.get("items"), list)
+                and isinstance(pfbody.get("total"), int)
+                and "generated_at" in pfbody, project_feed.text)
+          check("projects/feed derived item shape",
+                project_feed.status_code == 200
+                and pfbody.get("total", 0) >= 1
+                and len(pfbody.get("items", [])) >= 1
+                and all(all(k in item for k in (
+                    "project_id", "org_id", "org_name", "name", "description",
+                    "lifecycle", "created_by", "created_at", "updated_at"))
+                    for item in pfbody["items"]), project_feed.text)
+          check("projects/feed request-id header",
+                "x-request-id" in {k.lower() for k in project_feed.headers},
+                str(dict(project_feed.headers)))
+          pf_item = None
+          if project_id:
+              pf_item = next(
+                  (i for i in pfbody.get("items", []) if i.get("project_id") == project_id),
+                  None)
+              check("projects/feed derived project",
+                    project_feed.status_code == 200 and pf_item is not None
+                    and pf_item.get("lifecycle") in ("active", "archived")
+                    and isinstance(pf_item.get("org_name"), str)
+                    and bool(pf_item.get("org_name"))
+                    and isinstance(pf_item.get("created_at"), str)
+                    and isinstance(pf_item.get("updated_at"), str),
+                    project_feed.text)
+          else:
+              check("projects/feed derived setup", False,
+                    "could not obtain a project id for the feed probe")
+          pf_created_times = [i.get("created_at") for i in pfbody.get("items", [])]
+          check("projects/feed newest-first order",
+                project_feed.status_code == 200
+                and pf_created_times == sorted(pf_created_times, reverse=True),
+                project_feed.text)
+          pf_limited = httpx.get(f"{base}/projects/feed", params={"limit": 1}, timeout=5)
+          pflbody = pf_limited.json() if pf_limited.status_code == 200 else {}
+          check("projects/feed limit bounds page not total",
+                pf_limited.status_code == 200
+                and len(pflbody.get("items", [])) <= 1
+                and pflbody.get("total") == pfbody.get("total"), pf_limited.text)
+          pf_lifecycle = httpx.get(
+              f"{base}/projects/feed", params={"lifecycle": "active"}, timeout=5)
+          pfcybody = pf_lifecycle.json() if pf_lifecycle.status_code == 200 else {}
+          check("projects/feed lifecycle filter 200",
+                pf_lifecycle.status_code == 200
+                and isinstance(pfcybody.get("total"), int)
+                and pfcybody.get("total", 0) <= pfbody.get("total", 0)
+                and all(i.get("lifecycle") == "active"
+                        for i in pfcybody.get("items", [])), pf_lifecycle.text)
+          pf_org = pf_item.get("org_id") if pf_item else None
+          if pf_org:
+              pf_scoped = httpx.get(
+                  f"{base}/projects/feed", params={"org_id": pf_org}, timeout=5)
+              pfspbody = pf_scoped.json() if pf_scoped.status_code == 200 else {}
+              check("projects/feed org scope 200",
+                    pf_scoped.status_code == 200
+                    and isinstance(pfspbody.get("total"), int)
+                    and pfspbody.get("total", 0) >= 1
+                    and pfspbody.get("total", 0) <= pfbody.get("total", 0)
+                    and all(i.get("org_id") == pf_org
+                            for i in pfspbody.get("items", [])), pf_scoped.text)
+          else:
+              check("projects/feed org scope setup", False,
+                    "could not read an org id from the derived feed item")
+          pf_unknown_org = httpx.get(
+              f"{base}/projects/feed",
+              params={"org_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          pfuobody = pf_unknown_org.json() if pf_unknown_org.status_code == 200 else {}
+          check("projects/feed unknown org zero-filled 200",
+                pf_unknown_org.status_code == 200
+                and pfuobody.get("total") == 0
+                and pfuobody.get("items") == [], pf_unknown_org.text)
+          pf_bad = httpx.get(
+              f"{base}/projects/feed", params={"org_id": "not-a-uuid"}, timeout=5)
+          pfbadbody = pf_bad.json() if pf_bad.status_code == 422 else {}
+          check("projects/feed 422 malformed org envelope",
+                pf_bad.status_code == 422
+                and pfbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(pfbadbody.get("error", {}).get("request_id")), pf_bad.text)
+          pf_bad_lifecycle = httpx.get(
+              f"{base}/projects/feed", params={"lifecycle": "mystery"}, timeout=5)
+          pfblcbody = pf_bad_lifecycle.json() if pf_bad_lifecycle.status_code == 422 else {}
+          check("projects/feed 422 invalid lifecycle envelope",
+                pf_bad_lifecycle.status_code == 422
+                and pfblcbody.get("error", {}).get("code") == "validation_error"
+                and bool(pfblcbody.get("error", {}).get("request_id")),
+                pf_bad_lifecycle.text)
+          pf_bad_limit = httpx.get(f"{base}/projects/feed", params={"limit": 0}, timeout=5)
+          pfbltbody = pf_bad_limit.json() if pf_bad_limit.status_code == 422 else {}
+          check("projects/feed 422 invalid limit envelope",
+                pf_bad_limit.status_code == 422
+                and pfbltbody.get("error", {}).get("code") == "validation_error"
+                and bool(pfbltbody.get("error", {}).get("request_id")), pf_bad_limit.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
