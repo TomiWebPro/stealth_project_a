@@ -197,6 +197,19 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the collaboration feed key by project, signal and limit", () => {
+    expect(queryKeys.collaborationFeed.feed()).toEqual([
+      "collaboration-feed",
+      "feed",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(
+      queryKeys.collaborationFeed.feed({ projectId: "p1", signal: "comment", limit: 5 }),
+    ).toEqual(["collaboration-feed", "feed", "p1", "comment", 5]);
+  });
+
   it("scopes the collaboration stats key by project", () => {
     expect(queryKeys.collaborationStats.summary()).toEqual([
       "collaboration-stats",

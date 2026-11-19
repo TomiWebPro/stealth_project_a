@@ -11,6 +11,11 @@ import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
 import {
+  deriveCollaborationFeed,
+  validateCollaborationFeedArgs,
+} from "../collaborationFeed";
+import type { CollaborationFeedOptions } from "../collaborationFeed";
+import {
   deriveCollaborationStats,
   validateCollaborationStatsArgs,
 } from "../collaborationStats";
@@ -125,6 +130,7 @@ import type {
   AssetUpdate,
   ActivityStats,
   AuditTrail,
+  CollaborationFeed,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -233,7 +239,7 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
- * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`, `orchestrationFeed`,
+ * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
@@ -716,6 +722,28 @@ export async function fetchCollaborationStats(
     });
   }
   return delay(deriveCollaborationStats(PRESENCE, COMMENTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative collaboration feed (C197) derived from the same presence and
+ * comment seeds as the live `/collaboration/feed` endpoint. Router-style 422
+ * validation (project id / signal / limit), a normalized 404 for an unknown
+ * project scope and the `"collaborationFeed"` failure domain keep error and
+ * empty states at parity with live mode.
+ */
+export async function fetchCollaborationFeed(
+  options?: CollaborationFeedOptions,
+): Promise<CollaborationFeed> {
+  failIfEnabled("collaborationFeed");
+  validateCollaborationFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveCollaborationFeed(PRESENCE, COMMENTS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

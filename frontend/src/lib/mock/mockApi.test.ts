@@ -31,6 +31,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchCollaborationFeed,
   fetchCollaborationStats,
   fetchConversation,
   fetchComments,
@@ -1939,6 +1940,85 @@ describe("mock API job retry statistics (C105 follow-up)", () => {
 
     setMockFailure("retryStats");
     await expect(fetchRetryStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API collaboration feed (C197 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a newest-first feed of presence and comment signals with joined project names", async () => {
+    const feed = await fetchCollaborationFeed();
+    expect(feed.generated_at).toBe(REFERENCE_NOW);
+    expect(feed.total).toBe(PRESENCE.length + COMMENTS.length);
+    expect((feed.items ?? []).map((item) => item.signal).sort()).toEqual(
+      [...Array(PRESENCE.length).fill("presence"), ...Array(COMMENTS.length).fill("comment")].sort(),
+    );
+    for (const item of feed.items ?? []) {
+      expect(item.project_name).toBeTruthy();
+      expect(item.occurred_at).toBeTruthy();
+      if (item.signal === "presence") {
+        expect(item.state).toBeTruthy();
+        expect(item.body).toBeNull();
+        expect(item.asset_id).toBeNull();
+      } else {
+        expect(item.state).toBeNull();
+        expect(item.body).toBeTruthy();
+      }
+    }
+    // Newest-first by (occurred_at, signal_id, signal, project_id).
+    const keys = (feed.items ?? []).map(
+      (item) => `${item.occurred_at}|${item.signal_id}|${item.signal}|${item.project_id}`,
+    );
+    expect(keys).toEqual([...keys].sort().reverse());
+  });
+
+  it("filters to one signal kind", async () => {
+    const presence = await fetchCollaborationFeed({ signal: "presence" });
+    expect(presence.total).toBe(PRESENCE.length);
+    expect(presence.items?.every((item) => item.signal === "presence")).toBe(true);
+
+    const comments = await fetchCollaborationFeed({ signal: "comment" });
+    expect(comments.total).toBe(COMMENTS.length);
+    expect(comments.items?.every((item) => item.signal === "comment")).toBe(true);
+  });
+
+  it("scopes to one project, zero-fills an unseeded project and bounds the page", async () => {
+    const scoped = await fetchCollaborationFeed({ projectId: filmId });
+    expect(scoped.total).toBeGreaterThan(0);
+    expect(scoped.items?.every((item) => item.project_id === filmId)).toBe(true);
+
+    const empty = await fetchCollaborationFeed({ projectId: emptyId });
+    expect(empty).toEqual({ items: [], total: 0, generated_at: REFERENCE_NOW });
+
+    const whole = await fetchCollaborationFeed();
+    const limited = await fetchCollaborationFeed({ limit: 1 });
+    expect(limited.total).toBe(whole.total);
+    expect(limited.items ?? []).toHaveLength(1);
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchCollaborationFeed({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchCollaborationFeed({ signal: "bogus" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchCollaborationFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchCollaborationFeed({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("collaborationFeed");
+    await expect(fetchCollaborationFeed()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

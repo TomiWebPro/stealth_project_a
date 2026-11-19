@@ -8,6 +8,7 @@ import type { AssetFeedOptions } from "../lib/assetFeed";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
+import type { CollaborationFeedOptions } from "../lib/collaborationFeed";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { CommentStatsOptions } from "../lib/commentStats";
 import type { CommentFeedOptions } from "../lib/commentFeed";
@@ -58,6 +59,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationFeed,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -358,6 +360,17 @@ export function useCollaborationStats(
   return useQuery({
     queryKey: queryKeys.collaborationStats.summary(options),
     queryFn: () => api.getCollaborationStats(options),
+  });
+}
+
+/** Newest-first authoritative collaboration feed from `/collaboration/feed`, optionally project/signal-scoped (C197). */
+export function useCollaborationFeed(
+  options?: CollaborationFeedOptions,
+): UseQueryResult<CollaborationFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.collaborationFeed.feed(options),
+    queryFn: () => api.getCollaborationFeed(options),
   });
 }
 

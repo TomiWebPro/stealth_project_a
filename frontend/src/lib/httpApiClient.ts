@@ -13,6 +13,8 @@ import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
+import { collaborationFeedQueryParams } from "./collaborationFeed";
+import type { CollaborationFeedOptions } from "./collaborationFeed";
 import { collaborationStatsQueryParams } from "./collaborationStats";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import { commentFeedQueryParams } from "./commentFeed";
@@ -103,6 +105,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationFeed,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -458,6 +461,14 @@ export function createHttpApiClient(
       return request<CollaborationStats>(
         "/collaboration/stats",
         collaborationStatsQueryParams(options),
+      );
+    },
+
+    /** Newest-first authoritative collaboration feed derived by `/collaboration/feed` (C197). */
+    getCollaborationFeed(options?: CollaborationFeedOptions): Promise<CollaborationFeed> {
+      return request<CollaborationFeed>(
+        "/collaboration/feed",
+        collaborationFeedQueryParams(options),
       );
     },
 

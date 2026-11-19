@@ -12,6 +12,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchCollaborationFeed,
   fetchCollaborationStats,
   fetchCommentFeed,
   fetchCommentStats,
@@ -132,6 +133,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchCollaborationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
@@ -368,6 +370,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchCollaborationStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the collaboration feed domain", async () => {
+    setMockFailure("collaborationFeed");
+
+    await expect(fetchCollaborationFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchCollaborationFeed()).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the activity stats domain", async () => {

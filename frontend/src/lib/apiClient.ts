@@ -4,6 +4,7 @@ import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
+import type { CollaborationFeedOptions } from "./collaborationFeed";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
@@ -56,6 +57,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CollaborationFeed,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -173,6 +175,8 @@ export interface ApiClient {
   getLineageFeed(options?: LineageFeedOptions): Promise<LineageFeed>;
   /** Authoritative collaboration metrics derived by `/collaboration/stats`, optionally project-scoped (C81). */
   getCollaborationStats(options?: CollaborationStatsOptions): Promise<CollaborationStats>;
+  /** Newest-first authoritative collaboration feed derived by `/collaboration/feed`, optionally project/signal-scoped (C197). */
+  getCollaborationFeed(options?: CollaborationFeedOptions): Promise<CollaborationFeed>;
   /** Authoritative orchestration metrics derived by `/orchestration/stats`, optionally project-scoped (C85). */
   getOrchestrationStats(options?: OrchestrationStatsOptions): Promise<OrchestrationStats>;
   /** Newest-first authoritative orchestration feed derived by `/orchestration/feed`, optionally project/kind-scoped (C181). */
@@ -285,6 +289,7 @@ export const mockApiClient: ApiClient = {
   getLineageStats: mockApi.fetchLineageStats,
   getLineageFeed: mockApi.fetchLineageFeed,
   getCollaborationStats: mockApi.fetchCollaborationStats,
+  getCollaborationFeed: mockApi.fetchCollaborationFeed,
   getOrchestrationStats: mockApi.fetchOrchestrationStats,
   getOrchestrationFeed: mockApi.fetchOrchestrationFeed,
   listProjects: mockApi.fetchProjects,

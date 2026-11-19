@@ -11,6 +11,11 @@ import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
 import {
+  deriveCollaborationFeed,
+  validateCollaborationFeedArgs,
+} from "./collaborationFeed";
+import type { CollaborationFeedOptions } from "./collaborationFeed";
+import {
   deriveCollaborationStats,
   validateCollaborationStatsArgs,
 } from "./collaborationStats";
@@ -1118,6 +1123,39 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options);
   }
 
+  // Authoritative collaboration feed derives the presence + comment stores on
+  // every call; mirror the router's 422 validation, unknown-project 404 and the
+  // repository's newest-first signal projection over the shared seeds so live
+  // and mock agree exactly.
+  if (path === "/collaboration/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const rawSignal = params.get("signal");
+    const rawLimit = params.get("limit");
+    const options: CollaborationFeedOptions = {
+      projectId,
+      signal:
+        rawSignal === "presence" || rawSignal === "comment"
+          ? rawSignal
+          : rawSignal === null
+            ? undefined
+            : (rawSignal as never),
+      limit: rawLimit !== null ? Number(rawLimit) : undefined,
+    };
+    try {
+      validateCollaborationFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveCollaborationFeed(PRESENCE, COMMENTS, PROJECTS, REFERENCE_NOW, options);
+  }
+
   // Authoritative collaboration stats are derived from the presence + comment
   // stores on every call; reproduce the router's 422 validation, unknown-project
   // 404 and the repository derivation over the shared seeds so live and mock
@@ -1469,6 +1507,14 @@ describe("live vs mock transport parity", () => {
       ],
       ["getCollaborationStats", (api) => api.getCollaborationStats()],
       ["getCollaborationStats scoped", (api) => api.getCollaborationStats({ projectId: filmId })],
+      ["getCollaborationFeed", (api) => api.getCollaborationFeed()],
+      ["getCollaborationFeed scoped", (api) => api.getCollaborationFeed({ projectId: filmId })],
+      ["getCollaborationFeed filtered", (api) => api.getCollaborationFeed({ signal: "comment" })],
+      ["getCollaborationFeed limited", (api) => api.getCollaborationFeed({ limit: 2 })],
+      [
+        "getCollaborationFeed scoped, filtered and limited",
+        (api) => api.getCollaborationFeed({ projectId: filmId, signal: "presence", limit: 1 }),
+      ],
       ["getOrchestrationStats", (api) => api.getOrchestrationStats()],
       ["getOrchestrationStats scoped", (api) => api.getOrchestrationStats({ projectId: filmId })],
       ["getOrchestrationFeed", (api) => api.getOrchestrationFeed()],
@@ -1616,6 +1662,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getCollaborationStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getCollaborationStats({ projectId: emptyId }),
+    );
+    expect(await live.getCollaborationFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getCollaborationFeed({ projectId: emptyId }),
     );
     expect(await live.getOrchestrationStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getOrchestrationStats({ projectId: emptyId }),
@@ -2164,6 +2213,29 @@ describe("live vs mock transport parity", () => {
     expect(mockCollab422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveCollab422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown collaboration-feed project
+    // scope and reject a malformed id, signal or limit with the same 422 envelope.
+    const [mockCollabFeed404, liveCollabFeed404] = await Promise.all([
+      mockApiClient.getCollaborationFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getCollaborationFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockCollabFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveCollabFeed404).toMatchObject({ status: 404, code: "not_found" });
+    const badCollaborationFeedOptions = [
+      { projectId: "not-a-uuid" },
+      { signal: "bogus" },
+      { limit: 0 },
+      { limit: 201 },
+    ];
+    for (const bad of badCollaborationFeedOptions) {
+      const [mockCause, liveCause] = await Promise.all([
+        mockApiClient.getCollaborationFeed(bad as never).catch((cause) => cause),
+        live.getCollaborationFeed(bad as never).catch((cause) => cause),
+      ]);
+      expect(mockCause).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveCause).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports 404 identically for an unknown orchestration-stats project
     // scope and reject a malformed project id with the same 422 envelope.
     const [mockOrch404, liveOrch404] = await Promise.all([
@@ -2399,6 +2471,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getLineageStats).toBe("function");
     expect(typeof typed.getLineageFeed).toBe("function");
     expect(typeof typed.getCollaborationStats).toBe("function");
+    expect(typeof typed.getCollaborationFeed).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");
     expect(typeof typed.getOrchestrationFeed).toBe("function");
     expect(typeof typed.getOperationFeed).toBe("function");
