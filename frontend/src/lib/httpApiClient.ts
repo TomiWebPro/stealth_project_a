@@ -56,6 +56,8 @@ import { searchStatsQueryParams } from "./searchStats";
 import type { SearchStatsOptions } from "./searchStats";
 import { tagQueryParams } from "./tags";
 import type { TagOptions } from "./tags";
+import { uploadFeedQueryParams } from "./uploadFeed";
+import type { UploadFeedOptions } from "./uploadFeed";
 import { uploadStatsQueryParams } from "./uploadStats";
 import type { UploadStatsOptions } from "./uploadStats";
 import { versionStatsQueryParams } from "./versionStats";
@@ -102,6 +104,7 @@ import type {
   SearchStats,
   StorageStats,
   TagIndex,
+  UploadFeed,
   UploadStats,
   User,
   VersionStats,
@@ -616,6 +619,11 @@ export function createHttpApiClient(
     /** Authoritative upload-ticket metrics derived by the backend `/uploads/stats`. */
     getUploadStats(options?: UploadStatsOptions): Promise<UploadStats> {
       return request<UploadStats>("/uploads/stats", uploadStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative upload-ticket feed derived by the backend `/uploads/feed`. */
+    getUploadFeed(options?: UploadFeedOptions): Promise<UploadFeed> {
+      return request<UploadFeed>("/uploads/feed", uploadFeedQueryParams(options));
     },
 
     /** Authoritative job event stream metrics derived by the backend `/events/stats`. */

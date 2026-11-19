@@ -274,6 +274,16 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the upload feed key by project and limit", () => {
+    expect(queryKeys.uploadFeed.feed()).toEqual(["upload-feed", "feed", "all", "all"]);
+    expect(queryKeys.uploadFeed.feed({ projectId: "p1", limit: 5 })).toEqual([
+      "upload-feed",
+      "feed",
+      "p1",
+      5,
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

@@ -73,6 +73,8 @@ import { deriveSearchStats, validateSearchStatsArgs } from "../searchStats";
 import type { SearchStatsOptions } from "../searchStats";
 import { deriveTagIndex, validateTagArgs } from "../tags";
 import type { TagOptions } from "../tags";
+import { deriveUploadFeed, validateUploadFeedArgs } from "../uploadFeed";
+import type { UploadFeedOptions } from "../uploadFeed";
 import { deriveUploadStats, validateUploadStatsArgs } from "../uploadStats";
 import type { UploadStatsOptions } from "../uploadStats";
 import { deriveVersionStats, validateVersionStatsArgs } from "../versionStats";
@@ -118,6 +120,7 @@ import type {
   StorageStats,
   StreamEvent,
   TagIndex,
+  UploadFeed,
   UploadStats,
   User,
   VersionStats,
@@ -175,7 +178,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs` and
  * `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1010,6 +1013,25 @@ export async function fetchUploadStats(options?: UploadStatsOptions): Promise<Up
     });
   }
   return delay(deriveUploadStats(UPLOADS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative upload feed (C129) derived from the same ticket store as the
+ * live `/uploads/feed` endpoint. Router-style 422 validation, a normalized 404
+ * for an unknown project scope and the `"uploadFeed"` failure domain keep error
+ * and empty states at parity.
+ */
+export async function fetchUploadFeed(options?: UploadFeedOptions): Promise<UploadFeed> {
+  failIfEnabled("uploadFeed");
+  validateUploadFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveUploadFeed(UPLOADS, PROJECTS, REFERENCE_NOW, options));
 }
 
 /**

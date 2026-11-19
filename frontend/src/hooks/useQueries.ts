@@ -30,6 +30,7 @@ import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
+import type { UploadFeedOptions } from "../lib/uploadFeed";
 import type { UploadStatsOptions } from "../lib/uploadStats";
 import type { VersionStatsOptions } from "../lib/versionStats";
 import type {
@@ -75,6 +76,7 @@ import type {
   StorageStats,
   StreamEvent,
   TagIndex,
+  UploadFeed,
   UploadStats,
   User,
   VersionStats,
@@ -586,6 +588,15 @@ export function useUploadStats(
   return useQuery({
     queryKey: queryKeys.uploadStats.summary(options),
     queryFn: () => api.getUploadStats(options),
+  });
+}
+
+/** Newest-first authoritative upload feed from `/uploads/feed`, optionally project-scoped (C129). */
+export function useUploadFeed(options?: UploadFeedOptions): UseQueryResult<UploadFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.uploadFeed.feed(options),
+    queryFn: () => api.getUploadFeed(options),
   });
 }
 

@@ -23,6 +23,7 @@ import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
+import type { UploadFeedOptions } from "./uploadFeed";
 import type { UploadStatsOptions } from "./uploadStats";
 import type { VersionStatsOptions } from "./versionStats";
 
@@ -207,6 +208,10 @@ export const queryKeys = {
   uploadStats: {
     summary: (options: UploadStatsOptions = {}) =>
       ["upload-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  uploadFeed: {
+    feed: (options: UploadFeedOptions = {}) =>
+      ["upload-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   eventStats: {
     summary: (options: EventStatsOptions = {}) =>

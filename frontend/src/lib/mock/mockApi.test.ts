@@ -74,6 +74,7 @@ import {
   fetchSearch,
   fetchSearchStats,
   fetchStorageStats,
+  fetchUploadFeed,
   fetchUploadStats,
   fetchWorkflowTemplates,
   resetMockAssets,
@@ -1524,6 +1525,66 @@ describe("mock API upload statistics (C97 follow-up)", () => {
 
     setMockFailure("uploadStats");
     await expect(fetchUploadStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API upload feed (C129 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+
+  it("derives a newest-first feed with joined project names and whole-scope totals", async () => {
+    const feed = await fetchUploadFeed();
+    expect(feed.generated_at).toBe(REFERENCE_NOW);
+    expect(feed.total).toBe(UPLOADS.length);
+    expect((feed.items ?? []).length).toBe(UPLOADS.length);
+
+    const dates = (feed.items ?? []).map((item) => item.created_at);
+    expect([...dates].sort().reverse()).toEqual(dates);
+    for (const item of feed.items ?? []) {
+      const project = PROJECTS.find((candidate) => candidate.id === item.project_id);
+      expect(item.project_name).toBe(project?.name ?? "Unknown project");
+      expect(item.filename).toBeTruthy();
+      expect(item.content_type).toBeTruthy();
+      expect(item.expires_at).toBeTruthy();
+    }
+  });
+
+  it("scopes to one project and bounds the page without changing the total", async () => {
+    const full = await fetchUploadFeed();
+    const paged = await fetchUploadFeed({ limit: 2 });
+    expect(paged.total).toBe(full.total);
+    expect((paged.items ?? []).length).toBe(2);
+    expect((paged.items ?? []).map((item) => item.upload_id)).toEqual(
+      (full.items ?? []).slice(0, 2).map((item) => item.upload_id),
+    );
+
+    const scoped = await fetchUploadFeed({ projectId: filmId });
+    expect((scoped.items ?? []).every((item) => item.project_id === filmId)).toBe(true);
+
+    const empty = await fetchUploadFeed({ projectId: emptyId });
+    expect(empty).toMatchObject({ items: [], total: 0 });
+  });
+
+  it("mirrors router validation, 404s unknown projects and surfaces the injected failure", async () => {
+    await expect(fetchUploadFeed({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    for (const limit of [0, 201]) {
+      await expect(fetchUploadFeed({ limit })).rejects.toMatchObject({
+        status: 422,
+        code: "validation_error",
+      });
+    }
+    await expect(
+      fetchUploadFeed({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("uploadFeed");
+    await expect(fetchUploadFeed()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

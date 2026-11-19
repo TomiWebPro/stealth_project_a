@@ -28,6 +28,7 @@ import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
+import type { UploadFeedOptions } from "./uploadFeed";
 import type { UploadStatsOptions } from "./uploadStats";
 import type { VersionStatsOptions } from "./versionStats";
 import type {
@@ -72,6 +73,7 @@ import type {
   SearchStats,
   StorageStats,
   TagIndex,
+  UploadFeed,
   UploadStats,
   User,
   VersionStats,
@@ -174,6 +176,8 @@ export interface ApiClient {
   getSearchStats(options?: SearchStatsOptions): Promise<SearchStats>;
   /** Authoritative upload-ticket metrics derived by `/uploads/stats`, optionally project-scoped (C97). */
   getUploadStats(options?: UploadStatsOptions): Promise<UploadStats>;
+  /** Newest-first authoritative upload-ticket feed derived by `/uploads/feed`, optionally project-scoped (C129). */
+  getUploadFeed(options?: UploadFeedOptions): Promise<UploadFeed>;
   /** Authoritative job event stream metrics derived by `/events/stats`, optionally project-scoped (C101). */
   getEventStats(options?: EventStatsOptions): Promise<EventStats>;
   /** Authoritative job retry metrics derived by `/retries/stats`, optionally project-scoped (C105). */
@@ -243,6 +247,7 @@ export const mockApiClient: ApiClient = {
   search: mockApi.fetchSearch,
   getSearchStats: mockApi.fetchSearchStats,
   getUploadStats: mockApi.fetchUploadStats,
+  getUploadFeed: mockApi.fetchUploadFeed,
   getEventStats: mockApi.fetchEventStats,
   getRetryStats: mockApi.fetchRetryStats,
   getVersionStats: mockApi.fetchVersionStats,

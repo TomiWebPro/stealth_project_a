@@ -11,7 +11,8 @@ import type { AssetRelationshipRecord } from "../lineageStats";
 import type { OrganizationMemberRecord } from "../organizationStats";
 import type { PipelineChainRecord } from "../pipelineStats";
 import type { JobRetryRecord } from "../retryStats";
-import type { UploadRecord } from "../uploadStats";
+import type { UploadFeedRecord } from "../uploadFeed";
+import type { UploadStatus } from "../types";
 import type { AssetVersionRecord } from "../versionStats";
 import type {
   Asset,
@@ -1628,77 +1629,49 @@ export const ASSET_RELATIONSHIPS: readonly AssetRelationshipRecord[] = [
   },
 ];
 
-// --- Authoritative upload tickets (C97 / upload statistics) -----------------
-// Mirrors the backend `UPLOADS` collection used by `/uploads/stats`. The "empty"
-// and archived projects intentionally have no tickets so a scoped snapshot for
-// them is zero-filled, matching the other authoritative statistics endpoints.
+// --- Authoritative upload tickets (C97 / upload statistics, C129 / feed) -----
+// Mirrors the backend `UPLOADS` collection used by `/uploads/stats` and
+// `/uploads/feed`. The "empty" and archived projects intentionally have no
+// tickets so a scoped snapshot/feed for them is zero-filled, matching the other
+// authoritative endpoints. The feed-only fields (filename/content type/declared
+// size/expiry) are deterministic so mock and live share one derivation.
 
-export const UPLOADS: readonly UploadRecord[] = [
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000001",
-    project_id: PROJECT_IDS.moonshot,
-    status: "complete",
-    size_bytes: 1_200_000,
-    created_at: isoMinutesAgo(500),
-  },
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000002",
-    project_id: PROJECT_IDS.moonshot,
-    status: "complete",
-    size_bytes: 3_400_000,
-    created_at: isoMinutesAgo(420),
-  },
-  // Pending tickets carry a declared size but must not contribute bytes.
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000003",
-    project_id: PROJECT_IDS.moonshot,
-    status: "pending",
-    size_bytes: 2_500_000,
-    created_at: isoMinutesAgo(30),
-  },
-  // Newest ticket in the store; also exercises the recency max.
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000004",
-    project_id: PROJECT_IDS.moonshot,
-    status: "pending",
-    size_bytes: 700_000,
-    created_at: isoMinutesAgo(5),
-  },
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000005",
-    project_id: PROJECT_IDS.brand,
-    status: "complete",
-    size_bytes: 900_000,
-    created_at: isoMinutesAgo(1_200),
-  },
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000006",
-    project_id: PROJECT_IDS.brand,
-    status: "complete",
-    size_bytes: 150_000,
-    created_at: isoMinutesAgo(1_100),
-  },
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000007",
-    project_id: PROJECT_IDS.brand,
-    status: "pending",
-    size_bytes: 500_000,
-    created_at: isoMinutesAgo(600),
-  },
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000008",
-    project_id: PROJECT_IDS.character,
-    status: "complete",
-    size_bytes: 2_000_000,
-    created_at: isoMinutesAgo(1_500),
-  },
-  {
-    upload_id: "0b5c1e2a-7000-4000-8000-000000000009",
-    project_id: PROJECT_IDS.environment,
-    status: "complete",
-    size_bytes: 250_000,
-    created_at: isoMinutesAgo(2_000),
-  },
+function uploadTicket(
+  upload_id: string,
+  project_id: string,
+  status: UploadStatus,
+  size_bytes: number,
+  minutesAgo: number,
+  filename: string,
+  content_type = "image/png",
+): UploadFeedRecord {
+  const created_at = isoMinutesAgo(minutesAgo);
+  return {
+    upload_id,
+    project_id,
+    status,
+    size_bytes,
+    // A completed ticket uploads exactly its declared bytes; a pending one is
+    // only partially uploaded so declared_size exceeds size_bytes.
+    declared_size: status === "complete" ? size_bytes : Math.round(size_bytes * 2),
+    filename,
+    content_type,
+    created_at,
+    expires_at: isoMinutesAgo(minutesAgo - 2_880), // 48h ticket TTL after creation
+  };
+}
+
+export const UPLOADS: readonly UploadFeedRecord[] = [
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000001", PROJECT_IDS.moonshot, "complete", 1_200_000, 500, "concept_sheet.png"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000002", PROJECT_IDS.moonshot, "complete", 3_400_000, 420, "hero_frame.exr", "image/x-exr"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000003", PROJECT_IDS.moonshot, "pending", 2_500_000, 30, "shot_01_plates.mov", "video/quicktime"),
+  // Newest ticket in the store; also exercises the recency and feed-order max.
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000004", PROJECT_IDS.moonshot, "pending", 700_000, 5, "shot_02_plates.mov", "video/quicktime"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000005", PROJECT_IDS.brand, "complete", 900_000, 1_200, "brand_logo.png"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000006", PROJECT_IDS.brand, "complete", 150_000, 1_100, "brand_palette.png"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000007", PROJECT_IDS.brand, "pending", 500_000, 600, "brand_b-roll.mov", "video/quicktime"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000008", PROJECT_IDS.character, "complete", 2_000_000, 1_500, "character_ref.png"),
+  uploadTicket("0b5c1e2a-7000-4000-8000-000000000009", PROJECT_IDS.environment, "complete", 250_000, 2_000, "env_plate.png"),
 ];
 
 // --- Authoritative job events (C101 / event stream statistics) ---------------

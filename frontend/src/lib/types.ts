@@ -119,6 +119,8 @@ export type {
   TagFacet,
   TagIndex,
   Timestamp,
+  UploadFeed,
+  UploadFeedItem,
   UploadProjectCount,
   UploadStats,
   UploadStatus,
