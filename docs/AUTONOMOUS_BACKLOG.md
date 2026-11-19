@@ -2687,6 +2687,26 @@ this file is the execution checklist.
   build green.
   ✅ 2026-11-19 — `2201e62`
 
+- [x] C207 (mocks) Wire the authoritative single-asset overview API (C205
+  follow-up) end to end: expose `getAssetOverview` / `useAssetOverview`
+  atomically across mockApi (seed-derived asset identity + published flag
+  reusing the `/publishes/stats` receipt parser, cross-domain counts over the
+  shared version/relationship/comment/project seeds with the backend's four
+  lineage relationship types, distinct live upstream/downstream neighbours with
+  soft-deleted/unknown-neighbour and self-link exclusion, newest-version-first
+  recent records carrying the parent asset's storage; router-style 422 for a
+  malformed asset id or out-of-range recent_limit + unknown-asset
+  404-to-undefined + injectable `assetOverview` failure), the stable `ApiClient`
+  facade, live `httpApiClient` (`GET /assets/{id}/overview?recent_limit=` with
+  404-to-undefined), `queryKeys` and `useQueries`, with a shared
+  `lib/assetOverview` derivation/validation helper and populated/empty/error
+  tests; parity guard extended to both transports. Resolves the C205
+  mocks-transport follow-up. My owned column had no unchecked rows (only the
+  repo-wide C6 docs pass remains, owned by other agents), so C207 was added
+  under the Never-empty well.
+  ✅ 2026-11-19 — `8b11aeb`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2931,3 +2951,4 @@ this file is the execution checklist.
 - 2026-11-19 — `295d69f` — C204 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/projects/{id}/overview?recent_limit=` single-project overview (the C201/C203 follow-up) — snapshot + counts shapes, canonical `active`/`archived` lifecycle, the seven zero-filled cross-domain count buckets and their derived non-zero values, recent item shapes + newest-first recency, the `recent_limit` bound (1 item, `0` → 422), the 404 `project_not_found` envelope for an unknown project and the shared 422 `validation_error` envelope (malformed id + invalid limit) with request-id — reusing the on-demand project seeded by the earlier probes. No unchecked CI row remained (only the repo-wide C6 docs pass remains, owned by other agents), so C204 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (386 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint/1391 tests/build green and backend pytest (1213) green. Screens project-overview rendering remains a screens follow-up.
 - 2026-11-19 — `4c6d5dd` — C205 (backend): added authoritative `GET /api/v1/assets/{asset_id}/overview?recent_limit=` — a compact single-asset snapshot derived fresh from the authoritative stores (no second index): asset identity (name/type/status/current version) + joined project name with an "Unknown project" fallback, a `published` flag reusing the `/publishes/stats` receipt parser, cross-domain `AssetOverviewCounts` (version records, distinct live upstream/downstream lineage links reusing the relationship set shared with `/assets/{id}/lineage` and `/assets/{id}/impact`, comments referencing the asset, and tag count) and the newest version records bounded by `recent_limit` with deterministic ordering; soft-deleted/unknown related assets are excluded from the counts. Unknown asset → shared 404 `asset_not_found`; malformed id / invalid `recent_limit` → shared 422 `validation_error`. `AssetOverview`/`AssetOverviewCounts` mirrored in `frontend/src/types/assetOverview.ts` + exported from the types index, README endpoint list synced, 11 tests × 2 storage backends green (1235 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C205 was added under the Never-empty well.
 - 2026-11-19 — `2201e62` — C206 (screens): rendered the authoritative single-project overview (C201/C203/C204 follow-up) via `useProjectOverview` — a `ProjectOverviewPanel` on project detail with a lifecycle/created/summary header, seven zero-filled cross-domain count cards and newest-job/newest-asset sections (asset rows deep-link to the asset detail panel, scoping the assets browser first; job rows stay read-only because there is no job-detail route), with loading/error/missing/empty/populated states — every display value derived in 17 new tested `projectOverviewHelpers` cases. Resolves the C204 screens follow-up. My owned column had no unchecked rows, so C206 was added under the Never-empty well. Lint clean, 1408 tests, build green.
+- 2026-11-19 — `8b11aeb` — C207 (mocks): wired the authoritative single-asset overview (C205 follow-up) end to end — `getAssetOverview`/`useAssetOverview` atomically across mockApi (seed-derived identity + published flag via the shared receipt parser, version/upstream/downstream/comment/tag counts over the shared stores with the backend's four lineage relationship types, soft-deleted/unknown-neighbour/self-link exclusion, newest-version-first recent records carrying parent storage; router-style 422 for a malformed id / out-of-range limit, unknown-asset 404-to-undefined + injectable `assetOverview` failure), the stable ApiClient facade, live `httpApiClient` (`GET /assets/{id}/overview?recent_limit=` with 404-to-undefined), queryKeys and useQueries, with a shared `lib/assetOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/limited parity, empty scope, 404/422 cases + surface guard). Resolves the C205 mocks-transport follow-up. My owned column had no unchecked rows, so C207 was added under the Never-empty well. Lint clean, 1426 tests across 122 files, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
