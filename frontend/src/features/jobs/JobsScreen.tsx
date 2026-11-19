@@ -6,6 +6,7 @@ import { useUiStore } from "../../stores/uiStore";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { EventFeedPanel } from "./EventFeedPanel";
 import { EventStatsPanel } from "./EventStatsPanel";
 import { JobFeedPanel } from "./JobFeedPanel";
 import { JobLogConsole } from "./JobLogConsole";
@@ -77,6 +78,11 @@ export function JobsScreen() {
       <EventStatsPanel
         title="Global job event stats"
         description="Authoritative workspace-wide status, progress and result event metrics."
+      />
+
+      <EventFeedPanel
+        title="Global job event feed"
+        description="Newest-first job events from the authoritative event stream, with type filters."
       />
 
       <RetryStatsPanel

@@ -10,6 +10,7 @@ import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
 import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
+import { EventFeedPanel } from "../jobs/EventFeedPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobFeedPanel } from "../jobs/JobFeedPanel";
 import { JobLogConsole } from "../jobs/JobLogConsole";
@@ -288,6 +289,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project event stats"
         description="Authoritative job event metrics scoped to this project."
+      />
+      <EventFeedPanel
+        projectId={projectId}
+        title="Project job event feed"
+        description="Newest-first job events from the authoritative event stream, scoped to this project."
       />
       <RetryStatsPanel
         projectId={projectId}
