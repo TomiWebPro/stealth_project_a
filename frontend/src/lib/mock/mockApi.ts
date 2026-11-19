@@ -39,6 +39,8 @@ import {
 } from "../extensionStats";
 import type { ExtensionStatsOptions } from "../extensionStats";
 import type { HomeSummary } from "../homeSummary";
+import { deriveLineageFeed, validateLineageFeedArgs } from "../lineageFeed";
+import type { LineageFeedOptions } from "../lineageFeed";
 import { deriveLineageStats, validateLineageStatsArgs } from "../lineageStats";
 import type { LineageStatsOptions } from "../lineageStats";
 import type { ImpactOptions } from "../impact";
@@ -116,6 +118,7 @@ import type {
   JobLogFrame,
   JobQueueView,
   JobStats,
+  LineageFeed,
   LineageStats,
   Message,
   MessageCreate,
@@ -200,8 +203,8 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `commentFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
- * `lineageStats`, `collaborationStats`, `orchestrationStats`, `jobLogs`,
- * `jobFeed` and `jobQueue`.
+ * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
+ * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -552,6 +555,29 @@ export async function fetchLineageStats(
   }
   return delay(
     deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options),
+  );
+}
+
+/**
+ * Authoritative asset lineage feed (C157) derived from the same relationship/
+ * asset/project seeds as the live `/lineage/feed` endpoint. Router-style 422
+ * validation, a normalized 404 for an unknown project scope and the
+ * `"lineageFeed"` failure domain keep error and empty states at parity.
+ */
+export async function fetchLineageFeed(
+  options?: LineageFeedOptions,
+): Promise<LineageFeed> {
+  failIfEnabled("lineageFeed");
+  validateLineageFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveLineageFeed(ASSET_RELATIONSHIPS, ASSETS, PROJECTS, REFERENCE_NOW, options),
   );
 }
 

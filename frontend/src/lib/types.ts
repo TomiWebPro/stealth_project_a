@@ -60,6 +60,8 @@ export type {
   JobQueueEntry,
   JobQueueView,
   JobStatus,
+  LineageFeed,
+  LineageFeedItem,
   LineageProjectCount,
   LogLevel,
   LineageStats,

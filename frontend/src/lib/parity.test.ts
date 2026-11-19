@@ -33,6 +33,8 @@ import type { JobLogsOptions } from "./jobLogs";
 import { deriveJobQueue, validateJobQueueArgs } from "./jobQueue";
 import type { JobQueueOptions } from "./jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
+import { deriveLineageFeed, validateLineageFeedArgs } from "./lineageFeed";
+import type { LineageFeedOptions } from "./lineageFeed";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationStats } from "./operationStats";
 import {
@@ -888,6 +890,32 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return derivePipelineStats(PIPELINE_CHAINS, REFERENCE_NOW, options);
   }
 
+  // Authoritative asset lineage feed derives the same newest-first typed
+  // relationship view as the `/lineage/feed` endpoint from the shared
+  // relationship/asset/project seeds; mirror its 422 validation, unknown-project
+  // 404, page bound and repository derivation so live and mock agree exactly.
+  if (path === "/lineage/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const limitRaw = params.get("limit");
+    const options: LineageFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateLineageFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveLineageFeed(ASSET_RELATIONSHIPS, ASSETS, PROJECTS, REFERENCE_NOW, options);
+  }
+
   // Authoritative asset-lineage stats are derived from the relationship + asset
   // stores on every call; reproduce the router's 422 validation, unknown-project
   // 404 and the repository derivation over the shared seeds so live and mock
@@ -1150,6 +1178,13 @@ describe("live vs mock transport parity", () => {
       ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
       ["getLineageStats", (api) => api.getLineageStats()],
       ["getLineageStats scoped", (api) => api.getLineageStats({ projectId: filmId })],
+      ["getLineageFeed", (api) => api.getLineageFeed()],
+      ["getLineageFeed scoped", (api) => api.getLineageFeed({ projectId: filmId })],
+      ["getLineageFeed limited", (api) => api.getLineageFeed({ limit: 2 })],
+      [
+        "getLineageFeed scoped and limited",
+        (api) => api.getLineageFeed({ projectId: filmId, limit: 1 }),
+      ],
       ["getCollaborationStats", (api) => api.getCollaborationStats()],
       ["getCollaborationStats scoped", (api) => api.getCollaborationStats({ projectId: filmId })],
       ["getOrchestrationStats", (api) => api.getOrchestrationStats()],
@@ -1261,6 +1296,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getLineageStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getLineageStats({ projectId: emptyId }),
+    );
+    expect(await live.getLineageFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getLineageFeed({ projectId: emptyId }),
     );
     expect(await live.getCollaborationStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getCollaborationStats({ projectId: emptyId }),
@@ -1690,6 +1728,23 @@ describe("live vs mock transport parity", () => {
     expect(mockLineage422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveLineage422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown lineage-feed project scope
+    // and reject a malformed project id / limit with the same 422 envelope.
+    const [mockLineageFeed404, liveLineageFeed404] = await Promise.all([
+      mockApiClient.getLineageFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getLineageFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockLineageFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveLineageFeed404).toMatchObject({ status: 404, code: "not_found" });
+    for (const bad of [{ projectId: "not-a-uuid" }, { limit: 0 }, { limit: 201 }]) {
+      const [mockLineageFeed422, liveLineageFeed422] = await Promise.all([
+        mockApiClient.getLineageFeed(bad).catch((cause) => cause),
+        live.getLineageFeed(bad).catch((cause) => cause),
+      ]);
+      expect(mockLineageFeed422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveLineageFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports 404 identically for an unknown collaboration-stats project
     // scope and reject a malformed project id with the same 422 envelope.
     const [mockCollab404, liveCollab404] = await Promise.all([
@@ -1859,6 +1914,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getLineageStats).toBe("function");
+    expect(typeof typed.getLineageFeed).toBe("function");
     expect(typeof typed.getCollaborationStats).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");

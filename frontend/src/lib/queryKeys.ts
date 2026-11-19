@@ -15,6 +15,7 @@ import type { JobFeedOptions } from "./jobFeed";
 import type { JobLogsOptions } from "./jobLogs";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
+import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
@@ -134,6 +135,10 @@ export const queryKeys = {
   lineageStats: {
     summary: (options: LineageStatsOptions = {}) =>
       ["lineage-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  lineageFeed: {
+    feed: (options: LineageFeedOptions = {}) =>
+      ["lineage-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
   collaborationStats: {
     summary: (options: CollaborationStatsOptions = {}) =>

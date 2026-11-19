@@ -60,6 +60,8 @@ import { publishStatsQueryParams } from "./publishStats";
 import type { PublishStatsOptions } from "./publishStats";
 import { retryStatsQueryParams } from "./retryStats";
 import type { RetryStatsOptions } from "./retryStats";
+import { lineageFeedQueryParams } from "./lineageFeed";
+import type { LineageFeedOptions } from "./lineageFeed";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
 import { searchStatsQueryParams } from "./searchStats";
@@ -98,6 +100,7 @@ import type {
   JobLogFrame,
   JobQueueView,
   JobStats,
+  LineageFeed,
   LineageStats,
   Message,
   MessageCreate,
@@ -391,6 +394,11 @@ export function createHttpApiClient(
     /** Authoritative asset-lineage metrics derived by `/lineage/stats`. */
     getLineageStats(options?: LineageStatsOptions): Promise<LineageStats> {
       return request<LineageStats>("/lineage/stats", lineageStatsQueryParams(options));
+    },
+
+    /** Newest-first authoritative asset lineage feed derived by `/lineage/feed` (C157). */
+    getLineageFeed(options?: LineageFeedOptions): Promise<LineageFeed> {
+      return request<LineageFeed>("/lineage/feed", lineageFeedQueryParams(options));
     },
 
     /** Authoritative collaboration metrics derived by `/collaboration/stats`. */

@@ -21,6 +21,7 @@ import type { JobFeedOptions } from "../lib/jobFeed";
 import type { JobLogsOptions } from "../lib/jobLogs";
 import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
+import type { LineageFeedOptions } from "../lib/lineageFeed";
 import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
@@ -63,6 +64,7 @@ import type {
   JobLogFrame,
   JobQueueView,
   JobStats,
+  LineageFeed,
   LineageStats,
   Message,
   MessageCreate,
@@ -265,6 +267,17 @@ export function useLineageStats(
   return useQuery({
     queryKey: queryKeys.lineageStats.summary(options),
     queryFn: () => api.getLineageStats(options),
+  });
+}
+
+/** Newest-first authoritative asset lineage feed from `/lineage/feed`, optionally project-scoped (C157). */
+export function useLineageFeed(
+  options?: LineageFeedOptions,
+): UseQueryResult<LineageFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.lineageFeed.feed(options),
+    queryFn: () => api.getLineageFeed(options),
   });
 }
 
