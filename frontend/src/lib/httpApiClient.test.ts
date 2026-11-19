@@ -592,6 +592,93 @@ describe("createHttpApiClient project audit", () => {
   });
 });
 
+describe("createHttpApiClient asset overview (C205)", () => {
+  const root = asset("a1", "frame", "2026-01-05T00:00:00Z");
+  const overview = {
+    asset_id: root.id,
+    asset_name: root.name,
+    asset_type: root.type,
+    status: "ready",
+    version: 2,
+    project_id: root.project_id,
+    project_name: project.name,
+    created_at: root.created_at,
+    published: true,
+    counts: { versions: 2, upstream: 1, downstream: 3, comments: 4, tags: 5 },
+    recent_versions: [
+      {
+        asset_id: root.id,
+        version: 2,
+        storage: root.storage,
+        created_at: "2026-01-06T00:00:00Z",
+        created_by: root.creator_id,
+      },
+    ],
+    generated_at: "2026-01-07T00:00:00Z",
+  };
+
+  it("GETs the asset overview path with the recent limit and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/assets/${root.id}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getAssetOverview(root.id, { recentLimit: 3 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/assets/${root.id}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("3");
+  });
+
+  it("omits the query string when no recent limit is supplied", async () => {
+    const { fetchImpl, calls } = router({
+      [`/assets/${root.id}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+    await expect(api.getAssetOverview(root.id)).resolves.toEqual(overview);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces validation and other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getAssetOverview(root.id)).resolves.toBeUndefined();
+
+    const invalid = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          {
+            error: {
+              code: "validation_error",
+              message: "Invalid asset id.",
+              details: [{ field: "asset_id", message: "must be a UUID" }],
+            },
+          },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(invalid.getAssetOverview("bad")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getAssetOverview(root.id)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient project overview (C201)", () => {
   const overview = {
     project_id: project.id,

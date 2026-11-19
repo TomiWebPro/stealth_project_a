@@ -153,6 +153,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the asset overview key by asset and recent limit", () => {
+    expect(queryKeys.assetOverview.detail("a1")).toEqual([
+      "asset-overview",
+      "detail",
+      "a1",
+      "all",
+    ]);
+    expect(queryKeys.assetOverview.detail("a1", { recentLimit: 3 })).toEqual([
+      "asset-overview",
+      "detail",
+      "a1",
+      3,
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

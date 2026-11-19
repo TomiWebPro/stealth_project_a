@@ -5,6 +5,11 @@ import { deriveActivityStats, validateActivityStatsArgs } from "../activityStats
 import type { ActivityStatsOptions } from "../activityStats";
 import { deriveAssetFeed, validateAssetFeedArgs } from "../assetFeed";
 import type { AssetFeedOptions } from "../assetFeed";
+import {
+  deriveAssetOverview,
+  validateAssetOverviewArgs,
+} from "../assetOverview";
+import type { AssetOverviewOptions } from "../assetOverview";
 import { deriveAssetStats, validateAssetStatsArgs } from "../assetStats";
 import type { AssetStatsOptions } from "../assetStats";
 import { filterAuditTrail } from "../audit";
@@ -131,6 +136,7 @@ import type {
   Asset,
   AssetFeed,
   AssetImpact,
+  AssetOverview,
   AssetStats,
   AssetUpdate,
   ActivityStats,
@@ -246,7 +252,7 @@ function delay<T>(value: T): Promise<T> {
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
- * `projectOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
+ * `projectOverview`, `assetOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -908,6 +914,38 @@ export async function fetchProjectDetail(projectId: string): Promise<ProjectDeta
       b.created_at.localeCompare(a.created_at),
     ),
   });
+}
+
+/**
+ * Authoritative single-asset overview (C205) derived from the same stores as
+ * the live `/assets/{id}/overview` endpoint. Router-style 422 validation
+ * (asset id / recent_limit), a normalized 404-to-`undefined` for an unknown
+ * asset and the `"assetOverview"` failure domain keep error and empty states
+ * at parity with live mode.
+ */
+export async function fetchAssetOverview(
+  assetId: string,
+  options?: AssetOverviewOptions,
+): Promise<AssetOverview | undefined> {
+  failIfEnabled("assetOverview");
+  validateAssetOverviewArgs(assetId, options);
+  if (!ASSETS.some((asset) => asset.id === assetId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveAssetOverview(
+      assetId,
+      {
+        projects: PROJECTS,
+        assets: ASSETS,
+        assetVersions: ASSET_VERSIONS,
+        relationships: ASSET_RELATIONSHIPS,
+        comments: COMMENTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
 }
 
 /**

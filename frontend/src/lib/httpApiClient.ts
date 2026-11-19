@@ -6,6 +6,8 @@ import { activityStatsQueryParams } from "./activityStats";
 import type { ActivityStatsOptions } from "./activityStats";
 import { assetFeedQueryParams } from "./assetFeed";
 import type { AssetFeedOptions } from "./assetFeed";
+import { assetOverviewQueryParams } from "./assetOverview";
+import type { AssetOverviewOptions } from "./assetOverview";
 import { assetStatsQueryParams } from "./assetStats";
 import type { AssetStatsOptions } from "./assetStats";
 import { auditQueryParams } from "./audit";
@@ -104,6 +106,7 @@ import type {
   Asset,
   AssetFeed,
   AssetImpact,
+  AssetOverview,
   AssetStats,
   AssetUpdate,
   AuditTrail,
@@ -572,6 +575,25 @@ export function createHttpApiClient(
         optional(() => listJobs({ project_id: projectId }), [] as readonly Job[]),
       ]);
       return { project, assets, jobs };
+    },
+
+    /**
+     * Authoritative single-asset overview; the backend 404s on an unknown
+     * asset, which is normalized to `undefined` like the other detail lookups.
+     */
+    async getAssetOverview(
+      assetId: string,
+      options?: AssetOverviewOptions,
+    ): Promise<AssetOverview | undefined> {
+      try {
+        return await request<AssetOverview>(
+          `/assets/${encodeURIComponent(assetId)}/overview`,
+          assetOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /**

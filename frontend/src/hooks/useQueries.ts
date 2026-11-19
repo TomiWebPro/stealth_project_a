@@ -5,6 +5,7 @@ import { useApiClient } from "../app/apiContext";
 import type { ActivityOptions } from "../lib/activity";
 import type { ActivityStatsOptions } from "../lib/activityStats";
 import type { AssetFeedOptions } from "../lib/assetFeed";
+import type { AssetOverviewOptions } from "../lib/assetOverview";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
@@ -57,6 +58,7 @@ import type {
   Asset,
   AssetFeed,
   AssetImpact,
+  AssetOverview,
   AssetStats,
   AssetUpdate,
   AuditTrail,
@@ -419,6 +421,21 @@ export function useProjectDetail(projectId: string): UseQueryResult<ProjectDetai
   return useQuery({
     queryKey: queryKeys.projects.detail(projectId),
     queryFn: () => api.getProjectDetail(projectId),
+  });
+}
+
+/**
+ * Authoritative single-asset snapshot (identity, published flag, counts and a
+ * bounded newest-version list) from `/assets/{id}/overview` (C205).
+ */
+export function useAssetOverview(
+  assetId: string,
+  options?: AssetOverviewOptions,
+): UseQueryResult<AssetOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.assetOverview.detail(assetId, options),
+    queryFn: () => api.getAssetOverview(assetId, options),
   });
 }
 

@@ -1,6 +1,7 @@
 import type { ActivityOptions } from "./activity";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
+import type { AssetOverviewOptions } from "./assetOverview";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
@@ -55,6 +56,7 @@ import type {
   Asset,
   AssetFeed,
   AssetImpact,
+  AssetOverview,
   AssetStats,
   AssetUpdate,
   AuditTrail,
@@ -207,6 +209,15 @@ export interface ApiClient {
   getJobQueue(options?: JobQueueOptions): Promise<JobQueueView>;
   getProjectDetail(projectId: string): Promise<ProjectDetail | undefined>;
   /**
+   * Authoritative single-asset snapshot (identity, published flag, cross-domain
+   * counts and a bounded newest-version list) from `/assets/{id}/overview`;
+   * unknown assets resolve to `undefined` (C205).
+   */
+  getAssetOverview(
+    assetId: string,
+    options?: AssetOverviewOptions,
+  ): Promise<AssetOverview | undefined>;
+  /**
    * Authoritative single-project snapshot (identity, cross-domain counts and a
    * bounded newest-first jobs/assets list) from `/projects/{id}/overview`;
    * unknown projects resolve to `undefined` (C201).
@@ -316,6 +327,7 @@ export const mockApiClient: ApiClient = {
   getJobLogs: mockApi.fetchJobLogs,
   getJobQueue: mockApi.fetchJobQueue,
   getProjectDetail: mockApi.fetchProjectDetail,
+  getAssetOverview: mockApi.fetchAssetOverview,
   getProjectOverview: mockApi.fetchProjectOverview,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,

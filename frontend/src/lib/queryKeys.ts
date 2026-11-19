@@ -1,6 +1,7 @@
 import type { ActivityOptions } from "./activity";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
+import type { AssetOverviewOptions } from "./assetOverview";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
@@ -87,6 +88,10 @@ export const queryKeys = {
         options.status ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  assetOverview: {
+    detail: (assetId: string, options: AssetOverviewOptions = {}) =>
+      ["asset-overview", "detail", assetId, options.recentLimit ?? "all"] as const,
   },
   assetStats: {
     summary: (options: AssetStatsOptions = {}) =>

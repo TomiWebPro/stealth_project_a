@@ -21,6 +21,8 @@ import {
 } from "./collaborationStats";
 import { deriveAssetFeed, validateAssetFeedArgs } from "./assetFeed";
 import type { AssetFeedOptions } from "./assetFeed";
+import { deriveAssetOverview, validateAssetOverviewArgs } from "./assetOverview";
+import type { AssetOverviewOptions } from "./assetOverview";
 import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationFeed, validateConversationFeedArgs } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
@@ -730,6 +732,41 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return deriveAssetFeed(ASSETS, PROJECTS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative single-asset overview derives a compact snapshot from the
+  // same asset/version/relationship/comment stores on every call; mirror the
+  // router's 422 validation, unknown-asset 404 and repository derivation over
+  // the seeds. This must precede the dynamic /assets/{id} branch below.
+  if (/^\/assets\/[^/]+\/overview$/.test(path)) {
+    const assetId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options: AssetOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateAssetOverviewArgs(assetId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ASSETS.some((asset) => asset.id === assetId)) return NOT_FOUND;
+    return deriveAssetOverview(
+      assetId,
+      {
+        projects: PROJECTS,
+        assets: ASSETS,
+        assetVersions: ASSET_VERSIONS,
+        relationships: ASSET_RELATIONSHIPS,
+        comments: COMMENTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
   }
 
   if (path.startsWith("/assets/")) return ASSETS.find((a) => a.id === id) ?? NOT_FOUND;
@@ -1508,6 +1545,8 @@ describe("live vs mock transport parity", () => {
       ],
       ["getProjectOverview", (api) => api.getProjectOverview(filmId)],
       ["getProjectOverview limited", (api) => api.getProjectOverview(filmId, { recentLimit: 2 })],
+      ["getAssetOverview", (api) => api.getAssetOverview(impactRootId)],
+      ["getAssetOverview limited", (api) => api.getAssetOverview(impactRootId, { recentLimit: 2 })],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -1791,6 +1830,15 @@ describe("live vs mock transport parity", () => {
     expect(await live.getProjectOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getProjectOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The asset overview resolves an unknown asset to undefined on both
+    // transports and returns a zero-filled snapshot for a seeded asset.
+    expect(await live.getAssetOverview(impactRootId)).toEqual(
+      await mockApiClient.getAssetOverview(impactRootId),
+    );
+    expect(await live.getAssetOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getAssetOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
@@ -2355,6 +2403,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed asset id or an out-of-range
+    // recent_limit with the same 422 envelope for the single-asset overview.
+    const badAssetOverviewOptions: Array<[string, string, AssetOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [impactRootId, impactRootId, { recentLimit: 0 }],
+      [impactRootId, impactRootId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badAssetOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getAssetOverview(mockId, options).catch((cause) => cause),
+        live.getAssetOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -2531,6 +2595,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProjectFeed).toBe("function");
     expect(typeof typed.getProjectOverview).toBe("function");
+    expect(typeof typed.getAssetOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");

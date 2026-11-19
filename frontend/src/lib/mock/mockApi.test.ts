@@ -4,6 +4,7 @@ import type { StreamEvent } from "../../types";
 import {
   ASSETS,
   ASSET_RELATIONSHIPS,
+  ASSET_VERSIONS,
   COMMENTS,
   CONVERSATIONS,
   EXTENSIONS,
@@ -27,6 +28,7 @@ import {
   fetchActivity,
   fetchActivityStats,
   fetchAsset,
+  fetchAssetOverview,
   fetchAssetStats,
   fetchAssets,
   fetchAssetsByProject,
@@ -1879,6 +1881,58 @@ describe("mock API job dispatch queue (C121 follow-up)", () => {
 
     setMockFailure("jobQueue");
     await expect(fetchJobQueue()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API asset overview (C205 follow-up)", () => {
+  const rootAsset =
+    ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined) ?? ASSETS[0];
+  const assetId = rootAsset?.id ?? "";
+
+  it("derives a populated snapshot with identity, counts and recent versions", async () => {
+    const overview = await fetchAssetOverview(assetId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.asset_id).toBe(assetId);
+    expect(overview?.asset_name).toBe(rootAsset?.name);
+    expect(overview?.project_id).toBe(rootAsset?.project_id);
+    expect(overview?.published).toBe(true);
+    expect(overview?.counts.versions).toBe(
+      ASSET_VERSIONS.filter((version) => version.asset_id === assetId).length,
+    );
+    expect(overview?.counts.comments).toBe(
+      COMMENTS.filter((comment) => comment.asset_id === assetId).length,
+    );
+    expect(overview?.counts.tags).toBe(rootAsset?.tags?.length ?? 0);
+    const keys = (overview?.recent_versions ?? []).map((item) => item.version);
+    expect(keys).toEqual([...keys].sort((a, b) => b - a));
+  });
+
+  it("bounds the recent-version list without changing the totals", async () => {
+    const whole = await fetchAssetOverview(assetId);
+    const limited = await fetchAssetOverview(assetId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.recent_versions).toHaveLength(1);
+  });
+
+  it("mirrors router validation, the unknown-asset 404 and the injected failure", async () => {
+    await expect(fetchAssetOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchAssetOverview(assetId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchAssetOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+
+    setMockFailure("assetOverview");
+    await expect(fetchAssetOverview(assetId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

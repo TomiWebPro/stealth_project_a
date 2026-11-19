@@ -8,6 +8,7 @@ import {
   fetchAsset,
   fetchAssetFeed,
   fetchAssetImpact,
+  fetchAssetOverview,
   fetchAssetStats,
   fetchAssets,
   fetchAssetsByProject,
@@ -132,6 +133,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectOverview(projectId)).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchAssetOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
@@ -384,6 +386,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchCollaborationFeed()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the asset overview domain", async () => {
+    const overviewAssetId = ASSETS[0]?.id ?? "";
+    setMockFailure("assetOverview");
+
+    await expect(fetchAssetOverview(overviewAssetId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchAssetOverview(overviewAssetId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the project overview domain", async () => {
