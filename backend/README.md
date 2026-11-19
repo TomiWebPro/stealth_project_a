@@ -156,6 +156,11 @@ All paths are prefixed with `/api/v1`.
   `GET /jobs/feed?project_id=&status=&limit=` — authoritative newest-first job
   feed (project-name join, lifecycle fields and whole-scope total before the
   bounded page) derived from the job store; shared 404/422 envelopes
+  `GET /jobs/{job_id}/overview?recent_limit=` — authoritative single-job snapshot
+  (identity + terminal result/error, joined project name, event/retry totals with
+  a zero-filled event-type breakdown, and the newest events bounded by
+  `recent_limit`) derived fresh from the job/event/retry stores; shared 404/422
+  envelopes
   `GET /events/feed?project_id=&type=&limit=` — authoritative newest-first job
   event feed (operation/project-name join, all event lifecycle fields and a
   whole-scope total before the bounded page) derived from the job event store;
