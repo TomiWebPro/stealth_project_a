@@ -192,6 +192,11 @@ All paths are prefixed with `/api/v1`.
   (zero-filled presence-state breakdown, per-project activity counts, distinct
   participant count and newest-signal recency) derived from the presence/comment
   stores; optional project scope with shared 404/422 envelopes
+  `GET /collaboration/feed?project_id=&signal=&limit=` — authoritative newest-first
+  feed of presence/comment signals derived from the same presence/comment stores
+  (coarse presence/comment kind, joined project name, unified recency and
+  whole-scope total before the `limit` page; optional project + signal filters with
+  shared 404/422 envelopes)
   `GET /comments/stats?project_id=` — authoritative comment metrics (zero-filled
   asset/project reference breakdown, per-project and per-author comment counts,
   distinct author/project totals and newest-comment recency) derived from the

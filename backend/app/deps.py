@@ -25,6 +25,7 @@ from .repositories.conversations import ConversationRepository
 from .repositories.conversation_feed import ConversationFeedRepository
 from .repositories.conversation_stats import ConversationStatsRepository
 from .repositories.collaboration_stats import CollaborationStatsRepository
+from .repositories.collaboration_feed import CollaborationFeedRepository
 from .repositories.comment_feed import CommentFeedRepository
 from .repositories.comment_stats import CommentStatsRepository
 from .repositories.dashboard import DashboardRepository
@@ -211,6 +212,12 @@ def get_collaboration_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> CollaborationStatsRepository:
     return repositories.collaboration_stats
+
+
+def get_collaboration_feed_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> CollaborationFeedRepository:
+    return repositories.collaboration_feed
 
 
 def get_comment_feed_repository(
@@ -523,6 +530,7 @@ __all__ = [
     "get_auth_repository",
     "get_bearer_token",
     "get_collaboration_stats_repository",
+    "get_collaboration_feed_repository",
     "get_comment_feed_repository",
     "get_comment_stats_repository",
     "get_conversation_repository",

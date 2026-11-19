@@ -166,6 +166,11 @@ from .collaboration_stats import (
     CollaborationStats,
     PresenceStateCount,
 )
+from .collaboration_feed import (
+    CollaborationFeed,
+    CollaborationFeedItem,
+    CollaborationSignal,
+)
 from .comment_feed import (
     CommentFeed,
     CommentFeedItem,
@@ -492,6 +497,10 @@ __all__ = [
     "CollaborationProjectCount",
     "CollaborationStats",
     "PresenceStateCount",
+    # collaboration feed
+    "CollaborationFeed",
+    "CollaborationFeedItem",
+    "CollaborationSignal",
     # comment feed
     "CommentFeed",
     "CommentFeedItem",
