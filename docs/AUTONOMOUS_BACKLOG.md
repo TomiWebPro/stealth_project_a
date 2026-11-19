@@ -583,6 +583,15 @@ this file is the execution checklist.
   My owned backend column had no unchecked items, so C61 was added under the
   Never-empty well. ✅ 2026-11-19 — `9eaec7c`
 
+- [x] C62 (screens) Render the authoritative provider fleet stats (C57/C59/C60
+  follow-up) via `useProviderStats`: a reusable `ProviderStatsPanel` on the
+  Providers screen with location/status filters wired from the existing filter
+  selects, four stat cards, zero-filled status/location breakdowns and
+  per-operation availability coverage, and loading/error/missing/empty/
+  populated states — all display values derived in tested `providerStatsHelpers`.
+  My owned column had no unchecked rows, so C62 was added under the Never-empty
+  well. ✅ 2026-11-19 — `9a62ea9`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -683,3 +692,4 @@ this file is the execution checklist.
 - 2026-11-19 — `9eaf9a3` — C59 (mocks): wired the authoritative provider fleet stats API (C57 follow-up) end to end — `getProviderStats`/`useProviderStats` atomically across mockApi, the stable facade, live `httpApiClient` (`GET /providers/stats?location=&status=`), `queryKeys` and `useQueries`, with a shared `lib/providerStats` derivation/validation helper; parity guard extended to both transports; injectable `providerStats` error domain documented + covered; lint clean, 412 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents. My owned column had no unchecked rows, so C59 was added under the Never-empty well.
 - 2026-11-19 — `1beae67` — C60 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/providers/stats` (zero-filled snapshot + status/location breakdown shapes, `location`/`status` filters, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C57/C59. No unchecked CI row remained, so C60 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (50/50 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (412)/build and backend pytest (621) green. Screens provider-stats rendering remains a screens follow-up.
 - 2026-11-19 — `9eaec7c` — C61 (backend): added authoritative `GET /api/v1/extensions/stats?type=&status=` deriving zero-filled registry type/status breakdowns, trust flags and permission/capability coverage from the authoritative extension stores (no second index), with independent `type`/`status` filters and a shared 422 envelope; `ExtensionStats` + 3 nested contracts mirrored in TS, README synced, 7 tests × 2 backends green (635 passed, contract parity + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C61 was added under the Never-empty well.
+- 2026-11-19 — `9a62ea9` — C62 (screens): rendered the authoritative provider fleet stats via a reusable `ProviderStatsPanel` on the Providers screen — location/status filters wired from the existing selects, four stat cards, zero-filled status/location breakdowns and per-operation availability coverage, all five UI states, and every display value derived in tested `providerStatsHelpers`; resolves the C57/C59/C60 screens follow-up. Lint clean, 425 tests, build green. My owned column had no unchecked rows, so C62 was added under the Never-empty well.
