@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { formatProjectUpdatedAt } from "./helpers";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
+import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
 import { ProjectStatsPanel } from "./ProjectStatsPanel";
 
@@ -79,6 +80,11 @@ export function ProjectsScreen() {
       <PipelineStatsPanel
         title="Production pipeline stats"
         description="Authoritative training, shot and splat chain metrics across the workspace."
+      />
+
+      <LineageStatsPanel
+        title="Asset lineage stats"
+        description="Authoritative asset relationship metrics across the workspace."
       />
 
       {isPending ? <ProjectsSkeleton /> : null}

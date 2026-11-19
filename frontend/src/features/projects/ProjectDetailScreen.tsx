@@ -12,6 +12,7 @@ import { JobsPanel } from "../jobs/JobsPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
+import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { StoragePanel } from "../storage/StoragePanel";
 import { LineageView } from "../lineage/LineageView";
 import { VersionPanel } from "../assets/VersionPanel";
@@ -161,6 +162,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project asset stats"
         description="Authoritative inventory metrics scoped to this project."
+      />
+      <LineageStatsPanel
+        projectId={projectId}
+        title="Project lineage stats"
+        description="Authoritative asset relationship metrics scoped to this project."
       />
       <JobStatsPanel
         projectId={projectId}
