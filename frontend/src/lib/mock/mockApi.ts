@@ -15,6 +15,11 @@ import type { ConversationStream } from "../conversationStream";
 import { deriveDashboardSummary, validateDashboardArgs } from "../dashboard";
 import type { DashboardOptions } from "../dashboard";
 import { env } from "../env";
+import {
+  deriveExtensionStats,
+  validateExtensionStatsArgs,
+} from "../extensionStats";
+import type { ExtensionStatsOptions } from "../extensionStats";
 import type { HomeSummary } from "../homeSummary";
 import type { ImpactOptions } from "../impact";
 import { deriveAssetImpact, validateImpactArgs } from "../impact";
@@ -39,6 +44,7 @@ import type {
   Conversation,
   ConversationStats,
   Extension,
+  ExtensionStats,
   Job,
   JobStats,
   Message,
@@ -96,7 +102,7 @@ function delay<T>(value: T): Promise<T> {
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`, `jobStats`,
- * `assetStats`, `conversationStats`, `projectStats`, `providerStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
+ * `assetStats`, `conversationStats`, `projectStats`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
@@ -300,6 +306,20 @@ export async function fetchProviderStats(
   failIfEnabled("providerStats");
   validateProviderStatsArgs(options);
   return delay(deriveProviderStats(PROVIDERS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative extension registry/installation metrics (C61) derived from the
+ * same extension seeds as the live `/extensions/stats` endpoint. Router-style
+ * 422 validation for an invalid type/status filter and the `"extensionStats"`
+ * failure domain keep error and empty states at parity with live mode.
+ */
+export async function fetchExtensionStats(
+  options?: ExtensionStatsOptions,
+): Promise<ExtensionStats> {
+  failIfEnabled("extensionStats");
+  validateExtensionStatsArgs(options);
+  return delay(deriveExtensionStats(EXTENSIONS, REFERENCE_NOW, options));
 }
 
 /**

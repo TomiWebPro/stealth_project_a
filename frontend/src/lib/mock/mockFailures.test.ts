@@ -17,6 +17,7 @@ import {
   fetchCurrentUser,
   fetchExtension,
   fetchExtensions,
+  fetchExtensionStats,
   fetchHomeSummary,
   fetchJob,
   fetchJobs,
@@ -69,6 +70,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchConversationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviderStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchExtensionStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
@@ -146,6 +148,18 @@ describe("mock error-state fakes", () => {
     await expect(fetchProviderStats()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the extension stats domain", async () => {
+    setMockFailure("extensionStats");
+
+    await expect(fetchExtensionStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchExtensionStats()).resolves.toBeDefined();
+  });
+
   it("exposes injectable failures for the tags and impact domains", async () => {
     const assetId = "0b5c1e2a-2000-4000-8000-000000000011";
     setMockFailure("tags");
@@ -185,6 +199,7 @@ describe("mock error-state fakes", () => {
         ["jobs", () => fetchJob(jobId)],
         ["providers", () => fetchProvider(providerId)],
         ["providerStats", () => fetchProviderStats()],
+        ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],
         ["conversations", () => fetchConversation(conversationId)],

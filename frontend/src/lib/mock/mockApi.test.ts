@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
-import { ASSETS, CONVERSATIONS, PROJECTS, PROVIDERS, REFERENCE_NOW } from "./data";
+import { ASSETS, CONVERSATIONS, EXTENSIONS, PROJECTS, PROVIDERS, REFERENCE_NOW } from "./data";
 import {
   clearMockFailures,
   fetchActivity,
@@ -18,6 +18,7 @@ import {
   fetchDashboard,
   fetchExtension,
   fetchExtensions,
+  fetchExtensionStats,
   fetchHomeSummary,
   fetchJob,
   fetchJobs,
@@ -321,6 +322,56 @@ describe("mock API provider stats (C57 follow-up)", () => {
 
     setMockFailure("providerStats");
     await expect(fetchProviderStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API extension stats (C61 follow-up)", () => {
+  it("derives a populated snapshot from the authoritative extension seeds", async () => {
+    const stats = await fetchExtensionStats();
+    expect(stats.total_registered).toBe(EXTENSIONS.length);
+    expect(stats.total_installed).toBe(EXTENSIONS.length);
+    expect(stats.by_type?.filter((entry) => entry.count > 0)).toHaveLength(
+      new Set(EXTENSIONS.map((extension) => extension.manifest.type)).size,
+    );
+    expect(stats.enabled).toBe(EXTENSIONS.filter((extension) => extension.status === "enabled").length);
+    expect(stats.signed).toBe(EXTENSIONS.filter((extension) => extension.signed).length);
+    expect(stats.verified).toBe(EXTENSIONS.filter((extension) => extension.verified).length);
+    expect(stats.unique_permissions).toBeGreaterThan(0);
+    expect(stats.by_permission ?? []).toHaveLength(stats.unique_permissions);
+    expect(stats.total_capabilities).toBeGreaterThan(0);
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("narrows the type/status slices independently and zero-fills an empty slice", async () => {
+    const ui = await fetchExtensionStats({ type: "ui" });
+    expect(ui.total_registered).toBe(EXTENSIONS.filter((extension) => extension.manifest.type === "ui").length);
+    expect(ui.total_installed).toBe(EXTENSIONS.length);
+
+    const enabled = await fetchExtensionStats({ status: "enabled" });
+    expect(enabled.total_installed).toBe(EXTENSIONS.filter((extension) => extension.status === "enabled").length);
+    expect(enabled.total_registered).toBe(EXTENSIONS.length);
+
+    const empty = await fetchExtensionStats({ type: "bundle", status: "update_available" });
+    expect(empty.total_registered).toBe(0);
+    expect(empty.total_installed).toBe(0);
+    expect(empty.by_permission).toEqual([]);
+  });
+
+  it("mirrors router validation and surfaces the injected failure", async () => {
+    await expect(fetchExtensionStats({ type: "mystery" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchExtensionStats({ status: "bogus" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("extensionStats");
+    await expect(fetchExtensionStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

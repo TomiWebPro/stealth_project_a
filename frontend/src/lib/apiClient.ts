@@ -6,6 +6,7 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
+import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
@@ -26,6 +27,7 @@ import type {
   ConversationStats,
   DashboardSummary,
   Extension,
+  ExtensionStats,
   Job,
   JobStats,
   Message,
@@ -72,6 +74,8 @@ export interface ApiClient {
   getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats>;
   /** Authoritative provider fleet metrics derived by `/providers/stats`, optionally filtered (C57). */
   getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats>;
+  /** Authoritative extension registry/installation metrics derived by `/extensions/stats`, optionally filtered (C61). */
+  getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -126,6 +130,7 @@ export const mockApiClient: ApiClient = {
   getConversationStats: mockApi.fetchConversationStats,
   getProjectStats: mockApi.fetchProjectStats,
   getProviderStats: mockApi.fetchProviderStats,
+  getExtensionStats: mockApi.fetchExtensionStats,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

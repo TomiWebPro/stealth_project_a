@@ -14,6 +14,8 @@ import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
 import { dashboardQueryParams } from "./dashboard";
 import type { DashboardOptions } from "./dashboard";
+import { extensionStatsQueryParams } from "./extensionStats";
+import type { ExtensionStatsOptions } from "./extensionStats";
 import type { HomeSummary } from "./homeSummary";
 import { impactQueryParams } from "./impact";
 import type { ImpactOptions } from "./impact";
@@ -40,6 +42,7 @@ import type {
   ConversationStats,
   DashboardSummary,
   Extension,
+  ExtensionStats,
   Job,
   JobStats,
   Message,
@@ -266,6 +269,11 @@ export function createHttpApiClient(
     /** Authoritative provider fleet metrics derived by the backend `/providers/stats`. */
     getProviderStats(options?: ProviderStatsOptions): Promise<ProviderStats> {
       return request<ProviderStats>("/providers/stats", providerStatsQueryParams(options));
+    },
+
+    /** Authoritative extension registry/installation metrics derived by `/extensions/stats`. */
+    getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats> {
+      return request<ExtensionStats>("/extensions/stats", extensionStatsQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

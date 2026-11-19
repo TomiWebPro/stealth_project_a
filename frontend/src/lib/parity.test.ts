@@ -11,6 +11,8 @@ import { deriveAssetStats, validateAssetStatsArgs } from "./assetStats";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
+import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionStats";
+import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import type { ImpactOptions } from "./impact";
@@ -401,6 +403,31 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   if (path === "/storage/stats") {
     return STORAGE_STATS.find((s) => s.project_id === params.get("project_id")) ?? NOT_FOUND;
   }
+  // Authoritative extension registry/installation stats are derived from the
+  // extension store on every call; reproduce the router's 422 validation and
+  // repository derivation over the shared seeds so live and mock agree. This
+  // must precede the dynamic /extensions/{id} detail branch below.
+  if (path === "/extensions/stats") {
+    const typeRaw = params.get("type");
+    const statusRaw = params.get("status");
+    const options: ExtensionStatsOptions = {
+      ...(typeRaw !== null ? { type: typeRaw as ExtensionStatsOptions["type"] } : {}),
+      ...(statusRaw !== null ? { status: statusRaw as ExtensionStatsOptions["status"] } : {}),
+    };
+    try {
+      validateExtensionStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    return deriveExtensionStats(EXTENSIONS, REFERENCE_NOW, options);
+  }
+
   if (path === "/extensions") return EXTENSIONS;
   if (path.startsWith("/extensions/")) {
     return EXTENSIONS.find((e) => e.manifest.id === id) ?? NOT_FOUND;
@@ -472,6 +499,9 @@ describe("live vs mock transport parity", () => {
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
+      ["getExtensionStats", (api) => api.getExtensionStats()],
+      ["getExtensionStats scoped", (api) => api.getExtensionStats({ type: "ui" })],
+      ["getExtensionStats filtered", (api) => api.getExtensionStats({ type: "ui", status: "enabled" })],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -648,6 +678,18 @@ describe("live vs mock transport parity", () => {
     expect(mockProviderStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveProviderStats422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both zero-fill an empty extension-stats filter and reject invalid filters
+    // with the same 422 envelope.
+    expect(await live.getExtensionStats({ type: "bundle" })).toEqual(
+      await mockApiClient.getExtensionStats({ type: "bundle" }),
+    );
+    const [mockExtensionStats422, liveExtensionStats422] = await Promise.all([
+      mockApiClient.getExtensionStats({ type: "mystery" as never }).catch((cause) => cause),
+      live.getExtensionStats({ type: "mystery" as never }).catch((cause) => cause),
+    ]);
+    expect(mockExtensionStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveExtensionStats422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both resolve an unknown impact root to undefined.
     expect(await live.getAssetImpact(missingId)).toEqual(
       await mockApiClient.getAssetImpact(missingId),
@@ -698,5 +740,6 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
+    expect(typeof typed.getExtensionStats).toBe("function");
   });
 });

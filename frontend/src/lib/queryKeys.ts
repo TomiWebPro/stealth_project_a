@@ -3,6 +3,7 @@ import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
+import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
 import type { JobStatsOptions } from "./jobStats";
 import type { ProjectStatsOptions } from "./projectStats";
@@ -59,6 +60,10 @@ export const queryKeys = {
         options.location ?? "all",
         options.status ?? "all",
       ] as const,
+  },
+  extensionStats: {
+    summary: (options: ExtensionStatsOptions = {}) =>
+      ["extension-stats", "summary", options.type ?? "all", options.status ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

@@ -94,6 +94,27 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the extension stats key by type and status", () => {
+    expect(queryKeys.extensionStats.summary()).toEqual([
+      "extension-stats",
+      "summary",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.extensionStats.summary({ type: "ui" })).toEqual([
+      "extension-stats",
+      "summary",
+      "ui",
+      "all",
+    ]);
+    expect(queryKeys.extensionStats.summary({ type: "ui", status: "enabled" })).toEqual([
+      "extension-stats",
+      "summary",
+      "ui",
+      "enabled",
+    ]);
+  });
+
   it("scopes project keys by id", () => {
     expect(queryKeys.projects.all()).toEqual(["projects"]);
     expect(queryKeys.projects.byId("p1")).toEqual(["projects", "by-id", "p1"]);

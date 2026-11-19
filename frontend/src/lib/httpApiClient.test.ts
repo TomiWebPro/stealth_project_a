@@ -995,3 +995,75 @@ describe("createHttpApiClient provider stats", () => {
     });
   });
 });
+
+describe("createHttpApiClient extension stats", () => {
+  const stats = {
+    total_registered: 3,
+    total_installed: 2,
+    by_type: [
+      { type: "capability", count: 1 },
+      { type: "ui", count: 1 },
+      { type: "provider", count: 1 },
+      { type: "runtime", count: 0 },
+      { type: "bundle", count: 0 },
+    ],
+    by_status: [
+      { status: "installed", count: 1 },
+      { status: "enabled", count: 1 },
+      { status: "disabled", count: 0 },
+      { status: "update_available", count: 0 },
+    ],
+    enabled: 1,
+    signed: 1,
+    verified: 1,
+    total_permissions: 3,
+    unique_permissions: 2,
+    by_permission: [
+      { permission: "assets.read", extensions: 2 },
+      { permission: "storage.write", extensions: 1 },
+    ],
+    total_capabilities: 2,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /extensions/stats with both filters and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/extensions/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getExtensionStats({ type: "ui", status: "enabled" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/extensions/stats`);
+    expect(url.searchParams.get("type")).toBe("ui");
+    expect(url.searchParams.get("status")).toBe("enabled");
+  });
+
+  it("omits the filters when no options are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/extensions/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getExtensionStats()).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/extensions/stats`);
+    expect(url.searchParams.has("type")).toBe(false);
+    expect(url.searchParams.has("status")).toBe(false);
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Invalid extension type." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getExtensionStats({ type: "mystery" as never })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Invalid extension type.",
+    });
+  });
+});

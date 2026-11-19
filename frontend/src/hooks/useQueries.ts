@@ -8,6 +8,7 @@ import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
+import type { ExtensionStatsOptions } from "../lib/extensionStats";
 import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobStatsOptions } from "../lib/jobStats";
@@ -28,6 +29,7 @@ import type {
   ConversationStats,
   DashboardSummary,
   Extension,
+  ExtensionStats,
   Job,
   JobStats,
   Message,
@@ -118,6 +120,17 @@ export function useProviderStats(options?: ProviderStatsOptions): UseQueryResult
   return useQuery({
     queryKey: queryKeys.providerStats.summary(options),
     queryFn: () => api.getProviderStats(options),
+  });
+}
+
+/** Authoritative extension registry/installation metrics from `/extensions/stats`, optionally filtered (C61). */
+export function useExtensionStats(
+  options?: ExtensionStatsOptions,
+): UseQueryResult<ExtensionStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.extensionStats.summary(options),
+    queryFn: () => api.getExtensionStats(options),
   });
 }
 
