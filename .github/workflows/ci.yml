@@ -2259,6 +2259,96 @@ jobs:
                 and bool(comment_feed_bad_limit_body.get("error", {}).get("request_id")),
                 comment_feed_bad_limit.text)
 
+          # Authoritative comment statistics (C165/C167) is the newest /api/v1
+          # URL the live client calls (getCommentStats). Reuse the comment added
+          # in the comment-feed probe above so the derived snapshot has real
+          # counts. Probe the zero-filled snapshot + by_reference/by_project/
+          # by_author breakdown shapes, the two canonical reference categories,
+          # the optional project scope (unknown project -> shared 404, malformed
+          # -> shared 422) and the request-id header, keeping CI aligned with the
+          # exact /api/v1 URLs the live client calls as the repo grows.
+          comment_stats = httpx.get(f"{base}/comments/stats", timeout=5)
+          comstbody = comment_stats.json() if comment_stats.status_code == 200 else {}
+          check("comments/stats 200 snapshot shape",
+                comment_stats.status_code == 200 and all(
+                    k in comstbody for k in ("total_comments", "total_authors",
+                                             "total_projects", "by_reference",
+                                             "by_project", "by_author",
+                                             "newest_comment_at", "generated_at")),
+                comment_stats.text)
+          check("comments/stats breakdown shapes",
+                isinstance(comstbody.get("by_reference"), list)
+                and all(isinstance(r, dict) and all(
+                    k in r for k in ("reference", "count"))
+                    for r in comstbody["by_reference"])
+                and isinstance(comstbody.get("by_project"), list)
+                and all(isinstance(p, dict) and all(
+                    k in p for k in ("project_id", "comments", "authors"))
+                    for p in comstbody["by_project"])
+                and isinstance(comstbody.get("by_author"), list)
+                and all(isinstance(a, dict) and all(
+                    k in a for k in ("author_id", "comments"))
+                    for a in comstbody["by_author"]),
+                comment_stats.text)
+          check("comments/stats zero-filled references",
+                comment_stats.status_code == 200
+                and {r.get("reference") for r in comstbody["by_reference"]} >= {
+                    "asset", "project"},
+                comment_stats.text)
+          check("comments/stats request-id header",
+                "x-request-id" in {k.lower() for k in comment_stats.headers},
+                str(dict(comment_stats.headers)))
+          if comment_id:
+              project_ref = next(
+                  (r for r in comstbody.get("by_reference", [])
+                   if r.get("reference") == "project"),
+                  None)
+              check("comments/stats derived shapes",
+                    comment_stats.status_code == 200
+                    and comstbody.get("total_comments", 0) >= 1
+                    and comstbody.get("total_projects", 0) >= 1
+                    and comstbody.get("total_authors", 0) >= 1
+                    and project_ref is not None and project_ref.get("count", 0) >= 1
+                    and any(p.get("project_id") == project_id
+                            and p.get("comments", 0) >= 1
+                            for p in comstbody.get("by_project", []))
+                    and len(comstbody.get("by_author", [])) >= 1
+                    and isinstance(comstbody.get("newest_comment_at"), str),
+                    comment_stats.text)
+          else:
+              check("comments/stats derived setup", False,
+                    "could not add a comment for the stats probe")
+          if project_id:
+              comst_scoped = httpx.get(
+                  f"{base}/comments/stats", params={"project_id": project_id}, timeout=5)
+              cssbody = comst_scoped.json() if comst_scoped.status_code == 200 else {}
+              check("comments/stats project scope 200",
+                    comst_scoped.status_code == 200
+                    and isinstance(cssbody.get("total_comments"), int)
+                    and cssbody.get("total_comments", 0) >= 1
+                    and isinstance(cssbody.get("by_reference"), list),
+                    comst_scoped.text)
+          else:
+              check("comments/stats project scope setup", False,
+                    "could not obtain a project id")
+          comst_missing = httpx.get(
+              f"{base}/comments/stats",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          comst404body = comst_missing.json() if comst_missing.status_code == 404 else {}
+          check("comments/stats 404 shared envelope",
+                comst_missing.status_code == 404
+                and comst404body.get("error", {}).get("code") == "project_not_found"
+                and bool(comst404body.get("error", {}).get("request_id")),
+                comst_missing.text)
+          comst_bad = httpx.get(
+              f"{base}/comments/stats", params={"project_id": "not-a-uuid"}, timeout=5)
+          comstbadbody = comst_bad.json() if comst_bad.status_code == 422 else {}
+          check("comments/stats 422 validation envelope",
+                comst_bad.status_code == 422
+                and comstbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(comstbadbody.get("error", {}).get("request_id")),
+                comst_bad.text)
+
           # Authoritative asset version feed (C153/C155) is the newest /api/v1
           # URL the live client calls (getVersionFeed). Reuse the on-demand
           # registered asset (which now has the v1 from registration plus the
