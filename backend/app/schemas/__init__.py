@@ -143,6 +143,12 @@ from .project_stats import (
     ProjectLifecycleCount,
     ProjectStats,
 )
+from .provider_stats import (
+    ProviderLocationCount,
+    ProviderOperationStat,
+    ProviderStats,
+    ProviderStatusCount,
+)
 from .provider import (
     CapabilityQuery,
     Extension,
@@ -222,6 +228,11 @@ __all__ = [
     "ProjectLifecycle",
     "ProjectLifecycleCount",
     "ProjectStats",
+    # provider stats
+    "ProviderLocationCount",
+    "ProviderOperationStat",
+    "ProviderStats",
+    "ProviderStatusCount",
     # auth
     "LoginRequest",
     "Member",

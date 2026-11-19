@@ -41,6 +41,7 @@ from .routers import (
     pipelines,
     projects,
     project_stats,
+    provider_stats,
     providers,
     publish,
     search,
@@ -226,6 +227,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # path wins over the UUID-templated one.
     app.include_router(job_stats.router, prefix=API_PREFIX)
     app.include_router(jobs.router, prefix=API_PREFIX)
+    # "/providers/stats" must be registered before "/providers/{provider_id}" so
+    # the literal path wins over the dynamic one.
+    app.include_router(provider_stats.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)

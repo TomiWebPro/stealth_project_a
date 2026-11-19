@@ -22,3 +22,4 @@ export * from "./search";
 export * from "./dashboard";
 export * from "./tags";
 export * from "./impact";
+export * from "./providerStats";

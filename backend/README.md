@@ -72,6 +72,9 @@ All paths are prefixed with `/api/v1`.
   `POST /jobs/{id}/cancel|retry|run`,
   `GET /jobs/{id}/events/stream` (SSE, `since`/`idle_timeout`)
 - **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
+  `GET /providers/stats?location=&status=` — authoritative fleet metrics
+  (zero-filled health/location breakdowns, capability/operation coverage) derived
+  from the provider store, with optional location/status filters
   `GET /capabilities`, `GET /adapters`, `GET /adapters/{id}/health`
 - **Orchestration/collaboration:** `GET|POST /orchestration/plans`,
   `GET|POST /orchestration/runs`, `GET /orchestration/plans/{id}`,

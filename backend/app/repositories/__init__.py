@@ -22,6 +22,7 @@ from .jobs import JobRepository
 from .orchestration import OrchestrationRepository
 from .projects import ProjectRepository
 from .project_stats import ProjectStatsRepository
+from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
 from .search import SearchRepository
 from .tags import TagRepository
@@ -41,6 +42,7 @@ class Repositories:
     jobs: JobRepository
     job_stats: JobStatsRepository
     providers: ProviderRepository
+    provider_stats: ProviderStatsRepository
     orchestration: OrchestrationRepository
     auth: AuthRepository
     extensions: ExtensionRepository
@@ -69,6 +71,7 @@ class Repositories:
         jobs = JobRepository(store, projects, clock=clock)
         job_stats = JobStatsRepository(store, projects, clock=clock)
         providers = ProviderRepository(store, clock=clock)
+        provider_stats = ProviderStatsRepository(store, clock=clock)
         orchestration = OrchestrationRepository(
             store,
             projects,
@@ -101,6 +104,7 @@ class Repositories:
             jobs=jobs,
             job_stats=job_stats,
             providers=providers,
+            provider_stats=provider_stats,
             orchestration=orchestration,
             auth=auth,
             extensions=extensions,
