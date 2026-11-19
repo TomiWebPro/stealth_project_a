@@ -27,6 +27,7 @@ import type { LineageStatsOptions } from "./lineageStats";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
+import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectDetail } from "./projectDetail";
@@ -79,6 +80,7 @@ import type {
   Organization,
   OrganizationFeed,
   OrganizationStats,
+  OrchestrationFeed,
   OrchestrationRun,
   OrchestrationStats,
   PipelineFeed,
@@ -165,6 +167,8 @@ export interface ApiClient {
   getCollaborationStats(options?: CollaborationStatsOptions): Promise<CollaborationStats>;
   /** Authoritative orchestration metrics derived by `/orchestration/stats`, optionally project-scoped (C85). */
   getOrchestrationStats(options?: OrchestrationStatsOptions): Promise<OrchestrationStats>;
+  /** Newest-first authoritative orchestration feed derived by `/orchestration/feed`, optionally project/kind-scoped (C181). */
+  getOrchestrationFeed(options?: OrchestrationFeedOptions): Promise<OrchestrationFeed>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -269,6 +273,7 @@ export const mockApiClient: ApiClient = {
   getLineageFeed: mockApi.fetchLineageFeed,
   getCollaborationStats: mockApi.fetchCollaborationStats,
   getOrchestrationStats: mockApi.fetchOrchestrationStats,
+  getOrchestrationFeed: mockApi.fetchOrchestrationFeed,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

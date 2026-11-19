@@ -42,6 +42,7 @@ import {
   fetchOrganizationStats,
   fetchPipelineFeed,
   fetchPipelineStats,
+  fetchOrchestrationFeed,
   fetchOrchestrationRun,
   fetchOrchestrationStats,
   fetchOrganizations,
@@ -127,6 +128,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchOrchestrationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
@@ -565,6 +567,18 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchOrchestrationStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the orchestration feed domain", async () => {
+    setMockFailure("orchestrationFeed");
+
+    await expect(fetchOrchestrationFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchOrchestrationFeed()).resolves.toBeDefined();
   });
 
   it("exposes injectable failures for the tags and impact domains", async () => {

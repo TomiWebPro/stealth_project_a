@@ -51,6 +51,8 @@ import { organizationFeedQueryParams } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
+import { orchestrationFeedQueryParams } from "./orchestrationFeed";
+import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import { orchestrationStatsQueryParams } from "./orchestrationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import { pipelineFeedQueryParams } from "./pipelineFeed";
@@ -122,6 +124,7 @@ import type {
   Organization,
   OrganizationFeed,
   OrganizationStats,
+  OrchestrationFeed,
   OrchestrationRun,
   OrchestrationStats,
   PipelineFeed,
@@ -450,6 +453,11 @@ export function createHttpApiClient(
         "/orchestration/stats",
         orchestrationStatsQueryParams(options),
       );
+    },
+
+    /** Newest-first authoritative orchestration feed derived by `/orchestration/feed` (C181). */
+    getOrchestrationFeed(options?: OrchestrationFeedOptions): Promise<OrchestrationFeed> {
+      return request<OrchestrationFeed>("/orchestration/feed", orchestrationFeedQueryParams(options));
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

@@ -50,6 +50,11 @@ import {
 } from "./organizationStats";
 import type { ImpactOptions } from "./impact";
 import {
+  deriveOrchestrationFeed,
+  validateOrchestrationFeedArgs,
+} from "./orchestrationFeed";
+import type { OrchestrationFeedOptions } from "./orchestrationFeed";
+import {
   deriveOrchestrationStats,
   validateOrchestrationStatsArgs,
 } from "./orchestrationStats";
@@ -1068,6 +1073,40 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative orchestration feed derives the same newest-first plan/run view
+  // as the `/orchestration/feed` endpoint from the shared stores: runs join back
+  // to their plan for project attribution. Mirror the router's 422 validation
+  // (project id / kind / limit) and unknown-project 404 so live and mock agree.
+  if (path === "/orchestration/feed") {
+    const projectId = params.get("project_id") ?? undefined;
+    const kindRaw = params.get("kind");
+    const limitRaw = params.get("limit");
+    const options: OrchestrationFeedOptions = {
+      ...(projectId ? { projectId } : {}),
+      ...(kindRaw !== null ? { kind: kindRaw as OrchestrationFeedOptions["kind"] } : {}),
+      ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
+    };
+    try {
+      validateOrchestrationFeedArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveOrchestrationFeed(
+      ORCHESTRATION_PLANS,
+      ORCHESTRATION_RUNS,
+      PROJECTS,
+      REFERENCE_NOW,
+      options,
+    );
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -1334,6 +1373,14 @@ describe("live vs mock transport parity", () => {
       ["getCollaborationStats scoped", (api) => api.getCollaborationStats({ projectId: filmId })],
       ["getOrchestrationStats", (api) => api.getOrchestrationStats()],
       ["getOrchestrationStats scoped", (api) => api.getOrchestrationStats({ projectId: filmId })],
+      ["getOrchestrationFeed", (api) => api.getOrchestrationFeed()],
+      ["getOrchestrationFeed scoped", (api) => api.getOrchestrationFeed({ projectId: filmId })],
+      ["getOrchestrationFeed kind filtered", (api) => api.getOrchestrationFeed({ kind: "run" })],
+      ["getOrchestrationFeed limited", (api) => api.getOrchestrationFeed({ limit: 2 })],
+      [
+        "getOrchestrationFeed scoped, filtered and limited",
+        (api) => api.getOrchestrationFeed({ projectId: filmId, kind: "plan", limit: 1 }),
+      ],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -1461,6 +1508,9 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getOrchestrationStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getOrchestrationStats({ projectId: emptyId }),
+    );
+    expect(await live.getOrchestrationFeed({ projectId: emptyId })).toEqual(
+      await mockApiClient.getOrchestrationFeed({ projectId: emptyId }),
     );
     expect(await live.listConversations(emptyId)).toEqual(
       await mockApiClient.listConversations(emptyId),
@@ -1997,6 +2047,28 @@ describe("live vs mock transport parity", () => {
     expect(mockOrch422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveOrch422).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports 404 identically for an unknown orchestration-feed project
+    // scope and reject an invalid kind, page bound and project id with the same
+    // 422 envelope.
+    const [mockOrchFeed404, liveOrchFeed404] = await Promise.all([
+      mockApiClient.getOrchestrationFeed({ projectId: missingId }).catch((cause) => cause),
+      live.getOrchestrationFeed({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockOrchFeed404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveOrchFeed404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockOrchFeed422, liveOrchFeed422] = await Promise.all([
+      mockApiClient.getOrchestrationFeed({ limit: 0 }).catch((cause) => cause),
+      live.getOrchestrationFeed({ limit: 0 }).catch((cause) => cause),
+    ]);
+    expect(mockOrchFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveOrchFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    const [mockOrchFeedKind422, liveOrchFeedKind422] = await Promise.all([
+      mockApiClient.getOrchestrationFeed({ kind: "mystery" as never }).catch((cause) => cause),
+      live.getOrchestrationFeed({ kind: "mystery" as never }).catch((cause) => cause),
+    ]);
+    expect(mockOrchFeedKind422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveOrchFeedKind422).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill for an unknown (well-formed) org scope and
     // reject a malformed org id with the same 422 envelope.
     expect(await live.getProjectStats({ orgId: missingId })).toEqual(
@@ -2167,6 +2239,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getLineageFeed).toBe("function");
     expect(typeof typed.getCollaborationStats).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");
+    expect(typeof typed.getOrchestrationFeed).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
   });
 });

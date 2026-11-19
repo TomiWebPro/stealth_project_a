@@ -1831,6 +1831,70 @@ describe("createHttpApiClient orchestration stats", () => {
   });
 });
 
+describe("createHttpApiClient /orchestration/feed", () => {
+  const feed = {
+    items: [
+      {
+        id: "0b5c1e2a-6100-4000-8000-000000000001",
+        kind: "plan",
+        plan_id: "0b5c1e2a-6100-4000-8000-000000000001",
+        run_id: null,
+        project_id: "0b5c1e2a-1000-4000-8000-000000000005",
+        project_name: "Moonshot — Short Film",
+        goal: "Generate the shot video.",
+        stage: null,
+        step_count: 3,
+        job_count: 0,
+        created_at: "2026-01-06T00:00:00Z",
+      },
+    ],
+    total: 1,
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /orchestration/feed with filters and page and forwards the feed untouched", async () => {
+    const { fetchImpl, calls } = router({ "/orchestration/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getOrchestrationFeed({
+        projectId: "0b5c1e2a-1000-4000-8000-000000000005",
+        kind: "plan",
+        limit: 2,
+      }),
+    ).resolves.toEqual(feed);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/orchestration/feed`);
+    expect(url.searchParams.get("project_id")).toBe("0b5c1e2a-1000-4000-8000-000000000005");
+    expect(url.searchParams.get("kind")).toBe("plan");
+    expect(url.searchParams.get("limit")).toBe("2");
+  });
+
+  it("omits the query string when no filters or page are supplied", async () => {
+    const { fetchImpl, calls } = router({ "/orchestration/feed": feed });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getOrchestrationFeed()).resolves.toEqual(feed);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "Feed limit must be between 1 and 200." } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getOrchestrationFeed({ limit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+      message: "Feed limit must be between 1 and 200.",
+    });
+  });
+});
+
 describe("createHttpApiClient provider stats", () => {
   const stats = {
     total: 2,

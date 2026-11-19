@@ -29,6 +29,7 @@ import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
+import type { OrchestrationFeedOptions } from "../lib/orchestrationFeed";
 import type { PipelineFeedOptions } from "../lib/pipelineFeed";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
 import type { ProjectDetail } from "../lib/projectDetail";
@@ -81,6 +82,7 @@ import type {
   Organization,
   OrganizationFeed,
   OrganizationStats,
+  OrchestrationFeed,
   OrchestrationRun,
   OrchestrationStats,
   PipelineFeed,
@@ -352,6 +354,17 @@ export function useOrchestrationStats(
   return useQuery({
     queryKey: queryKeys.orchestrationStats.summary(options),
     queryFn: () => api.getOrchestrationStats(options),
+  });
+}
+
+/** Newest-first authoritative orchestration feed from `/orchestration/feed`, optionally project/kind-scoped (C181). */
+export function useOrchestrationFeed(
+  options?: OrchestrationFeedOptions,
+): UseQueryResult<OrchestrationFeed> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.orchestrationFeed.feed(options),
+    queryFn: () => api.getOrchestrationFeed(options),
   });
 }
 

@@ -68,6 +68,11 @@ import {
 } from "../organizationStats";
 import type { OrganizationStatsOptions } from "../organizationStats";
 import {
+  deriveOrchestrationFeed,
+  validateOrchestrationFeedArgs,
+} from "../orchestrationFeed";
+import type { OrchestrationFeedOptions } from "../orchestrationFeed";
+import {
   deriveOrchestrationStats,
   validateOrchestrationStatsArgs,
 } from "../orchestrationStats";
@@ -140,6 +145,7 @@ import type {
   Organization,
   OrganizationFeed,
   OrganizationStats,
+  OrchestrationFeed,
   OrchestrationRun,
   OrchestrationStats,
   PipelineFeed,
@@ -218,7 +224,7 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
- * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
+ * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`, `orchestrationFeed`,
  * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
@@ -712,6 +718,30 @@ export async function fetchOrchestrationStats(
   }
   return delay(
     deriveOrchestrationStats(ORCHESTRATION_PLANS, ORCHESTRATION_RUNS, REFERENCE_NOW, options),
+  );
+}
+
+/**
+ * Authoritative orchestration feed (C181) derived from the same plan/run/project
+ * seeds as the live `/orchestration/feed` endpoint. Router-style 422 validation
+ * (project id / kind / limit), a normalized 404 for an unknown project scope and
+ * the `"orchestrationFeed"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchOrchestrationFeed(
+  options?: OrchestrationFeedOptions,
+): Promise<OrchestrationFeed> {
+  failIfEnabled("orchestrationFeed");
+  validateOrchestrationFeedArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveOrchestrationFeed(ORCHESTRATION_PLANS, ORCHESTRATION_RUNS, PROJECTS, REFERENCE_NOW, options),
   );
 }
 

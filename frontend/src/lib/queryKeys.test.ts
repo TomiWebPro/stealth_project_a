@@ -236,6 +236,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the orchestration feed key by project, kind and limit", () => {
+    expect(queryKeys.orchestrationFeed.feed()).toEqual([
+      "orchestration-feed",
+      "feed",
+      "all",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.orchestrationFeed.feed({ projectId: "p1", kind: "run", limit: 5 })).toEqual([
+      "orchestration-feed",
+      "feed",
+      "p1",
+      "run",
+      5,
+    ]);
+  });
+
   it("scopes the provider stats key by location and status", () => {
     expect(queryKeys.providerStats.summary()).toEqual([
       "provider-stats",
