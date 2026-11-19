@@ -743,6 +743,19 @@ this file is the execution checklist.
   Never-empty well. ✅ 2026-11-19 — `70bd66b`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C76 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  production-pipeline statistics endpoint from C73/C75
+  (`GET /api/v1/pipelines/stats?project_id=`): probe the zero-filled snapshot
+  shape (`total_chains`, `total_jobs`, `total_assets`, `by_kind`, `by_project`,
+  `newest_chain_at`, `generated_at`) + per-kind/per-project breakdown shapes and
+  the three canonical pipeline kinds (training/shot/splat), the optional
+  `project_id` scope (unknown → shared 404 `project_not_found`), and the shared
+  422 `validation_error` envelope with request-id, keeping CI aligned with the
+  exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  No unchecked CI row remained, so C76 was added under the Never-empty well.
+  ✅ 2026-11-19 — `e779f84`
+  Screens pipeline-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -857,3 +870,4 @@ this file is the execution checklist.
 - 2026-11-19 — `459314a` — C73 (backend): added authoritative `GET /api/v1/pipelines/stats?project_id=` deriving zero-filled per-kind (training/shot/splat) chain/job/asset breakdowns, per-project chain counts, totals and newest-chain recency from the three chain collections (no second index), with an optional project scope (unknown → shared 404 `project_not_found`, malformed → shared 422) and deterministic cross-backend ordering; `PipelineKind`/`PipelineKindStats`/`PipelineProjectCount`/`PipelineStats` mirrored in `frontend/src/types/pipelineStats.ts`, README endpoint list synced, 5 tests × 2 backends green (671 passed, contract parity + route guard clean), frontend tsc clean. Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C73 was added under the Never-empty well.
 - 2026-11-19 — `82c5f45` — C74 (screens): rendered the authoritative organization/membership stats (C69/C71/C72 follow-up) via `useOrganizationStats` — a reusable `OrganizationStatsPanel` on Home (workspace-wide) and Workspaces (org-scoped) with four stat cards, zero-filled member-role and per-org breakdowns, friendly org names and all five UI states; every display value derived in tested `organizationStatsHelpers`; lint clean, 507 tests, build green. My owned column had no unchecked rows, so C74 was added under the Never-empty well.
 - 2026-11-19 — `70bd66b` — C75 (mocks): wired the C73 production-pipeline stats API end to end — `getPipelineStats`/`usePipelineStats` atomically across mockApi (seed-derived zero-filled per-kind/per-project breakdowns, totals + recency, router-style 422/unknown-project 404 + injectable `pipelineStats` failure), the stable facade, live `httpApiClient` (`GET /pipelines/stats?project_id=`), queryKeys and useQueries, with a shared `lib/pipelineStats` helper + chain seeds; parity guard extended to both transports; lint clean, 521 tests, build green. Screens rendering + CI live-smoke probe are follow-ups. My owned column had no unchecked rows, so C75 was added under the Never-empty well.
+- 2026-11-19 — `e779f84` — C76 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/pipelines/stats` (zero-filled snapshot + per-kind/per-project breakdown shapes, the three canonical pipeline kinds, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C73/C75. No unchecked CI row remained, so C76 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (69/69 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (521)/build and backend pytest (671) green. Screens pipeline-stats rendering remains a screens follow-up.
