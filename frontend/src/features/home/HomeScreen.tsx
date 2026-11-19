@@ -14,6 +14,7 @@ import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionStatsPanel } from "../assets/VersionStatsPanel";
+import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
@@ -166,6 +167,10 @@ export function HomeScreen() {
         <ConversationStatsPanel
           title="Workspace conversation stats"
           description="Authoritative message metrics across every project in the workspace."
+        />
+        <ConversationFeedPanel
+          title="Workspace conversations"
+          description="Newest-first conversations across every project in the workspace."
         />
         <AssetStatsPanel
           title="Workspace asset stats"

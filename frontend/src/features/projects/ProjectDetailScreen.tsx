@@ -15,6 +15,7 @@ import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
 import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
+import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
@@ -225,6 +226,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project conversation stats"
         description="Authoritative message metrics scoped to this project."
+      />
+      <ConversationFeedPanel
+        projectId={projectId}
+        title="Project conversations"
+        description="Newest-first conversations scoped to this project."
       />
       <PipelineStatsPanel
         projectId={projectId}
