@@ -313,6 +313,26 @@ this file is the execution checklist.
   project-detail route, and display values derived in tested `activityHelpers`.
   ✅ 2026-11-19 — `7ef46c8`
 
+- [x] C36 (mocks) Wire the authoritative asset tag facets API (C33 follow-up)
+  end to end: expose `getTags` / `useTags` atomically across mockApi (seed-derived
+  most-used-first facets, dedup-per-asset counts, case-insensitive prefix filter,
+  project scoping, router-style 422 + unknown-project 404 + injectable `tags`
+  failure), the stable `ApiClient` facade, live `httpApiClient` (`GET /tags`),
+  `queryKeys` and `useQueries`, with a shared `lib/tags` derivation/validation
+  helper and populated/empty/error seeds; parity guard extended to both transports.
+  ✅ 2026-11-19 — `cfcdab6`
+  Screens tag-facet rendering + CI live-smoke probe are follow-ups for those agents.
+
+- [x] C37 (mocks) Wire the authoritative downstream asset impact API (C34
+  follow-up) end to end: expose `getAssetImpact` / `useAssetImpact` atomically
+  across mockApi (BFS lineage derivation from `parent_asset_ids` seeds with depth
+  labels, cycle safety, deleted-subtree exclusion, router-style 422 + unknown-root
+  404-to-undefined + injectable `impact` failure), the stable `ApiClient` facade,
+  live `httpApiClient` (`GET /assets/{id}/impact`), `queryKeys` and `useQueries`,
+  with a shared `lib/impact` derivation/validation helper; parity guard extended
+  to both transports. ✅ 2026-11-19 — `cfcdab6`
+  Screens impact rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -388,3 +408,4 @@ this file is the execution checklist.
 - 2026-11-17 — `7be2a4f` — C33 (backend): added authoritative `GET /api/v1/tags` — a most-used-first, deduplicated asset tag facet index (count of non-deleted assets per tag) derived from the asset store with no second index; `project_id` scoping, case-insensitive `prefix` autocomplete filter and `limit` bounds with shared 404/422 envelopes and deterministic cross-backend ordering. `TagFacet`/`TagIndex` mirrored in `frontend/src/types/tags.ts`; 6 tests × 2 backends green (553 passed), backend README endpoint list synced, tsc --noEmit clean. Mocks/screens/CI wiring of the index is a follow-up for those agents.
 - 2026-11-19 — `4f2f6d9` — C34 (backend): added authoritative `GET /api/v1/assets/{id}/impact` downstream impact API — BFS transitive descendants from the relationship store with depth labels, cycle safety, deleted-asset exclusion, max_depth bounds (1..20), shared 404/422 envelopes and deterministic cross-backend order; `AssetImpact`/`ImpactNode` mirrored in TS; 6 tests × 2 backends green (565 passed), tsc --noEmit clean. Mocks/screens/CI transport/rendering/smoke wiring of the endpoint is a follow-up for those agents.
 - 2026-11-19 — `7ef46c8` — C35 (screens): Home now renders the authoritative `useActivity` workspace feed with kind/limit filters, all five UI states, project-detail deep links and tested `activityHelpers`; lint clean, 245 tests, build green.
+- 2026-11-19 — `cfcdab6` — C36/C37 (mocks): wired the authoritative tag-facets (C33) and downstream impact (C34) APIs end to end — `getTags`/`useTags` and `getAssetImpact`/`useAssetImpact` across mockApi, the stable facade, live httpApiClient, queryKeys and useQueries, with shared `lib/tags` + `lib/impact` derivation/validation helpers, populated/empty/404/422 injection tests and parity extended to both transports; lint clean, 265 tests, build green. Screens rendering + CI smoke probes remain follow-ups.
