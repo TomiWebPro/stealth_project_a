@@ -781,6 +781,20 @@ this file is the execution checklist.
   no unchecked rows, so C78 was added under the Never-empty well.
   ✅ 2026-11-19 — `c8409f4`
 
+- [x] C79 (mocks) Wire the authoritative asset lineage statistics API (C77
+  follow-up) end to end: expose `getLineageStats` / `useLineageStats` atomically
+  across mockApi (relationship + asset seed derivation with zero-filled type
+  buckets, per-project link counts, distinct live-asset count and recency;
+  deleted/unknown-source exclusion; router-style 422 for a malformed project id,
+  normalized 404 for an unknown project + injectable `lineageStats` failure), the
+  stable `ApiClient` facade, live `httpApiClient` (`GET /lineage/stats?project_id=`),
+  `queryKeys` and `useQueries`, with a shared `lib/lineageStats`
+  derivation/validation helper and relationship seeds; parity guard extended to
+  both transports. Resolves the C77 mocks-transport follow-up. My owned column had
+  no unchecked rows, so C79 was added under the Never-empty well.
+  ✅ 2026-11-19 — `fec5c4f`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -898,3 +912,4 @@ this file is the execution checklist.
 - 2026-11-19 — `e779f84` — C76 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/pipelines/stats` (zero-filled snapshot + per-kind/per-project breakdown shapes, the three canonical pipeline kinds, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C73/C75. No unchecked CI row remained, so C76 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (69/69 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (521)/build and backend pytest (671) green. Screens pipeline-stats rendering remains a screens follow-up.
 - 2026-11-19 — `d8f08a0` — C77 (backend): added authoritative `GET /api/v1/lineage/stats?project_id=` deriving zero-filled relationship-type breakdowns (derived_from/variant_of/uses_input/related_to/duplicate_of), per-project link counts, distinct live-asset count and newest-link recency from the authoritative `ASSET_RELATIONSHIPS` store (joined to assets for project attribution; links from soft-deleted/unknown source assets excluded, no second index), with an optional `project_id` scope (unknown → shared 404 `project_not_found`, malformed → shared 422) and deterministic cross-backend ordering; `LineageStats`/`LineageTypeCount`/`LineageProjectCount` mirrored in `frontend/src/types/lineageStats.ts`, README endpoint list synced, 6 tests × 2 backends green (683 passed, contract parity + route-surface guard + frontend tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C77 was added under the Never-empty well.
 - 2026-11-19 — `c8409f4` — C78 (screens): rendered authoritative production-pipeline stats via a reusable `PipelineStatsPanel` — workspace-wide on Projects and project-scoped on project detail — with three stat cards, zero-filled training/shot/splat chain/job/asset breakdowns, per-project chain counts and a recency footer, all five UI states, and every display value derived in tested `pipelineStatsHelpers`; resolves the C76 screens follow-up. Lint clean, 534 tests, build green. My owned column had no unchecked rows, so C78 was added under the Never-empty well.
+- 2026-11-19 — `fec5c4f` — C79 (mocks): wired the C77 authoritative asset lineage stats API end to end — `getLineageStats`/`useLineageStats` atomically across mockApi (relationship + asset seed derivation with zero-filled type buckets, per-project link counts, distinct live-asset count, recency, deleted/unknown-source exclusion, router-style 422/unknown-project 404 + injectable `lineageStats` failure), the stable facade, live `httpApiClient` (`GET /lineage/stats?project_id=`), queryKeys and useQueries, with a shared `lib/lineageStats` helper + relationship seeds; parity guard extended to both transports. Resolves the C77 mocks-transport follow-up. Lint clean, 548 tests, build green. My owned column had no unchecked rows, so C79 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
