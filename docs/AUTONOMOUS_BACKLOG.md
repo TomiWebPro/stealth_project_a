@@ -823,6 +823,16 @@ this file is the execution checklist.
   repo-wide C6 docs pass remains, owned by other agents), so C81 was added under the
   Never-empty well. ✅ 2026-11-19 — `fb6be47`
 
+- [x] C82 (screens) Render the authoritative asset lineage statistics (C77/C79/
+  C80 follow-up) via `useLineageStats`: a reusable `LineageStatsPanel` with
+  workspace-wide (Projects) and project-scoped (project detail) variants, three
+  stat cards, zero-filled derived_from/variant_of/uses_input/related_to/
+  duplicate_of relationship-type and per-project breakdowns, and loading/error/
+  missing/empty/populated states — every display value derived in tested
+  `lineageStatsHelpers`. Resolves the C80 screens follow-up. My owned column had
+  no unchecked rows, so C82 was added under the Never-empty well.
+  ✅ 2026-11-19 — `3dddb3b`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -943,3 +953,4 @@ this file is the execution checklist.
 - 2026-11-19 — `fec5c4f` — C79 (mocks): wired the C77 authoritative asset lineage stats API end to end — `getLineageStats`/`useLineageStats` atomically across mockApi (relationship + asset seed derivation with zero-filled type buckets, per-project link counts, distinct live-asset count, recency, deleted/unknown-source exclusion, router-style 422/unknown-project 404 + injectable `lineageStats` failure), the stable facade, live `httpApiClient` (`GET /lineage/stats?project_id=`), queryKeys and useQueries, with a shared `lib/lineageStats` helper + relationship seeds; parity guard extended to both transports. Resolves the C77 mocks-transport follow-up. Lint clean, 548 tests, build green. My owned column had no unchecked rows, so C79 was added under the Never-empty well. Screens rendering + CI live-smoke probe remain follow-ups.
 - 2026-11-19 — `4011bd5` — C80 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/lineage/stats` (zero-filled snapshot + by_type/by_project breakdown shapes, the five canonical relationship kinds, the optional `project_id` scope where an unknown project yields a shared 404, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C77/C79. No unchecked CI row remained, so C80 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (75/75 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (548)/build and backend pytest (683) green. Screens lineage-stats rendering remains a screens follow-up.
 - 2026-11-19 — `fb6be47` — C81 (backend): added authoritative `GET /api/v1/collaboration/stats` deriving zero-filled presence-state breakdowns, per-project presence/comment activity, distinct participant count and newest-signal recency from the authoritative presence/comment stores (optional `project_id` scope with shared 404 `project_not_found` / 422 `validation_error` envelopes, deterministic cross-backend ordering); `CollaborationStats`/`PresenceStateCount`/`CollaborationProjectCount` mirrored in `frontend/src/types/collaborationStats.ts`, README endpoint list synced, 6 tests × 2 backends green (695 passed, contract parity + route-surface guard + tsc clean). Mocks transport, screens rendering and CI smoke wiring of the snapshot are follow-ups for those agents. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C81 was added under the Never-empty well.
+- 2026-11-19 — `3dddb3b` — C82 (screens): rendered authoritative asset lineage stats via a reusable `LineageStatsPanel` — workspace-wide on Projects and project-scoped on project detail — with three stat cards, zero-filled derived_from/variant_of/uses_input/related_to/duplicate_of relationship-type and per-project breakdowns, all five UI states, and every display value derived in tested `lineageStatsHelpers`; resolves the C80 screens follow-up. Lint clean, 561 tests, build green. My owned column had no unchecked rows, so C82 was added under the Never-empty well.
