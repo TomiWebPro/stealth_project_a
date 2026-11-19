@@ -2290,6 +2290,26 @@ this file is the execution checklist.
   ✅ 2026-11-19 — `6f616c0`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C184 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  orchestration feed endpoint from C181/C183
+  (`GET /api/v1/orchestration/feed?project_id=&kind=&limit=`): create one plan and
+  one run on demand so the derived feed has real plan + run items, then probe the
+  feed shape (`items`/`total`/`generated_at`), derived item shapes (plan/run
+  identity, joined project name, goal/stage, step/job counts and creation time),
+  newest-first `(created_at, kind, id)` ordering, the whole-scope `total` before
+  the `limit` page (counters unchanged), both `kind` filters (plan/run), the
+  optional `project_id` scope (unknown → shared 404 `project_not_found`) and the
+  shared 422 `validation_error` envelopes (malformed id + invalid kind + invalid
+  limit) with request-id, keeping CI aligned with the exact `/api/v1` URLs the
+  `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row
+  remained, so C184 was added under the Never-empty well; resolves the C183 CI
+  live-smoke follow-up. Verified the exact embedded smoke script against a real
+  ASGI server on a dynamically chosen free port (all probes OK) with YAML parse +
+  actionlint v1.7.12 (`-shellcheck=`); frontend lint/test (1220)/build green and
+  backend pytest (1117) green. Screens orchestration-feed rendering remains a
+  screens follow-up.
+  ✅ 2026-11-19 — `b82acdf`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -2511,3 +2531,4 @@ this file is the execution checklist.
 - 2026-11-19 — `3d88446` — C181 (backend): added authoritative `GET /api/v1/orchestration/feed?project_id=&kind=&limit=` — a newest-first workspace feed of plans and runs derived fresh from the same authoritative `ORCHESTRATION_PLANS`/`ORCHESTRATION_RUNS` stores `/orchestration/stats` aggregates (no second index) — with plan/run identity (`kind`/`id`/`plan_id`/`run_id`), joined project id/name, plan goal or run stage, plan-step/run-job counts and creation time, a deterministic `(created_at, kind, id)` tie-break and a whole-scope `total` before the `limit` page; runs are joined to their plan for project attribution (orphan runs excluded), with optional `project_id` (unknown → shared 404 `project_not_found`) and `kind` (plan/run) filters plus shared 422 envelopes (malformed id / invalid kind / invalid limit) and request-id. `OrchestrationFeed`/`OrchestrationFeedItem`/`OrchestrationFeedKind` mirrored in `frontend/src/types/orchestrationFeed.ts` + types index, README endpoint list synced, 12 tests × 2 storage backends green (1117 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the feed is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C181 was added under the Never-empty well.
 - 2026-11-19 — `a2c9529` — C182 (screens): rendered the authoritative production-pipeline feed (C177/C179/C180 follow-up) via `usePipelineFeed` — a reusable `PipelineFeedPanel` on Projects (workspace-wide) and project detail (project-scoped) with kind/page-size filter chips, newest-first rows showing a kind badge, chain id, joined project name, job/asset counts and creation recency, and Open buttons deep-linking to the existing project-detail route, with all five UI states — every display value derived in 13 new tested `pipelineFeedHelpers` cases. Resolves the C180 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C182 was added under the Never-empty well. Lint clean, 1200 tests, build green.
 - 2026-11-19 — `6f616c0` — C183 (mocks): wired the authoritative orchestration feed (C181 follow-up) end to end — `getOrchestrationFeed`/`useOrchestrationFeed` atomically across mockApi, the stable ApiClient facade, live `httpApiClient` (`GET /orchestration/feed?project_id=&kind=&limit=`), queryKeys and useQueries, with a shared `lib/orchestrationFeed` derivation/validation helper (newest-first `(created_at, kind, id)` plan/run projection, run→plan join with orphan exclusion, "Unknown project" fallback, project/kind filters, whole-scope `total` before the `limit` page, router-style 422 + unknown-project 404 + injectable `orchestrationFeed` failure) over the existing plan/run/project seeds; populated/empty/error tests and parity guard extended to both transports. Resolves the C181 mocks-transport follow-up. My owned column had no unchecked rows, so C183 was added under the Never-empty well. Lint clean, 1220 tests, build green. Screens rendering + CI live-smoke probe remain follow-ups.
+- 2026-11-19 — `b82acdf` — C184 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/orchestration/feed?project_id=&kind=&limit=` orchestration feed (the C181/C183 follow-up) — feed shape (`items`/`total`/`generated_at`), derived plan/run item shapes (id/kind/plan_id/run_id, joined project name, goal/stage, step/job counts, created_at), newest-first `(created_at, kind, id)` ordering, whole-scope `total` before the `limit` page with unchanged counters, both `kind` filters (plan/run), the optional `project_id` scope (unknown → shared 404 `project_not_found`) and the shared 422 `validation_error` envelopes (malformed id + invalid kind + invalid limit) with request-id — creating one plan and one run on demand so the derived feed is non-empty. No unchecked CI row remained (only the repo-wide C6 docs pass remains, owned by other agents), so C184 was added under the Never-empty well; resolves the C183 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (all probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint/test (1220)/build green and backend pytest (1117) green. Screens orchestration-feed rendering remains a screens follow-up.
