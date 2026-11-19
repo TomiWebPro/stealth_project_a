@@ -15,6 +15,7 @@ import type { PipelineStatsOptions } from "./pipelineStats";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { SearchOptions } from "./search";
+import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
 
 /**
@@ -175,6 +176,10 @@ export const queryKeys = {
   search: {
     results: (query: string, options: SearchOptions = {}) =>
       ["search", "results", query, options.kind ?? "all", options.limit ?? "all"] as const,
+  },
+  searchStats: {
+    summary: (options: SearchStatsOptions = {}) =>
+      ["search-stats", "summary", options.projectId ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>

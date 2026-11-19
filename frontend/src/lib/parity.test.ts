@@ -60,6 +60,7 @@ import {
 import { createHttpApiClient } from "./httpApiClient";
 import { deriveSearchResponse, validateSearchArgs } from "./search";
 import type { SearchOptions } from "./search";
+import { deriveSearchStats, validateSearchStatsArgs } from "./searchStats";
 import { deriveTagIndex, validateTagArgs } from "./tags";
 import type { TagOptions } from "./tags";
 
@@ -153,6 +154,27 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       return NOT_FOUND;
     }
     return deriveActivityFeed(ASSETS, JOBS, COMMENTS, options);
+  }
+
+  // Authoritative search index stats count the same document stores the search
+  // reads; reproduce the router's 422 validation, unknown-project 404 and the
+  // repository's aggregation over the shared seeds.
+  if (path === "/search/stats") {
+    const projectId = params.get("project_id") ?? undefined;
+    const options = projectId ? { projectId } : {};
+    try {
+      validateSearchStatsArgs(options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
+    return deriveSearchStats(PROJECTS, ASSETS, CONVERSATIONS, REFERENCE_NOW, options);
   }
 
   // Authoritative cross-domain search is derived from the same document stores
@@ -713,6 +735,8 @@ describe("live vs mock transport parity", () => {
       ["getExtension", (api) => api.getExtension(extensionId)],
       ["search", (api) => api.search("moon")],
       ["search filtered", (api) => api.search("moon", { kind: "asset", limit: 3 })],
+      ["getSearchStats", (api) => api.getSearchStats()],
+      ["getSearchStats scoped", (api) => api.getSearchStats({ projectId: filmId })],
       ["getTags", (api) => api.getTags()],
       ["getTags scoped", (api) => api.getTags({ projectId: filmId })],
       ["getTags filtered", (api) => api.getTags({ projectId: filmId, prefix: "lora", limit: 3 })],
@@ -764,6 +788,9 @@ describe("live vs mock transport parity", () => {
     expect(await live.getActivityStats({ projectId: emptyId })).toEqual(
       await mockApiClient.getActivityStats({ projectId: emptyId }),
     );
+    expect(await live.getSearchStats({ projectId: emptyId })).toEqual(
+      await mockApiClient.getSearchStats({ projectId: emptyId }),
+    );
     // Both transports 404 identically for an unknown project scope.
     const missingId = "00000000-0000-4000-8000-000000000000";
     const [mock404, live404] = await Promise.all([
@@ -812,6 +839,21 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockActivityStats422).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveActivityStats422).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports 404 identically for an unknown search-stats project scope
+    // and reject a malformed project id with the same 422 envelope.
+    const [mockSearchStats404, liveSearchStats404] = await Promise.all([
+      mockApiClient.getSearchStats({ projectId: missingId }).catch((cause) => cause),
+      live.getSearchStats({ projectId: missingId }).catch((cause) => cause),
+    ]);
+    expect(mockSearchStats404).toMatchObject({ status: 404, code: "not_found" });
+    expect(liveSearchStats404).toMatchObject({ status: 404, code: "not_found" });
+    const [mockSearchStats422, liveSearchStats422] = await Promise.all([
+      mockApiClient.getSearchStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+      live.getSearchStats({ projectId: "not-a-uuid" }).catch((cause) => cause),
+    ]);
+    expect(mockSearchStats422).toMatchObject({ status: 422, code: "validation_error" });
+    expect(liveSearchStats422).toMatchObject({ status: 422, code: "validation_error" });
 
     // Both transports 404 identically for an unknown project tag scope.
     const [mockTags404, liveTags404] = await Promise.all([
@@ -1021,6 +1063,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getConversationStats).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
+    expect(typeof typed.getSearchStats).toBe("function");
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");

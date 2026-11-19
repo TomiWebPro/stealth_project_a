@@ -1149,6 +1149,55 @@ describe("createHttpApiClient activity stats", () => {
   });
 });
 
+describe("createHttpApiClient search index stats", () => {
+  const stats = {
+    total_documents: 6,
+    by_kind: [
+      { kind: "project", count: 2 },
+      { kind: "asset", count: 3 },
+      { kind: "conversation", count: 1 },
+    ],
+    newest_document_at: "2026-01-06T00:00:00Z",
+    generated_at: "2026-01-06T00:00:00Z",
+  };
+
+  it("GETs /search/stats with the project scope and forwards the snapshot untouched", async () => {
+    const { fetchImpl, calls } = router({ "/search/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(
+      api.getSearchStats({ projectId: "11111111-1111-4111-8111-111111111111" }),
+    ).resolves.toEqual(stats);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/search/stats`);
+    expect(url.searchParams.get("project_id")).toBe("11111111-1111-4111-8111-111111111111");
+  });
+
+  it("omits the project scope when none is supplied", async () => {
+    const { fetchImpl, calls } = router({ "/search/stats": stats });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getSearchStats()).resolves.toEqual(stats);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("normalizes a backend failure into an ApiError", async () => {
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "project_not_found", message: "Project not found." } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getSearchStats({ projectId: "bad" })).rejects.toMatchObject({
+      status: 404,
+      code: "project_not_found",
+      message: "Project not found.",
+    });
+  });
+});
+
 describe("createHttpApiClient orchestration stats", () => {
   const stats = {
     total_plans: 3,

@@ -57,6 +57,8 @@ import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats
 import type { ProviderStatsOptions } from "../providerStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
 import type { SearchOptions } from "../search";
+import { deriveSearchStats, validateSearchStatsArgs } from "../searchStats";
+import type { SearchStatsOptions } from "../searchStats";
 import { deriveTagIndex, validateTagArgs } from "../tags";
 import type { TagOptions } from "../tags";
 import type {
@@ -90,6 +92,7 @@ import type {
   Provider,
   ProviderStats,
   SearchResponse,
+  SearchStats,
   StorageStats,
   StreamEvent,
   TagIndex,
@@ -144,7 +147,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
+ * `searchStats`, `tags`, `impact`, `operationStats`, `organizationStats`, `pipelineStats`,
  * `lineageStats`, `collaborationStats` and `orchestrationStats`. Always reset
  * with {@link clearMockFailures} afterwards.
  */
@@ -894,6 +897,33 @@ export async function fetchSearch(
       PROJECTS,
       ASSETS.map(withAssetOverrides),
       CONVERSATIONS,
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative search index metrics (C93) derived from the same project/asset/
+ * conversation document seeds as the live `/search/stats` endpoint. Router-style
+ * 422 validation, a normalized 404 for an unknown project scope and the
+ * `"searchStats"` failure domain keep error and empty states at parity.
+ */
+export async function fetchSearchStats(options?: SearchStatsOptions): Promise<SearchStats> {
+  failIfEnabled("searchStats");
+  validateSearchStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(
+    deriveSearchStats(
+      PROJECTS,
+      ASSETS.map(withAssetOverrides),
+      CONVERSATIONS,
+      REFERENCE_NOW,
       options,
     ),
   );

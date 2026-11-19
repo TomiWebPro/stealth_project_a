@@ -40,6 +40,8 @@ import { providerStatsQueryParams } from "./providerStats";
 import type { ProviderStatsOptions } from "./providerStats";
 import { searchQueryParams } from "./search";
 import type { SearchOptions } from "./search";
+import { searchStatsQueryParams } from "./searchStats";
+import type { SearchStatsOptions } from "./searchStats";
 import { tagQueryParams } from "./tags";
 import type { TagOptions } from "./tags";
 import type {
@@ -75,6 +77,7 @@ import type {
   Provider,
   ProviderStats,
   SearchResponse,
+  SearchStats,
   StorageStats,
   TagIndex,
   User,
@@ -556,6 +559,11 @@ export function createHttpApiClient(
 
     search(query: string, options?: SearchOptions): Promise<SearchResponse> {
       return request<SearchResponse>("/search", searchQueryParams(query, options));
+    },
+
+    /** Authoritative search-index metrics derived by the backend `/search/stats`. */
+    getSearchStats(options?: SearchStatsOptions): Promise<SearchStats> {
+      return request<SearchStats>("/search/stats", searchStatsQueryParams(options));
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

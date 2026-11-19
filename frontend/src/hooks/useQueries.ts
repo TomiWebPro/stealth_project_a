@@ -22,6 +22,7 @@ import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { SearchOptions } from "../lib/search";
+import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
 import type {
   ActivityFeed,
@@ -56,6 +57,7 @@ import type {
   Provider,
   ProviderStats,
   SearchResponse,
+  SearchStats,
   StorageStats,
   StreamEvent,
   TagIndex,
@@ -524,6 +526,17 @@ export function useSearch(
     queryKey: queryKeys.search.results(query, options),
     queryFn: () => api.search(query, options),
     enabled: query.trim().length > 0,
+  });
+}
+
+/** Authoritative search-index metrics from `/search/stats`, optionally project-scoped (C93). */
+export function useSearchStats(
+  options?: SearchStatsOptions,
+): UseQueryResult<SearchStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.searchStats.summary(options),
+    queryFn: () => api.getSearchStats(options),
   });
 }
 

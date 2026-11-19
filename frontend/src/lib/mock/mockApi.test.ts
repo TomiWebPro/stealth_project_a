@@ -64,6 +64,7 @@ import {
   fetchProviderStats,
   fetchRecentAssets,
   fetchSearch,
+  fetchSearchStats,
   fetchStorageStats,
   fetchWorkflowTemplates,
   resetMockAssets,
@@ -1402,6 +1403,62 @@ describe("mock API cross-domain search (C22)", () => {
 
     setMockFailure("search");
     await expect(fetchSearch("moon")).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API search index stats (C93 follow-up)", () => {
+  const filmId = PROJECTS.find((project) => project.name.startsWith("Moonshot"))?.id ?? "";
+  const emptyId = PROJECTS.find((project) => project.name.startsWith("Blank Slate"))?.id ?? "";
+  const liveAssets = ASSETS.filter((asset) => asset.status !== "deleted");
+
+  it("derives a populated snapshot from the authoritative document seeds", async () => {
+    const stats = await fetchSearchStats();
+    expect(stats.by_kind).toEqual([
+      { kind: "project", count: PROJECTS.length },
+      { kind: "asset", count: liveAssets.length },
+      { kind: "conversation", count: CONVERSATIONS.length },
+    ]);
+    expect(stats.total_documents).toBe(PROJECTS.length + liveAssets.length + CONVERSATIONS.length);
+    expect(stats.newest_document_at).toBeTruthy();
+    expect(stats.generated_at).toBe(REFERENCE_NOW);
+  });
+
+  it("scopes the snapshot to one project, counting the project itself", async () => {
+    const scoped = await fetchSearchStats({ projectId: filmId });
+    expect(scoped.by_kind?.[0]).toEqual({ kind: "project", count: 1 });
+    expect(scoped.total_documents).toBe(
+      (scoped.by_kind ?? []).reduce((sum, bucket) => sum + bucket.count, 0),
+    );
+
+    // A project with no assets still counts itself plus any conversations,
+    // mirroring the backend's scoped-project document selection.
+    const empty = await fetchSearchStats({ projectId: emptyId });
+    const emptyConversations = CONVERSATIONS.filter(
+      (conversation) => conversation.project_id === emptyId,
+    ).length;
+    expect(empty.by_kind).toEqual([
+      { kind: "project", count: 1 },
+      { kind: "asset", count: 0 },
+      { kind: "conversation", count: emptyConversations },
+    ]);
+    expect(empty.total_documents).toBe(1 + emptyConversations);
+    expect(empty.newest_document_at).toBeTruthy();
+  });
+
+  it("mirrors router validation, the unknown-project 404 and the injected failure", async () => {
+    await expect(fetchSearchStats({ projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchSearchStats({ projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).rejects.toMatchObject({ status: 404, code: "not_found" });
+
+    setMockFailure("searchStats");
+    await expect(fetchSearchStats()).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

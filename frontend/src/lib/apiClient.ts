@@ -20,6 +20,7 @@ import type { ProjectDetail } from "./projectDetail";
 import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { SearchOptions } from "./search";
+import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
 import type {
   ActivityFeed,
@@ -54,6 +55,7 @@ import type {
   Provider,
   ProviderStats,
   SearchResponse,
+  SearchStats,
   StorageStats,
   TagIndex,
   User,
@@ -141,6 +143,8 @@ export interface ApiClient {
   getExtension(extensionId: string): Promise<Extension | undefined>;
   /** Ranked cross-domain (project/asset/conversation) matches (C22). */
   search(query: string, options?: SearchOptions): Promise<SearchResponse>;
+  /** Authoritative search-index metrics derived by `/search/stats`, optionally project-scoped (C93). */
+  getSearchStats(options?: SearchStatsOptions): Promise<SearchStats>;
   /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
   getTags(options?: TagOptions): Promise<TagIndex>;
   /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
@@ -196,6 +200,7 @@ export const mockApiClient: ApiClient = {
   listExtensions: mockApi.fetchExtensions,
   getExtension: mockApi.fetchExtension,
   search: mockApi.fetchSearch,
+  getSearchStats: mockApi.fetchSearchStats,
   getTags: mockApi.fetchTags,
   getAssetImpact: mockApi.fetchAssetImpact,
 };
