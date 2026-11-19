@@ -169,6 +169,11 @@ from .orchestration import (
     StorageQuotaUnit,
     StorageStats,
 )
+from .orchestration_stats import (
+    OrchestrationProjectCount,
+    OrchestrationStageCount,
+    OrchestrationStats,
+)
 from .project_stats import (
     ProjectLifecycle,
     ProjectLifecycleCount,
@@ -362,6 +367,10 @@ __all__ = [
     "StorageQuota",
     "StorageQuotaUnit",
     "StorageStats",
+    # orchestration stats
+    "OrchestrationProjectCount",
+    "OrchestrationStageCount",
+    "OrchestrationStats",
     # provider
     "CapabilityQuery",
     "Extension",

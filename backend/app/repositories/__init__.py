@@ -26,6 +26,7 @@ from .operation_stats import OperationStatsRepository
 from .pipeline_stats import PipelineStatsRepository
 from .organization_stats import OrganizationStatsRepository
 from .orchestration import OrchestrationRepository
+from .orchestration_stats import OrchestrationStatsRepository
 from .projects import ProjectRepository
 from .project_stats import ProjectStatsRepository
 from .provider_stats import ProviderStatsRepository
@@ -55,6 +56,7 @@ class Repositories:
     providers: ProviderRepository
     provider_stats: ProviderStatsRepository
     orchestration: OrchestrationRepository
+    orchestration_stats: OrchestrationStatsRepository
     auth: AuthRepository
     extensions: ExtensionRepository
     extension_stats: ExtensionStatsRepository
@@ -96,6 +98,7 @@ class Repositories:
             storage_quota_bytes=settings.storage_quota_bytes,
             clock=clock,
         )
+        orchestration_stats = OrchestrationStatsRepository(store, projects, clock=clock)
         auth = AuthRepository(
             store,
             default_user_id=settings.default_user_id,
@@ -129,6 +132,7 @@ class Repositories:
             providers=providers,
             provider_stats=provider_stats,
             orchestration=orchestration,
+            orchestration_stats=orchestration_stats,
             auth=auth,
             extensions=extensions,
             extension_stats=extension_stats,

@@ -44,6 +44,7 @@ from .routers import (
     pipeline_stats,
     organization_stats,
     orchestration,
+    orchestration_stats,
     pipelines,
     projects,
     project_stats,
@@ -243,6 +244,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # the literal path wins over the dynamic one.
     app.include_router(provider_stats.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
+    # "/orchestration/stats" has no templated sibling at that segment; register
+    # it directly (before the orchestration router) to keep stats paths explicit.
+    app.include_router(orchestration_stats.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
     # "/orgs/stats" must be registered before "/orgs/{org_id}" in auth.router so

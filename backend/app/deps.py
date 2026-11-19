@@ -33,6 +33,7 @@ from .repositories.operation_stats import OperationStatsRepository
 from .repositories.pipeline_stats import PipelineStatsRepository
 from .repositories.organization_stats import OrganizationStatsRepository
 from .repositories.orchestration import OrchestrationRepository
+from .repositories.orchestration_stats import OrchestrationStatsRepository
 from .repositories.projects import ProjectRepository
 from .repositories.project_stats import ProjectStatsRepository
 from .repositories.provider_stats import ProviderStatsRepository
@@ -227,6 +228,12 @@ def get_orchestration_repository(
     return repositories.orchestration
 
 
+def get_orchestration_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> OrchestrationStatsRepository:
+    return repositories.orchestration_stats
+
+
 def get_auth_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> AuthRepository:
@@ -342,6 +349,7 @@ __all__ = [
     "get_pipeline_stats_repository",
     "get_organization_stats_repository",
     "get_orchestration_repository",
+    "get_orchestration_stats_repository",
     "get_project_repository",
     "get_project_stats_repository",
     "get_project_tree",

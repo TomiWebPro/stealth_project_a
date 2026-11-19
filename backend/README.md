@@ -85,7 +85,12 @@ All paths are prefixed with `/api/v1`.
   `GET /capabilities`, `GET /adapters`, `GET /adapters/{id}/health`
 - **Orchestration/collaboration:** `GET|POST /orchestration/plans`,
   `GET|POST /orchestration/runs`, `GET /orchestration/plans/{id}`,
-  `GET /orchestration/runs/{id}`, `GET|POST /presence`,
+  `GET /orchestration/runs/{id}`, `GET /orchestration/stats?project_id=` —
+  authoritative orchestration metrics (zero-filled lifecycle-stage breakdown,
+  per-project plan/run activity, plan-step and linked-job totals, newest-plan/run
+  recency) derived from the plan/run stores; runs are joined to plans for project
+  attribution and unknown `project_id` uses the shared 404 envelope
+  `GET|POST /presence`,
   `GET|POST /comments`, `GET /storage/stats`,
   `GET /collaboration/stats?project_id=` — authoritative collaboration metrics
   (zero-filled presence-state breakdown, per-project activity counts, distinct
