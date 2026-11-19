@@ -627,6 +627,15 @@ this file is the execution checklist.
   memory+sqlite (647 passed). Mocks/screens/CI wiring is a follow-up.
   ✅ 2026-11-19 — `5bc5f46`
 
+- [x] C66 (screens) Render the authoritative extension registry/installation
+  statistics (C61/C63/C64 follow-up) via `useExtensionStats`: an
+  `ExtensionStatsPanel` on the Extensions screen with type/status filters, four
+  stat cards, zero-filled type/status distributions, trust flags and permission
+  coverage, and loading/error/missing/empty/populated states — all display
+  values derived in tested `extensionStatsHelpers`. My owned column had no
+  unchecked rows, so C66 was added under the Never-empty well.
+  ✅ 2026-11-19 — `d81bc55`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -731,3 +740,4 @@ this file is the execution checklist.
 - 2026-11-19 — `8b3cf2c` — C63 (mocks): wired the C61 extension stats API end to end — `getExtensionStats`/`useExtensionStats` atomically across mockApi, the stable facade, live `httpApiClient` (`GET /extensions/stats?type=&status=`), `queryKeys` and `useQueries`, with a shared `lib/extensionStats` seed-derivation/validation helper (zero-filled type/status breakdowns, trust flags, deterministic permission coverage, router-style 422), injectable `extensionStats` failure domain and parity guard across both transports; lint clean, 442 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents. My owned column had no unchecked rows, so C63 was added under the Never-empty well.
 - 2026-11-19 — `562ab49` — C64 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/extensions/stats` (zero-filled snapshot + type/status/permission breakdown shapes, independent `type`/`status` filters, shared 422 `validation_error` envelope with request-id) — the CI follow-up from C61/C63. No unchecked CI row remained, so C64 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (55/55 probes OK) with YAML parse + actionlint v1.7.12; frontend lint/test (442)/build and backend pytest (635) green. Screens extension-stats rendering remains a screens follow-up.
 - 2026-11-19 — `5bc5f46` — C65 (backend): added authoritative `GET /api/v1/operations/stats` deriving catalog size, streaming/provider coverage, total settings, unique output types and deterministic asset-type input/output breakdowns from the authoritative operation catalog (no second index); `OperationStats`/`OperationTypeCount` mirrored in TS, README synced, 7 tests × 2 backends green (647 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C65 was added under the Never-empty well.
+- 2026-11-19 — `d81bc55` — C66 (screens): rendered authoritative extension registry/installation stats via `useExtensionStats` — a reusable `ExtensionStatsPanel` on the Extensions screen with type/status filters, four stat cards, zero-filled type/status distributions, trust flags and permission coverage, and all five UI states; display values derived in tested `extensionStatsHelpers`. Resolves the C61/C63/C64 screens follow-up. Lint clean, 459 tests, build green. My owned column had no unchecked rows, so C66 was added under the Never-empty well.
