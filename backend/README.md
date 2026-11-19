@@ -86,6 +86,10 @@ All paths are prefixed with `/api/v1`.
   `GET|POST /jobs`, `GET /jobs/{id}`, `GET /jobs/{id}/events`,
   `POST /jobs/{id}/cancel|retry|run`,
   `GET /jobs/{id}/events/stream` (SSE, `since`/`idle_timeout`)
+  `GET /events/stats?project_id=` — authoritative job-event stream metrics
+  (zero-filled event-type breakdown, per-job event counts with recency and
+  newest-event recency) derived from the authoritative job event store; an
+  optional project scope joins events to jobs with shared 404/422 envelopes
 - **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
   `GET /providers/stats?location=&status=` — authoritative fleet metrics
   (zero-filled health/location breakdowns, capability/operation coverage) derived

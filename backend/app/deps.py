@@ -24,6 +24,7 @@ from .repositories.conversations import ConversationRepository
 from .repositories.conversation_stats import ConversationStatsRepository
 from .repositories.collaboration_stats import CollaborationStatsRepository
 from .repositories.dashboard import DashboardRepository
+from .repositories.event_stats import EventStatsRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.extension_stats import ExtensionStatsRepository
 from .repositories.impact import ImpactRepository
@@ -267,6 +268,12 @@ def get_activity_stats_repository(
     return repositories.activity_stats
 
 
+def get_event_stats_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> EventStatsRepository:
+    return repositories.event_stats
+
+
 def get_extension_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ExtensionRepository:
@@ -357,6 +364,7 @@ __all__ = [
     "get_conversation_repository",
     "get_conversation_stats_repository",
     "get_dashboard_repository",
+    "get_event_stats_repository",
     "get_extension_repository",
     "get_extension_stats_repository",
     "get_impact_repository",

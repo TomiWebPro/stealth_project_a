@@ -32,6 +32,7 @@ from .routers import (
     collaboration_stats,
     dashboard,
     events,
+    event_stats,
     exports,
     extension_stats,
     extensions,
@@ -257,6 +258,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # it directly (before the orchestration router) to keep stats paths explicit.
     app.include_router(orchestration_stats.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
+    # "/events/stats" has no templated sibling at that segment; register it
+    # before the events stream router to keep stats paths explicit.
+    app.include_router(event_stats.router, prefix=API_PREFIX)
     app.include_router(events.router, prefix=API_PREFIX)
     # "/orgs/stats" must be registered before "/orgs/{org_id}" in auth.router so
     # the literal path wins over the UUID-templated one.

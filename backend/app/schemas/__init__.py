@@ -68,6 +68,11 @@ from .dashboard import (
     DashboardCounts,
     DashboardSummary,
 )
+from .event_stats import (
+    EventJobCount,
+    EventStats,
+    EventTypeCount,
+)
 from .extension_stats import (
     ExtensionPermissionStat,
     ExtensionStats,
@@ -241,6 +246,10 @@ __all__ = [
     # dashboard
     "DashboardCounts",
     "DashboardSummary",
+    # event stats
+    "EventJobCount",
+    "EventStats",
+    "EventTypeCount",
     # extension stats
     "ExtensionPermissionStat",
     "ExtensionStats",

@@ -17,6 +17,7 @@ from .conversations import ConversationRepository
 from .conversation_stats import ConversationStatsRepository
 from .collaboration_stats import CollaborationStatsRepository
 from .dashboard import DashboardRepository
+from .event_stats import EventStatsRepository
 from .extensions import ExtensionRepository
 from .extension_stats import ExtensionStatsRepository
 from .impact import ImpactRepository
@@ -63,6 +64,7 @@ class Repositories:
     orchestration: OrchestrationRepository
     orchestration_stats: OrchestrationStatsRepository
     auth: AuthRepository
+    event_stats: EventStatsRepository
     extensions: ExtensionRepository
     extension_stats: ExtensionStatsRepository
     audit: AuditRepository
@@ -112,6 +114,7 @@ class Repositories:
             default_org_id=settings.default_org_id,
             clock=clock,
         )
+        event_stats = EventStatsRepository(store, projects, clock=clock)
         extensions = ExtensionRepository(store, clock=clock)
         extension_stats = ExtensionStatsRepository(store, clock=clock)
         audit = AuditRepository(store, projects, assets, jobs, clock=clock)
@@ -145,6 +148,7 @@ class Repositories:
             orchestration=orchestration,
             orchestration_stats=orchestration_stats,
             auth=auth,
+            event_stats=event_stats,
             extensions=extensions,
             extension_stats=extension_stats,
             audit=audit,

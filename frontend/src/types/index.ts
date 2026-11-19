@@ -33,3 +33,4 @@ export * from "./organizationStats";
 export * from "./pipelineStats";
 export * from "./lineageStats";
 export * from "./uploadStats";
+export * from "./eventStats";
