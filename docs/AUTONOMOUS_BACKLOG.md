@@ -1253,6 +1253,19 @@ this file is the execution checklist.
   Resolves the C112 screens follow-up. My owned column had no unchecked rows, so C114 was
   added under the Never-empty well. ✅ 2026-11-19 — `bad8580`
 
+- [x] C115 (mocks) Wire the authoritative publish statistics API (C113 follow-up)
+  end to end: expose `getPublishStats` / `usePublishStats` atomically across mockApi
+  (receipt-derived totals, delivered bytes, ascending by-version buckets,
+  per-project publish/byte counts sorted by descending publishes then id, newest
+  publish recency; soft-deleted assets and malformed receipts excluded,
+  router-style 422 for a malformed project id + unknown-project 404 + injectable
+  `publishStats` failure), the stable `ApiClient` facade, live `httpApiClient`
+  (`GET /publishes/stats?project_id=`), `queryKeys` and `useQueries`, with a shared
+  `lib/publishStats` derivation/validation helper and quantitative receipt seeds;
+  parity guard extended to both transports. My owned column had no unchecked rows,
+  so C115 was added under the Never-empty well. ✅ 2026-11-19 — `91afa99`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1406,3 +1419,4 @@ this file is the execution checklist.
 - 2026-11-19 — `8da0578` — C112 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/versions/stats` (zero-filled snapshot + by_version/by_project breakdown shapes, an on-demand v2 revision so the derived 200 shape is exercised, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found`, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C109/C111. No unchecked CI row remained, so C112 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (129/129 probes OK, on a non-conflicting port because :8000 is held by another service) with YAML parse + actionlint v1.7.12; frontend lint clean/759 tests/build green and backend pytest (771) green. Screens version-stats rendering remains a screens follow-up.
 - 2026-11-19 — `207d242` — C113 (backend): added authoritative `GET /api/v1/publishes/stats?project_id=` deriving published-asset totals, delivered bytes, deterministic by-version/by-project breakdowns and newest-publish recency from publish receipts in the authoritative asset store (no second index; soft-deleted/unpublished assets and malformed receipts excluded, shared 404/422 envelopes); `PublishStats`/`PublishVersionCount`/`PublishProjectCount` mirrored in `frontend/src/types/publishStats.ts`, README endpoint list synced, 6 tests × 2 backends green (783 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C113 was added under the Never-empty well.
 - 2026-11-19 — `bad8580` — C114 (screens): rendered the authoritative asset version statistics (C109/C111/C112 follow-up) via `useVersionStats` — a reusable `VersionStatsPanel` on Home (workspace-wide), the Assets browser and project detail (project-scoped) with four stat cards, version-number and per-project version/asset breakdowns, and all five UI states; every display value derived in tested `versionStatsHelpers`. Resolves the C112 screens follow-up. Lint clean, 770 tests, build green. My owned column had no unchecked rows, so C114 was added under the Never-empty well.
+- 2026-11-19 — `91afa99` — C115 (mocks): wired the authoritative publish statistics API (C113 follow-up) end to end — `getPublishStats`/`usePublishStats` atomically across mockApi (receipt-derived totals, delivered bytes, ascending by-version buckets, per-project publish/byte counts sorted by descending publishes then id, newest-publish recency, soft-deleted/malformed-receipt exclusion, router-style 422 + unknown-project 404 + injectable `publishStats` failure), the stable facade, live `httpApiClient` (`GET /publishes/stats?project_id=`), queryKeys and useQueries, with a shared `lib/publishStats` derivation/validation helper + quantitative publish-receipt seeds; parity guard extended to both transports (populated/scoped/empty/404/422 + surface guard). Lint clean, 781 tests, build green. My owned column had no unchecked rows, so C115 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups.
