@@ -1053,6 +1053,18 @@ this file is the execution checklist.
   added under the Never-empty well. ✅ 2026-11-19 — `e985ec5`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C100 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  upload statistics endpoint from C97/C99 (`GET /api/v1/uploads/stats?project_id=`):
+  probe the zero-filled snapshot shape (`total_tickets`, `pending`, `completed`,
+  `bytes_uploaded`, `by_status`, `by_project`, `newest_upload_at`, `generated_at`)
+  + breakdown shapes and the two canonical upload statuses (pending/complete),
+  the optional `project_id` scope (unknown → shared 404 `project_not_found`),
+  and the shared 422 `validation_error` envelope with request-id, keeping CI
+  aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as
+  the repo grows. No unchecked CI row remained, so C100 was added under the
+  Never-empty well. ✅ 2026-11-19 — `2f28b46`
+  Screens upload-stats rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1191,3 +1203,4 @@ this file is the execution checklist.
 - 2026-11-19 — `2c3433c` — C97 (backend): added authoritative `GET /api/v1/uploads/stats?project_id=` deriving zero-filled pending/complete status counts, completed byte totals, deterministic per-project ticket activity and newest-ticket recency from the authoritative `UPLOADS` store (no second index), with optional project scope (shared 404 `project_not_found` / 422 `validation_error` envelopes) and a single canonical `UploadStatus` literal shared with `UploadRecord.status`; contracts mirrored in `frontend/src/types/uploadStats.ts`, README endpoint list synced, 5 tests × 2 backends green (741 passed, contract parity + route guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C97 was added under the Never-empty well.
 - 2026-11-19 — `fbad6df` — C98 (screens): rendered the authoritative search index statistics (C93/C95/C96 follow-up) via `useSearchStats` — a reusable `SearchStatsPanel` on Home (workspace-wide) and project detail (project-scoped) with four stat cards, zero-filled project/asset/conversation kind breakdowns with share bars, and all five UI states; every display value derived in tested `searchStatsHelpers`. Resolves the C96 screens follow-up. Lint clean, 661 tests, build green. My owned column had no unchecked rows, so C98 was added under the Never-empty well.
 - 2026-11-19 — `e985ec5` — C99 (mocks): wired the authoritative upload statistics API (C97 follow-up) end to end — `getUploadStats`/`useUploadStats` atomically across mockApi (seed-derived zero-filled pending/complete status buckets, completed-only byte totals, deterministic per-project ticket activity, newest-ticket recency; router-style 422 for a malformed project id + unknown-project 404 + injectable `uploadStats` failure), the stable facade, live `httpApiClient` (`GET /uploads/stats?project_id=`), queryKeys and useQueries, with a shared `lib/uploadStats` derivation/validation helper + ticket seeds; parity guard extended to both transports. My owned column had no unchecked rows, so C99 was added under the Never-empty well. Lint clean, 676 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-19 — `2f28b46` — C100 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/uploads/stats` (zero-filled snapshot + by_status/by_project breakdown shapes, the two canonical statuses pending/complete, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found`, and the shared 422 `validation_error` envelope with request-id) — the CI follow-up from C97/C99. No unchecked CI row remained, so C100 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (107/107 probes OK) with actionlint v1.7.12 + YAML parse; frontend lint clean/676 tests/build green and backend pytest (741) green. Screens upload-stats rendering remains a screens follow-up.
