@@ -6,6 +6,7 @@ import { useUiStore } from "../../stores/uiStore";
 import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { EventStatsPanel } from "./EventStatsPanel";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
@@ -67,6 +68,11 @@ export function JobsScreen() {
       <OrchestrationStatsPanel
         title="Global orchestration stats"
         description="Authoritative workspace-wide plan, run and step metrics."
+      />
+
+      <EventStatsPanel
+        title="Global job event stats"
+        description="Authoritative workspace-wide status, progress and result event metrics."
       />
 
       {data ? (

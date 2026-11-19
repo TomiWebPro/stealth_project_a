@@ -8,6 +8,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
+import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
@@ -212,6 +213,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project orchestration stats"
         description="Authoritative plan, run and step metrics scoped to this project."
+      />
+      <EventStatsPanel
+        projectId={projectId}
+        title="Project event stats"
+        description="Authoritative job event metrics scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
       <VersionPanel assets={assets} />
