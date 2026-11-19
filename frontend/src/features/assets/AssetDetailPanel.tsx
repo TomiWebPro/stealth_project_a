@@ -18,12 +18,15 @@ import {
   tagsToInput,
 } from "./detailHelpers";
 import { assetPreviewUrl, assetTypeTone } from "./helpers";
+import { AssetImpactPanel } from "../impact/AssetImpactPanel";
 
 const inputClass =
   "w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-content placeholder:text-content-subtle";
 
 interface AssetDetailPanelProps {
   readonly asset: Asset;
+  /** Siblings used to resolve downstream-impact descendant ids to names. */
+  readonly assets?: readonly Asset[];
 }
 
 /**
@@ -31,7 +34,7 @@ interface AssetDetailPanelProps {
  * (PATCH /assets/{id}) and are also cached in a session store so the form keeps
  * its values while other asset queries refetch.
  */
-export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
+export function AssetDetailPanel({ asset, assets }: AssetDetailPanelProps) {
   const edit = useAssetEditStore((state) => state.edits[asset.id]);
   const setEdit = useAssetEditStore((state) => state.setEdit);
   const clearEdit = useAssetEditStore((state) => state.clearEdit);
@@ -81,6 +84,7 @@ export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
   const storage = storageFields(effective);
 
   return (
+    <div className="space-y-4">
     <Card>
       <div className="p-4">
         <SectionHeader
@@ -185,5 +189,7 @@ export function AssetDetailPanel({ asset }: AssetDetailPanelProps) {
         </form>
       </div>
     </Card>
+    <AssetImpactPanel assetId={asset.id} assets={assets} />
+    </div>
   );
 }

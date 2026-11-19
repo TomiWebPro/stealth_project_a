@@ -21,6 +21,7 @@ import {
 } from "./helpers";
 import { AssetDetailPanel } from "./AssetDetailPanel";
 import { VersionPanel } from "./VersionPanel";
+import { TagFacetPanel } from "../tags/TagFacetPanel";
 
 type ViewMode = "grid" | "list";
 
@@ -177,6 +178,8 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
         </div>
       </Card>
 
+      <TagFacetPanel projectId={projectId} onSelectTag={setSearch} />
+
       <Card>
         <div className="p-4">
           <SectionHeader
@@ -252,7 +255,7 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
       </Card>
 
       {selectedAsset ? (
-        <AssetDetailPanel key={selectedAsset.id} asset={selectedAsset} />
+        <AssetDetailPanel key={selectedAsset.id} asset={selectedAsset} assets={assets} />
       ) : (
         <Card className="p-4">
           <EmptyState
