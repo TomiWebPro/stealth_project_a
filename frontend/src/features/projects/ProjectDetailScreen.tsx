@@ -8,6 +8,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
+import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobFeedPanel } from "../jobs/JobFeedPanel";
@@ -262,6 +263,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project comments"
         description="Newest-first collaboration comments scoped to this project."
+      />
+      <CommentStatsPanel
+        projectId={projectId}
+        title="Project comment stats"
+        description="Authoritative comment metrics scoped to this project."
       />
       <PipelineStatsPanel
         projectId={projectId}

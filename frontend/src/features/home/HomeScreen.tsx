@@ -11,6 +11,7 @@ import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
+import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
@@ -178,6 +179,10 @@ export function HomeScreen() {
         <CommentFeedPanel
           title="Workspace comments"
           description="Newest-first collaboration comments across every project in the workspace."
+        />
+        <CommentStatsPanel
+          title="Workspace comment stats"
+          description="Authoritative comment metrics across every project in the workspace."
         />
         <AssetStatsPanel
           title="Workspace asset stats"
