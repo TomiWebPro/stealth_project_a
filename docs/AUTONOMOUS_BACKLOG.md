@@ -1015,6 +1015,22 @@ this file is the execution checklist.
   well. ✅ 2026-11-19 — `83fc093`
   Screens search-stats rendering remains a screens follow-up.
 
+- [x] C97 (backend) Authoritative upload statistics API:
+  `GET /api/v1/uploads/stats?project_id=` derives upload-ticket metrics from the
+  authoritative `UPLOADS` store (no second index) — a zero-filled pending/complete
+  status breakdown, completed byte totals, per-project ticket activity sorted by
+  count then id, newest-ticket recency and generated-at — with an optional
+  `project_id` scope (unknown → shared 404 `project_not_found`, malformed → shared
+  422) and deterministic cross-backend ordering; the canonical `UploadStatus`
+  literal is the single source for both `UploadRecord.status` and the breakdown.
+  `UploadStatus`/`UploadStatusCount`/`UploadProjectCount`/`UploadStats` mirrored in
+  `frontend/src/types/uploadStats.ts`, README endpoint list synced, 5 tests × 2
+  storage backends green (741 passed, contract parity + route-surface guard + tsc
+  clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend
+  column had no unchecked items (only the repo-wide C6 docs pass remains, owned by
+  other agents), so C97 was added under the Never-empty well.
+  ✅ 2026-11-19 — `2c3433c`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -1150,3 +1166,4 @@ this file is the execution checklist.
 - 2026-11-19 — `78dabbe` — C94 (screens): rendered the authoritative activity statistics (C89/C91/C92 follow-up) via `useActivityStats` — a reusable `ActivityStatsPanel` on Home (workspace-wide, beside the activity feed) and project detail (project-scoped) with four stat cards, zero-filled asset/publish/job/comment kind and per-project event/participant breakdowns, and all five UI states; every display value derived in tested `activityStatsHelpers`. Resolves the C89/C91/C92 screens follow-up. Lint clean, 636 tests, build green. My owned column had no unchecked rows, so C94 was added under the Never-empty well.
 - 2026-11-19 — `21df9fe` — C95 (mocks): wired the authoritative search index statistics API (C93 follow-up) end to end — `getSearchStats`/`useSearchStats` atomically across mockApi (seed-derived zero-filled project/asset/conversation document counts, total, newest-document recency, soft-deleted-asset exclusion, scoped-project self-count; router-style 422 + unknown-project 404 + injectable `searchStats` failure), the stable facade, live `httpApiClient` (`GET /search/stats?project_id=`), queryKeys and useQueries, with a shared `lib/searchStats` helper; parity guard extended to both transports (populated/scoped/empty/404/422 + surface guard). Lint clean, 650 tests, build green. My owned column had no unchecked rows, so C95 was added under the Never-empty well. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-19 — `83fc093` — C96 (CI): extended the live-mode HTTP smoke job with the newly live-wired `GET /api/v1/search/stats?project_id=` (zero-filled snapshot shape `total_documents`/`by_kind`/`newest_document_at`/`generated_at` + by_kind breakdown, the three canonical search kinds project/asset/conversation, the optional `project_id` scope where an unknown project yields a shared 404 `project_not_found`, the shared 422 `validation_error` envelope and request-id) — the CI follow-up from C93/C95. No unchecked CI row remained, so C96 was added under the Never-empty well. Verified the exact embedded smoke script against a real ASGI server (100/100 probes OK) with YAML parse + actionlint v1.7.12; frontend lint clean/650 tests/build green and backend pytest (731) green. Screens search-stats rendering remains a screens follow-up.
+- 2026-11-19 — `2c3433c` — C97 (backend): added authoritative `GET /api/v1/uploads/stats?project_id=` deriving zero-filled pending/complete status counts, completed byte totals, deterministic per-project ticket activity and newest-ticket recency from the authoritative `UPLOADS` store (no second index), with optional project scope (shared 404 `project_not_found` / 422 `validation_error` envelopes) and a single canonical `UploadStatus` literal shared with `UploadRecord.status`; contracts mirrored in `frontend/src/types/uploadStats.ts`, README endpoint list synced, 5 tests × 2 backends green (741 passed, contract parity + route guard + tsc clean). Mocks/screens/CI wiring is a follow-up. My owned backend column had no unchecked items, so C97 was added under the Never-empty well.
