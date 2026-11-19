@@ -17,6 +17,8 @@ import {
 import type { CollaborationStatsOptions } from "../collaborationStats";
 import { deriveCommentFeed, validateCommentFeedArgs } from "../commentFeed";
 import type { CommentFeedOptions } from "../commentFeed";
+import { deriveCommentStats, validateCommentStatsArgs } from "../commentStats";
+import type { CommentStatsOptions } from "../commentStats";
 import {
   deriveConversationFeed,
   validateConversationFeedArgs,
@@ -109,6 +111,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentStats,
   Conversation,
   ConversationFeed,
   ConversationStats,
@@ -203,7 +206,7 @@ function delay<T>(value: T): Promise<T> {
  * `activityStats`, `jobStats`,
  * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
- * `conversations`, `conversationFeed`, `commentFeed`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
+ * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `retryStats`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `organizationStats`, `organizationFeed`, `pipelineStats`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `orchestrationStats`,
@@ -431,6 +434,27 @@ export async function fetchCommentFeed(options?: CommentFeedOptions): Promise<Co
     });
   }
   return delay(deriveCommentFeed(COMMENTS, PROJECTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative comment statistics (C165) derived from the same comment seeds
+ * as the live `/comments/stats` endpoint. Router-style 422 validation for a
+ * malformed project id, a normalized 404 for an unknown project scope and the
+ * `"commentStats"` failure domain keep error and empty states at parity.
+ */
+export async function fetchCommentStats(
+  options?: CommentStatsOptions,
+): Promise<CommentStats> {
+  failIfEnabled("commentStats");
+  validateCommentStatsArgs(options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    throw new ApiError({
+      status: 404,
+      code: "not_found",
+      message: `Project '${options.projectId}' not found.`,
+    });
+  }
+  return delay(deriveCommentStats(COMMENTS, REFERENCE_NOW, options));
 }
 
 /**

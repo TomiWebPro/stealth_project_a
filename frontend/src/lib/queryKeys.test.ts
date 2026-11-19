@@ -124,6 +124,15 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the comment stats key by project", () => {
+    expect(queryKeys.commentStats.summary()).toEqual(["comment-stats", "summary", "all"]);
+    expect(queryKeys.commentStats.summary({ projectId: "p1" })).toEqual([
+      "comment-stats",
+      "summary",
+      "p1",
+    ]);
+  });
+
   it("scopes the project stats key by organization", () => {
     expect(queryKeys.projectStats.summary()).toEqual(["project-stats", "summary", "all"]);
     expect(queryKeys.projectStats.summary({ orgId: "o1" })).toEqual([

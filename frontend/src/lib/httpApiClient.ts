@@ -17,6 +17,8 @@ import { collaborationStatsQueryParams } from "./collaborationStats";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import { commentFeedQueryParams } from "./commentFeed";
 import type { CommentFeedOptions } from "./commentFeed";
+import { commentStatsQueryParams } from "./commentStats";
+import type { CommentStatsOptions } from "./commentStats";
 import { conversationFeedQueryParams } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import { conversationStatsQueryParams } from "./conversationStats";
@@ -90,6 +92,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentStats,
   Conversation,
   ConversationFeed,
   ConversationStats,
@@ -362,6 +365,11 @@ export function createHttpApiClient(
     /** Newest-first authoritative comment feed derived by `/comments/feed` (C149). */
     getCommentFeed(options?: CommentFeedOptions): Promise<CommentFeed> {
       return request<CommentFeed>("/comments/feed", commentFeedQueryParams(options));
+    },
+
+    /** Authoritative comment metrics derived by `/comments/stats` (C165). */
+    getCommentStats(options?: CommentStatsOptions): Promise<CommentStats> {
+      return request<CommentStats>("/comments/stats", commentStatsQueryParams(options));
     },
 
     /** Authoritative project portfolio metrics derived by the backend `/projects/stats`. */

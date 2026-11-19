@@ -9,6 +9,7 @@ import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
+import type { CommentStatsOptions } from "../lib/commentStats";
 import type { CommentFeedOptions } from "../lib/commentFeed";
 import type { ConversationFeedOptions } from "../lib/conversationFeed";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
@@ -53,6 +54,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentStats,
   Conversation,
   ConversationFeed,
   ConversationStats,
@@ -198,6 +200,15 @@ export function useCommentFeed(options?: CommentFeedOptions): UseQueryResult<Com
   return useQuery({
     queryKey: queryKeys.commentFeed.feed(options),
     queryFn: () => api.getCommentFeed(options),
+  });
+}
+
+/** Authoritative comment metrics from `/comments/stats`, optionally project-scoped (C165). */
+export function useCommentStats(options?: CommentStatsOptions): UseQueryResult<CommentStats> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.commentStats.summary(options),
+    queryFn: () => api.getCommentStats(options),
   });
 }
 

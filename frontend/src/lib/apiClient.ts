@@ -5,6 +5,7 @@ import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
 import type { CollaborationStatsOptions } from "./collaborationStats";
+import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import type { ConversationStatsOptions } from "./conversationStats";
@@ -51,6 +52,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentStats,
   Conversation,
   ConversationFeed,
   ConversationStats,
@@ -129,6 +131,8 @@ export interface ApiClient {
   getConversationFeed(options?: ConversationFeedOptions): Promise<ConversationFeed>;
   /** Newest-first authoritative comment feed derived by `/comments/feed`, optionally project-scoped (C149). */
   getCommentFeed(options?: CommentFeedOptions): Promise<CommentFeed>;
+  /** Authoritative comment metrics derived by `/comments/stats`, optionally project-scoped (C165). */
+  getCommentStats(options?: CommentStatsOptions): Promise<CommentStats>;
   /** Authoritative project portfolio metrics derived by `/projects/stats`, optionally org-scoped (C53). */
   getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats>;
   /** Newest-first authoritative project feed derived by `/projects/feed`, optionally org/lifecycle-scoped (C145). */
@@ -239,6 +243,7 @@ export const mockApiClient: ApiClient = {
   getConversationStats: mockApi.fetchConversationStats,
   getConversationFeed: mockApi.fetchConversationFeed,
   getCommentFeed: mockApi.fetchCommentFeed,
+  getCommentStats: mockApi.fetchCommentStats,
   getProjectStats: mockApi.fetchProjectStats,
   getProjectFeed: mockApi.fetchProjectFeed,
   getProviderStats: mockApi.fetchProviderStats,
