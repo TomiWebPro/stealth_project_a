@@ -3428,6 +3428,26 @@ this file is the execution checklist.
    Lint clean, 1735 tests, build green. ✅ 2026-11-20 — `3183ea0`
    Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C249 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  single-upload-ticket overview endpoint from C246/C248
+  (`GET /api/v1/uploads/{upload_id}/overview`): reuse the on-demand ticket issued
+  in the uploads/feed probe (filename `ci-smoke.bin`, declared size 8, pending)
+  so the snapshot has real identity and byte accounting, then probe the full
+  snapshot shape, identity + joined project name + status, the derived
+  `bytes_remaining`/`progress`/`expired` signals (invariants against the
+  authoritative byte fields), the stats-shared whole-project `counts` block
+  (`project_tickets`/`project_completed`/`project_bytes_uploaded`, tickets >=
+  completed), the request-id header and the shared 404 `upload_not_found` / 422
+  `validation_error` envelopes (malformed id), keeping CI aligned with the
+  exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  No unchecked CI row remained, so C249 was added under the Never-empty well;
+  resolves the C246/C248 CI live-smoke follow-up. Verified the exact embedded
+  smoke script against a real ASGI server on a dynamically chosen free port
+  (492 checks OK, exit 0) with actionlint v1.7.12 (`-shellcheck=`) + YAML parse;
+  both suites green (frontend lint clean/1735 tests/build, backend pytest 1403).
+  ✅ 2026-11-20 — `c503de3`
+  Screens upload-overview rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3713,3 +3733,4 @@ this file is the execution checklist.
 - 2026-11-20 — `cffb5b1` — C246 (backend): added authoritative `GET /api/v1/uploads/{id}/overview` — a single-upload-ticket snapshot derived from the authoritative `UPLOADS` store joined to `PROJECTS`, carrying ticket identity/filename/content type/lifecycle status, declared+uploaded byte accounting with derived `bytes_remaining`/`progress`/`expired`, and whole-project counts reusing the exact per-project bucket behind `/uploads/stats` so the views cannot drift; unknown ticket → shared 404 `upload_not_found`, malformed id → shared 422 envelope. `UploadOverview`/`UploadOverviewCounts` mirrored in TS + exported from the types index, README endpoint list synced, 9 tests × 2 storage backends green (1403 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring is a follow-up.
 - 2026-11-20 — `c5755c1` — C247 (screens): rendered the authoritative single-orchestration-run overview (C242/C244/C245 follow-up) via `useRunOverview` — a reusable `RunOverviewPanel` on Jobs (workspace-wide) and project detail (project-scoped) with a run picker fed by the authoritative `useOrchestrationFeed` (run records only), recent-job page-size chips, a stage/identity/plan header with a project deep link, four zero-filled count cards (whole-run plan steps/linked jobs/resolved jobs plus bounded recent jobs), a zero-filled queued/running/succeeded/failed/canceled status distribution with share bars reusing the canonical job-status labels/tones, newest-job rows with operation labels and progress bars, and loading/error/missing/empty/populated states — every display value derived in tested `runOverviewHelpers` that reuse the canonical orchestration, job-status and job-stats helpers. Job rows stay read-only (no job-detail route); no new route was added. Resolves the C245 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C247 was added under the Never-empty well. Lint clean, 1722 tests, build green.
 - 2026-11-20 — `3183ea0` — C248 (mocks): wired the authoritative single-upload-ticket overview (C246 follow-up) end to end — `getUploadOverview`/`useUploadOverview` across mockApi, the stable ApiClient facade, live httpApiClient (`GET /uploads/{id}/overview`, 404-to-undefined), queryKeys and useQueries, with a shared `lib/uploadOverview` seed derivation (joined project name with "Unknown project" fallback, declared/uploaded byte accounting with `bytes_remaining`/`progress`/`expired`, `/uploads/stats`-shared whole-project counts, 422 for a malformed id, injectable `uploadOverview` failure), populated/missing/error tests, an extended live-vs-mock parity guard (shape/missing/422 + surface) and dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Lint clean, 1735 tests, build green. Screens rendering + CI live-smoke probe are follow-ups.
+- 2026-11-20 — `c503de3` — C249 (CI): extended the live-mode HTTP smoke job with the authoritative single-upload-ticket overview endpoint (`GET /api/v1/uploads/{id}/overview`) from C246/C248 — reusing the on-demand ticket issued in the uploads/feed probe (filename `ci-smoke.bin`, declared size 8, pending) so the snapshot has real identity and byte accounting, then probing the full snapshot shape, identity + joined project name + status, the derived `bytes_remaining`/`progress`/`expired` signals (invariants against the authoritative byte fields), the stats-shared whole-project `counts` block, the request-id header and the shared 404 `upload_not_found` / 422 `validation_error` envelopes (malformed id), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C249 was added under the Never-empty well; resolves the C246/C248 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (492 checks OK, exit 0) with actionlint v1.7.12 (`-shellcheck=`) + YAML parse; both suites green (frontend lint clean/1735 tests/build, backend pytest 1403). Screens upload-overview rendering remains a screens follow-up.
