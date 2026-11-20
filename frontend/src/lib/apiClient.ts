@@ -33,6 +33,7 @@ import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageOverviewOptions } from "./lineageOverview";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { MembershipOverviewOptions } from "./membershipOverview";
+import type { MessageOverviewOptions } from "./messageOverview";
 import type { UserOverviewOptions } from "./userOverview";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
@@ -101,6 +102,7 @@ import type {
   MembershipOverview,
   Message,
   MessageCreate,
+  MessageOverview,
   OperationCatalog,
   OperationFeed,
   OperationOverview,
@@ -356,6 +358,17 @@ export interface ApiClient {
     options?: ConversationOverviewOptions,
   ): Promise<ConversationOverview | undefined>;
   /**
+   * Authoritative single-message snapshot (identity, joined conversation/project,
+   * 1-based position, whole-conversation role/status counts and a bounded
+   * newest-first sibling page) from `/conversations/{id}/messages/{id}/overview`;
+   * an unknown conversation or message resolves to `undefined` (C270).
+   */
+  getMessageOverview(
+    conversationId: string,
+    messageId: string,
+    options?: MessageOverviewOptions,
+  ): Promise<MessageOverview | undefined>;
+  /**
    * Authoritative single-job snapshot (identity, event/retry counts and a
    * bounded newest-event list) from `/jobs/{id}/overview`; unknown jobs resolve
    * to `undefined` (C213).
@@ -495,6 +508,7 @@ export const mockApiClient: ApiClient = {
   getAssetOverview: mockApi.fetchAssetOverview,
   getProjectOverview: mockApi.fetchProjectOverview,
   getConversationOverview: mockApi.fetchConversationOverview,
+  getMessageOverview: mockApi.fetchMessageOverview,
   getJobOverview: mockApi.fetchJobOverview,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,

@@ -230,6 +230,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the message overview key by conversation, message and recent limit", () => {
+    expect(queryKeys.messageOverview.detail("c1", "m1")).toEqual([
+      "message-overview",
+      "detail",
+      "c1",
+      "m1",
+      "all",
+    ]);
+    expect(queryKeys.messageOverview.detail("c1", "m1", { recentLimit: 3 })).toEqual([
+      "message-overview",
+      "detail",
+      "c1",
+      "m1",
+      3,
+    ]);
+  });
+
   it("scopes the job overview key by job and recent limit", () => {
     expect(queryKeys.jobOverview.detail("j1")).toEqual([
       "job-overview",

@@ -7,6 +7,7 @@ import {
   CONVERSATIONS,
   EXTENSIONS,
   JOBS,
+  MESSAGES,
   ORGANIZATIONS,
   ORCHESTRATION_PLANS,
   ORCHESTRATION_RUNS,
@@ -38,6 +39,7 @@ import {
   fetchConversationStats,
   fetchConversationFeed,
   fetchConversationOverview,
+  fetchMessageOverview,
   fetchCurrentUser,
   fetchEventFeed,
   fetchEventStats,
@@ -559,6 +561,20 @@ describe("mock error-state fakes", () => {
     await expect(fetchConversationOverview(overviewConversationId)).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the message overview domain", async () => {
+    const overviewConversationId = CONVERSATIONS[0]?.id ?? "";
+    const overviewMessageId = MESSAGES.find((m) => m.conversation_id === overviewConversationId)?.id ?? "";
+    setMockFailure("messageOverview");
+
+    await expect(fetchMessageOverview(overviewConversationId, overviewMessageId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchMessageOverview(overviewConversationId, overviewMessageId)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the project overview domain", async () => {
     const overviewProjectId = PROJECTS[0]?.id ?? "";
     setMockFailure("projectOverview");
@@ -910,6 +926,7 @@ describe("mock error-state fakes", () => {
         ["runOverview", () => fetchRunOverview(ORCHESTRATION_RUNS[0]?.run_id ?? "")],
         ["uploadOverview", () => fetchUploadOverview("0b5c1e2a-7000-4000-8000-000000000001")],
         ["commentOverview", () => fetchCommentOverview("0b5c1e2a-6200-4000-8000-000000000001")],
+        ["messageOverview", () => fetchMessageOverview(CONVERSATIONS[0]?.id ?? "", MESSAGES[0]?.id ?? "")],
         ["lineageOverview", () => fetchLineageOverview("0b5c1e2a-5000-4000-8000-000000000001")],
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],

@@ -46,6 +46,7 @@ import {
   fetchConversationStats,
   fetchConversationFeed,
   fetchConversationOverview,
+  fetchMessageOverview,
   fetchCurrentUser,
   fetchDashboard,
   fetchEventStats,
@@ -2067,6 +2068,65 @@ describe("mock API conversation overview (C209 follow-up)", () => {
 
     setMockFailure("conversationOverview");
     await expect(fetchConversationOverview(conversationId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API message overview (C270 follow-up)", () => {
+  const film = CONVERSATIONS.find((conversation) => conversation.message_count && conversation.message_count > 0);
+  const conversationId = film?.id ?? "";
+  const messages = MESSAGES.filter((message) => message.conversation_id === conversationId);
+  const messageId = messages[0]?.id ?? "";
+
+  it("derives a populated snapshot with identity, position and whole-conversation counts", async () => {
+    const overview = await fetchMessageOverview(conversationId, messageId);
+    expect(overview).toBeDefined();
+    expect(overview?.message_id).toBe(messageId);
+    expect(overview?.conversation_id).toBe(conversationId);
+    expect(overview?.conversation_title).toBe(film?.title);
+    expect(overview?.position).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.total).toBe(messages.length);
+    expect((overview?.counts.by_role ?? []).reduce((sum, row) => sum + row.count, 0)).toBe(
+      overview?.counts.total,
+    );
+    expect((overview?.counts.by_status ?? []).reduce((sum, row) => sum + row.count, 0)).toBe(
+      overview?.counts.total,
+    );
+    expect(overview?.recent_siblings?.[0]?.id).toBe(messages[messages.length - 1]?.id);
+  });
+
+  it("bounds the sibling page without changing counts or position", async () => {
+    const whole = await fetchMessageOverview(conversationId, messageId);
+    const limited = await fetchMessageOverview(conversationId, messageId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.position).toBe(whole?.position);
+    expect(limited?.recent_siblings).toHaveLength(1);
+  });
+
+  it("mirrors router validation, both 404s and the injected failure", async () => {
+    await expect(fetchMessageOverview("not-a-uuid", messageId)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchMessageOverview(conversationId, "not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchMessageOverview(conversationId, messageId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchMessageOverview("00000000-0000-4000-8000-000000000000", messageId),
+    ).resolves.toBeUndefined();
+    await expect(
+      fetchMessageOverview(conversationId, "00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+
+    setMockFailure("messageOverview");
+    await expect(fetchMessageOverview(conversationId, messageId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

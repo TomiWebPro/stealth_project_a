@@ -101,6 +101,8 @@ export type {
   MembershipOverviewCounts,
   Message,
   MessageCreate,
+  MessageOverview,
+  MessageOverviewCounts,
   MessageRole,
   MessageStatus,
   Metadata,

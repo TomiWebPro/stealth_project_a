@@ -47,6 +47,11 @@ import {
 } from "../conversationOverview";
 import type { ConversationOverviewOptions } from "../conversationOverview";
 import {
+  deriveMessageOverview,
+  validateMessageOverviewArgs,
+} from "../messageOverview";
+import type { MessageOverviewOptions } from "../messageOverview";
+import {
   deriveConversationStats,
   validateConversationStatsArgs,
 } from "../conversationStats";
@@ -214,6 +219,7 @@ import type {
   MembershipOverview,
   Message,
   MessageCreate,
+  MessageOverview,
   OperationCatalog,
   OperationFeed,
   OperationOverview,
@@ -311,7 +317,7 @@ function delay<T>(value: T): Promise<T> {
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
- * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
+ * `projectOverview`, `assetOverview`, `conversationOverview`, `messageOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`,
  * `membershipOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1345,6 +1351,41 @@ export async function fetchConversationOverview(
   return delay(
     deriveConversationOverview(
       conversationId,
+      {
+        conversations: CONVERSATIONS,
+        messages: MESSAGES,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-message overview (C270) derived from the same stores as
+ * the live `/conversations/{id}/messages/{id}/overview` endpoint. Router-style
+ * 422 validation (both ids / recent_limit), normalized 404-to-`undefined` for
+ * an unknown conversation or a message absent from it, and the
+ * `"messageOverview"` failure domain keep error and empty states at parity with
+ * live mode.
+ */
+export async function fetchMessageOverview(
+  conversationId: string,
+  messageId: string,
+  options?: MessageOverviewOptions,
+): Promise<MessageOverview | undefined> {
+  failIfEnabled("messageOverview");
+  validateMessageOverviewArgs(conversationId, messageId, options);
+  const conversation = CONVERSATIONS.find((candidate) => candidate.id === conversationId);
+  if (!conversation) return delay(undefined);
+  if (!MESSAGES.some((message) => message.conversation_id === conversationId && message.id === messageId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveMessageOverview(
+      conversationId,
+      messageId,
       {
         conversations: CONVERSATIONS,
         messages: MESSAGES,

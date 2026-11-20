@@ -32,6 +32,7 @@ import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationOverviewOptions } from "./organizationOverview";
 import type { MembershipOverviewOptions } from "./membershipOverview";
+import type { MessageOverviewOptions } from "./messageOverview";
 import type { UserOverviewOptions } from "./userOverview";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
@@ -131,6 +132,16 @@ export const queryKeys = {
   conversationOverview: {
     detail: (conversationId: string, options: ConversationOverviewOptions = {}) =>
       ["conversation-overview", "detail", conversationId, options.recentLimit ?? "all"] as const,
+  },
+  messageOverview: {
+    detail: (conversationId: string, messageId: string, options: MessageOverviewOptions = {}) =>
+      [
+        "message-overview",
+        "detail",
+        conversationId,
+        messageId,
+        options.recentLimit ?? "all",
+      ] as const,
   },
   commentFeed: {
     feed: (options: CommentFeedOptions = {}) =>

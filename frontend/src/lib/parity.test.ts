@@ -37,6 +37,11 @@ import {
   validateConversationOverviewArgs,
 } from "./conversationOverview";
 import type { ConversationOverviewOptions } from "./conversationOverview";
+import {
+  deriveMessageOverview,
+  validateMessageOverviewArgs,
+} from "./messageOverview";
+import type { MessageOverviewOptions } from "./messageOverview";
 import { deriveConversationStats, validateConversationStatsArgs } from "./conversationStats";
 import { deriveCommentFeed, validateCommentFeedArgs } from "./commentFeed";
 import type { CommentFeedOptions } from "./commentFeed";
@@ -1220,6 +1225,39 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative single-message overview derives a compact snapshot from the
+  // same conversation/message/project stores; mirror the router's 422 validation
+  // and both 404s (unknown conversation vs message absent from it) over the seeds.
+  // This must precede the dynamic /conversations/{id} and /messages branches.
+  if (/^\/conversations\/[^/]+\/messages\/[^/]+\/overview$/.test(path)) {
+    const conversationIdValue = pathParts[2] ?? "";
+    const messageIdValue = pathParts[4] ?? "";
+    const limitRaw = params.get("recent_limit");
+    const options: MessageOverviewOptions =
+      limitRaw !== null ? { recentLimit: Number(limitRaw) } : {};
+    try {
+      validateMessageOverviewArgs(conversationIdValue, messageIdValue, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!CONVERSATIONS.some((c) => c.id === conversationIdValue)) return NOT_FOUND;
+    if (!MESSAGES.some((m) => m.conversation_id === conversationIdValue && m.id === messageIdValue)) {
+      return NOT_FOUND;
+    }
+    return deriveMessageOverview(
+      conversationIdValue,
+      messageIdValue,
+      { conversations: CONVERSATIONS, messages: MESSAGES, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+  }
+
   if (path === "/conversations") {
     return CONVERSATIONS.filter((c) => c.project_id === params.get("project_id"));
   }
@@ -1930,6 +1968,8 @@ const orgId = PROJECTS[0]?.org_id ?? "";
 const emptyId = PROJECTS.find((p) => p.name.startsWith("Blank Slate"))?.id ?? "";
 const failedJobId = JOBS.find((j) => j.status === "failed")?.id ?? "";
 const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ?? "";
+/** A seeded message in the film conversation, used by the single-message overview probes. */
+const messageId = MESSAGES.find((m) => m.conversation_id === conversationId)?.id ?? "";
 /** A project with no seeded conversations, so the feed scope is genuinely empty. */
 const noConversationsId = PROJECTS.find((p) => p.name.startsWith("Northlight"))?.id ?? "";
 const runId = ORCHESTRATION_RUNS[0]?.run_id ?? "";
@@ -2027,6 +2067,15 @@ describe("live vs mock transport parity", () => {
       [
         "getConversationOverview limited",
         (api) => api.getConversationOverview(conversationId, { recentLimit: 2 }),
+      ],
+      ["getMessageOverview", (api) => api.getMessageOverview(conversationId, messageId)],
+      [
+        "getMessageOverview limited",
+        (api) => api.getMessageOverview(conversationId, messageId, { recentLimit: 2 }),
+      ],
+      [
+        "getMessageOverview missing message",
+        (api) => api.getMessageOverview(conversationId, "00000000-0000-4000-8000-000000000000"),
       ],
       ["getJobOverview", (api) => api.getJobOverview(failedJobId)],
       ["getJobOverview limited", (api) => api.getJobOverview(failedJobId, { recentLimit: 2 })],
@@ -2370,6 +2419,22 @@ describe("live vs mock transport parity", () => {
     expect(await live.getConversationOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getConversationOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The message overview resolves an unknown conversation/message to undefined
+    // on both transports; the page bound changes siblings but never the counts.
+    expect(await live.getMessageOverview(conversationId, messageId)).toEqual(
+      await mockApiClient.getMessageOverview(conversationId, messageId),
+    );
+    expect(await live.getMessageOverview(conversationId, messageId, { recentLimit: 2 })).toEqual(
+      await mockApiClient.getMessageOverview(conversationId, messageId, { recentLimit: 2 }),
+    );
+    expect(await live.getMessageOverview("00000000-0000-4000-8000-000000000000", messageId)).toBeUndefined();
+    expect(
+      await mockApiClient.getMessageOverview("00000000-0000-4000-8000-000000000000", messageId),
+    ).toBeUndefined();
+    expect(await live.getMessageOverview(conversationId, "00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getMessageOverview(conversationId, "00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The job overview resolves an unknown job to undefined on both transports
     // and returns a derived snapshot (with event/retry counts) for a seeded job.
@@ -3214,6 +3279,25 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed conversation/message id or an
+    // out-of-range recent_limit with the same 422 envelope for the message overview.
+    const badMessageOverviewOptions: Array<
+      [string, string, string, string, MessageOverviewOptions | undefined]
+    > = [
+      ["not-a-uuid", "not-a-uuid", "not-a-uuid", "not-a-uuid", undefined],
+      [conversationId, "not-a-uuid", conversationId, "not-a-uuid", undefined],
+      [conversationId, messageId, conversationId, messageId, { recentLimit: 0 }],
+      [conversationId, messageId, conversationId, messageId, { recentLimit: 51 }],
+    ];
+    for (const [mockConversation, mockMessage, liveConversation, liveMessage, options] of badMessageOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getMessageOverview(mockConversation, mockMessage, options).catch((cause) => cause),
+        live.getMessageOverview(liveConversation, liveMessage, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports reject a malformed job id or an out-of-range
     // recent_limit with the same 422 envelope for the single-job overview.
     const badJobOverviewOptions: Array<[string, string, JobOverviewOptions | undefined]> = [
@@ -3499,6 +3583,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectOverview).toBe("function");
     expect(typeof typed.getAssetOverview).toBe("function");
     expect(typeof typed.getConversationOverview).toBe("function");
+    expect(typeof typed.getMessageOverview).toBe("function");
     expect(typeof typed.getJobOverview).toBe("function");
     expect(typeof typed.getProviderOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");

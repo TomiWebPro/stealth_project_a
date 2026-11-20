@@ -38,6 +38,7 @@ import type { OperationFeedOptions } from "../lib/operationFeed";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationOverviewOptions } from "../lib/organizationOverview";
 import type { MembershipOverviewOptions } from "../lib/membershipOverview";
+import type { MessageOverviewOptions } from "../lib/messageOverview";
 import type { UserOverviewOptions } from "../lib/userOverview";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
@@ -102,6 +103,7 @@ import type {
   LineageStats,
   Message,
   MessageCreate,
+  MessageOverview,
   OperationCatalog,
   OperationFeed,
   OperationOverview,
@@ -647,6 +649,24 @@ export function useConversationOverview(
   return useQuery({
     queryKey: queryKeys.conversationOverview.detail(conversationId, options),
     queryFn: () => api.getConversationOverview(conversationId, options),
+  });
+}
+
+/**
+ * Authoritative single-message snapshot (identity, joined conversation/project,
+ * 1-based position, whole-conversation role/status counts and a bounded
+ * newest-first sibling page) from `/conversations/{id}/messages/{id}/overview`
+ * (C270). Unknown conversations/messages resolve to `undefined`.
+ */
+export function useMessageOverview(
+  conversationId: string,
+  messageId: string,
+  options?: MessageOverviewOptions,
+): UseQueryResult<MessageOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.messageOverview.detail(conversationId, messageId, options),
+    queryFn: () => api.getMessageOverview(conversationId, messageId, options),
   });
 }
 

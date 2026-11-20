@@ -31,6 +31,8 @@ import { conversationFeedQueryParams } from "./conversationFeed";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import { conversationOverviewQueryParams } from "./conversationOverview";
 import type { ConversationOverviewOptions } from "./conversationOverview";
+import { messageOverviewQueryParams } from "./messageOverview";
+import type { MessageOverviewOptions } from "./messageOverview";
 import { conversationStatsQueryParams } from "./conversationStats";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { ConversationStream } from "./conversationStream";
@@ -162,6 +164,7 @@ import type {
   MembershipOverview,
   Message,
   MessageCreate,
+  MessageOverview,
   OperationCatalog,
   OperationFeed,
   OperationOverview,
@@ -875,6 +878,27 @@ export function createHttpApiClient(
         return await request<ConversationOverview>(
           `/conversations/${encodeURIComponent(conversationId)}/overview`,
           conversationOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-message overview; the backend 404s on an unknown
+     * conversation or a message absent from it, both normalized to `undefined`
+     * like the other detail lookups.
+     */
+    async getMessageOverview(
+      conversationId: string,
+      messageId: string,
+      options?: MessageOverviewOptions,
+    ): Promise<MessageOverview | undefined> {
+      try {
+        return await request<MessageOverview>(
+          `/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/overview`,
+          messageOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;
