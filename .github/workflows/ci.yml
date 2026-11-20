@@ -1427,6 +1427,122 @@ jobs:
                 and fblbody.get("error", {}).get("code") == "validation_error"
                 and bool(fblbody.get("error", {}).get("request_id")), feed_bad_limit.text)
 
+          # Authoritative single publish-receipt overview (C278/C280) is the
+          # newest /api/v1 URL the live client calls (getPublishOverview). Reuse
+          # the on-demand asset already published with a receipt above so the
+          # derived snapshot has real identity/counts/siblings. Probe the full
+          # snapshot shape, the stats-shared whole-project/workspace counts, the
+          # newest-first sibling page and its recent_limit bound (page only), the
+          # request-id header, both 404 envelopes (unknown asset vs missing
+          # receipt) and the shared 422 envelope (malformed id + invalid limit).
+          if asset_id:
+              pov = httpx.get(f"{base}/publishes/{asset_id}/overview", timeout=5)
+              povbody = pov.json() if pov.status_code == 200 else {}
+              check("publishes/{id}/overview 200 snapshot shape",
+                    pov.status_code == 200 and all(
+                        k in povbody for k in ("asset_id", "asset_name",
+                        "asset_type", "project_id", "project_name", "version",
+                        "size_bytes", "published_at", "counts",
+                        "recent_siblings", "generated_at")),
+                    pov.text)
+              check("publishes/{id}/overview identity",
+                    pov.status_code == 200
+                    and povbody.get("asset_id") == asset_id
+                    and povbody.get("project_id") == project_id
+                    and povbody.get("version") == 1
+                    and povbody.get("size_bytes") == 8
+                    and isinstance(povbody.get("asset_name"), str)
+                    and isinstance(povbody.get("project_name"), str),
+                    pov.text)
+              check("publishes/{id}/overview stats-shared counts",
+                    pov.status_code == 200
+                    and isinstance(povbody.get("counts"), dict)
+                    and all(k in povbody["counts"] for k in (
+                        "project_published", "project_bytes", "total_published"))
+                    and povbody["counts"].get("project_published", 0) >= 1
+                    and povbody["counts"].get("project_bytes", 0) >= 8
+                    and povbody["counts"].get("total_published", 0) >= 1,
+                    pov.text)
+              sibs = povbody.get("recent_siblings", [])
+              check("publishes/{id}/overview sibling page shape + target",
+                    pov.status_code == 200 and isinstance(sibs, list)
+                    and any(i.get("asset_id") == asset_id for i in sibs)
+                    and all(all(k in i for k in (
+                        "asset_id", "asset_name", "asset_type", "project_id",
+                        "project_name", "version", "size_bytes", "published_at"))
+                        for i in sibs),
+                    pov.text)
+              sib_times = [i.get("published_at") for i in sibs]
+              check("publishes/{id}/overview siblings newest-first",
+                    pov.status_code == 200
+                    and sib_times == sorted(sib_times, reverse=True), pov.text)
+              check("publishes/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in pov.headers},
+                    str(dict(pov.headers)))
+              pov_limited = httpx.get(
+                  f"{base}/publishes/{asset_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              plbody = pov_limited.json() if pov_limited.status_code == 200 else {}
+              check("publishes/{id}/overview recent_limit bounds page only",
+                    pov_limited.status_code == 200
+                    and len(plbody.get("recent_siblings", [])) <= 1
+                    and plbody.get("counts") == povbody.get("counts"),
+                    pov_limited.text)
+              for bad_limit in (0, 51):
+                  pov_bad = httpx.get(
+                      f"{base}/publishes/{asset_id}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  pvbadbody = pov_bad.json() if pov_bad.status_code == 422 else {}
+                  check(f"publishes/{{id}}/overview 422 invalid limit {bad_limit}",
+                        pov_bad.status_code == 422
+                        and pvbadbody.get("error", {}).get("code") == "validation_error"
+                        and bool(pvbadbody.get("error", {}).get("request_id")),
+                        pov_bad.text)
+          else:
+              check("publishes/{id}/overview setup", False,
+                    "could not obtain a published asset for the overview probe")
+
+          pov_unknown = httpx.get(
+              f"{base}/publishes/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          pv404body = pov_unknown.json() if pov_unknown.status_code == 404 else {}
+          check("publishes/{id}/overview 404 asset_not_found envelope",
+                pov_unknown.status_code == 404
+                and pv404body.get("error", {}).get("code") == "asset_not_found"
+                and bool(pv404body.get("error", {}).get("request_id")),
+                pov_unknown.text)
+          # An asset with no publish receipt yields the second 404 variant.
+          pov_unpublished = httpx.post(
+              f"{base}/assets/register",
+              json={
+                  "project_id": project_id,
+                  "type": "image",
+                  "name": "CI smoke unpublished overview",
+                  "storage": {"backend": "local", "key": "ci/unpublished.png",
+                              "size_bytes": 1, "content_type": "image/png"},
+              },
+              timeout=5)
+          if pov_unpublished.status_code == 201:
+              unp_id = pov_unpublished.json().get("id")
+              pov_no_receipt = httpx.get(
+                  f"{base}/publishes/{unp_id}/overview", timeout=5)
+              pvb404body = pov_no_receipt.json() if pov_no_receipt.status_code == 404 else {}
+              check("publishes/{id}/overview 404 publish_not_found envelope",
+                    pov_no_receipt.status_code == 404
+                    and pvb404body.get("error", {}).get("code") == "publish_not_found"
+                    and bool(pvb404body.get("error", {}).get("request_id")),
+                    pov_no_receipt.text)
+          else:
+              check("publishes/{id}/overview unpublished setup", False,
+                    "could not register an unpublished asset for the overview probe")
+          pov_bad_id = httpx.get(f"{base}/publishes/not-a-uuid/overview", timeout=5)
+          pvbadbody = pov_bad_id.json() if pov_bad_id.status_code == 422 else {}
+          check("publishes/{id}/overview 422 malformed id envelope",
+                pov_bad_id.status_code == 422
+                and pvbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(pvbadbody.get("error", {}).get("request_id")),
+                pov_bad_id.text)
+
           # Authoritative per-job execution log (C117/C119) is the newest /api/v1
           # URL the live client calls (getJobLogs). Submit a job on demand so the
           # derived frame has a real event stream, then probe the frame shape,
