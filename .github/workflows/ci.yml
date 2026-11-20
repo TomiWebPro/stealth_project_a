@@ -3726,6 +3726,126 @@ jobs:
                 and rfblbody.get("error", {}).get("code") == "validation_error"
                 and bool(rfblbody.get("error", {}).get("request_id")), rf_bad_limit.text)
 
+          # Authoritative single-retried-job overview (C286/C288) is the newest
+          # /api/v1 URL the live client calls (getRetryOverview). Reuse the
+          # on-demand job submitted/cancelled/retried by the retry-feed probe so
+          # the derived snapshot has real identity/counts/siblings. Probe the full
+          # snapshot shape, the stats-shared whole-scope counts, the bounded
+          # newest-first sibling page and its recent_limit bound (page only,
+          # counts unchanged), canonical identity/lifecycle, the request-id
+          # header, both 404 envelopes (unknown job vs a job with no accepted
+          # retries) and the shared 422 envelope (malformed id + invalid limit).
+          if retry_job_id:
+              rov = httpx.get(
+                  f"{base}/retries/{retry_job_id}/overview", timeout=5)
+              rovbody = rov.json() if rov.status_code == 200 else {}
+              check("retries/{id}/overview 200 snapshot shape",
+                    rov.status_code == 200 and all(
+                        k in rovbody for k in (
+                            "job_id", "project_id", "project_name", "operation_id",
+                            "status", "attempt", "retries", "retried_at", "counts",
+                            "recent_siblings", "generated_at"))
+                    and rovbody.get("job_id") == retry_job_id, rov.text)
+              check("retries/{id}/overview identity + lifecycle",
+                    rov.status_code == 200
+                    and rovbody.get("project_id") == project_id
+                    and isinstance(rovbody.get("project_name"), str)
+                    and rovbody.get("operation_id") == "text-to-image"
+                    and rovbody.get("status") in (
+                        "queued", "running", "succeeded", "failed", "canceled")
+                    and rovbody.get("attempt", 0) >= 2
+                    and rovbody.get("retries", 0) >= 1, rov.text)
+              rov_counts = rovbody.get("counts", {})
+              check("retries/{id}/overview whole-scope counts",
+                    rov.status_code == 200
+                    and isinstance(rov_counts, dict)
+                    and all(k in rov_counts for k in (
+                        "project_retries", "project_jobs", "total_retries"))
+                    and rov_counts.get("project_retries", 0) >= 1
+                    and rov_counts.get("project_jobs", 0) >= 1
+                    and rov_counts.get("total_retries", 0)
+                        >= rov_counts.get("project_retries", 0), rov.text)
+              siblings = rovbody.get("recent_siblings", [])
+              check("retries/{id}/overview sibling page shape + target",
+                    rov.status_code == 200 and isinstance(siblings, list)
+                    and any(i.get("job_id") == retry_job_id for i in siblings)
+                    and all(all(k in i for k in (
+                        "job_id", "project_id", "project_name", "operation_id",
+                        "status", "attempt", "retries", "retried_at"))
+                        for i in siblings), rov.text)
+              sib_times = [i.get("retried_at") for i in siblings]
+              check("retries/{id}/overview siblings newest-first",
+                    rov.status_code == 200
+                    and sib_times == sorted(sib_times, reverse=True), rov.text)
+              check("retries/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in rov.headers},
+                    str(dict(rov.headers)))
+              rov_limited = httpx.get(
+                  f"{base}/retries/{retry_job_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              rlbody = rov_limited.json() if rov_limited.status_code == 200 else {}
+              check("retries/{id}/overview recent_limit bounds page only",
+                    rov_limited.status_code == 200
+                    and len(rlbody.get("recent_siblings", [])) <= 1
+                    and rlbody.get("counts") == rovbody.get("counts"), rov_limited.text)
+              for bad_limit in (0, 51):
+                  rov_bad = httpx.get(
+                      f"{base}/retries/{retry_job_id}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  rlbadbody = rov_bad.json() if rov_bad.status_code == 422 else {}
+                  check(f"retries/{{id}}/overview 422 invalid limit {bad_limit}",
+                        rov_bad.status_code == 422
+                        and rlbadbody.get("error", {}).get("code") == "validation_error"
+                        and bool(rlbadbody.get("error", {}).get("request_id")),
+                        rov_bad.text)
+          else:
+              check("retries/{id}/overview setup", False,
+                    "could not create a retried job for the overview probe")
+
+          rov_unknown = httpx.get(
+              f"{base}/retries/00000000-0000-4000-8000-000000000000/overview", timeout=5)
+          ro404body = rov_unknown.json() if rov_unknown.status_code == 404 else {}
+          check("retries/{id}/overview 404 job_not_found envelope",
+                rov_unknown.status_code == 404
+                and ro404body.get("error", {}).get("code") == "job_not_found"
+                and bool(ro404body.get("error", {}).get("request_id")),
+                rov_unknown.text)
+          rov_no_retry_id = None
+          if project_id:
+              rov_seed = httpx.post(
+                  f"{base}/jobs",
+                  json={
+                      "operation_id": "text-to-image",
+                      "schema_version": "1.0.0",
+                      "project_id": project_id,
+                      "prompt": "ci smoke no-retry overview seed",
+                  },
+                  timeout=5)
+              rov_no_retry_id = (rov_seed.json().get("id")
+                                 if rov_seed.status_code == 201 else None)
+              check("retries/{id}/overview create no-retry seed 201",
+                    rov_seed.status_code == 201 and rov_no_retry_id is not None,
+                    rov_seed.text)
+          if rov_no_retry_id:
+              rov_no_retry = httpx.get(
+                  f"{base}/retries/{rov_no_retry_id}/overview", timeout=5)
+              ronrbody = rov_no_retry.json() if rov_no_retry.status_code == 404 else {}
+              check("retries/{id}/overview 404 retry_not_found envelope",
+                    rov_no_retry.status_code == 404
+                    and ronrbody.get("error", {}).get("code") == "retry_not_found"
+                    and bool(ronrbody.get("error", {}).get("request_id")),
+                    rov_no_retry.text)
+          else:
+              check("retries/{id}/overview no-retry setup", False,
+                    "could not create a no-retry job for the overview probe")
+          rov_bad_id = httpx.get(f"{base}/retries/not-a-uuid/overview", timeout=5)
+          ro_badbody = rov_bad_id.json() if rov_bad_id.status_code == 422 else {}
+          check("retries/{id}/overview 422 malformed id envelope",
+                rov_bad_id.status_code == 422
+                and ro_badbody.get("error", {}).get("code") == "validation_error"
+                and bool(ro_badbody.get("error", {}).get("request_id")),
+                rov_bad_id.text)
+
           # Authoritative collaboration feed (C197/C199) is the newest /api/v1 URL
           # the live client calls (getCollaborationFeed). Upsert one presence signal
           # on demand and reuse the comment seeded in the comment-feed probe so the
