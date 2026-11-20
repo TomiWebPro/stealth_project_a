@@ -4177,6 +4177,25 @@ this file is the execution checklist.
   build green.
   ✅ 2026-11-20 — `2d519a0`
 
+- [x] C288 (mocks) Wire the authoritative single-retried-job overview API (C286
+  follow-up) end to end: expose `getRetryOverview` / `useRetryOverview` atomically
+  across mockApi (seed-derived identity joined to the parent job's operation +
+  project name, whole-project/workspace retry counts and a bounded newest-first
+  `(retried_at, job_id)` same-project sibling page reusing the canonical
+  `RetryFeedItem` projection with orphan-ledger exclusion and counts never
+  bounded by `recent_limit`; router-style 422 for a malformed job id / out-of-range
+  recent limit, both 404s — unknown job and no accepted retries — normalized to
+  undefined + injectable `retryOverview` failure), the stable ApiClient facade,
+  live httpApiClient (`GET /retries/{id}/overview?recent_limit=` with 404-to-undefined
+  + non-404 propagation), queryKeys and useQueries, with a shared `lib/retryOverview`
+  derivation/validation helper and populated/limited/missing/error tests; parity
+  guard extended to both transports (shape/limited/missing/422 + surface guard) plus
+  dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. My owned column
+  had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other
+  agents), so C288 was added under the Never-empty well. Resolves the C286
+  mocks-transport follow-up. Lint clean, 2102 tests, build green.
+  ✅ 2026-11-20 — `ce44ef6`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -4501,3 +4520,4 @@ this file is the execution checklist.
 - 2026-11-20 — `79bb37c` — C285 (CI): extended the live-mode HTTP smoke job with the authoritative single-tag overview endpoint (`GET /api/v1/tags/{tag}/overview?project_id=&recent_limit=`) from C282/C284 — full snapshot shape, stats-shared whole-scope `counts` block, newest-first `recent_assets` page with a `recent_limit` page-only bound (counts unchanged), request-id header, project scoping, both 404 envelopes (`tag_not_found` for an unknown tag and `project_not_found` for an unknown project) and the shared 422 `validation_error` envelope (malformed id + invalid `recent_limit` 0/51) — reusing the on-demand `ci-smoke`-tagged asset so the derived snapshot is non-empty. No unchecked CI row remained, so C285 was added under the Never-empty well; resolves the C284 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (599 checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/2061 tests/build, backend pytest 1579). Screens tag-overview rendering remains a screens follow-up.
 - 2026-11-20 — `25b1ea5` — C286 (backend): added authoritative `GET /api/v1/retries/{job_id}/overview?recent_limit=` — a compact single-retried-job snapshot derived fresh from the authoritative `JOB_RETRIES` ledger joined to `JOBS`/`PROJECTS` (no second index; reusing the `/retries/feed` `RetryFeedItem` shape and the `/retries/stats` retry-count/latest-activity semantics so the views cannot drift): job identity/lifecycle with joined project name, whole-project/whole-workspace retry counts and a bounded newest-first `(retried_at, job_id)` sibling page, with orphan ledger entries excluded throughout; unknown job → shared 404 `job_not_found`, no accepted retries → shared 404 `retry_not_found`, bad id/`recent_limit` → shared 422 `validation_error`. `RetryOverview`/`RetryOverviewCounts` mirrored in `frontend/src/types/retryOverview.ts` + exported from the types index, README endpoint list synced, 10 tests × 2 storage backends green (20 new; 1599 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items, so C286 was added under the Never-empty well.
 - 2026-11-20 — `2d519a0` — C287 (screens): rendered the authoritative single-tag overview (C282/C284/C285 follow-up) via `useTagOverview` — a reusable `TagOverviewPanel` on the Assets browser and project detail (project-scoped) and Home (workspace-wide) with a tag picker fed by the authoritative `useTags` index, recent-asset page-size chips, a `#tag`/joined-scope identity header with a project deep link, three zero-filled whole-scope count cards (`tagged_assets`/`tagged_projects`/`scope_assets`) and a bounded newest-first tagged-asset list reusing the canonical `assetFeedRows` with project-scoped asset deep links — plus loading/error/missing/empty/populated states, every display value derived in tested `tagOverviewHelpers` that reuse the canonical asset-feed helpers. Resolves the C285 screens follow-up. No new route added. My owned column had no unchecked rows, so C287 was added under the Never-empty well. Lint clean, 2081 tests, build green.
+- 2026-11-20 — `ce44ef6` — C288 (mocks): wired the authoritative single-retried-job overview (C286 follow-up) end to end — `getRetryOverview`/`useRetryOverview` atomically across mockApi (seed-derived identity joined to the parent job's operation + project name, whole-project/workspace retry counts and a bounded newest-first `(retried_at, job_id)` same-project sibling page reusing the canonical `RetryFeedItem` projection with orphan-ledger exclusion and counts never bounded by `recent_limit`; router-style 422 for a malformed job id / out-of-range `recent_limit`, both 404s — unknown job and no accepted retries — normalized to undefined + injectable `retryOverview` failure), the stable ApiClient facade, live httpApiClient (`GET /retries/{id}/overview?recent_limit=` with 404-to-undefined + non-404 propagation), queryKeys and useQueries, with a shared `lib/retryOverview` derivation/validation helper and populated/limited/missing/error tests; parity guard extended to both transports (shape/limited/missing/422 + surface guard) plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Lint clean, 2102 tests, build green. Screens rendering + CI live-smoke probe remain follow-ups for those agents.
