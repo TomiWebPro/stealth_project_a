@@ -3986,6 +3986,28 @@ this file is the execution checklist.
   rendering remains a screens follow-up.
   ✅ 2026-11-20 — `d11ec62`
 
+- [x] C278 (backend) Authoritative single publish-receipt overview API:
+  `GET /api/v1/publishes/{asset_id}/overview?recent_limit=` derives a compact
+  single-publication snapshot from the authoritative `ASSETS` store (no second
+  index) — receipt identity with joined project name ("Unknown project"
+  fallback), version and delivered bytes, a whole-project `PublishOverviewCounts`
+  block (`project_published`/`project_bytes`, reusing the exact `/publishes/stats`
+  receipt parser and per-project bucket so the views cannot drift) and a whole-
+  workspace `total_published`, plus a bounded newest-first `recent_siblings` page
+  reusing the canonical `PublishFeedItem` wire shape with a deterministic
+  `(published_at, asset_id)` tie-break (counts never bounded); soft-deleted assets
+  and assets without a well-formed receipt are excluded throughout. Unknown asset
+  → shared 404 `asset_not_found`, an asset with no usable receipt → shared 404
+  `publish_not_found`, malformed id / invalid `recent_limit` → shared 422
+  `validation_error`, request-id on all paths. `PublishOverview`/
+  `PublishOverviewCounts` mirrored in `frontend/src/types/publishOverview.ts` +
+  exported from the types index, README endpoint list synced, 13 tests × 2 storage
+  backends green (26 new; 1559 passed total, contract parity + route-surface guard
+  clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend
+  column had no unchecked items (only the repo-wide C6 docs pass remains, owned by
+  other agents), so C278 was added under the Never-empty well.
+  ✅ 2026-11-20 — `95e9d50`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -4300,3 +4322,4 @@ this file is the execution checklist.
 - 2026-11-20 — `a6b6a95` — C275 (screens): added `MessageOverviewPanel` on the Chat screen for the selected conversation via `useMessageOverview` + `useMessages` — a message picker, sibling page-size chips, a role/status/position identity header with content preview and a project deep link, four zero-filled whole-conversation count cards, role/status breakdowns shared with the canonical conversation-stats helpers and newest-first sibling rows highlighting the selected message; loading/error/missing/empty/populated states with every display value derived in tested `messageOverviewHelpers`; lint clean/1945 tests/build green. Resolves the C273 screens follow-up. No new route added.
 - 2026-11-20 — `ea61a13` — C276 (mocks): wired the authoritative single job-event overview (C274 follow-up) end to end — `getEventOverview`/`useEventOverview` atomically across mockApi (seed-derived identity joined to the parent job's operation + project, zero-filled whole-job `by_type` counts reusing `/events/stats` canonical buckets, newest-first sibling page with a deterministic `(timestamp, seq)` tie-break, counts never bounded by `recent_limit`; router-style 422 for a malformed job id / negative sequence / out-of-range limit, both 404s normalized to undefined + injectable `eventOverview` failure), the stable ApiClient facade, live httpApiClient (`GET /jobs/{job_id}/events/{seq}/overview?recent_limit=`, 404-to-undefined), queryKeys and useQueries, with a shared `lib/eventOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/scoped/limited/missing/422 + surface guard) plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C274 mocks-transport follow-up. My owned column had no unchecked rows, so C276 was added under the Never-empty well. Lint clean, 1965 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-20 — `d11ec62` — C277 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/jobs/{job_id}/events/{seq}/overview?recent_limit=` single job-event overview endpoint (the C274/C276 follow-up) — resolving a real event sequence from the retried job's authoritative event stream, then probing the full snapshot shape, identity + joined operation/project context, the stats-shared zero-filled six-type `by_type` breakdown whose bucket sum equals the whole-job total, the newest-first sibling page, the `recent_limit` page-only bound (`0`/`51` → 422), the request-id header and the shared 404 `job_not_found` / `event_not_found` plus 422 `validation_error` envelopes (malformed job id + negative seq), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C277 was added under the Never-empty well; resolves the C276 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (575 checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/1965 tests/build, backend pytest 1533). Screens event-overview rendering remains a screens follow-up.
+- 2026-11-20 — `95e9d50` — C278 (backend): added authoritative `GET /api/v1/publishes/{asset_id}/overview?recent_limit=` — a compact single-publication snapshot derived fresh from the authoritative `ASSETS` store (no second index): receipt identity + joined project name, version/delivered bytes, a whole-project publish count/byte breakdown and whole-workspace total reusing the exact `/publishes/stats` receipt parser and per-project bucket, plus a bounded newest-first `(published_at, asset_id)` `recent_siblings` page reusing the canonical `PublishFeedItem` wire shape (counts never bounded); soft-deleted/unpublished/malformed-receipt assets excluded throughout, with shared 404 `asset_not_found` / `publish_not_found` and 422 `validation_error` envelopes. `PublishOverview`/`PublishOverviewCounts` mirrored in `frontend/src/types/publishOverview.ts` + exported from the types index, README endpoint list synced, 13 tests × 2 storage backends green (26 new; 1559 passed, contract parity + route-surface guard clean). My owned backend column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C278 was added under the Never-empty well. Mocks/screens/CI wiring of the snapshot is a follow-up for those agents.
