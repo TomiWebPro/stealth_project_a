@@ -44,6 +44,7 @@ from .operation_overview import OperationOverviewRepository
 from .operation_stats import OperationStatsRepository
 from .pipeline_stats import PipelineStatsRepository
 from .pipeline_feed import PipelineFeedRepository
+from .chain_overview import ChainOverviewRepository
 from .organization_feed import OrganizationFeedRepository
 from .organization_stats import OrganizationStatsRepository
 from .organization_overview import OrganizationOverviewRepository
@@ -108,6 +109,7 @@ class Repositories:
     operation_stats: OperationStatsRepository
     pipeline_stats: PipelineStatsRepository
     pipeline_feed: PipelineFeedRepository
+    chain_overview: ChainOverviewRepository
     organization_feed: OrganizationFeedRepository
     organization_stats: OrganizationStatsRepository
     organization_overview: OrganizationOverviewRepository
@@ -178,6 +180,7 @@ class Repositories:
         operation_stats = OperationStatsRepository(store, clock=clock)
         pipeline_stats = PipelineStatsRepository(store, projects, clock=clock)
         pipeline_feed = PipelineFeedRepository(store, projects, clock=clock)
+        chain_overview = ChainOverviewRepository(store, projects, clock=clock)
         organization_feed = OrganizationFeedRepository(store, clock=clock)
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
@@ -256,6 +259,7 @@ class Repositories:
             operation_stats=operation_stats,
             pipeline_stats=pipeline_stats,
             pipeline_feed=pipeline_feed,
+            chain_overview=chain_overview,
             organization_feed=organization_feed,
             organization_stats=organization_stats,
             organization_overview=organization_overview,

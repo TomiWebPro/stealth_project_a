@@ -252,6 +252,12 @@ from .pipeline_feed import (
     PipelineFeed,
     PipelineFeedItem,
 )
+from .chain_overview import (
+    ChainOverview,
+    ChainOverviewCounts,
+    ChainJobRef,
+    ChainAssetRef,
+)
 from .orchestration import (
     Comment,
     OrchestrationPlan,
@@ -608,6 +614,11 @@ __all__ = [
     # pipeline feed
     "PipelineFeed",
     "PipelineFeedItem",
+    # chain overview
+    "ChainOverview",
+    "ChainOverviewCounts",
+    "ChainJobRef",
+    "ChainAssetRef",
     # orchestration
     "Comment",
     "OrchestrationPlan",

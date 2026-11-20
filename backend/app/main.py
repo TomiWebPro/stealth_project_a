@@ -60,6 +60,7 @@ from .routers import (
     operation_feed,
     operation_overview,
     operation_stats,
+    chain_overview,
     pipeline_feed,
     pipeline_stats,
     organization_feed,
@@ -389,6 +390,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/pipelines/{kind}/{chain_id}" detail routes.
     app.include_router(pipeline_feed.router, prefix=API_PREFIX)
     app.include_router(pipeline_stats.router, prefix=API_PREFIX)
+    # "/pipelines/{chain_id}/overview" is a nested single-chain view; mount it
+    # beside the other pipeline routers so the literal feed/stats paths still win.
+    app.include_router(chain_overview.router, prefix=API_PREFIX)
     app.include_router(pipelines.router, prefix=API_PREFIX)
     app.include_router(shots.router, prefix=API_PREFIX)
     app.include_router(splat.router, prefix=API_PREFIX)

@@ -51,6 +51,7 @@ from .repositories.operation_overview import OperationOverviewRepository
 from .repositories.operation_stats import OperationStatsRepository
 from .repositories.pipeline_stats import PipelineStatsRepository
 from .repositories.pipeline_feed import PipelineFeedRepository
+from .repositories.chain_overview import ChainOverviewRepository
 from .repositories.organization_feed import OrganizationFeedRepository
 from .repositories.organization_stats import OrganizationStatsRepository
 from .repositories.organization_overview import OrganizationOverviewRepository
@@ -354,6 +355,12 @@ def get_pipeline_feed_repository(
     return repositories.pipeline_feed
 
 
+def get_chain_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ChainOverviewRepository:
+    return repositories.chain_overview
+
+
 def get_organization_feed_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> OrganizationFeedRepository:
@@ -619,6 +626,7 @@ __all__ = [
     "get_operation_stats_repository",
     "get_pipeline_stats_repository",
     "get_pipeline_feed_repository",
+    "get_chain_overview_repository",
     "get_organization_feed_repository",
     "get_organization_stats_repository",
     "get_organization_overview_repository",

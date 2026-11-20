@@ -271,6 +271,11 @@ All paths are prefixed with `/api/v1`.
   (zero-filled per-kind chain/job/asset breakdowns, per-project chain counts,
   totals and newest-chain recency) derived from the chain stores; unknown
   `project_id` uses the shared 404 envelope
+  `GET /pipelines/{chain_id}/overview?recent_limit=` — compact single-chain snapshot:
+  identity/canonical kind, joined project name, whole-scope job/asset counts (reusing
+  the stats/feed derivation) and bounded newest-first linked jobs/assets resolved from
+  the authoritative stores (orphan/deleted links skipped); unknown chain uses the
+  shared 404 `chain_not_found` envelope, bad id/limit uses the shared 422 envelope
 - **Exports:** `GET /projects/{id}/exports`, `GET /assets/{id}/exports`
 - **Search:** `GET /search?q=&kind=&limit=` — ranked, best-first project/asset/
   conversation matches derived from the authoritative stores (no second index);

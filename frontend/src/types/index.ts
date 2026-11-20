@@ -53,6 +53,7 @@ export * from "./organizationStats";
 export * from "./organizationOverview";
 export * from "./pipelineStats";
 export * from "./pipelineFeed";
+export * from "./chainOverview";
 export * from "./lineageStats";
 export * from "./uploadStats";
 export * from "./uploadFeed";
