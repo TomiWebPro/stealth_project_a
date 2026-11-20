@@ -45,6 +45,7 @@ from .pipeline_stats import PipelineStatsRepository
 from .pipeline_feed import PipelineFeedRepository
 from .organization_feed import OrganizationFeedRepository
 from .organization_stats import OrganizationStatsRepository
+from .organization_overview import OrganizationOverviewRepository
 from .orchestration import OrchestrationRepository
 from .orchestration_feed import OrchestrationFeedRepository
 from .orchestration_stats import OrchestrationStatsRepository
@@ -107,6 +108,7 @@ class Repositories:
     pipeline_feed: PipelineFeedRepository
     organization_feed: OrganizationFeedRepository
     organization_stats: OrganizationStatsRepository
+    organization_overview: OrganizationOverviewRepository
     providers: ProviderRepository
     provider_feed: ProviderFeedRepository
     provider_stats: ProviderStatsRepository
@@ -199,6 +201,7 @@ class Repositories:
             default_org_id=settings.default_org_id,
             clock=clock,
         )
+        organization_overview = OrganizationOverviewRepository(store, auth, clock=clock)
         event_feed = EventFeedRepository(store, projects, clock=clock)
         event_stats = EventStatsRepository(store, projects, clock=clock)
         extensions = ExtensionRepository(store, clock=clock)
@@ -251,6 +254,7 @@ class Repositories:
             pipeline_feed=pipeline_feed,
             organization_feed=organization_feed,
             organization_stats=organization_stats,
+            organization_overview=organization_overview,
             providers=providers,
             provider_feed=provider_feed,
             provider_stats=provider_stats,

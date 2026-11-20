@@ -233,6 +233,10 @@ from .organization_stats import (
     OrganizationStats,
     RoleMemberCount,
 )
+from .organization_overview import (
+    OrganizationOverview,
+    OrganizationOverviewCounts,
+)
 from .pipeline_stats import (
     PipelineKind,
     PipelineKindStats,
@@ -584,6 +588,9 @@ __all__ = [
     "OrganizationMemberCount",
     "OrganizationStats",
     "RoleMemberCount",
+    # organization overview
+    "OrganizationOverview",
+    "OrganizationOverviewCounts",
     # pipeline stats
     "PipelineKind",
     "PipelineKindStats",

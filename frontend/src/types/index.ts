@@ -49,6 +49,7 @@ export * from "./extensionStats";
 export * from "./operationStats";
 export * from "./organizationFeed";
 export * from "./organizationStats";
+export * from "./organizationOverview";
 export * from "./pipelineStats";
 export * from "./pipelineFeed";
 export * from "./lineageStats";

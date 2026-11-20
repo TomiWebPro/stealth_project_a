@@ -235,6 +235,11 @@ All paths are prefixed with `/api/v1`.
   `GET /orgs/feed?limit=` (alias `/organizations/feed`) — authoritative newest-first
   organization feed (member/project activity joins, whole-scope total before the
   `limit` page) derived from the auth/project stores; shared 422 envelope
+  `GET /orgs/{id}/overview?recent_limit=` (alias `/organizations/{id}/overview`) —
+  authoritative single-organization snapshot (identity, whole-scope
+  member/project counts, a zero-filled role breakdown and bounded newest-first
+  members/projects) derived from the auth/project stores; shared 404
+  `organization_not_found` / 422 envelopes
 - **Extensions:** `GET /extensions/registry`, `GET /extensions`,
   `POST /extensions/install`, `GET /extensions/{id}`,
   `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`,

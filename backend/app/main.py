@@ -63,6 +63,7 @@ from .routers import (
     pipeline_stats,
     organization_feed,
     organization_stats,
+    organization_overview,
     orchestration,
     orchestration_feed,
     orchestration_stats,
@@ -358,6 +359,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # in auth.router so the literal paths win over the UUID-templated one.
     app.include_router(organization_stats.router, prefix=API_PREFIX)
     app.include_router(organization_feed.router, prefix=API_PREFIX)
+    # "/orgs/{org_id}/overview" is a nested single-organization view; mount it
+    # beside the organization routers and before auth.router so its literal
+    # suffix stays explicit.
+    app.include_router(organization_overview.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     # "/extensions/stats" and "/extensions/feed" must be registered before
     # "/extensions/{extension_id}" so the literal paths win over the
