@@ -73,6 +73,7 @@ import {
   fetchOrganizations,
   fetchOrchestrationRun,
   fetchOrchestrationStats,
+  fetchPlanOverview,
   fetchPresence,
   fetchProject,
   fetchProjectAudit,
@@ -2220,6 +2221,46 @@ describe("mock API chain overview (C234 follow-up)", () => {
   it("injects a failure for the chainOverview domain", async () => {
     setMockFailure("chainOverview");
     await expect(fetchChainOverview(chainId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API plan overview (C238 follow-up)", () => {
+  const planId = ORCHESTRATION_PLANS[0]?.plan_id ?? "";
+  const plan = ORCHESTRATION_PLANS.find((candidate) => candidate.plan_id === planId);
+
+  it("derives a populated snapshot from the plan/run/project seeds", async () => {
+    const overview = await fetchPlanOverview(planId, { recentLimit: 2 });
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.plan_id).toBe(planId);
+    expect(overview?.project_id).toBe(plan?.project_id);
+    expect(overview?.goal).toBe(plan?.goal ?? null);
+    expect(overview?.counts.steps).toBe((plan?.steps ?? []).length);
+    expect(overview?.counts.runs).toBeGreaterThanOrEqual(0);
+    expect((overview?.recent_runs ?? []).length).toBeLessThanOrEqual(2);
+    expect(overview?.by_stage).toHaveLength(6);
+  });
+
+  it("rejects a malformed id / limit and resolves an unknown plan to undefined", async () => {
+    await expect(fetchPlanOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchPlanOverview(planId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchPlanOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the planOverview domain", async () => {
+    setMockFailure("planOverview");
+    await expect(fetchPlanOverview(planId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

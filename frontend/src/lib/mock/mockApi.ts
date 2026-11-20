@@ -111,6 +111,8 @@ import {
   validateOrchestrationStatsArgs,
 } from "../orchestrationStats";
 import type { OrchestrationStatsOptions } from "../orchestrationStats";
+import { derivePlanOverview, validatePlanOverviewArgs } from "../planOverview";
+import type { PlanOverviewOptions } from "../planOverview";
 import { derivePipelineFeed, validatePipelineFeedArgs } from "../pipelineFeed";
 import type { PipelineFeedOptions } from "../pipelineFeed";
 import {
@@ -203,6 +205,7 @@ import type {
   OrchestrationStats,
   PipelineFeed,
   PipelineStats,
+  PlanOverview,
   Presence,
   Project,
   ProjectFeed,
@@ -281,7 +284,7 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
- * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
+ * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
  * `jobFeed` and `jobQueue`.
@@ -908,6 +911,33 @@ export async function fetchOrchestrationFeed(
   }
   return delay(
     deriveOrchestrationFeed(ORCHESTRATION_PLANS, ORCHESTRATION_RUNS, PROJECTS, REFERENCE_NOW, options),
+  );
+}
+
+/**
+ * Authoritative single-plan overview (C238 follow-up) derived from the same
+ * plan/run/project seeds as the live `/orchestration/plans/{id}/overview`
+ * endpoint. Router-style 422 validation (plan id / recent limit), an unknown
+ * plan resolving to `undefined` (matching the live 404-to-undefined detail
+ * mapping) and the injectable `"planOverview"` failure domain keep error and
+ * empty states at parity with live mode.
+ */
+export async function fetchPlanOverview(
+  planId: string,
+  options?: PlanOverviewOptions,
+): Promise<PlanOverview | undefined> {
+  failIfEnabled("planOverview");
+  validatePlanOverviewArgs(planId, options);
+  if (!ORCHESTRATION_PLANS.some((plan) => plan.plan_id === planId)) return delay(undefined);
+  return delay(
+    derivePlanOverview(
+      planId,
+      ORCHESTRATION_PLANS,
+      ORCHESTRATION_RUNS,
+      PROJECTS,
+      REFERENCE_NOW,
+      options,
+    ),
   );
 }
 

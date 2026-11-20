@@ -8,6 +8,7 @@ import {
   EXTENSIONS,
   JOBS,
   ORGANIZATIONS,
+  ORCHESTRATION_PLANS,
   PIPELINE_CHAINS,
   PROJECTS,
   PROVIDERS,
@@ -65,6 +66,7 @@ import {
   fetchOrchestrationFeed,
   fetchOrchestrationRun,
   fetchOrchestrationStats,
+  fetchPlanOverview,
   fetchOrganizations,
   fetchPresence,
   fetchProject,
@@ -165,6 +167,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchCollaborationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviders()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversations(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationRun("missing")).rejects.toBeInstanceOf(ApiError);
@@ -453,6 +456,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchChainOverview(chainId)).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the plan overview domain", async () => {
+    const planId = ORCHESTRATION_PLANS[0]?.plan_id ?? "";
+    setMockFailure("planOverview");
+
+    await expect(fetchPlanOverview(planId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchPlanOverview(planId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the lineage stats domain", async () => {
@@ -825,6 +841,7 @@ describe("mock error-state fakes", () => {
         ["providerOverview", () => fetchProviderOverview(providerId)],
         ["operationOverview", () => fetchOperationOverview("text-to-image")],
         ["chainOverview", () => fetchChainOverview(PIPELINE_CHAINS[0]?.id ?? "")],
+        ["planOverview", () => fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],

@@ -39,6 +39,7 @@ import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
 import type { OrchestrationFeedOptions } from "../lib/orchestrationFeed";
 import type { PipelineFeedOptions } from "../lib/pipelineFeed";
 import type { PipelineStatsOptions } from "../lib/pipelineStats";
+import type { PlanOverviewOptions } from "../lib/planOverview";
 import type { ProjectDetail } from "../lib/projectDetail";
 import type { ProjectFeedOptions } from "../lib/projectFeed";
 import type { ProjectOverviewOptions } from "../lib/projectOverview";
@@ -106,6 +107,7 @@ import type {
   OrchestrationStats,
   PipelineFeed,
   PipelineStats,
+  PlanOverview,
   Presence,
   Project,
   ProjectFeed,
@@ -465,6 +467,21 @@ export function useOrchestrationFeed(
   return useQuery({
     queryKey: queryKeys.orchestrationFeed.feed(options),
     queryFn: () => api.getOrchestrationFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-plan snapshot (identity, whole-scope counts and bounded
+ * recent runs) from `/orchestration/plans/{id}/overview` (C238).
+ */
+export function usePlanOverview(
+  planId: string,
+  options?: PlanOverviewOptions,
+): UseQueryResult<PlanOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.planOverview.detail(planId, options),
+    queryFn: () => api.getPlanOverview(planId, options),
   });
 }
 

@@ -12,6 +12,8 @@ import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
 import { deriveChainOverview, validateChainOverviewArgs } from "./chainOverview";
 import type { ChainOverviewOptions } from "./chainOverview";
+import { derivePlanOverview, validatePlanOverviewArgs } from "./planOverview";
+import type { PlanOverviewOptions } from "./planOverview";
 import {
   deriveCollaborationFeed,
   validateCollaborationFeedArgs,
@@ -1483,6 +1485,38 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative single-plan overview derives a compact snapshot from the same
+  // plan/run/project stores on every call; mirror the router's 422 validation,
+  // unknown-plan 404 and repository derivation over the seeds. This must precede
+  // any dynamic `/orchestration/...` detail branch.
+  if (/^\/orchestration\/plans\/[^/]+\/overview$/.test(path)) {
+    const planId = pathParts[3] ?? "";
+    const rawLimit = params.get("recent_limit");
+    const options: PlanOverviewOptions = {
+      ...(rawLimit !== null ? { recentLimit: Number(rawLimit) } : {}),
+    };
+    try {
+      validatePlanOverviewArgs(planId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ORCHESTRATION_PLANS.some((plan) => plan.plan_id === planId)) return NOT_FOUND;
+    return derivePlanOverview(
+      planId,
+      ORCHESTRATION_PLANS,
+      ORCHESTRATION_RUNS,
+      PROJECTS,
+      REFERENCE_NOW,
+      options,
+    );
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -1647,6 +1681,7 @@ const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ??
 const noConversationsId = PROJECTS.find((p) => p.name.startsWith("Northlight"))?.id ?? "";
 const runId = ORCHESTRATION_RUNS[0]?.run_id ?? "";
 const chainId = PIPELINE_CHAINS[0]?.id ?? "";
+const planId = ORCHESTRATION_PLANS[0]?.plan_id ?? "";
 const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
 /** Moonshot concept asset whose descendants exercise the full impact chain. */
 const impactRootId = "0b5c1e2a-2000-4000-8000-000000000011";
@@ -1803,6 +1838,9 @@ describe("live vs mock transport parity", () => {
         "getOrchestrationFeed scoped, filtered and limited",
         (api) => api.getOrchestrationFeed({ projectId: filmId, kind: "plan", limit: 1 }),
       ],
+      ["getPlanOverview", (api) => api.getPlanOverview(planId)],
+      ["getPlanOverview limited", (api) => api.getPlanOverview(planId, { recentLimit: 1 })],
+      ["getPlanOverview missing", (api) => api.getPlanOverview("00000000-0000-4000-8000-000000000000")],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -2079,6 +2117,19 @@ describe("live vs mock transport parity", () => {
     expect(await live.getChainOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getChainOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The plan overview resolves an unknown plan to undefined on both transports
+    // and returns a derived snapshot for a seeded plan (bounded recent runs,
+    // with counts and stage buckets never bounded).
+    expect(await live.getPlanOverview(planId)).toEqual(
+      await mockApiClient.getPlanOverview(planId),
+    );
+    expect(await live.getPlanOverview(planId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getPlanOverview(planId, { recentLimit: 1 }),
+    );
+    expect(await live.getPlanOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getPlanOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The extension overview resolves an unknown extension to undefined on both
     // transports and returns a derived snapshot for a seeded extension id.
@@ -2744,6 +2795,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed plan id or an out-of-range recent_limit
+    // with the same 422 envelope for the single-plan overview.
+    const badPlanOverviewOptions: Array<[string, string, PlanOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [planId, planId, { recentLimit: 0 }],
+      [planId, planId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badPlanOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getPlanOverview(mockId, options).catch((cause) => cause),
+        live.getPlanOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -2941,6 +3008,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getCollaborationFeed).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");
     expect(typeof typed.getOrchestrationFeed).toBe("function");
+    expect(typeof typed.getPlanOverview).toBe("function");
     expect(typeof typed.getOperationFeed).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
     expect(typeof typed.getOperationOverview).toBe("function");

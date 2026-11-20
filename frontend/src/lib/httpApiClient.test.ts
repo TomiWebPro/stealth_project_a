@@ -1049,6 +1049,62 @@ describe("createHttpApiClient chain overview (C234)", () => {
   });
 });
 
+describe("createHttpApiClient plan overview (C238)", () => {
+  const planId = "0b5c1e2a-6100-4000-8000-000000000001";
+  const overview = {
+    plan_id: planId,
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    goal: "Generate the s01_c01 shot video.",
+    created_at: "2026-01-01T00:00:00.000Z",
+    counts: { steps: 3, runs: 1, jobs_linked: 2 },
+    by_stage: [
+      { stage: "plan", count: 0 },
+      { stage: "resolve", count: 0 },
+      { stage: "submit", count: 0 },
+      { stage: "await", count: 1 },
+      { stage: "collect", count: 0 },
+      { stage: "done", count: 0 },
+    ],
+    recent_runs: [],
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the plan overview path and forwards recent_limit", async () => {
+    const { fetchImpl, calls } = router({
+      [`/orchestration/plans/${planId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getPlanOverview(planId, { recentLimit: 2 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/orchestration/plans/${planId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "plan_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getPlanOverview(planId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getPlanOverview(planId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient extension overview (C222)", () => {
   const extensionId = "0f1f2a3b-4c5d-5e6f-8a9b-0c1d2e3f4a5b";
   const overview = {

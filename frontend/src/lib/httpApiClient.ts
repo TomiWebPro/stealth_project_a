@@ -73,6 +73,8 @@ import { pipelineFeedQueryParams } from "./pipelineFeed";
 import type { PipelineFeedOptions } from "./pipelineFeed";
 import { pipelineStatsQueryParams } from "./pipelineStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
+import { planOverviewQueryParams } from "./planOverview";
+import type { PlanOverviewOptions } from "./planOverview";
 import type { ProjectDetail } from "./projectDetail";
 import { projectFeedQueryParams } from "./projectFeed";
 import type { ProjectFeedOptions } from "./projectFeed";
@@ -158,6 +160,7 @@ import type {
   OrchestrationStats,
   PipelineFeed,
   PipelineStats,
+  PlanOverview,
   Presence,
   Project,
   ProjectFeed,
@@ -575,6 +578,25 @@ export function createHttpApiClient(
     /** Newest-first authoritative orchestration feed derived by `/orchestration/feed` (C181). */
     getOrchestrationFeed(options?: OrchestrationFeedOptions): Promise<OrchestrationFeed> {
       return request<OrchestrationFeed>("/orchestration/feed", orchestrationFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-plan snapshot; the backend 404s on an unknown plan,
+     * which is normalized to `undefined` like the other detail lookups (C238).
+     */
+    async getPlanOverview(
+      planId: string,
+      options?: PlanOverviewOptions,
+    ): Promise<PlanOverview | undefined> {
+      try {
+        return await request<PlanOverview>(
+          `/orchestration/plans/${encodeURIComponent(planId)}/overview`,
+          planOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     async getHomeSummary(): Promise<HomeSummary> {

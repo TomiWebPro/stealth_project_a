@@ -37,6 +37,7 @@ import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
+import type { PlanOverviewOptions } from "./planOverview";
 import type { ProjectDetail } from "./projectDetail";
 import type { ProjectFeedOptions } from "./projectFeed";
 import type { ProjectOverviewOptions } from "./projectOverview";
@@ -104,6 +105,7 @@ import type {
   OrchestrationStats,
   PipelineFeed,
   PipelineStats,
+  PlanOverview,
   Presence,
   Project,
   ProjectFeed,
@@ -220,6 +222,15 @@ export interface ApiClient {
   getOrchestrationStats(options?: OrchestrationStatsOptions): Promise<OrchestrationStats>;
   /** Newest-first authoritative orchestration feed derived by `/orchestration/feed`, optionally project/kind-scoped (C181). */
   getOrchestrationFeed(options?: OrchestrationFeedOptions): Promise<OrchestrationFeed>;
+  /**
+   * Authoritative single-plan snapshot (identity, project, whole-scope step/run/
+   * job totals, zero-filled run-stage breakdown and bounded newest-first runs)
+   * from `/orchestration/plans/{id}/overview`; unknown plans resolve to `undefined` (C238).
+   */
+  getPlanOverview(
+    planId: string,
+    options?: PlanOverviewOptions,
+  ): Promise<PlanOverview | undefined>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -383,6 +394,7 @@ export const mockApiClient: ApiClient = {
   getCollaborationFeed: mockApi.fetchCollaborationFeed,
   getOrchestrationStats: mockApi.fetchOrchestrationStats,
   getOrchestrationFeed: mockApi.fetchOrchestrationFeed,
+  getPlanOverview: mockApi.fetchPlanOverview,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

@@ -294,6 +294,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the plan overview key by plan id and recent limit", () => {
+    expect(queryKeys.planOverview.detail("plan-1")).toEqual([
+      "plan-overview",
+      "detail",
+      "plan-1",
+      "all",
+    ]);
+    expect(queryKeys.planOverview.detail("plan-1", { recentLimit: 3 })).toEqual([
+      "plan-overview",
+      "detail",
+      "plan-1",
+      3,
+    ]);
+  });
+
   it("scopes the lineage stats key by project", () => {
     expect(queryKeys.lineageStats.summary()).toEqual(["lineage-stats", "summary", "all"]);
     expect(queryKeys.lineageStats.summary({ projectId: "p1" })).toEqual([
