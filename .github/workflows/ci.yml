@@ -4497,6 +4497,124 @@ jobs:
                 and bool(opov404.get("error", {}).get("request_id")),
                 opov_missing.text)
 
+          # Authoritative single-pipeline-chain overview (C234/C236) is the
+          # newest /api/v1 URL the live client calls (getChainOverview). Reuse
+          # the on-demand LoRA training chain created in the pipelines/feed
+          # probe (it carries real linked jobs/assets) so the derived snapshot
+          # has non-empty recent lists, then probe the full snapshot/count/ref
+          # shapes, newest-first recency, the recent_limit bound, the request-id
+          # header and the shared 404/422 envelopes, keeping CI aligned with
+          # the exact /api/v1 URLs the live client calls as the repo grows.
+          if pipeline_chain:
+              chov = httpx.get(
+                  f"{base}/pipelines/{pipeline_chain}/overview", timeout=5)
+              chob = chov.json() if chov.status_code == 200 else {}
+              check("pipelines/{id}/overview 200 snapshot shape",
+                    chov.status_code == 200 and all(
+                        k in chob for k in (
+                            "chain_id", "project_id", "project_name", "kind",
+                            "created_by", "created_at", "counts",
+                            "recent_jobs", "recent_assets", "generated_at")),
+                    chov.text)
+              check("pipelines/{id}/overview identity",
+                    chov.status_code == 200
+                    and chob.get("chain_id") == pipeline_chain
+                    and chob.get("project_id") == project_id
+                    and chob.get("kind") == "training"
+                    and isinstance(chob.get("project_name"), str)
+                    and bool(chob.get("project_name"))
+                    and isinstance(chob.get("created_by"), str)
+                    and isinstance(chob.get("created_at"), str)
+                    and isinstance(chob.get("generated_at"), str),
+                    chov.text)
+              check("pipelines/{id}/overview counts shape + invariants",
+                    chov.status_code == 200
+                    and isinstance(chob.get("counts"), dict)
+                    and all(isinstance(chob["counts"].get(k), int)
+                            and chob["counts"][k] >= 1
+                            for k in ("jobs", "assets"))
+                    and isinstance(chob.get("recent_jobs"), list)
+                    and isinstance(chob.get("recent_assets"), list)
+                    and len(chob["recent_jobs"]) >= 1
+                    and len(chob["recent_assets"]) >= 1
+                    and chob["counts"]["jobs"] >= len(chob["recent_jobs"])
+                    and chob["counts"]["assets"] >= len(chob["recent_assets"]),
+                    chov.text)
+              check("pipelines/{id}/overview recent ref shapes",
+                    chov.status_code == 200
+                    and all(all(k in j for k in (
+                        "job_id", "operation_id", "status", "created_at"))
+                        and isinstance(j["job_id"], str)
+                        and isinstance(j["operation_id"], str)
+                        and j.get("status") in (
+                            "queued", "running", "succeeded", "failed", "canceled")
+                        and isinstance(j["created_at"], str)
+                        for j in chob["recent_jobs"])
+                    and all(all(k in a for k in (
+                        "asset_id", "name", "asset_type", "created_at"))
+                        and isinstance(a["asset_id"], str)
+                        and isinstance(a["name"], str)
+                        and bool(a["name"])
+                        and isinstance(a["asset_type"], str)
+                        and isinstance(a["created_at"], str)
+                        for a in chob["recent_assets"]),
+                    chov.text)
+              check("pipelines/{id}/overview recent newest-first",
+                    chov.status_code == 200
+                    and [(j["created_at"], j["job_id"]) for j in chob["recent_jobs"]]
+                        == sorted(((j["created_at"], j["job_id"])
+                                   for j in chob["recent_jobs"]), reverse=True)
+                    and [(a["created_at"], a["asset_id"])
+                         for a in chob["recent_assets"]]
+                        == sorted(((a["created_at"], a["asset_id"])
+                                   for a in chob["recent_assets"]), reverse=True),
+                    chov.text)
+              check("pipelines/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in chov.headers},
+                    str(dict(chov.headers)))
+              chov_limited = httpx.get(
+                  f"{base}/pipelines/{pipeline_chain}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              chlb = (chov_limited.json()
+                      if chov_limited.status_code == 200 else {})
+              check("pipelines/{id}/overview recent_limit bounds lists only",
+                    chov_limited.status_code == 200
+                    and len(chlb.get("recent_jobs", [])) <= 1
+                    and len(chlb.get("recent_assets", [])) <= 1
+                    and chlb.get("counts") == chob.get("counts")
+                    and chlb.get("chain_id") == pipeline_chain,
+                    chov_limited.text)
+              chov_bad_limit = httpx.get(
+                  f"{base}/pipelines/{pipeline_chain}/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              chblbody = (chov_bad_limit.json()
+                          if chov_bad_limit.status_code == 422 else {})
+              check("pipelines/{id}/overview 422 invalid limit envelope",
+                    chov_bad_limit.status_code == 422
+                    and chblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(chblbody.get("error", {}).get("request_id")),
+                    chov_bad_limit.text)
+          else:
+              check("pipelines/{id}/overview setup", False,
+                    "could not obtain a chain id for the overview probe")
+          chov_missing = httpx.get(
+              f"{base}/pipelines/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          chov404 = (chov_missing.json() if chov_missing.status_code == 404 else {})
+          check("pipelines/{id}/overview 404 shared envelope",
+                chov_missing.status_code == 404
+                and chov404.get("error", {}).get("code") == "chain_not_found"
+                and bool(chov404.get("error", {}).get("request_id")),
+                chov_missing.text)
+          chov_bad_id = httpx.get(
+              f"{base}/pipelines/not-a-uuid/overview", timeout=5)
+          chovbadbody = (chov_bad_id.json() if chov_bad_id.status_code == 422 else {})
+          check("pipelines/{id}/overview 422 malformed id envelope",
+                chov_bad_id.status_code == 422
+                and chovbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(chovbadbody.get("error", {}).get("request_id")),
+                chov_bad_id.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
