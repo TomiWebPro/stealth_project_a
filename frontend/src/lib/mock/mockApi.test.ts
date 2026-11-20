@@ -29,6 +29,7 @@ import {
 import {
   clearMockFailures,
   fetchActivity,
+  fetchActivityOverview,
   fetchActivityStats,
   fetchAsset,
   fetchAssetOverview,
@@ -655,6 +656,56 @@ describe("mock API activity stats (C89 follow-up)", () => {
 
     setMockFailure("activityStats");
     await expect(fetchActivityStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API activity overview (C290 follow-up)", () => {
+  it("derives a populated snapshot from the authoritative activity seeds", async () => {
+    const feed = await fetchActivity();
+    const seededId = feed.events?.[0]?.id ?? "";
+    const overview = await fetchActivityOverview(seededId);
+
+    expect(overview).toBeDefined();
+    expect(overview?.id).toBe(seededId);
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.project_name).toBeTruthy();
+    expect(overview?.counts.workspace_events).toBe(feed.total);
+    expect(overview?.counts.total_events).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.by_kind).toHaveLength(4);
+    expect(overview?.recent_events?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds the sibling page by recentLimit without bounding the counts", async () => {
+    const seededId = (await fetchActivity()).events?.[0]?.id ?? "";
+    const full = await fetchActivityOverview(seededId);
+    const limited = await fetchActivityOverview(seededId, { recentLimit: 1 });
+
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.recent_events).toHaveLength(1);
+  });
+
+  it("mirrors router validation and resolves a well-formed missing id to undefined", async () => {
+    await expect(fetchActivityOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    const seededId = (await fetchActivity()).events?.[0]?.id ?? "";
+    await expect(fetchActivityOverview(seededId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchActivityOverview("asset-00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the activityOverview domain", async () => {
+    const seededId = (await fetchActivity()).events?.[0]?.id ?? "";
+    setMockFailure("activityOverview");
+    await expect(fetchActivityOverview(seededId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

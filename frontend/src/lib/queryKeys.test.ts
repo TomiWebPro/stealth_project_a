@@ -485,6 +485,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the activity overview key by event and recent limit", () => {
+    expect(queryKeys.activityOverview.detail("e1")).toEqual([
+      "activity-overview",
+      "detail",
+      "e1",
+      "all",
+    ]);
+    expect(queryKeys.activityOverview.detail("e1", { recentLimit: 3 })).toEqual([
+      "activity-overview",
+      "detail",
+      "e1",
+      3,
+    ]);
+  });
+
   it("scopes the orchestration stats key by project", () => {
     expect(queryKeys.orchestrationStats.summary()).toEqual([
       "orchestration-stats",

@@ -1559,6 +1559,68 @@ describe("createHttpApiClient retry overview (C286)", () => {
   });
 });
 
+describe("createHttpApiClient activity overview (C290)", () => {
+  const eventId = "asset-0b5c1e2a-2000-4000-8000-000000000011";
+  const overview = {
+    id: eventId,
+    kind: "asset",
+    project_id: "0b5c1e2a-1000-4000-8000-000000000002",
+    project_name: "Moonshot",
+    actor_id: "0b5c1e2a-0000-4000-8000-0000000000aa",
+    label: "Created frame.png",
+    detail: "text-to-image",
+    timestamp: "2026-03-18T09:00:00.000Z",
+    tone: "info",
+    counts: {
+      total_events: 4,
+      total_participants: 2,
+      workspace_events: 9,
+      by_kind: [
+        { kind: "asset", count: 2 },
+        { kind: "publish", count: 0 },
+        { kind: "job", count: 1 },
+        { kind: "comment", count: 1 },
+      ],
+    },
+    recent_events: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the activity overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({ [`/activity/${eventId}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getActivityOverview(eventId, { recentLimit: 2 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/activity/${eventId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces validation and other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "activity_not_found", message: "missing" } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(missing.getActivityOverview(eventId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "bad limit" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getActivityOverview(eventId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+  });
+});
+
 describe("createHttpApiClient lineage overview (C258)", () => {
   const relationshipId = "0b5c1e2a-5000-4000-8000-000000000001";
   const overview = {

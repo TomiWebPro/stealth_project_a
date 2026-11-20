@@ -2,6 +2,8 @@ import { ApiError } from "../api/client";
 import { parseStreamEvent } from "../api/conversations";
 import { activityQueryParams } from "./activity";
 import type { ActivityOptions } from "./activity";
+import { activityOverviewQueryParams } from "./activityOverview";
+import type { ActivityOverviewOptions } from "./activityOverview";
 import { activityStatsQueryParams } from "./activityStats";
 import type { ActivityStatsOptions } from "./activityStats";
 import { assetFeedQueryParams } from "./assetFeed";
@@ -134,6 +136,7 @@ import { versionStatsQueryParams } from "./versionStats";
 import type { VersionStatsOptions } from "./versionStats";
 import type {
   ActivityFeed,
+  ActivityOverview,
   ActivityStats,
   Asset,
   AssetFeed,
@@ -399,6 +402,26 @@ export function createHttpApiClient(
     /** Authoritative activity metrics derived by the backend `/activity/stats`. */
     getActivityStats(options?: ActivityStatsOptions): Promise<ActivityStats> {
       return request<ActivityStats>("/activity/stats", activityStatsQueryParams(options));
+    },
+
+    /**
+     * Authoritative single activity-event snapshot; the backend 404s on a
+     * well-formed id with no live event, normalized to `undefined` like the
+     * other detail lookups (C290). Malformed ids surface as 422.
+     */
+    async getActivityOverview(
+      eventId: string,
+      options?: ActivityOverviewOptions,
+    ): Promise<ActivityOverview | undefined> {
+      try {
+        return await request<ActivityOverview>(
+          `/activity/${encodeURIComponent(eventId)}/overview`,
+          activityOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** The backend owns the whole snapshot; the live transport just forwards it. */

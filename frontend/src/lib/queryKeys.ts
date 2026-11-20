@@ -1,4 +1,5 @@
 import type { ActivityOptions } from "./activity";
+import type { ActivityOverviewOptions } from "./activityOverview";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetOverviewOptions } from "./assetOverview";
@@ -86,6 +87,10 @@ export const queryKeys = {
   activityStats: {
     summary: (options: ActivityStatsOptions = {}) =>
       ["activity-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  activityOverview: {
+    detail: (eventId: string, options: ActivityOverviewOptions = {}) =>
+      ["activity-overview", "detail", eventId, options.recentLimit ?? "all"] as const,
   },
   dashboard: {
     summary: (options: DashboardOptions = {}) =>

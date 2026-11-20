@@ -1,4 +1,5 @@
 import type { ActivityOptions } from "./activity";
+import type { ActivityOverviewOptions } from "./activityOverview";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetOverviewOptions } from "./assetOverview";
@@ -68,6 +69,7 @@ import type { VersionFeedOptions } from "./versionFeed";
 import type { VersionStatsOptions } from "./versionStats";
 import type {
   ActivityFeed,
+  ActivityOverview,
   ActivityStats,
   Asset,
   AssetFeed,
@@ -171,6 +173,15 @@ export interface ApiClient {
   getActivity(options?: ActivityOptions): Promise<ActivityFeed>;
   /** Authoritative activity metrics derived by `/activity/stats`, optionally project-scoped (C89). */
   getActivityStats(options?: ActivityStatsOptions): Promise<ActivityStats>;
+  /**
+   * Authoritative single activity-event snapshot (identity, joined project,
+   * project-scoped counts and same-project siblings) from `/activity/{id}/overview`;
+   * a well-formed id with no live event resolves to `undefined` (C290).
+   */
+  getActivityOverview(
+    eventId: string,
+    options?: ActivityOverviewOptions,
+  ): Promise<ActivityOverview | undefined>;
   /** Authoritative workspace snapshot derived by the backend `/dashboard` endpoint (C25). */
   getDashboard(options?: DashboardOptions): Promise<DashboardSummary>;
   /** Authoritative job execution metrics derived by `/jobs/stats`, optionally project-scoped (C40). */
@@ -505,6 +516,7 @@ export const mockApiClient: ApiClient = {
   getHomeSummary: mockApi.fetchHomeSummary,
   getActivity: mockApi.fetchActivity,
   getActivityStats: mockApi.fetchActivityStats,
+  getActivityOverview: mockApi.fetchActivityOverview,
   getDashboard: mockApi.fetchDashboard,
   getJobStats: mockApi.fetchJobStats,
   getJobFeed: mockApi.fetchJobFeed,

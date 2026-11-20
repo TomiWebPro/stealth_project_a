@@ -10,6 +10,8 @@ export type {
   ActivityFeed,
   ActivityKind,
   ActivityKindCount,
+  ActivityOverview,
+  ActivityOverviewCounts,
   ActivityProjectCount,
   ActivityStats,
   ActivityTone,

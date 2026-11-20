@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useApiClient } from "../app/apiContext";
 import type { ActivityOptions } from "../lib/activity";
+import type { ActivityOverviewOptions } from "../lib/activityOverview";
 import type { ActivityStatsOptions } from "../lib/activityStats";
 import type { AssetFeedOptions } from "../lib/assetFeed";
 import type { AssetOverviewOptions } from "../lib/assetOverview";
@@ -70,6 +71,7 @@ import type { VersionFeedOptions } from "../lib/versionFeed";
 import type { VersionStatsOptions } from "../lib/versionStats";
 import type {
   ActivityFeed,
+  ActivityOverview,
   ActivityStats,
   Asset,
   AssetFeed,
@@ -182,6 +184,22 @@ export function useActivityStats(
   return useQuery({
     queryKey: queryKeys.activityStats.summary(options),
     queryFn: () => api.getActivityStats(options),
+  });
+}
+
+/**
+ * Authoritative single activity-event snapshot (identity, joined project,
+ * project-scoped counts and same-project siblings) from `/activity/{id}/overview`
+ * (C290); a well-formed id with no live event resolves to `undefined`.
+ */
+export function useActivityOverview(
+  eventId: string,
+  options?: ActivityOverviewOptions,
+): UseQueryResult<ActivityOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.activityOverview.detail(eventId, options),
+    queryFn: () => api.getActivityOverview(eventId, options),
   });
 }
 

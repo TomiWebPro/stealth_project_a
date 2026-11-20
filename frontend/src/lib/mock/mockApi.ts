@@ -1,6 +1,11 @@
 import { ApiError } from "../../api/client";
 import { deriveActivityFeed, validateActivityArgs } from "../activity";
 import type { ActivityOptions } from "../activity";
+import {
+  deriveActivityOverview,
+  validateActivityOverviewArgs,
+} from "../activityOverview";
+import type { ActivityOverviewOptions } from "../activityOverview";
 import { deriveActivityStats, validateActivityStatsArgs } from "../activityStats";
 import type { ActivityStatsOptions } from "../activityStats";
 import { deriveAssetFeed, validateAssetFeedArgs } from "../assetFeed";
@@ -202,6 +207,7 @@ import type {
   AssetOverview,
   AssetStats,
   AssetUpdate,
+  ActivityOverview,
   ActivityStats,
   AuditTrail,
   ChainOverview,
@@ -328,7 +334,7 @@ function delay<T>(value: T): Promise<T> {
  * Error-state fakes. Tests and screens can switch a domain into a failing
  * state so mock mode exercises the same error paths as live mode; `"*"` fails
  * every guarded query. Guarded domains: `home`, `dashboard`, `activity`,
- * `activityStats`, `jobStats`,
+ * `activityStats`, `activityOverview`, `jobStats`,
  * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `providerFeed`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `commentOverview`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
@@ -1188,6 +1194,39 @@ export async function fetchActivityStats(
       options,
     ),
   );
+}
+
+/**
+ * Authoritative single activity-event overview (C290 follow-up) derived from
+ * the same asset/job/comment/project seeds as the live `/activity/{id}/overview`
+ * endpoint. Router-style 422 validation (event id + recent limit) and a
+ * normalized 404 for a well-formed id with no live event (resolved to
+ * `undefined`, matching the live detail mapping) plus the injectable
+ * `"activityOverview"` failure domain keep error and empty states at parity.
+ */
+export async function fetchActivityOverview(
+  eventId: string,
+  options?: ActivityOverviewOptions,
+): Promise<ActivityOverview | undefined> {
+  failIfEnabled("activityOverview");
+  validateActivityOverviewArgs(eventId, options);
+  try {
+    const overview = deriveActivityOverview(
+      eventId,
+      {
+        assets: ASSETS.map(withAssetOverrides),
+        jobs: JOBS,
+        comments: COMMENTS,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+    return delay(overview);
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 404) return delay(undefined);
+    throw cause;
+  }
 }
 
 export async function fetchProjects(): Promise<readonly Project[]> {

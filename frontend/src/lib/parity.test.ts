@@ -8,6 +8,11 @@ import { deriveEventOverview, validateEventOverviewArgs } from "./eventOverview"
 import type { EventOverviewOptions } from "./eventOverview";
 import { deriveActivityFeed, validateActivityArgs } from "./activity";
 import type { ActivityOptions } from "./activity";
+import {
+  deriveActivityOverview,
+  validateActivityOverviewArgs,
+} from "./activityOverview";
+import type { ActivityOverviewOptions } from "./activityOverview";
 import { deriveActivityStats, validateActivityStatsArgs } from "./activityStats";
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
@@ -218,6 +223,45 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       ...(limitRaw !== null ? { limit: Number(limitRaw) } : {}),
     };
     return filterAuditTrail(trail, query);
+  }
+
+  // Authoritative single activity-event overview derives a compact snapshot
+  // from the same canonical feed as `/activity` and `/activity/stats`; mirror the
+  // router/repository 422 id + recent_limit validation and the 404 envelope over
+  // the shared seeds so live and mock agree exactly (C290). This must precede
+  // the literal /activity and /activity/stats branches below.
+  if (/^\/activity\/[^/]+\/overview$/.test(path)) {
+    const eventId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options: ActivityOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateActivityOverviewArgs(eventId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    try {
+      return deriveActivityOverview(
+        eventId,
+        {
+          assets: ASSETS,
+          jobs: JOBS,
+          comments: COMMENTS,
+          projects: PROJECTS,
+          now: REFERENCE_NOW,
+        },
+        options,
+      );
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) return NOT_FOUND;
+      throw cause;
+    }
   }
 
   // Authoritative activity statistics reuse the same feed derivation over the
@@ -2129,6 +2173,9 @@ const tagOverviewTag = "lora";
 /** A seeded retried job (present in the ledger and the job store) used by retry-overview probes (C286). */
 const retryOverviewJobId =
   JOB_RETRIES.find((entry) => JOBS.some((job) => job.id === entry.job_id))?.job_id ?? "";
+/** A seeded activity event (from the canonical feed) used by activity-overview probes (C290). */
+const activityOverviewEventId =
+  deriveActivityFeed(ASSETS, JOBS, COMMENTS, { limit: 1_000_000_000 }).events?.[0]?.id ?? "";
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -2147,6 +2194,15 @@ describe("live vs mock transport parity", () => {
       ["getActivity", (api) => api.getActivity()],
       ["getActivityStats", (api) => api.getActivityStats()],
       ["getActivityStats scoped", (api) => api.getActivityStats({ projectId: filmId })],
+      ["getActivityOverview", (api) => api.getActivityOverview(activityOverviewEventId)],
+      [
+        "getActivityOverview limited",
+        (api) => api.getActivityOverview(activityOverviewEventId, { recentLimit: 1 }),
+      ],
+      [
+        "getActivityOverview missing",
+        (api) => api.getActivityOverview("asset-00000000-0000-4000-8000-000000000000"),
+      ],
       ["getActivity scoped", (api) => api.getActivity({ projectId: filmId })],
       ["getActivity filtered", (api) => api.getActivity({ projectId: filmId, kind: "job", limit: 3 })],
       ["getDashboard", (api) => api.getDashboard()],
@@ -2758,6 +2814,32 @@ describe("live vs mock transport parity", () => {
     ).toBeUndefined();
     expect(
       await mockApiClient.getRetryOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The activity overview returns identity, a joined project name and a
+    // project-scoped count block shared with `/activity/stats` for a seeded
+    // event, and resolves a well-formed unknown id to undefined on both
+    // transports (C290).
+    const seededActivityOverview = await mockApiClient.getActivityOverview(activityOverviewEventId);
+    expect(seededActivityOverview).toBeDefined();
+    expect(await live.getActivityOverview(activityOverviewEventId)).toEqual(seededActivityOverview);
+    expect(seededActivityOverview).toMatchObject({
+      id: activityOverviewEventId,
+      project_name: expect.any(String),
+      counts: {
+        total_events: expect.any(Number),
+        total_participants: expect.any(Number),
+        workspace_events: expect.any(Number),
+        by_kind: expect.any(Array),
+      },
+    });
+    expect(await live.getActivityOverview(activityOverviewEventId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getActivityOverview(activityOverviewEventId, { recentLimit: 1 }),
+    );
+    expect(
+      await live.getActivityOverview("asset-00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    expect(
+      await mockApiClient.getActivityOverview("asset-00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The lineage overview resolves an unknown relationship to undefined on
     // both transports and returns a canonical-set count snapshot for a seeded
@@ -3685,6 +3767,25 @@ describe("live vs mock transport parity", () => {
     expect(badRetryLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(badRetryLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports reject a malformed event id and out-of-range recent limit
+    // with the same 422 envelope for the single activity-event overview (C290).
+    const [badActivityMockErr, badActivityLiveErr] = await Promise.all([
+      mockApiClient.getActivityOverview("not-a-uuid").catch((cause) => cause),
+      live.getActivityOverview("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(badActivityMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badActivityLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [badActivityLimitMockErr, badActivityLimitLiveErr] = await Promise.all([
+      mockApiClient
+        .getActivityOverview(activityOverviewEventId, { recentLimit: 0 })
+        .catch((cause) => cause),
+      live
+        .getActivityOverview(activityOverviewEventId, { recentLimit: 0 })
+        .catch((cause) => cause),
+    ]);
+    expect(badActivityLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badActivityLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports reject a malformed relationship id and out-of-range
     // recent limit with the same 422 envelope for the single-relationship
     // overview (C258).
@@ -3866,6 +3967,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getHomeSummary).toBe("function");
     expect(typeof typed.getActivity).toBe("function");
     expect(typeof typed.getActivityStats).toBe("function");
+    expect(typeof typed.getActivityOverview).toBe("function");
     expect(typeof typed.getDashboard).toBe("function");
     expect(typeof typed.getJobStats).toBe("function");
     expect(typeof typed.getJobFeed).toBe("function");

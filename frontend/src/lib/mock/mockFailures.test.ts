@@ -20,6 +20,7 @@ import {
 } from "./data";
 import {
   clearMockFailures,
+  fetchActivityOverview,
   fetchActivityStats,
   fetchAsset,
   fetchAssetFeed,
@@ -137,6 +138,7 @@ describe("mock error-state fakes", () => {
 
     await expect(fetchHomeSummary()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchActivityStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchActivityOverview(`asset-${ASSETS[0]?.id ?? ""}`)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchSearchStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchUploadStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchUploadFeed()).rejects.toBeInstanceOf(ApiError);
@@ -623,6 +625,19 @@ describe("mock error-state fakes", () => {
     await expect(fetchActivityStats()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the activity overview domain", async () => {
+    const eventId = `asset-${ASSETS[0]?.id ?? ""}`;
+    setMockFailure("activityOverview");
+
+    await expect(fetchActivityOverview(eventId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchActivityOverview(eventId)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the search stats domain", async () => {
     setMockFailure("searchStats");
 
@@ -989,6 +1004,7 @@ describe("mock error-state fakes", () => {
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["publishOverview", () => fetchPublishOverview(assetId)],
         ["retryOverview", () => fetchRetryOverview(retriedJobId)],
+        ["activityOverview", () => fetchActivityOverview(`asset-${assetId}`)],
         ["tagOverview", () => fetchTagOverview("lora")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
