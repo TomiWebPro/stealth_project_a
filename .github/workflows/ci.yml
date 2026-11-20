@@ -4861,6 +4861,81 @@ jobs:
                 and bool(rovbadbody.get("error", {}).get("request_id")),
                 rov_bad_id.text)
 
+          # Authoritative single-upload-ticket overview (C246/C248) is the newest
+          # /api/v1 URL the live client calls (getUploadOverview). Reuse the
+          # on-demand ticket issued in the uploads/feed probe so the snapshot has
+          # real identity, byte accounting and whole-project counts, then probe the
+          # full shape, the derived bytes_remaining/progress/expired signals, the
+          # stats-shared counts block and the shared 404/422 envelopes, keeping CI
+          # aligned with the exact /api/v1 URLs the live client calls as it grows.
+          uov_missing = httpx.get(
+              f"{base}/uploads/00000000-0000-4000-8000-000000000000/overview", timeout=5)
+          uov404body = (uov_missing.json() if uov_missing.status_code == 404 else {})
+          check("uploads/{id}/overview 404 shared envelope",
+                uov_missing.status_code == 404
+                and uov404body.get("error", {}).get("code") == "upload_not_found"
+                and bool(uov404body.get("error", {}).get("request_id")),
+                uov_missing.text)
+          uov_bad_id = httpx.get(f"{base}/uploads/not-a-uuid/overview", timeout=5)
+          uovbadbody = (uov_bad_id.json() if uov_bad_id.status_code == 422 else {})
+          check("uploads/{id}/overview 422 malformed id envelope",
+                uov_bad_id.status_code == 422
+                and uovbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(uovbadbody.get("error", {}).get("request_id")),
+                uov_bad_id.text)
+          if upload_ticket:
+              uov = httpx.get(f"{base}/uploads/{upload_ticket}/overview", timeout=5)
+              uovb = uov.json() if uov.status_code == 200 else {}
+              check("uploads/{id}/overview 200 snapshot shape",
+                    uov.status_code == 200 and all(
+                        k in uovb for k in (
+                            "upload_id", "project_id", "project_name", "filename",
+                            "content_type", "status", "declared_size", "size_bytes",
+                            "bytes_remaining", "progress", "expired", "created_at",
+                            "expires_at", "counts", "generated_at")),
+                    uov.text)
+              check("uploads/{id}/overview identity + project join",
+                    uov.status_code == 200
+                    and uovb.get("upload_id") == upload_ticket
+                    and uovb.get("project_id") == project_id
+                    and uovb.get("filename") == "ci-smoke.bin"
+                    and uovb.get("content_type") == "application/octet-stream"
+                    and uovb.get("status") == "pending"
+                    and isinstance(uovb.get("project_name"), str)
+                    and bool(uovb.get("project_name"))
+                    and isinstance(uovb.get("created_at"), str)
+                    and isinstance(uovb.get("expires_at"), str)
+                    and isinstance(uovb.get("generated_at"), str),
+                    uov.text)
+              check("uploads/{id}/overview byte accounting + derived signals",
+                    uov.status_code == 200
+                    and uovb.get("declared_size") == 8
+                    and isinstance(uovb.get("size_bytes"), int)
+                    and uovb["size_bytes"] >= 0
+                    and isinstance(uovb.get("bytes_remaining"), int)
+                    and uovb["bytes_remaining"] == max(
+                        0, uovb["declared_size"] - uovb["size_bytes"])
+                    and isinstance(uovb.get("progress"), (int, float))
+                    and 0.0 <= uovb["progress"] <= 1.0
+                    and isinstance(uovb.get("expired"), bool),
+                    uov.text)
+              uov_counts = uovb.get("counts", {})
+              check("uploads/{id}/overview stats-shared counts",
+                    uov.status_code == 200
+                    and isinstance(uov_counts, dict)
+                    and all(isinstance(uov_counts.get(k), int) and uov_counts[k] >= 0
+                            for k in ("project_tickets", "project_completed",
+                                      "project_bytes_uploaded"))
+                    and uov_counts.get("project_tickets", 0) >= 1
+                    and uov_counts["project_tickets"] >= uov_counts["project_completed"],
+                    uov.text)
+              check("uploads/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in uov.headers},
+                    str(dict(uov.headers)))
+          else:
+              check("uploads/{id}/overview setup", False,
+                    "could not issue an upload ticket for the overview probe")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
