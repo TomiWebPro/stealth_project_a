@@ -21,6 +21,7 @@ import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationFeedPanel } from "../jobs/OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
 import { PlanOverviewPanel } from "../jobs/PlanOverviewPanel";
+import { RunOverviewPanel } from "../jobs/RunOverviewPanel";
 import { RetryFeedPanel } from "../jobs/RetryFeedPanel";
 import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
@@ -318,6 +319,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project plan overview"
         description="Select a plan in this project to inspect its authoritative snapshot, run-stage distribution and newest runs."
+      />
+      <RunOverviewPanel
+        projectId={projectId}
+        title="Project run overview"
+        description="Select a run in this project to inspect its authoritative snapshot, resolved-job statuses and newest jobs."
       />
       <EventStatsPanel
         projectId={projectId}

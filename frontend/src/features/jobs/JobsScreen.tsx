@@ -17,6 +17,7 @@ import { JobsPanel } from "./JobsPanel";
 import { OrchestrationFeedPanel } from "./OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
 import { PlanOverviewPanel } from "./PlanOverviewPanel";
+import { RunOverviewPanel } from "./RunOverviewPanel";
 import { RetryFeedPanel } from "./RetryFeedPanel";
 import { RetryStatsPanel } from "./RetryStatsPanel";
 import { OperationFeedPanel } from "../operations/OperationFeedPanel";
@@ -101,6 +102,11 @@ export function JobsScreen() {
       <PlanOverviewPanel
         title="Global plan overview"
         description="Select an orchestration plan to inspect its authoritative snapshot, run-stage distribution and newest runs."
+      />
+
+      <RunOverviewPanel
+        title="Global run overview"
+        description="Select an orchestration run to inspect its authoritative snapshot, resolved-job statuses and newest jobs."
       />
 
       <EventStatsPanel
