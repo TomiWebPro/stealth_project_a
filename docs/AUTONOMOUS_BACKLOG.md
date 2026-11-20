@@ -3754,6 +3754,30 @@ this file is the execution checklist.
   ✅ 2026-11-20 — `62e5222`
   Screens single-user overview rendering remains a screens follow-up.
 
+- [x] C266 (backend) Authoritative single-organization-membership overview API:
+  `GET /api/v1/orgs/{org_id}/members/{user_id}/overview?recent_limit=` derives a
+  compact single-membership snapshot from the authoritative auth/project/
+  conversation/comment/presence stores (no second index) — joined org identity
+  (id/name/slug) + user identity (id/email/display name/avatar), the membership
+  role + join date read from the authoritative `MEMBERS` collection with
+  `_org_id` scoping (so it cannot disagree with `GET /orgs/{id}/members`),
+  whole-scope `MembershipOverviewCounts` (project/conversation/comment/presence
+  activity scoped to the requested org and authored by the requested user) and
+  bounded newest-first `recent_projects`/`recent_comments` with a deterministic
+  `(created_at, id)` tie-break (counts never bounded by the page); malformed or
+  org-mismatched membership docs are skipped, and the literal path is registered
+  before `auth.router`. Unknown org → shared 404 `organization_not_found`,
+  unknown user → shared 404 `user_not_found`, no membership → shared 404
+  `membership_not_found`; malformed id / invalid `recent_limit` → shared 422
+  `validation_error`. `MembershipOverview`/`MembershipOverviewCounts` mirrored
+  in `frontend/src/types/membershipOverview.ts` + exported from the types index,
+  README endpoint list synced, 9 tests × 2 storage backends green (18 new tests;
+  1489 passed, contract parity + route-surface guard clean). Mocks/screens/CI
+  wiring of the snapshot is a follow-up. My owned backend column had no
+  unchecked items (only the repo-wide C6 docs pass remains, owned by other
+  agents), so C266 was added under the Never-empty well.
+  ✅ 2026-11-20 — `e131a85`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -4056,3 +4080,4 @@ this file is the execution checklist.
 - 2026-11-20 — `eadbd1c` — C263 (screens): rendered the authoritative single lineage-relationship overview (C258/C260/C261 follow-up) via `useLineageOverview` — a reusable `LineageOverviewPanel` on Projects (workspace-wide) and project detail (project-scoped) with a relationship picker fed by the authoritative `useLineageFeed`, a type/endpoint/context header with project + source/target deep links (scoping the assets browser to the relationship's project first), four zero-filled whole-source-asset count cards and newest-first sibling-link rows, plus loading/error/missing/empty/populated states — every display value derived in tested `lineageOverviewHelpers` that reuse the canonical lineage feed/stats helpers (9 new cases). Resolves the C261 screens follow-up. Rows stay read-only (no relationship-detail route); no new route was added. My owned column had no unchecked rows, so C263 was added under the Never-empty well. Lint clean, 1838 tests, build green.
 - 2026-11-20 — `8a8c23a` — C264 (mocks): wired the authoritative single-user profile overview (C262 follow-up) end to end — `getUserOverview`/`useUserOverview` atomically across mockApi (seed-derived identity, every organization membership with its joined org name + an "Unknown organization" fallback sorted newest-first, zero-filled whole-scope auth/project/conversation/comment/presence counts and a bounded newest-first `(created_at, id)` recent projects/comments page with counts never bounded; router-style 422 for a malformed user id / out-of-range recent limit, unknown-user 404-to-undefined + injectable `userOverview` failure), the stable ApiClient facade, live httpApiClient (`GET /users/{id}/overview?recent_limit=` with 404-to-undefined), queryKeys and useQueries, with a shared `lib/userOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/limited/missing/422 + surface guard) plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C262 mocks-transport follow-up. My owned column had no unchecked rows, so C264 was added under the Never-empty well. Lint clean, 1857 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-20 — `62e5222` — C265 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/users/{id}/overview?recent_limit=` single-user profile overview (the C262/C264 follow-up) — log in with the seeded dev-local account so the snapshot has a real user with a joined Studio Org owner membership and smoke-created projects/comments, then probe the full snapshot shape, identity, the zero-filled whole-scope count block (`organizations`/`projects`/`conversations`/`comments`/`presence`), membership shapes + count invariant, recent page shapes/bounds/recency, the `recent_limit` page-only bound (`0`/`51` → 422, counts and memberships never bounded), the request-id header and the shared 404 `user_not_found` / 422 `validation_error` envelopes (malformed id + invalid limits), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C265 was added under the Never-empty well; resolves the C262/C264 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (all probes OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/1857 tests/build, backend pytest 1471). Screens user-overview rendering remains a screens follow-up.
+- 2026-11-20 — `e131a85` — C266 (backend): added authoritative `GET /api/v1/orgs/{org_id}/members/{user_id}/overview?recent_limit=` — a compact single-membership snapshot derived fresh from the authoritative auth/project/conversation/comment/presence stores (no second index): joined org/user identity, membership role + join date read from the `MEMBERS` collection with `_org_id` scoping, whole-scope org/user-scoped project/conversation/comment/presence counts and bounded newest-first `recent_projects`/`recent_comments` with a deterministic `(created_at, id)` tie-break (counts never bounded by the page; malformed/org-mismatched member docs skipped), with shared 404 `organization_not_found` / `user_not_found` / `membership_not_found` and 422 `validation_error` envelopes. `MembershipOverview`/`MembershipOverviewCounts` mirrored in `frontend/src/types/membershipOverview.ts` + exported from the types index, README endpoint list synced, 9 tests × 2 storage backends green (18 new tests; 1489 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C266 was added under the Never-empty well.
