@@ -10,6 +10,7 @@ import { CollaborationFeedPanel } from "./CollaborationFeedPanel";
 import { CollaborationPanel } from "./CollaborationPanel";
 import { CollaborationStatsPanel } from "./CollaborationStatsPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
+import { MembershipOverviewPanel } from "./MembershipOverviewPanel";
 import { OrganizationFeedPanel } from "./OrganizationFeedPanel";
 import { OrganizationOverviewPanel } from "./OrganizationOverviewPanel";
 import { OrganizationStatsPanel } from "./OrganizationStatsPanel";
@@ -36,6 +37,8 @@ export function WorkspacesScreen() {
       <CollaborationPanel />
 
       <UserOverviewPanel />
+
+      <MembershipOverviewPanel />
 
       <OrganizationFeedPanel />
 
