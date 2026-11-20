@@ -3271,6 +3271,29 @@ this file is the execution checklist.
   Lint clean, 1676 tests, build green.
   ✅ 2026-11-20 — `5fe73f2`
 
+- [x] C241 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  single-orchestration-plan overview endpoint from C238/C240
+  (`GET /api/v1/orchestration/plans/{plan_id}/overview?recent_limit=`): reuse the
+  plan linked to the on-demand run created by the orchestration/feed probe (each
+  run is attached to a fresh plan with real steps) so the derived snapshot has a
+  non-empty recent_runs list, then probe the full snapshot shape
+  (`plan_id`/`project_id`/`project_name`/`goal`/`created_at`/`counts`/`by_stage`/
+  `recent_runs`/`generated_at`), identity + goal, the whole-scope count shape with
+  `steps >= 1` / `runs >= 1` / `runs >= len(recent_runs)` invariants, the six
+  canonical run-stage buckets (`plan`/`resolve`/`submit`/`await`/`collect`/`done`)
+  whose counts sum to `runs`, the recent-run ref shapes and newest-first
+  `(created_at, run_id)` recency, the `recent_limit` bound (1 run, `0` → 422,
+  counts unchanged), the request-id header and the shared 404 `plan_not_found` /
+  422 `validation_error` envelopes (malformed id + invalid limit), keeping CI
+  aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as
+  the repo grows. No unchecked CI row remained, so C241 was added under the
+  Never-empty well; resolves the C238/C240 CI live-smoke follow-up. Verified the
+  exact embedded smoke script against a real ASGI server on a dynamically chosen
+  free port (all checks OK, exit 0) with YAML parse + actionlint v1.7.12
+  (`-shellcheck=`); both suites green (frontend lint clean/1676 tests/build,
+  backend pytest 1369). Screens plan-overview rendering remains a screens follow-up.
+  ✅ 2026-11-20 — `614fbed`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3548,3 +3571,4 @@ this file is the execution checklist.
 - 2026-11-20 — `249dd67` — C238 (backend): added authoritative `GET /api/v1/orchestration/plans/{plan_id}/overview?recent_limit=` — a compact single-plan snapshot derived fresh from the authoritative plan/run stores joined to projects (no second index): identity + joined project name ("Unknown project" fallback) + nullable goal, whole-scope step/run/job totals, a zero-filled run-stage breakdown reusing the canonical `OrchestrationStageCount` from `/orchestration/stats`, and newest-first `(created_at, run_id)` recent runs bounded by `recent_limit` while counts stay unbounded (orphan runs excluded by the plan join); unknown plan → shared 404 `plan_not_found`, malformed id / invalid limit → shared 422 `validation_error`. `PlanOverview`/`PlanOverviewCounts`/`PlanOverviewRunRef` mirrored in `frontend/src/types/planOverview.ts` + exported from the types index, README endpoint list synced, 7 tests × 2 storage backends green (1369 passed, contract parity + route-surface guard + tsc clean). My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C238 was added under the Never-empty well. Mocks/screens/CI wiring of the snapshot is a follow-up.
 - 2026-11-20 — `41ed240` — C239 (screens): rendered the authoritative single-pipeline-chain overview (C234/C236/C237 follow-up) via `useChainOverview` — a reusable `ChainOverviewPanel` on Projects (workspace-wide) and project detail (project-scoped) with a chain picker fed by the authoritative `usePipelineFeed`, recent-item page-size chips, a kind/chain identity header with a project deep link, four zero-filled count cards (whole-chain jobs/assets plus bounded recent jobs/assets), newest-linked job/asset sections with asset deep links that scope the assets browser first, and loading/error/missing/empty/populated states — every display value derived in 15 tested `chainOverviewHelpers` cases that reuse the canonical pipeline/job/asset helpers so the view cannot drift from the workspace-wide pipeline screens. Resolves the C237 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C239 was added under the Never-empty well. Lint clean, 1661 tests, build green.
 - 2026-11-20 — `5fe73f2` — C240 (mocks): wired the authoritative single-orchestration-plan overview (C238 follow-up) end to end — `getPlanOverview`/`usePlanOverview` atomically across mockApi (seed-derived identity + joined project name, zero-filled canonical stage buckets reused from orchestration stats, whole-scope counts and bounded newest-first recent runs with orphan exclusion; 422 for a malformed plan id / out-of-range limit, unknown-plan 404-to-undefined + injectable `planOverview` failure), the stable ApiClient facade, live `httpApiClient` (`GET /orchestration/plans/{id}/overview?recent_limit=` with 404-to-undefined + non-404 propagation), queryKeys and useQueries, with a shared `lib/planOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/limited/missing/422 + surface guard), plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C238 mocks-transport follow-up. My owned column had no unchecked rows, so C240 was added under the Never-empty well. Lint clean, 1676 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-20 — `614fbed` — C241 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/orchestration/plans/{plan_id}/overview?recent_limit=` single-plan overview (the C238/C240 follow-up) — reusing the plan linked to the on-demand orchestration/feed run (each run is attached to a fresh plan with real steps) so the derived snapshot has a non-empty recent_runs list, then probing the full snapshot shape, identity + goal, the whole-scope count shape (`steps >= 1` / `runs >= 1` / `runs >= len(recent_runs)`), the six canonical run-stage buckets (plan/resolve/submit/await/collect/done) whose counts sum to `runs`, the recent-run ref shapes + newest-first `(created_at, run_id)` recency, the `recent_limit` bound (1 run, `0` → 422, counts unchanged), the request-id header and the shared 404 `plan_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C241 was added under the Never-empty well; resolves the C238/C240 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (all checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1676 tests/build and backend pytest (1369) green. Screens plan-overview rendering remains a screens follow-up.
