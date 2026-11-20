@@ -4224,6 +4224,85 @@ jobs:
                 and bool(pov404body.get("error", {}).get("request_id")),
                 pov_missing.text)
 
+          # Authoritative single-extension overview (C222/C224) is the newest /api/v1
+          # URL the live client calls (getExtensionOverview). Reuse the extension
+          # installed in the extensions/feed probe above so the derived snapshot has
+          # real manifest identity, trust flags and a declared permission/capability/
+          # provider/UI scope; probe the snapshot/binding shapes, the count invariants,
+          # the request-id header and the shared 404/422 envelopes, keeping CI aligned
+          # with the exact /api/v1 URLs the VITE_API_MODE=live client calls as it grows.
+          ext_ov_id = derived_ext.get("extension_id") if derived_ext else None
+          if ext_ov_id:
+              extov = httpx.get(f"{base}/extensions/{ext_ov_id}/overview", timeout=5)
+              eovbody = extov.json() if extov.status_code == 200 else {}
+              check("extensions/{id}/overview 200 snapshot shape",
+                    extov.status_code == 200 and all(
+                        k in eovbody for k in (
+                            "extension_id", "manifest_id", "name", "version",
+                            "publisher", "type", "status", "installed_at",
+                            "runtime", "app_versions", "signed", "verified",
+                            "permissions", "capabilities", "provider_ids",
+                            "ui_contributions", "dependencies", "counts",
+                            "generated_at")),
+                    extov.text)
+              check("extensions/{id}/overview identity + trust",
+                    extov.status_code == 200
+                    and eovbody.get("extension_id") == ext_ov_id
+                    and eovbody.get("manifest_id") == "com.studio.comfyui-bridge"
+                    and eovbody.get("name") == "ComfyUI Bridge"
+                    and eovbody.get("version") == "1.2.0"
+                    and eovbody.get("publisher") == "Studio Platform"
+                    and eovbody.get("type") in (
+                        "capability", "ui", "provider", "runtime", "bundle")
+                    and eovbody.get("type") == "provider"
+                    and eovbody.get("status") in (
+                        "installed", "enabled", "disabled", "update_available")
+                    and eovbody.get("signed") is True
+                    and eovbody.get("verified") is True
+                    and isinstance(eovbody.get("app_versions"), str)
+                    and isinstance(eovbody.get("generated_at"), str),
+                    extov.text)
+              check("extensions/{id}/overview declared scope sorted/dedup",
+                    extov.status_code == 200
+                    and all(
+                        isinstance(eovbody.get(k), list)
+                        and all(isinstance(v, str) for v in eovbody[k])
+                        and eovbody[k] == sorted(set(eovbody[k]))
+                        for k in ("permissions", "capabilities", "provider_ids",
+                                  "ui_contributions", "dependencies")),
+                    extov.text)
+              check("extensions/{id}/overview counts shape + invariants",
+                    extov.status_code == 200
+                    and isinstance(eovbody.get("counts"), dict)
+                    and all(isinstance(eovbody["counts"].get(k), int)
+                            and eovbody["counts"][k] >= 0
+                            and eovbody["counts"][k] == len(eovbody.get(k, []))
+                            for k in ("permissions", "capabilities", "provider_ids",
+                                      "ui_contributions", "dependencies")),
+                    extov.text)
+              check("extensions/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in extov.headers},
+                    str(dict(extov.headers)))
+              eov_missing = httpx.get(
+                  f"{base}/extensions/00000000-0000-4000-8000-000000000000/overview",
+                  timeout=5)
+              eov404body = (eov_missing.json() if eov_missing.status_code == 404 else {})
+              check("extensions/{id}/overview 404 shared envelope",
+                    eov_missing.status_code == 404
+                    and eov404body.get("error", {}).get("code") == "extension_not_found"
+                    and bool(eov404body.get("error", {}).get("request_id")),
+                    eov_missing.text)
+              eov_bad_id = httpx.get(f"{base}/extensions/not-a-uuid/overview", timeout=5)
+              eovbadbody = (eov_bad_id.json() if eov_bad_id.status_code == 422 else {})
+              check("extensions/{id}/overview 422 malformed id envelope",
+                    eov_bad_id.status_code == 422
+                    and eovbadbody.get("error", {}).get("code") == "validation_error"
+                    and bool(eovbadbody.get("error", {}).get("request_id")),
+                    eov_bad_id.text)
+          else:
+              check("extensions/{id}/overview setup", False,
+                    "could not obtain an installed extension id for the overview probe")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
