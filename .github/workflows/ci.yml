@@ -5190,6 +5190,127 @@ jobs:
               check("comments/{id}/overview setup", False,
                     "could not obtain a comment id for the overview probe")
 
+          # Authoritative single lineage-relationship overview (C258/C260) is the
+          # newest /api/v1 URL the live client calls (getLineageOverview). Reuse
+          # the on-demand child relationship registered in the lineage/feed probe
+          # so the snapshot has real endpoint identity, a joined source project,
+          # whole-source-asset counts shared with /lineage/stats and /lineage/feed
+          # and a newest-first sibling page, then probe the full snapshot/count/item
+          # shapes, the recent_limit bound (page only), the request-id header and
+          # the shared 404/422 envelopes, keeping CI aligned with the exact /api/v1
+          # URLs the live client calls as the repo grows.
+          lov_relationship = next(
+              (i for i in lfbody.get("items", [])
+               if i.get("from_asset_id") == lineage_child
+               and i.get("to_asset_id") == asset_id),
+              None)
+          lineage_rel_id = (
+              lov_relationship.get("id") if lov_relationship else None)
+          lov_unknown = httpx.get(
+              f"{base}/lineage/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          lov404 = (lov_unknown.json() if lov_unknown.status_code == 404 else {})
+          check("lineage/{id}/overview 404 shared envelope",
+                lov_unknown.status_code == 404
+                and lov404.get("error", {}).get("code") == "relationship_not_found"
+                and bool(lov404.get("error", {}).get("request_id")),
+                lov_unknown.text)
+          lov_bad_id = httpx.get(
+              f"{base}/lineage/not-a-uuid/overview", timeout=5)
+          lovbadbody = (lov_bad_id.json() if lov_bad_id.status_code == 422 else {})
+          check("lineage/{id}/overview 422 malformed id envelope",
+                lov_bad_id.status_code == 422
+                and lovbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(lovbadbody.get("error", {}).get("request_id")),
+                lov_bad_id.text)
+          if lineage_rel_id:
+              lov = httpx.get(f"{base}/lineage/{lineage_rel_id}/overview", timeout=5)
+              lovb = lov.json() if lov.status_code == 200 else {}
+              check("lineage/{id}/overview 200 snapshot shape",
+                    lov.status_code == 200 and all(
+                        k in lovb for k in (
+                            "id", "from_asset_id", "to_asset_id", "from_asset_name",
+                            "to_asset_name", "from_asset_type", "to_asset_type",
+                            "project_id", "project_name", "type", "created_at",
+                            "counts", "recent_relationships", "generated_at")),
+                    lov.text)
+              check("lineage/{id}/overview identity + joined context",
+                    lov.status_code == 200
+                    and lovb.get("id") == lineage_rel_id
+                    and lovb.get("from_asset_id") == lineage_child
+                    and lovb.get("to_asset_id") == asset_id
+                    and lovb.get("from_asset_name") == "CI smoke lineage child"
+                    and lovb.get("to_asset_name") == "CI smoke impact root"
+                    and lovb.get("from_asset_type") == "image"
+                    and lovb.get("project_id") == project_id
+                    and lovb.get("type") == "derived_from"
+                    and isinstance(lovb.get("project_name"), str)
+                    and bool(lovb.get("project_name"))
+                    and isinstance(lovb.get("created_at"), str)
+                    and isinstance(lovb.get("generated_at"), str),
+                    lov.text)
+              lov_counts = lovb.get("counts", {})
+              check("lineage/{id}/overview stats-shared counts",
+                    lov.status_code == 200
+                    and isinstance(lov_counts, dict)
+                    and all(isinstance(lov_counts.get(k), int) and lov_counts[k] >= 0
+                            for k in ("source_upstream", "source_downstream",
+                                      "source_types", "project_relationships"))
+                    and lov_counts.get("source_downstream", 0) >= 1
+                    and lov_counts.get("source_types", 0) >= 1
+                    and lov_counts.get("project_relationships", 0) >= 1
+                    and lov_counts["project_relationships"] >= lov_counts["source_downstream"],
+                    lov.text)
+              lov_recent = lovb.get("recent_relationships", [])
+              check("lineage/{id}/overview recent relationship item shapes",
+                    lov.status_code == 200
+                    and isinstance(lov_recent, list)
+                    and len(lov_recent) >= 1
+                    and all(all(k in item for k in (
+                        "id", "from_asset_id", "to_asset_id", "from_asset_name",
+                        "to_asset_name", "project_id", "project_name", "type",
+                        "created_at"))
+                        and isinstance(item["id"], str)
+                        and item["from_asset_id"] == lineage_child
+                        and item["project_id"] == project_id
+                        for item in lov_recent)
+                    and any(item["id"] == lineage_rel_id
+                            and item["to_asset_id"] == asset_id
+                            for item in lov_recent),
+                    lov.text)
+              check("lineage/{id}/overview recent newest-first",
+                    lov.status_code == 200
+                    and [(i["created_at"], i["id"]) for i in lov_recent]
+                        == sorted(((i["created_at"], i["id"])
+                                   for i in lov_recent), reverse=True),
+                    lov.text)
+              check("lineage/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in lov.headers},
+                    str(dict(lov.headers)))
+              lov_limited = httpx.get(
+                  f"{base}/lineage/{lineage_rel_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              lovlb = (lov_limited.json() if lov_limited.status_code == 200 else {})
+              check("lineage/{id}/overview recent_limit bounds page only",
+                    lov_limited.status_code == 200
+                    and len(lovlb.get("recent_relationships", [])) <= 1
+                    and lovlb.get("counts") == lovb.get("counts")
+                    and lovlb.get("id") == lineage_rel_id,
+                    lov_limited.text)
+              lov_bad_limit = httpx.get(
+                  f"{base}/lineage/{lineage_rel_id}/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              lovblbody = (lov_bad_limit.json()
+                           if lov_bad_limit.status_code == 422 else {})
+              check("lineage/{id}/overview 422 invalid limit envelope",
+                    lov_bad_limit.status_code == 422
+                    and lovblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(lovblbody.get("error", {}).get("request_id")),
+                    lov_bad_limit.text)
+          else:
+              check("lineage/{id}/overview setup", False,
+                    "could not obtain a lineage relationship id for the overview probe")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
