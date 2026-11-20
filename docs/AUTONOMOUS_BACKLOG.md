@@ -2864,6 +2864,27 @@ this file is the execution checklist.
   (1275) green. Screens single-job overview rendering remains a screens follow-up.
   ✅ 2026-11-20 — `62d10ea`
 
+- [x] C217 (backend) Authoritative single-provider overview API:
+  `GET /api/v1/providers/{provider_id}/overview` derives a compact single-provider
+  snapshot from the authoritative provider store and the versioned operation
+  catalog (no second index) — identity/health (id/name/location/status/metadata),
+  the sorted deduplicated advertised `operation_ids`, zero-filled-safe
+  `ProviderOverviewCounts` (capabilities, advertised_operations,
+  catalog_operations, schema_versions) and `catalog_operations` joining each
+  advertised catalog operation to its title + catalog version with sorted
+  deduplicated `advertised_versions` and a `schema_match` drift flag; counts are
+  never bounded by the catalog projection and output order is deterministic
+  across backends. Unknown provider → shared 404 `provider_not_found`; malformed
+  path/query uses the shared 422 envelope. `ProviderOverview`/
+  `ProviderOverviewCounts`/`ProviderOverviewOperation` mirrored in
+  `frontend/src/types/providerOverview.ts` + exported from the types index,
+  README endpoint list synced, 8 tests × 2 storage backends green (1291 passed,
+  contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of
+  the snapshot is a follow-up. My owned backend column had no unchecked items
+  (only the repo-wide C6 docs pass remains, owned by other agents), so C217 was
+  added under the Never-empty well.
+  ✅ 2026-11-20 — `866d34d`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3118,3 +3139,4 @@ this file is the execution checklist.
 - 2026-11-20 — `31265bb` — C214 (screens): rendered the authoritative single-conversation overview (C209/C211/C212 follow-up) via `useConversationOverview` — a `ConversationOverviewPanel` mounted on the Chat screen for the selected conversation with an identity + last-message preview header, three headline stat cards, zero-filled message-role/status distributions (derived by reusing the canonical `conversationStatsHelpers` projections so the two views cannot drift) and newest-message rows, plus loading/error/missing/empty/populated states — every display value derived in tested `conversationOverviewHelpers`. Resolves the C212 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C214 was added under the Never-empty well. Lint clean, 1476 tests across 125 files, build green.
 - 2026-11-20 — `753435c` — C215 (mocks): wired the authoritative single-job overview (C213 follow-up) end to end — `getJobOverview`/`useJobOverview` atomically across mockApi (seed-derived identity with an "Unknown project" fallback, event/retry totals with duplicate ledger entries counted and malformed/orphan entries excluded, zero-filled event-type buckets reusing the `/events/stats` canonical types, newest-first `(timestamp, job_id, seq)` recent events bounded by `recent_limit`; router-style 422 for a malformed id / out-of-range limit, unknown-job 404-to-undefined + injectable `jobOverview` failure), the stable ApiClient facade, live `httpApiClient` (`GET /jobs/{id}/overview?recent_limit=` with 404-to-undefined), queryKeys and useQueries, with a shared `lib/jobOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/limited/404/422 cases + surface guard), plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C213 mocks-transport follow-up. My owned column had no unchecked rows, so C215 was added under the Never-empty well. Lint clean, 1494 tests across 126 files, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
 - 2026-11-20 — `62d10ea` — C216 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/jobs/{job_id}/overview?recent_limit=` single-job overview (the C213/C215 follow-up) — snapshot shape, identity + joined project name, the six canonical event-type buckets (status/progress/intermediate/result/error/log) and event/retry totals with derived non-zero values (events >= 1, retries >= 1, bucket sum == events), the recent-event shape + newest-first recency, the `recent_limit` bound (1 event, `0` → 422, totals never bounded), the 404 `job_not_found` envelope for an unknown job and the shared 422 `validation_error` envelope (malformed id + invalid limit) with request-id — reusing the on-demand submitted + cancelled + retried job from the retry-feed probe so the derived event stream and retry ledger are non-empty. No unchecked CI row remained, so C216 was added under the Never-empty well; resolves the C213/C215 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (420 probes OK) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1494 tests/build green and backend pytest (1275) green. Screens single-job overview rendering remains a screens follow-up.
+- 2026-11-20 — `866d34d` — C217 (backend): added authoritative `GET /api/v1/providers/{provider_id}/overview` — a compact single-provider snapshot derived fresh from the authoritative provider store and the versioned `OPERATION_CATALOG` (no second index): identity/health (id/name/location/status/metadata), sorted deduplicated advertised `operation_ids`, `ProviderOverviewCounts` (capabilities, advertised_operations, catalog_operations, schema_versions) and `catalog_operations` joining each advertised catalog operation to its title + catalog version with sorted deduplicated `advertised_versions` and a `schema_match` drift flag (a re-sort after merging multiple capabilities of one operation keeps the wire order deterministic); unknown provider → shared 404 `provider_not_found`. `ProviderOverview`/`ProviderOverviewCounts`/`ProviderOverviewOperation` mirrored in `frontend/src/types/providerOverview.ts` + exported from the types index, README endpoint list synced, 8 tests × 2 storage backends green (1291 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C217 was added under the Never-empty well.
