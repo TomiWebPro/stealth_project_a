@@ -89,6 +89,8 @@ export type {
   JobStatus,
   LineageFeed,
   LineageFeedItem,
+  LineageOverview,
+  LineageOverviewCounts,
   LineageProjectCount,
   LogLevel,
   LineageStats,

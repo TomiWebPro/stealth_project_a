@@ -70,6 +70,11 @@ import type { ExtensionStatsOptions } from "../extensionStats";
 import type { HomeSummary } from "../homeSummary";
 import { deriveLineageFeed, validateLineageFeedArgs } from "../lineageFeed";
 import type { LineageFeedOptions } from "../lineageFeed";
+import {
+  deriveLineageOverview,
+  validateLineageOverviewArgs,
+} from "../lineageOverview";
+import type { LineageOverviewOptions } from "../lineageOverview";
 import { deriveLineageStats, validateLineageStatsArgs } from "../lineageStats";
 import type { LineageStatsOptions } from "../lineageStats";
 import type { ImpactOptions } from "../impact";
@@ -197,6 +202,7 @@ import type {
   JobQueueView,
   JobStats,
   LineageFeed,
+  LineageOverview,
   LineageStats,
   Message,
   MessageCreate,
@@ -850,6 +856,33 @@ export async function fetchLineageFeed(
   }
   return delay(
     deriveLineageFeed(ASSET_RELATIONSHIPS, ASSETS, PROJECTS, REFERENCE_NOW, options),
+  );
+}
+
+/**
+ * Authoritative single-relationship overview (C258 follow-up) derived from the
+ * same relationship/asset/project seeds as the live `/lineage/{id}/overview`
+ * endpoint. Router-style 422 validation (relationship id + recent limit), an
+ * unknown relationship resolving to `undefined` (matching the live 404-to-
+ * undefined detail mapping) and the injectable `"lineageOverview"` failure
+ * domain keep error and empty states at parity with live mode.
+ */
+export async function fetchLineageOverview(
+  relationshipId: string,
+  options?: LineageOverviewOptions,
+): Promise<LineageOverview | undefined> {
+  failIfEnabled("lineageOverview");
+  validateLineageOverviewArgs(relationshipId, options);
+  const canonical = ASSET_RELATIONSHIPS.filter((rel) =>
+    ASSETS.some((asset) => asset.id === rel.from_asset_id && asset.status !== "deleted"),
+  );
+  if (!canonical.some((rel) => rel.id === relationshipId)) return delay(undefined);
+  return delay(
+    deriveLineageOverview(
+      relationshipId,
+      { relationships: ASSET_RELATIONSHIPS, assets: ASSETS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    ),
   );
 }
 

@@ -1268,6 +1268,65 @@ describe("createHttpApiClient comment overview (C254)", () => {
   });
 });
 
+describe("createHttpApiClient lineage overview (C258)", () => {
+  const relationshipId = "0b5c1e2a-5000-4000-8000-000000000001";
+  const overview = {
+    id: relationshipId,
+    from_asset_id: "0b5c1e2a-2000-4000-8000-000000000012",
+    to_asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    from_asset_name: "Source frame",
+    to_asset_name: "Concept frame",
+    from_asset_type: "image",
+    to_asset_type: "image",
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    type: "derived_from",
+    created_at: "2026-03-18T10:00:00.000Z",
+    counts: {
+      source_upstream: 0,
+      source_downstream: 1,
+      source_types: 1,
+      project_relationships: 1,
+    },
+    recent_relationships: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the lineage overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({ [`/lineage/${relationshipId}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getLineageOverview(relationshipId, { recentLimit: 2 })).resolves.toEqual(
+      overview,
+    );
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/lineage/${relationshipId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "relationship_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getLineageOverview(relationshipId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getLineageOverview(relationshipId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient version overview (C250)", () => {
   const assetId = "0b5c1e2a-2000-4000-8000-000000000001";
   const overview = {

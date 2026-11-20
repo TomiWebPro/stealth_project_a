@@ -30,6 +30,7 @@ import type { JobOverviewOptions } from "./jobOverview";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
+import type { LineageOverviewOptions } from "./lineageOverview";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
@@ -93,6 +94,7 @@ import type {
   JobQueueView,
   JobStats,
   LineageFeed,
+  LineageOverview,
   LineageStats,
   Message,
   MessageCreate,
@@ -230,6 +232,16 @@ export interface ApiClient {
   getLineageStats(options?: LineageStatsOptions): Promise<LineageStats>;
   /** Newest-first authoritative asset lineage feed derived by `/lineage/feed`, optionally project-scoped (C157). */
   getLineageFeed(options?: LineageFeedOptions): Promise<LineageFeed>;
+  /**
+   * Authoritative single-relationship snapshot (both endpoints, source project
+   * context, whole-source-asset activity and a bounded newest-first sibling
+   * page) from `/lineage/{id}/overview`; unknown relationships resolve to
+   * `undefined` (C258).
+   */
+  getLineageOverview(
+    relationshipId: string,
+    options?: LineageOverviewOptions,
+  ): Promise<LineageOverview | undefined>;
   /** Authoritative collaboration metrics derived by `/collaboration/stats`, optionally project-scoped (C81). */
   getCollaborationStats(options?: CollaborationStatsOptions): Promise<CollaborationStats>;
   /** Newest-first authoritative collaboration feed derived by `/collaboration/feed`, optionally project/signal-scoped (C197). */
@@ -434,6 +446,7 @@ export const mockApiClient: ApiClient = {
   getChainOverview: mockApi.fetchChainOverview,
   getLineageStats: mockApi.fetchLineageStats,
   getLineageFeed: mockApi.fetchLineageFeed,
+  getLineageOverview: mockApi.fetchLineageOverview,
   getCollaborationStats: mockApi.fetchCollaborationStats,
   getCollaborationFeed: mockApi.fetchCollaborationFeed,
   getOrchestrationStats: mockApi.fetchOrchestrationStats,

@@ -26,6 +26,7 @@ import type { JobOverviewOptions } from "./jobOverview";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
+import type { LineageOverviewOptions } from "./lineageOverview";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
@@ -235,6 +236,10 @@ export const queryKeys = {
   lineageFeed: {
     feed: (options: LineageFeedOptions = {}) =>
       ["lineage-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
+  },
+  lineageOverview: {
+    detail: (relationshipId: string, options: LineageOverviewOptions = {}) =>
+      ["lineage-overview", "detail", relationshipId, options.recentLimit ?? "all"] as const,
   },
   collaborationStats: {
     summary: (options: CollaborationStatsOptions = {}) =>

@@ -61,6 +61,7 @@ import {
   fetchJobs,
   fetchJobsByProject,
   fetchLineageStats,
+  fetchLineageOverview,
   fetchMessages,
   fetchOperations,
   fetchOperationOverview,
@@ -2351,6 +2352,53 @@ describe("mock API comment overview (C254 follow-up)", () => {
   it("injects a failure for the commentOverview domain", async () => {
     setMockFailure("commentOverview");
     await expect(fetchCommentOverview(commentId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API lineage overview (C258 follow-up)", () => {
+  const relationship = ASSET_RELATIONSHIPS[0];
+  const relationshipId = relationship?.id ?? "";
+
+  it("derives a populated snapshot from the relationship/asset/project seeds", async () => {
+    const overview = await fetchLineageOverview(relationshipId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.id).toBe(relationshipId);
+    expect(overview?.from_asset_id).toBe(relationship?.from_asset_id);
+    expect(overview?.to_asset_id).toBe(relationship?.to_asset_id);
+    expect(overview?.project_name).toBeTruthy();
+    expect(overview?.counts.source_downstream).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.project_relationships).toBeGreaterThanOrEqual(1);
+    expect(overview?.recent_relationships?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds the sibling page by recentLimit without bounding the counts", async () => {
+    const full = await fetchLineageOverview(relationshipId);
+    const limited = await fetchLineageOverview(relationshipId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.recent_relationships).toHaveLength(1);
+  });
+
+  it("rejects a malformed id/limit and resolves an unknown relationship to undefined", async () => {
+    await expect(fetchLineageOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchLineageOverview(relationshipId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchLineageOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the lineageOverview domain", async () => {
+    setMockFailure("lineageOverview");
+    await expect(fetchLineageOverview(relationshipId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

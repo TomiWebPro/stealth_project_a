@@ -62,6 +62,10 @@ import type { JobQueueOptions } from "./jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
 import { deriveLineageFeed, validateLineageFeedArgs } from "./lineageFeed";
 import type { LineageFeedOptions } from "./lineageFeed";
+import {
+  deriveLineageOverview,
+  validateLineageOverviewArgs,
+} from "./lineageOverview";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationFeed, validateOperationFeedArgs } from "./operationFeed";
 import type { OperationFeedOptions } from "./operationFeed";
@@ -1410,6 +1414,38 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveLineageFeed(ASSET_RELATIONSHIPS, ASSETS, PROJECTS, REFERENCE_NOW, options);
   }
 
+  // Authoritative single-relationship overview derives the same canonical-set
+  // counts and LineageFeedItem sibling page as the live
+  // `/lineage/{id}/overview` endpoint; mirror the router's 422 id + recent_limit
+  // validation, unknown-relationship 404 and repository derivation so live and
+  // mock agree exactly (C258).
+  if (/^\/lineage\/[^/]+\/overview$/.test(path)) {
+    const relationshipId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : undefined;
+    try {
+      validateLineageOverviewArgs(relationshipId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    const canonical = ASSET_RELATIONSHIPS.filter((rel) =>
+      ASSETS.some((asset) => asset.id === rel.from_asset_id && asset.status !== "deleted"),
+    );
+    if (!canonical.some((rel) => rel.id === relationshipId)) return NOT_FOUND;
+    return deriveLineageOverview(
+      relationshipId,
+      { relationships: ASSET_RELATIONSHIPS, assets: ASSETS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+  }
+
   // Authoritative asset-lineage stats are derived from the relationship + asset
   // stores on every call; reproduce the router's 422 validation, unknown-project
   // 404 and the repository derivation over the shared seeds so live and mock
@@ -2312,6 +2348,22 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getCommentOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The lineage overview resolves an unknown relationship to undefined on
+    // both transports and returns a canonical-set count snapshot for a seeded
+    // relationship (C258).
+    const seededRelationshipId = ASSET_RELATIONSHIPS[0]?.id ?? "";
+    expect(await live.getLineageOverview(seededRelationshipId)).toEqual(
+      await mockApiClient.getLineageOverview(seededRelationshipId),
+    );
+    expect(await live.getLineageOverview(seededRelationshipId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getLineageOverview(seededRelationshipId, { recentLimit: 1 }),
+    );
+    expect(
+      await live.getLineageOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    expect(
+      await mockApiClient.getLineageOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
     // The upload overview resolves an unknown ticket to undefined on both
     // transports and returns a byte/count snapshot for a seeded ticket.
     const seededUploadId = UPLOADS[0]?.upload_id ?? "";
@@ -3078,6 +3130,22 @@ describe("live vs mock transport parity", () => {
     expect(badCommentLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(badCommentLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports reject a malformed relationship id and out-of-range
+    // recent limit with the same 422 envelope for the single-relationship
+    // overview (C258).
+    const [badLineageMockErr, badLineageLiveErr] = await Promise.all([
+      mockApiClient.getLineageOverview("not-a-uuid").catch((cause) => cause),
+      live.getLineageOverview("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(badLineageMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badLineageLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [badLineageLimitMockErr, badLineageLimitLiveErr] = await Promise.all([
+      mockApiClient.getLineageOverview(seededRelationshipId, { recentLimit: 0 }).catch((cause) => cause),
+      live.getLineageOverview(seededRelationshipId, { recentLimit: 0 }).catch((cause) => cause),
+    ]);
+    expect(badLineageLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badLineageLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -3274,6 +3342,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getChainOverview).toBe("function");
     expect(typeof typed.getLineageStats).toBe("function");
     expect(typeof typed.getLineageFeed).toBe("function");
+    expect(typeof typed.getLineageOverview).toBe("function");
     expect(typeof typed.getCollaborationStats).toBe("function");
     expect(typeof typed.getCollaborationFeed).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");

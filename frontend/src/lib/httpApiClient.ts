@@ -57,6 +57,8 @@ import { jobQueueQueryParams } from "./jobQueue";
 import type { JobQueueOptions } from "./jobQueue";
 import { jobStatsQueryParams } from "./jobStats";
 import type { JobStatsOptions } from "./jobStats";
+import { lineageOverviewQueryParams } from "./lineageOverview";
+import type { LineageOverviewOptions } from "./lineageOverview";
 import { lineageStatsQueryParams } from "./lineageStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import { organizationFeedQueryParams } from "./organizationFeed";
@@ -151,6 +153,7 @@ import type {
   JobQueueView,
   JobStats,
   LineageFeed,
+  LineageOverview,
   LineageStats,
   Message,
   MessageCreate,
@@ -579,6 +582,26 @@ export function createHttpApiClient(
     /** Newest-first authoritative asset lineage feed derived by `/lineage/feed` (C157). */
     getLineageFeed(options?: LineageFeedOptions): Promise<LineageFeed> {
       return request<LineageFeed>("/lineage/feed", lineageFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-relationship snapshot; the backend 404s on an unknown
+     * relationship (or one whose source is soft-deleted/unknown), normalized to
+     * `undefined` like the other detail lookups (C258).
+     */
+    async getLineageOverview(
+      relationshipId: string,
+      options?: LineageOverviewOptions,
+    ): Promise<LineageOverview | undefined> {
+      try {
+        return await request<LineageOverview>(
+          `/lineage/${encodeURIComponent(relationshipId)}/overview`,
+          lineageOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative collaboration metrics derived by `/collaboration/stats`. */

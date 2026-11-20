@@ -32,6 +32,7 @@ import type { JobOverviewOptions } from "../lib/jobOverview";
 import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageFeedOptions } from "../lib/lineageFeed";
+import type { LineageOverviewOptions } from "../lib/lineageOverview";
 import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OperationFeedOptions } from "../lib/operationFeed";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
@@ -95,6 +96,7 @@ import type {
   JobQueueView,
   JobStats,
   LineageFeed,
+  LineageOverview,
   LineageStats,
   Message,
   MessageCreate,
@@ -445,6 +447,22 @@ export function useLineageFeed(
   return useQuery({
     queryKey: queryKeys.lineageFeed.feed(options),
     queryFn: () => api.getLineageFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-relationship snapshot (both endpoints, source project
+ * context, whole-source-asset activity and bounded sibling links) from
+ * `/lineage/{id}/overview` (C258).
+ */
+export function useLineageOverview(
+  relationshipId: string,
+  options?: LineageOverviewOptions,
+): UseQueryResult<LineageOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.lineageOverview.detail(relationshipId, options),
+    queryFn: () => api.getLineageOverview(relationshipId, options),
   });
 }
 

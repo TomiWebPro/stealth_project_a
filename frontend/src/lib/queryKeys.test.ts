@@ -148,6 +148,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the lineage overview key by relationship id and recent limit", () => {
+    expect(queryKeys.lineageOverview.detail("r1")).toEqual([
+      "lineage-overview",
+      "detail",
+      "r1",
+      "all",
+    ]);
+    expect(queryKeys.lineageOverview.detail("r1", { recentLimit: 3 })).toEqual([
+      "lineage-overview",
+      "detail",
+      "r1",
+      3,
+    ]);
+  });
+
   it("scopes the project stats key by organization", () => {
     expect(queryKeys.projectStats.summary()).toEqual(["project-stats", "summary", "all"]);
     expect(queryKeys.projectStats.summary({ orgId: "o1" })).toEqual([
