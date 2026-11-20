@@ -52,8 +52,9 @@ import { deriveEventFeed, validateEventFeedArgs } from "../eventFeed";
 import type { EventFeedOptions } from "../eventFeed";
 import { deriveEventStats, validateEventStatsArgs } from "../eventStats";
 import type { EventStatsOptions } from "../eventStats";
-import { deriveExtensionFeed, validateExtensionFeedArgs } from "../extensionFeed";
+import { deriveExtensionFeed, extensionId, validateExtensionFeedArgs } from "../extensionFeed";
 import type { ExtensionFeedOptions } from "../extensionFeed";
+import { deriveExtensionOverview } from "../extensionOverview";
 import {
   deriveExtensionStats,
   validateExtensionStatsArgs,
@@ -165,6 +166,7 @@ import type {
   EventStats,
   Extension,
   ExtensionFeed,
+  ExtensionOverview,
   ExtensionStats,
   Job,
   JobFeed,
@@ -267,7 +269,7 @@ function delay<T>(value: T): Promise<T> {
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
- * `providerOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
+ * `providerOverview`, `extensionOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -603,6 +605,23 @@ export async function fetchExtensionFeed(
   failIfEnabled("extensionFeed");
   validateExtensionFeedArgs(options);
   return delay(deriveExtensionFeed(EXTENSIONS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single-extension overview (C222) derived from the same
+ * `EXTENSIONS` store as the live `/extensions/{id}/overview` endpoint. The id is
+ * the deterministic uuid5 of the manifest; a normalized 404-to-`undefined` for
+ * an unknown extension and the injectable `extensionOverview` failure domain
+ * keep error and empty states at parity with live mode.
+ */
+export async function fetchExtensionOverview(
+  extensionIdValue: string,
+): Promise<ExtensionOverview | undefined> {
+  failIfEnabled("extensionOverview");
+  if (!EXTENSIONS.some((extension) => extensionId(extension.manifest.id) === extensionIdValue)) {
+    return delay(undefined);
+  }
+  return delay(deriveExtensionOverview(extensionIdValue, EXTENSIONS, REFERENCE_NOW));
 }
 
 /**

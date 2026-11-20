@@ -932,6 +932,71 @@ describe("createHttpApiClient provider overview (C217)", () => {
   });
 });
 
+describe("createHttpApiClient extension overview (C222)", () => {
+  const extensionId = "0f1f2a3b-4c5d-5e6f-8a9b-0c1d2e3f4a5b";
+  const overview = {
+    extension_id: extensionId,
+    manifest_id: "comfyui-local-adapter",
+    name: "Local ComfyUI adapter",
+    version: "1.2.0",
+    publisher: "Studio Core",
+    type: "provider",
+    status: "enabled",
+    installed_at: "2026-01-01T00:00:00Z",
+    runtime: null,
+    app_versions: ">=0.1.0",
+    signed: true,
+    verified: true,
+    permissions: ["runtime.local"],
+    capabilities: ["image-to-image", "text-to-image"],
+    provider_ids: ["prov_comfy"],
+    ui_contributions: [],
+    dependencies: [],
+    counts: {
+      permissions: 1,
+      capabilities: 2,
+      provider_ids: 1,
+      ui_contributions: 0,
+      dependencies: 0,
+    },
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the extension overview path and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/extensions/${extensionId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getExtensionOverview(extensionId)).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/extensions/${extensionId}/overview`);
+    expect(url.search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "extension_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getExtensionOverview(extensionId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getExtensionOverview(extensionId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient project overview (C201)", () => {
   const overview = {
     project_id: project.id,

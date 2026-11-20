@@ -181,6 +181,9 @@ export const queryKeys = {
         options.limit ?? "all",
       ] as const,
   },
+  extensionOverview: {
+    detail: (extensionId: string) => ["extension-overview", "detail", extensionId] as const,
+  },
   organizationFeed: {
     feed: (options: OrganizationFeedOptions = {}) =>
       ["organization-feed", "feed", options.limit ?? "all"] as const,

@@ -38,8 +38,9 @@ import { deriveCommentStats, validateCommentStatsArgs } from "./commentStats";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
-import { deriveExtensionFeed, validateExtensionFeedArgs } from "./extensionFeed";
+import { deriveExtensionFeed, extensionId as computeExtensionId, validateExtensionFeedArgs } from "./extensionFeed";
 import type { ExtensionFeedOptions } from "./extensionFeed";
+import { deriveExtensionOverview } from "./extensionOverview";
 import { deriveExtensionStats, validateExtensionStatsArgs } from "./extensionStats";
 import type { ExtensionStatsOptions } from "./extensionStats";
 import { deriveAssetImpact, validateImpactArgs } from "./impact";
@@ -1505,6 +1506,18 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveExtensionFeed(EXTENSIONS, REFERENCE_NOW, options);
   }
 
+  // Authoritative single-extension overview derives a compact snapshot from the
+  // same extension store on every call; mirror the router's unknown-extension
+  // 404 and repository derivation over the seeds. This must precede the dynamic
+  // /extensions/{id} detail branch below (C222).
+  if (/^\/extensions\/[^/]+\/overview$/.test(path)) {
+    const extensionIdValue = pathParts[2] ?? "";
+    if (!EXTENSIONS.some((e) => computeExtensionId(e.manifest.id) === extensionIdValue)) {
+      return NOT_FOUND;
+    }
+    return deriveExtensionOverview(extensionIdValue, EXTENSIONS, REFERENCE_NOW);
+  }
+
   if (path === "/extensions") return EXTENSIONS;
   if (path.startsWith("/extensions/")) {
     return EXTENSIONS.find((e) => e.manifest.id === id) ?? NOT_FOUND;
@@ -1646,6 +1659,10 @@ describe("live vs mock transport parity", () => {
       [
         "getExtensionFeed filtered and limited",
         (api) => api.getExtensionFeed({ type: "ui", status: "disabled", limit: 1 }),
+      ],
+      [
+        "getExtensionOverview",
+        (api) => api.getExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "")),
       ],
       ["getOrganizationFeed", (api) => api.getOrganizationFeed()],
       ["getOrganizationFeed limited", (api) => api.getOrganizationFeed({ limit: 1 })],
@@ -1947,6 +1964,16 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getProviderOverview("missing-provider")).toBeUndefined();
     expect(await mockApiClient.getProviderOverview("missing-provider")).toBeUndefined();
+    // The extension overview resolves an unknown extension to undefined on both
+    // transports and returns a derived snapshot for a seeded extension id.
+    const seededExtensionId = computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "");
+    expect(await live.getExtensionOverview(seededExtensionId)).toEqual(
+      await mockApiClient.getExtensionOverview(seededExtensionId),
+    );
+    expect(await live.getExtensionOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getExtensionOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
     expect(await live.getJobLogs(missingId)).toBeUndefined();
@@ -2744,6 +2771,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");
     expect(typeof typed.getExtensionFeed).toBe("function");
+    expect(typeof typed.getExtensionOverview).toBe("function");
     expect(typeof typed.getOrganizationFeed).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");

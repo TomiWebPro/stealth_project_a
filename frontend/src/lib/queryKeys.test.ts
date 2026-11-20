@@ -206,6 +206,14 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the extension overview key by extension", () => {
+    expect(queryKeys.extensionOverview.detail("ext-1")).toEqual([
+      "extension-overview",
+      "detail",
+      "ext-1",
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

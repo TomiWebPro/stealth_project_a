@@ -128,6 +128,7 @@ import type {
   EventStats,
   Extension,
   ExtensionFeed,
+  ExtensionOverview,
   ExtensionStats,
   Job,
   JobFeed,
@@ -453,6 +454,22 @@ export function createHttpApiClient(
     /** Newest-first authoritative extension installation feed derived by `/extensions/feed` (C173). */
     getExtensionFeed(options?: ExtensionFeedOptions): Promise<ExtensionFeed> {
       return request<ExtensionFeed>("/extensions/feed", extensionFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-extension overview; the backend 404s on an unknown
+     * extension, which is normalized to `undefined` like the other detail
+     * lookups (C222).
+     */
+    async getExtensionOverview(extensionId: string): Promise<ExtensionOverview | undefined> {
+      try {
+        return await request<ExtensionOverview>(
+          `/extensions/${encodeURIComponent(extensionId)}/overview`,
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Newest-first authoritative organization feed derived by `/orgs/feed` (C161). */

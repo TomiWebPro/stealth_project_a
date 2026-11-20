@@ -76,6 +76,7 @@ import type {
   EventStats,
   Extension,
   ExtensionFeed,
+  ExtensionOverview,
   ExtensionStats,
   Job,
   JobFeed,
@@ -170,6 +171,12 @@ export interface ApiClient {
   getExtensionStats(options?: ExtensionStatsOptions): Promise<ExtensionStats>;
   /** Newest-first authoritative extension installation feed derived by `/extensions/feed`, optionally filtered/limited (C173). */
   getExtensionFeed(options?: ExtensionFeedOptions): Promise<ExtensionFeed>;
+  /**
+   * Authoritative single-extension snapshot (manifest identity, trust and
+   * declared scope) from `/extensions/{id}/overview`; unknown extensions
+   * resolve to `undefined` (C222).
+   */
+  getExtensionOverview(extensionId: string): Promise<ExtensionOverview | undefined>;
   /** Newest-first authoritative organization feed derived by `/orgs/feed`, with joined member/project counts (C161). */
   getOrganizationFeed(options?: OrganizationFeedOptions): Promise<OrganizationFeed>;
   /** Authoritative organization/membership metrics derived by `/orgs/stats`, optionally org-scoped (C69). */
@@ -334,6 +341,7 @@ export const mockApiClient: ApiClient = {
   getProviderFeed: mockApi.fetchProviderFeed,
   getExtensionStats: mockApi.fetchExtensionStats,
   getExtensionFeed: mockApi.fetchExtensionFeed,
+  getExtensionOverview: mockApi.fetchExtensionOverview,
   getOrganizationFeed: mockApi.fetchOrganizationFeed,
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getPipelineStats: mockApi.fetchPipelineStats,

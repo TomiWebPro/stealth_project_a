@@ -60,6 +60,8 @@ export type {
   Extension,
   ExtensionFeed,
   ExtensionFeedItem,
+  ExtensionOverview,
+  ExtensionOverviewCounts,
   ExtensionPermissionStat,
   ExtensionStatus,
   ExtensionStatusCount,

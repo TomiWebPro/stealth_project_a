@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiError } from "../../api/client";
+import { extensionId as computeExtensionId } from "../extensionFeed";
 import { ASSETS, CONVERSATIONS, EXTENSIONS, JOBS, PROJECTS, PROVIDERS } from "./data";
 import {
   clearMockFailures,
@@ -28,6 +29,7 @@ import {
   fetchEventStats,
   fetchExtension,
   fetchExtensionFeed,
+  fetchExtensionOverview,
   fetchExtensions,
   fetchExtensionStats,
   fetchHomeSummary,
@@ -140,6 +142,9 @@ describe("mock error-state fakes", () => {
     await expect(fetchConversationOverview(CONVERSATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobOverview(JOBS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviderOverview(PROVIDERS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(
+      fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "")),
+    ).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
@@ -226,6 +231,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchProviderOverview(providerId)).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the extension overview domain", async () => {
+    const id = computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "");
+    setMockFailure("extensionOverview");
+
+    await expect(fetchExtensionOverview(id)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchExtensionOverview(id)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the asset stats domain", async () => {
@@ -752,6 +770,7 @@ describe("mock error-state fakes", () => {
         ["providerStats", () => fetchProviderStats()],
         ["providerFeed", () => fetchProviderFeed()],
         ["providerOverview", () => fetchProviderOverview(providerId)],
+        ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],

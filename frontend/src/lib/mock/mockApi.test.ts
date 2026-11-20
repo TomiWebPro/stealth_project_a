@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
+import { extensionId } from "../extensionFeed";
 import {
   ASSETS,
   ASSET_RELATIONSHIPS,
@@ -47,6 +48,7 @@ import {
   fetchEventStats,
   fetchExtension,
   fetchExtensions,
+  fetchExtensionOverview,
   fetchExtensionStats,
   fetchHomeSummary,
   fetchJob,
@@ -2089,6 +2091,39 @@ describe("mock API provider overview (C217 follow-up)", () => {
 
     setMockFailure("providerOverview");
     await expect(fetchProviderOverview(providerId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API extension overview (C222 follow-up)", () => {
+  const firstId = extensionId(EXTENSIONS[0]?.manifest.id ?? "");
+
+  it("derives a populated snapshot with manifest identity, trust and declared scope", async () => {
+    const overview = await fetchExtensionOverview(firstId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.extension_id).toBe(firstId);
+    const extension = EXTENSIONS.find((candidate) => extensionId(candidate.manifest.id) === firstId);
+    expect(overview?.manifest_id).toBe(extension?.manifest.id);
+    expect(overview?.name).toBe(extension?.manifest.name);
+    expect(overview?.publisher).toBe(extension?.manifest.publisher);
+    expect(overview?.type).toBe(extension?.manifest.type);
+    expect(overview?.status).toBe(extension?.status);
+    expect(overview?.permissions).toEqual(
+      [...new Set((extension?.manifest.requirements.permissions ?? []).map((permission) => permission.name))].sort(),
+    );
+    expect(overview?.counts.permissions).toBe(overview?.permissions?.length);
+    expect(overview?.counts.capabilities).toBe(overview?.capabilities?.length);
+    expect(overview?.counts.provider_ids).toBe(overview?.provider_ids?.length);
+  });
+
+  it("resolves an unknown extension to undefined and injects a failure", async () => {
+    await expect(fetchExtensionOverview("00000000-0000-4000-8000-000000000000")).resolves.toBeUndefined();
+
+    setMockFailure("extensionOverview");
+    await expect(fetchExtensionOverview(firstId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -78,6 +78,7 @@ import type {
   EventStats,
   Extension,
   ExtensionFeed,
+  ExtensionOverview,
   ExtensionStats,
   Job,
   JobFeed,
@@ -304,6 +305,20 @@ export function useExtensionFeed(
   return useQuery({
     queryKey: queryKeys.extensionFeed.feed(options),
     queryFn: () => api.getExtensionFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-extension snapshot (manifest identity, trust and declared
+ * scope) from `/extensions/{id}/overview` (C222).
+ */
+export function useExtensionOverview(
+  extensionId: string,
+): UseQueryResult<ExtensionOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.extensionOverview.detail(extensionId),
+    queryFn: () => api.getExtensionOverview(extensionId),
   });
 }
 
