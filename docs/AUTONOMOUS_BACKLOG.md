@@ -3115,6 +3115,30 @@ this file is the execution checklist.
   ✅ 2026-11-20 — `7fdc105`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C233 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  single-operation overview endpoint from C230/C232
+  (`GET /api/v1/operations/{id}/overview`): reuse the seeded `text-to-image`
+  catalog operation (declared bindings local-comfyui + cloud-render, both
+  advertising it with a matching schema) so the snapshot has real shape and
+  coverage, then probe the full snapshot shape (`operation_id`/`title`/
+  `description`/`schema_version`/`input_types`/`output_types`/`setting_keys`/
+  `streaming`/`provider_ids`/`provider_bindings`/`counts`/`generated_at`),
+  catalog identity/shape values, sorted-deduplicated `provider_ids`, binding
+  shapes with canonical location/status enums + sorted ids, sorted-deduplicated
+  advertised versions and count-list/schema-drift invariants
+  (`provider_bindings == len(bindings)`, `matching_providers == count(schema_match)`,
+  `schema_match == schema_version in advertised_versions`), the request-id
+  header and the shared 404 `operation_not_found` envelope, keeping CI aligned
+  with the exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the
+  repo grows. No unchecked CI row remained, so C233 was added under the
+  Never-empty well; resolves the C230/C232 CI live-smoke follow-up. Verified the
+  exact embedded smoke script against a real ASGI server on a dynamically chosen
+  free port (453 checks OK, exit 0) with YAML parse + actionlint v1.7.12
+  (`-shellcheck=`); both suites green (frontend lint clean/1602 tests/build,
+  backend pytest 1339).
+  ✅ 2026-11-20 — `15b3eeb`
+  Screens single-operation overview rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3384,3 +3408,4 @@ this file is the execution checklist.
 - 2026-11-20 — `2453f58` — C230 (backend): added authoritative `GET /api/v1/operations/{operation_id}/overview` deriving a compact single-operation snapshot from the versioned operation catalog + authoritative provider store (no second index) — catalog identity/shape (title/description/schema version, input/output asset types, sorted setting keys, streaming flag), sorted-deduplicated declared `provider_ids` next to the actual `provider_bindings` advertising the operation (provider identity/health, sorted-deduplicated advertised schema versions and an advertised-vs-catalog `schema_match` drift flag), plus zero-filled shape/coverage counts (settings, input/output types, binding and matching-provider totals) with deterministic cross-backend ordering; unknown operation → shared 404 `operation_not_found` envelope, request-id on success and failure. `OperationOverview`/`OperationOverviewCounts`/`OperationProviderBinding` mirrored in `frontend/src/types/operationOverview.ts` + exported from the types index, README endpoint list synced, 7 tests × 2 storage backends green (1339 passed, contract parity + route-surface guard).
 - 2026-11-20 — `83a2432` — C231 (screens): rendered the authoritative single-organization overview (C226/C228/C229 follow-up) via `useOrganizationOverview` — a reusable `OrganizationOverviewPanel` on the Workspaces screen with an organization picker (falling back to the first org), an identity/created header, four zero-filled member/project/active-role/created stat cards, a zero-filled owner/admin/member/viewer role distribution with share bars, newest-member and newest-project sections (lifecycle badges), and loading/error/missing/empty/populated states — every display value derived in tested `organizationOverviewHelpers`. Resolves the C229 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C231 was added under the Never-empty well. Lint clean, 1594 tests, build green. Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C230 was added under the Never-empty well.
 - 2026-11-20 — `7fdc105` — C232 (mocks): wired the authoritative single-operation overview (C230 follow-up) end to end — `getOperationOverview`/`useOperationOverview` atomically across mockApi (seed-derived catalog identity/shape with sorted-deduplicated setting keys and declared provider ids, and the providers actually advertising the operation with sorted-deduplicated schema versions plus a `schema_match` drift flag, bindings sorted by provider id, counts never bounded by the projection, unknown-operation 404-to-undefined + injectable `operationOverview` failure), the stable ApiClient facade, live `httpApiClient` (`GET /operations/{id}/overview` with 404-to-undefined + non-404 propagation), queryKeys and useQueries, with a shared `lib/operationOverview` derivation helper and populated/error tests; parity guard extended to both transports (shape/missing + surface guard), plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C230 mocks-transport follow-up. My owned column had no unchecked rows, so C232 was added under the Never-empty well. Lint clean, 1602 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-20 — `15b3eeb` — C233 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/operations/{id}/overview` single-operation overview (the C230/C232 follow-up) — reusing the seeded `text-to-image` catalog operation (both declared providers advertise it with a matching schema) so the derived snapshot has real shape/coverage, then probing the full snapshot shape (`operation_id`/`title`/`description`/`schema_version`/`input_types`/`output_types`/`setting_keys`/`streaming`/`provider_ids`/`provider_bindings`/`counts`/`generated_at`), catalog identity/shape values, sorted-deduplicated provider ids, binding shapes with canonical location/status enums and sorted ids, sorted-deduplicated advertised versions and count-list/schema-drift invariants (`provider_bindings == len(bindings)`, `matching_providers == count(schema_match)`, `schema_match == schema_version in advertised_versions`), the request-id header and the shared 404 `operation_not_found` envelope, keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C233 was added under the Never-empty well; resolves the C230/C232 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (453 checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/1602 tests/build, backend pytest 1339). Screens single-operation overview rendering remains a screens follow-up.
