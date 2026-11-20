@@ -4615,6 +4615,130 @@ jobs:
                 and bool(chovbadbody.get("error", {}).get("request_id")),
                 chov_bad_id.text)
 
+          # Authoritative single-orchestration-plan overview (C238/C240) is the
+          # newest /api/v1 URL the live client calls (getPlanOverview). Reuse the
+          # plan linked to the on-demand run created in the orchestration/feed
+          # probe (create_run attaches each run to a fresh plan with real steps),
+          # so the derived snapshot has a non-empty recent_runs list and a
+          # zero-filled stage breakdown, then probe the full snapshot/count/ref
+          # shapes, newest-first recency, the recent_limit bound, the request-id
+          # header and the shared 404/422 envelopes, keeping CI aligned with the
+          # exact /api/v1 URLs the live client calls as the repo grows.
+          pov_plan_id = None
+          if orch_run_id:
+              pov_run = httpx.get(
+                  f"{base}/orchestration/runs/{orch_run_id}", timeout=5)
+              if pov_run.status_code == 200:
+                  pov_plan_id = pov_run.json().get("plan_id")
+          if pov_plan_id:
+              pov = httpx.get(
+                  f"{base}/orchestration/plans/{pov_plan_id}/overview", timeout=5)
+              povb = pov.json() if pov.status_code == 200 else {}
+              check("plans/{id}/overview 200 snapshot shape",
+                    pov.status_code == 200 and all(
+                        k in povb for k in (
+                            "plan_id", "project_id", "project_name", "goal",
+                            "created_at", "counts", "by_stage", "recent_runs",
+                            "generated_at")),
+                    pov.text)
+              check("plans/{id}/overview identity",
+                    pov.status_code == 200
+                    and povb.get("plan_id") == pov_plan_id
+                    and povb.get("project_id") == project_id
+                    and povb.get("goal") == "ci smoke orchestration run"
+                    and isinstance(povb.get("project_name"), str)
+                    and bool(povb.get("project_name"))
+                    and isinstance(povb.get("goal"), str)
+                    and isinstance(povb.get("created_at"), str)
+                    and isinstance(povb.get("generated_at"), str),
+                    pov.text)
+              pov_counts = povb.get("counts", {})
+              check("plans/{id}/overview counts shape + invariants",
+                    pov.status_code == 200
+                    and isinstance(pov_counts, dict)
+                    and all(isinstance(pov_counts.get(k), int)
+                            and pov_counts[k] >= 0
+                            for k in ("steps", "runs", "jobs_linked"))
+                    and pov_counts.get("steps", 0) >= 1
+                    and pov_counts.get("runs", 0) >= 1
+                    and isinstance(povb.get("recent_runs"), list)
+                    and len(povb["recent_runs"]) >= 1
+                    and pov_counts["runs"] >= len(povb["recent_runs"]),
+                    pov.text)
+              pov_stages = povb.get("by_stage", [])
+              check("plans/{id}/overview by_stage shape + invariants",
+                    pov.status_code == 200
+                    and isinstance(pov_stages, list)
+                    and {s.get("stage") for s in pov_stages} == {
+                        "plan", "resolve", "submit", "await", "collect", "done"}
+                    and all(isinstance(s.get("count"), int) and s["count"] >= 0
+                            for s in pov_stages)
+                    and sum(s["count"] for s in pov_stages) == pov_counts["runs"],
+                    pov.text)
+              check("plans/{id}/overview recent run ref shapes",
+                    pov.status_code == 200
+                    and all(all(k in r for k in (
+                        "run_id", "stage", "job_count", "created_at"))
+                        and isinstance(r["run_id"], str)
+                        and r.get("stage") in (
+                            "plan", "resolve", "submit", "await", "collect", "done")
+                        and isinstance(r["job_count"], int)
+                        and r["job_count"] >= 0
+                        and isinstance(r["created_at"], str)
+                        for r in povb["recent_runs"]),
+                    pov.text)
+              check("plans/{id}/overview recent newest-first",
+                    pov.status_code == 200
+                    and [(r["created_at"], r["run_id"]) for r in povb["recent_runs"]]
+                        == sorted(((r["created_at"], r["run_id"])
+                                   for r in povb["recent_runs"]), reverse=True),
+                    pov.text)
+              check("plans/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in pov.headers},
+                    str(dict(pov.headers)))
+              pov_limited = httpx.get(
+                  f"{base}/orchestration/plans/{pov_plan_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              povlb = (pov_limited.json()
+                       if pov_limited.status_code == 200 else {})
+              check("plans/{id}/overview recent_limit bounds lists only",
+                    pov_limited.status_code == 200
+                    and len(povlb.get("recent_runs", [])) <= 1
+                    and povlb.get("counts") == povb.get("counts")
+                    and povlb.get("by_stage") == povb.get("by_stage")
+                    and povlb.get("plan_id") == pov_plan_id,
+                    pov_limited.text)
+              pov_bad_limit = httpx.get(
+                  f"{base}/orchestration/plans/{pov_plan_id}/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              povblbody = (pov_bad_limit.json()
+                           if pov_bad_limit.status_code == 422 else {})
+              check("plans/{id}/overview 422 invalid limit envelope",
+                    pov_bad_limit.status_code == 422
+                    and povblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(povblbody.get("error", {}).get("request_id")),
+                    pov_bad_limit.text)
+          else:
+              check("plans/{id}/overview setup", False,
+                    "could not obtain a plan id with a run for the overview probe")
+          pov_missing = httpx.get(
+              f"{base}/orchestration/plans/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          pov404 = (pov_missing.json() if pov_missing.status_code == 404 else {})
+          check("plans/{id}/overview 404 shared envelope",
+                pov_missing.status_code == 404
+                and pov404.get("error", {}).get("code") == "plan_not_found"
+                and bool(pov404.get("error", {}).get("request_id")),
+                pov_missing.text)
+          pov_bad_id = httpx.get(
+              f"{base}/orchestration/plans/not-a-uuid/overview", timeout=5)
+          povbadbody = (pov_bad_id.json() if pov_bad_id.status_code == 422 else {})
+          check("plans/{id}/overview 422 malformed id envelope",
+                pov_bad_id.status_code == 422
+                and povbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(povbadbody.get("error", {}).get("request_id")),
+                pov_bad_id.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
