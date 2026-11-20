@@ -198,6 +198,11 @@ All paths are prefixed with `/api/v1`.
   (zero-filled event-type breakdown, per-job event counts with recency and
   newest-event recency) derived from the authoritative job event store; an
   optional project scope joins events to jobs with shared 404/422 envelopes
+  `GET /jobs/{job_id}/events/{seq}/overview?recent_limit=` — authoritative
+  single-event snapshot (event identity/lifecycle fields, joined operation/project
+  names, a whole-job zero-filled event-type breakdown and the newest sibling
+  events bounded by `recent_limit`) derived fresh from the job/event stores;
+  shared 404 `job_not_found`/`event_not_found` and 422 envelopes
   `GET /retries/stats?project_id=` — authoritative job retry metrics
   (zero-filled retried-jobs-by-status breakdown, per-project retry/job counts,
   accepted-retry totals and newest retried-job activity) derived from the

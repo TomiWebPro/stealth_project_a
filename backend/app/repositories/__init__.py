@@ -28,6 +28,7 @@ from .comment_overview import CommentOverviewRepository
 from .dashboard import DashboardRepository
 from .event_feed import EventFeedRepository
 from .event_stats import EventStatsRepository
+from .event_overview import EventOverviewRepository
 from .extensions import ExtensionRepository
 from .extension_feed import ExtensionFeedRepository
 from .extension_overview import ExtensionOverviewRepository
@@ -144,6 +145,7 @@ class Repositories:
     auth: AuthRepository
     event_feed: EventFeedRepository
     event_stats: EventStatsRepository
+    event_overview: EventOverviewRepository
     extensions: ExtensionRepository
     extension_feed: ExtensionFeedRepository
     extension_overview: ExtensionOverviewRepository
@@ -236,6 +238,7 @@ class Repositories:
         organization_overview = OrganizationOverviewRepository(store, auth, clock=clock)
         event_feed = EventFeedRepository(store, projects, clock=clock)
         event_stats = EventStatsRepository(store, projects, clock=clock)
+        event_overview = EventOverviewRepository(store, jobs, clock=clock)
         extensions = ExtensionRepository(store, clock=clock)
         extension_feed = ExtensionFeedRepository(store, clock=clock)
         extension_overview = ExtensionOverviewRepository(store, extensions, clock=clock)
@@ -312,6 +315,7 @@ class Repositories:
             auth=auth,
             event_feed=event_feed,
             event_stats=event_stats,
+            event_overview=event_overview,
             extensions=extensions,
             extension_feed=extension_feed,
             extension_overview=extension_overview,

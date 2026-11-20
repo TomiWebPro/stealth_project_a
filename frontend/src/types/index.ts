@@ -67,6 +67,7 @@ export * from "./userOverview";
 export * from "./membershipOverview";
 export * from "./eventFeed";
 export * from "./eventStats";
+export * from "./eventOverview";
 export * from "./jobLogs";
 export * from "./jobQueue";
 export * from "./jobFeed";

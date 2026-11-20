@@ -35,6 +35,7 @@ from .repositories.comment_overview import CommentOverviewRepository
 from .repositories.dashboard import DashboardRepository
 from .repositories.event_feed import EventFeedRepository
 from .repositories.event_stats import EventStatsRepository
+from .repositories.event_overview import EventOverviewRepository
 from .repositories.extensions import ExtensionRepository
 from .repositories.extension_feed import ExtensionFeedRepository
 from .repositories.extension_overview import ExtensionOverviewRepository
@@ -538,6 +539,12 @@ def get_event_stats_repository(
     return repositories.event_stats
 
 
+def get_event_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> EventOverviewRepository:
+    return repositories.event_overview
+
+
 def get_extension_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ExtensionRepository:
@@ -669,6 +676,7 @@ __all__ = [
     "get_dashboard_repository",
     "get_event_feed_repository",
     "get_event_stats_repository",
+    "get_event_overview_repository",
     "get_extension_repository",
     "get_extension_feed_repository",
     "get_extension_overview_repository",

@@ -85,6 +85,10 @@ from .event_stats import (
     EventStats,
     EventTypeCount,
 )
+from .event_overview import (
+    EventOverview,
+    EventOverviewCounts,
+)
 from .extension_feed import (
     ExtensionFeed,
     ExtensionFeedItem,
@@ -437,6 +441,9 @@ __all__ = [
     "EventJobCount",
     "EventStats",
     "EventTypeCount",
+    # event overview
+    "EventOverview",
+    "EventOverviewCounts",
     # extension feed
     "ExtensionFeed",
     "ExtensionFeedItem",
