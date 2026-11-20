@@ -25,6 +25,7 @@ import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
 import { PlanOverviewPanel } from "../jobs/PlanOverviewPanel";
 import { RunOverviewPanel } from "../jobs/RunOverviewPanel";
 import { RetryFeedPanel } from "../jobs/RetryFeedPanel";
+import { RetryOverviewPanel } from "../jobs/RetryOverviewPanel";
 import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
 import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
@@ -386,6 +387,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project job retry feed"
         description="Newest-first retried jobs from the authoritative retry ledger, scoped to this project."
+      />
+      <RetryOverviewPanel
+        projectId={projectId}
+        title="Project retry overview"
+        description="Select a retried job in this project to inspect its authoritative snapshot, whole-scope counts and newest siblings."
       />
       <JobQueuePanel
         projectId={projectId}

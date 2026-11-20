@@ -20,6 +20,7 @@ import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
 import { PlanOverviewPanel } from "./PlanOverviewPanel";
 import { RunOverviewPanel } from "./RunOverviewPanel";
 import { RetryFeedPanel } from "./RetryFeedPanel";
+import { RetryOverviewPanel } from "./RetryOverviewPanel";
 import { RetryStatsPanel } from "./RetryStatsPanel";
 import { OperationFeedPanel } from "../operations/OperationFeedPanel";
 import { OperationOverviewPanel } from "../operations/OperationOverviewPanel";
@@ -133,6 +134,11 @@ export function JobsScreen() {
       <RetryFeedPanel
         title="Global job retry feed"
         description="Newest-first retried jobs from the authoritative retry ledger."
+      />
+
+      <RetryOverviewPanel
+        title="Global retry overview"
+        description="Select a retried job to inspect its authoritative snapshot, whole-scope counts and newest siblings."
       />
 
       <JobQueuePanel
