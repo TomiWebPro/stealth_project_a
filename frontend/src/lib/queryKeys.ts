@@ -1,5 +1,6 @@
 import type { ActivityOptions } from "./activity";
 import type { ActivityOverviewOptions } from "./activityOverview";
+import type { CollaborationOverviewOptions } from "./collaborationOverview";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetOverviewOptions } from "./assetOverview";
@@ -284,6 +285,10 @@ export const queryKeys = {
         options.signal ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  collaborationOverview: {
+    detail: (signalKey: string, options: CollaborationOverviewOptions = {}) =>
+      ["collaboration-overview", "detail", signalKey, options.recentLimit ?? "all"] as const,
   },
   orchestrationStats: {
     summary: (options: OrchestrationStatsOptions = {}) =>

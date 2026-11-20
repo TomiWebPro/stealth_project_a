@@ -29,6 +29,12 @@ import {
 } from "./collaborationFeed";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
 import {
+  buildCollaborationSignalKey,
+  deriveCollaborationOverview,
+  validateCollaborationOverviewArgs,
+} from "./collaborationOverview";
+import type { CollaborationOverviewOptions } from "./collaborationOverview";
+import {
   deriveCollaborationStats,
   validateCollaborationStatsArgs,
 } from "./collaborationStats";
@@ -1780,6 +1786,45 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveLineageStats(ASSET_RELATIONSHIPS, ASSETS, REFERENCE_NOW, options);
   }
 
+  // Authoritative single collaboration-signal overview derives a compact
+  // snapshot from the same canonical feed as `/collaboration/feed` and
+  // `/collaboration/stats`; mirror the router/repository 422 key + recent_limit
+  // validation and the 404 envelope over the shared seeds so live and mock agree
+  // exactly (C294). The live client percent-encodes the composite key, so decode
+  // it before validating. This must precede the literal collaboration branches.
+  if (/^\/collaboration\/[^/]+\/overview$/.test(path)) {
+    const signalKey = decodeURIComponent(pathParts[2] ?? "");
+    const recentLimitRaw = params.get("recent_limit");
+    const options: CollaborationOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateCollaborationOverviewArgs(signalKey, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    try {
+      return deriveCollaborationOverview(
+        signalKey,
+        {
+          presences: PRESENCE,
+          comments: COMMENTS,
+          projects: PROJECTS,
+          now: REFERENCE_NOW,
+        },
+        options,
+      );
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) return NOT_FOUND;
+      throw cause;
+    }
+  }
+
   // Authoritative collaboration feed derives the presence + comment stores on
   // every call; mirror the router's 422 validation, unknown-project 404 and the
   // repository's newest-first signal projection over the shared seeds so live
@@ -2176,6 +2221,12 @@ const retryOverviewJobId =
 /** A seeded activity event (from the canonical feed) used by activity-overview probes (C290). */
 const activityOverviewEventId =
   deriveActivityFeed(ASSETS, JOBS, COMMENTS, { limit: 1_000_000_000 }).events?.[0]?.id ?? "";
+/** A seeded presence signal key used by collaboration-overview probes (C294). */
+const collaborationOverviewKey = (() => {
+  const film = PROJECTS.find((project) => project.name.startsWith("Moonshot"));
+  const presence = PRESENCE.find((entry) => entry.project_id === film?.id);
+  return buildCollaborationSignalKey("presence", film?.id ?? "", presence?.user_id ?? "");
+})();
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -2202,6 +2253,11 @@ describe("live vs mock transport parity", () => {
       [
         "getActivityOverview missing",
         (api) => api.getActivityOverview("asset-00000000-0000-4000-8000-000000000000"),
+      ],
+      ["getCollaborationOverview", (api) => api.getCollaborationOverview(collaborationOverviewKey)],
+      [
+        "getCollaborationOverview limited",
+        (api) => api.getCollaborationOverview(collaborationOverviewKey, { recentLimit: 1 }),
       ],
       ["getActivity scoped", (api) => api.getActivity({ projectId: filmId })],
       ["getActivity filtered", (api) => api.getActivity({ projectId: filmId, kind: "job", limit: 3 })],
@@ -2841,6 +2897,45 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getActivityOverview("asset-00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The collaboration overview returns identity, a joined project name and a
+    // project-scoped count block shared with `/collaboration/stats` for a seeded
+    // signal, and resolves a well-formed unknown key to undefined on both
+    // transports (C294).
+    const seededCollaborationOverview = await mockApiClient.getCollaborationOverview(
+      collaborationOverviewKey,
+    );
+    expect(seededCollaborationOverview).toBeDefined();
+    expect(await live.getCollaborationOverview(collaborationOverviewKey)).toEqual(
+      seededCollaborationOverview,
+    );
+    expect(seededCollaborationOverview).toMatchObject({
+      signal: "presence",
+      signal_id: expect.any(String),
+      project_id: expect.any(String),
+      project_name: expect.any(String),
+      actor_id: expect.any(String),
+      occurred_at: expect.any(String),
+      counts: {
+        project_signals: expect.any(Number),
+        project_presence: expect.any(Number),
+        project_comments: expect.any(Number),
+        project_participants: expect.any(Number),
+        workspace_signals: expect.any(Number),
+        by_state: expect.any(Array),
+      },
+    });
+    expect(
+      await live.getCollaborationOverview(collaborationOverviewKey, { recentLimit: 1 }),
+    ).toEqual(
+      await mockApiClient.getCollaborationOverview(collaborationOverviewKey, { recentLimit: 1 }),
+    );
+    const missingCollaborationKey = buildCollaborationSignalKey(
+      "presence",
+      "0b5c1e2a-1000-4000-8000-000000000001",
+      "00000000-0000-4000-8000-000000000000",
+    );
+    expect(await live.getCollaborationOverview(missingCollaborationKey)).toBeUndefined();
+    expect(await mockApiClient.getCollaborationOverview(missingCollaborationKey)).toBeUndefined();
     // The lineage overview resolves an unknown relationship to undefined on
     // both transports and returns a canonical-set count snapshot for a seeded
     // relationship (C258).
@@ -3786,6 +3881,26 @@ describe("live vs mock transport parity", () => {
     expect(badActivityLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(badActivityLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports reject a malformed composite key and out-of-range recent
+    // limit with the same 422 envelope for the single collaboration-signal
+    // overview (C294).
+    const [badCollabMockErr, badCollabLiveErr] = await Promise.all([
+      mockApiClient.getCollaborationOverview("not-a-key").catch((cause) => cause),
+      live.getCollaborationOverview("not-a-key").catch((cause) => cause),
+    ]);
+    expect(badCollabMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badCollabLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [badCollabLimitMockErr, badCollabLimitLiveErr] = await Promise.all([
+      mockApiClient
+        .getCollaborationOverview(collaborationOverviewKey, { recentLimit: 0 })
+        .catch((cause) => cause),
+      live
+        .getCollaborationOverview(collaborationOverviewKey, { recentLimit: 0 })
+        .catch((cause) => cause),
+    ]);
+    expect(badCollabLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badCollabLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports reject a malformed relationship id and out-of-range
     // recent limit with the same 422 envelope for the single-relationship
     // overview (C258).
@@ -4026,6 +4141,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getLineageOverview).toBe("function");
     expect(typeof typed.getCollaborationStats).toBe("function");
     expect(typeof typed.getCollaborationFeed).toBe("function");
+    expect(typeof typed.getCollaborationOverview).toBe("function");
     expect(typeof typed.getOrchestrationStats).toBe("function");
     expect(typeof typed.getOrchestrationFeed).toBe("function");
     expect(typeof typed.getPlanOverview).toBe("function");

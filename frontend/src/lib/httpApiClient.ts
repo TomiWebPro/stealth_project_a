@@ -21,6 +21,8 @@ import { chainOverviewQueryParams } from "./chainOverview";
 import type { ChainOverviewOptions } from "./chainOverview";
 import { collaborationFeedQueryParams } from "./collaborationFeed";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
+import { collaborationOverviewQueryParams } from "./collaborationOverview";
+import type { CollaborationOverviewOptions } from "./collaborationOverview";
 import { collaborationStatsQueryParams } from "./collaborationStats";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import { commentFeedQueryParams } from "./commentFeed";
@@ -147,6 +149,7 @@ import type {
   AuditTrail,
   ChainOverview,
   CollaborationFeed,
+  CollaborationOverview,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -703,6 +706,26 @@ export function createHttpApiClient(
         "/collaboration/feed",
         collaborationFeedQueryParams(options),
       );
+    },
+
+    /**
+     * Authoritative single collaboration-signal snapshot; the backend 404s on a
+     * well-formed key with no live signal, normalized to `undefined` like the
+     * other detail lookups (C294). Malformed keys surface as 422.
+     */
+    async getCollaborationOverview(
+      signalKey: string,
+      options?: CollaborationOverviewOptions,
+    ): Promise<CollaborationOverview | undefined> {
+      try {
+        return await request<CollaborationOverview>(
+          `/collaboration/${encodeURIComponent(signalKey)}/overview`,
+          collaborationOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative orchestration metrics derived by `/orchestration/stats`. */

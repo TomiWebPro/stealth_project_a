@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiError } from "../../api/client";
+import { buildCollaborationSignalKey } from "../collaborationOverview";
 import { extensionId as computeExtensionId } from "../extensionFeed";
 import {
   ASSETS,
@@ -14,6 +15,7 @@ import {
   ORCHESTRATION_PLANS,
   ORCHESTRATION_RUNS,
   PIPELINE_CHAINS,
+  PRESENCE,
   PROJECTS,
   PROVIDERS,
   USERS,
@@ -32,6 +34,7 @@ import {
   fetchCapabilities,
   fetchChainOverview,
   fetchCollaborationFeed,
+  fetchCollaborationOverview,
   fetchCollaborationStats,
   fetchCommentFeed,
   fetchCommentStats,
@@ -188,6 +191,12 @@ describe("mock error-state fakes", () => {
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationFeed()).rejects.toBeInstanceOf(ApiError);
+    const collabPresence = PRESENCE.find((entry) => entry.project_id === projectId);
+    await expect(
+      fetchCollaborationOverview(
+        buildCollaborationSignalKey("presence", projectId, collabPresence?.user_id ?? ""),
+      ),
+    ).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrchestrationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")).rejects.toBeInstanceOf(ApiError);
@@ -638,6 +647,24 @@ describe("mock error-state fakes", () => {
     await expect(fetchActivityOverview(eventId)).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the collaboration overview domain", async () => {
+    const presence = PRESENCE[0];
+    const signalKey = buildCollaborationSignalKey(
+      "presence",
+      presence?.project_id ?? "",
+      presence?.user_id ?? "",
+    );
+    setMockFailure("collaborationOverview");
+
+    await expect(fetchCollaborationOverview(signalKey)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchCollaborationOverview(signalKey)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the search stats domain", async () => {
     setMockFailure("searchStats");
 
@@ -1005,6 +1032,17 @@ describe("mock error-state fakes", () => {
         ["publishOverview", () => fetchPublishOverview(assetId)],
         ["retryOverview", () => fetchRetryOverview(retriedJobId)],
         ["activityOverview", () => fetchActivityOverview(`asset-${assetId}`)],
+        [
+          "collaborationOverview",
+          () =>
+            fetchCollaborationOverview(
+              buildCollaborationSignalKey(
+                "presence",
+                PRESENCE[0]?.project_id ?? "",
+                PRESENCE[0]?.user_id ?? "",
+              ),
+            ),
+        ],
         ["tagOverview", () => fetchTagOverview("lora")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],

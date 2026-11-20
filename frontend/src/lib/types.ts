@@ -39,6 +39,8 @@ export type {
   ChainOverviewCounts,
   CollaborationFeed,
   CollaborationFeedItem,
+  CollaborationOverview,
+  CollaborationOverviewCounts,
   CollaborationProjectCount,
   CollaborationSignal,
   CollaborationStats,

@@ -13,6 +13,7 @@ import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
 import type { ChainOverviewOptions } from "../lib/chainOverview";
 import type { CollaborationFeedOptions } from "../lib/collaborationFeed";
+import type { CollaborationOverviewOptions } from "../lib/collaborationOverview";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { CommentStatsOptions } from "../lib/commentStats";
 import type { CommentFeedOptions } from "../lib/commentFeed";
@@ -82,6 +83,7 @@ import type {
   AuditTrail,
   ChainOverview,
   CollaborationFeed,
+  CollaborationOverview,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -551,6 +553,22 @@ export function useCollaborationFeed(
   return useQuery({
     queryKey: queryKeys.collaborationFeed.feed(options),
     queryFn: () => api.getCollaborationFeed(options),
+  });
+}
+
+/**
+ * Authoritative single collaboration-signal snapshot from
+ * `/collaboration/{signal_key}/overview` (C294); a well-formed key with no live
+ * signal resolves to `undefined`.
+ */
+export function useCollaborationOverview(
+  signalKey: string,
+  options?: CollaborationOverviewOptions,
+): UseQueryResult<CollaborationOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.collaborationOverview.detail(signalKey, options),
+    queryFn: () => api.getCollaborationOverview(signalKey, options),
   });
 }
 

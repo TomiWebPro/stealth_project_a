@@ -500,6 +500,22 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the collaboration overview key by signal and recent limit", () => {
+    const key = "presence:0b5c1e2a-1000-4000-8000-000000000001:0b5c1e2a-0000-4000-8000-0000000000aa";
+    expect(queryKeys.collaborationOverview.detail(key)).toEqual([
+      "collaboration-overview",
+      "detail",
+      key,
+      "all",
+    ]);
+    expect(queryKeys.collaborationOverview.detail(key, { recentLimit: 3 })).toEqual([
+      "collaboration-overview",
+      "detail",
+      key,
+      3,
+    ]);
+  });
+
   it("scopes the orchestration stats key by project", () => {
     expect(queryKeys.orchestrationStats.summary()).toEqual([
       "orchestration-stats",

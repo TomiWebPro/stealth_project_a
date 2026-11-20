@@ -9,6 +9,7 @@ import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
 import type { ChainOverviewOptions } from "./chainOverview";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
+import type { CollaborationOverviewOptions } from "./collaborationOverview";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
@@ -80,6 +81,7 @@ import type {
   AuditTrail,
   ChainOverview,
   CollaborationFeed,
+  CollaborationOverview,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -291,6 +293,16 @@ export interface ApiClient {
   getCollaborationStats(options?: CollaborationStatsOptions): Promise<CollaborationStats>;
   /** Newest-first authoritative collaboration feed derived by `/collaboration/feed`, optionally project/signal-scoped (C197). */
   getCollaborationFeed(options?: CollaborationFeedOptions): Promise<CollaborationFeed>;
+  /**
+   * Authoritative single collaboration-signal snapshot (identity, joined project,
+   * project-scoped counts and same-project siblings) from
+   * `/collaboration/{signal_key}/overview`; a well-formed key with no live signal
+   * resolves to `undefined` (C294).
+   */
+  getCollaborationOverview(
+    signalKey: string,
+    options?: CollaborationOverviewOptions,
+  ): Promise<CollaborationOverview | undefined>;
   /** Authoritative orchestration metrics derived by `/orchestration/stats`, optionally project-scoped (C85). */
   getOrchestrationStats(options?: OrchestrationStatsOptions): Promise<OrchestrationStats>;
   /** Newest-first authoritative orchestration feed derived by `/orchestration/feed`, optionally project/kind-scoped (C181). */
@@ -547,6 +559,7 @@ export const mockApiClient: ApiClient = {
   getLineageOverview: mockApi.fetchLineageOverview,
   getCollaborationStats: mockApi.fetchCollaborationStats,
   getCollaborationFeed: mockApi.fetchCollaborationFeed,
+  getCollaborationOverview: mockApi.fetchCollaborationOverview,
   getOrchestrationStats: mockApi.fetchOrchestrationStats,
   getOrchestrationFeed: mockApi.fetchOrchestrationFeed,
   getPlanOverview: mockApi.fetchPlanOverview,

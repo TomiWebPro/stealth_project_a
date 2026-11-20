@@ -1621,6 +1621,73 @@ describe("createHttpApiClient activity overview (C290)", () => {
   });
 });
 
+describe("createHttpApiClient collaboration overview (C294)", () => {
+  const signalKey =
+    "presence:0b5c1e2a-1000-4000-8000-000000000001:0b5c1e2a-0000-4000-8000-0000000000aa";
+  const encodedKey = encodeURIComponent(signalKey);
+  const overview = {
+    signal_id: "0b5c1e2a-0000-4000-8000-0000000000aa",
+    signal: "presence",
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    actor_id: "0b5c1e2a-0000-4000-8000-0000000000aa",
+    state: "online",
+    body: null,
+    asset_id: null,
+    occurred_at: "2026-03-18T09:00:00.000Z",
+    counts: {
+      project_signals: 3,
+      project_presence: 2,
+      project_comments: 1,
+      project_participants: 2,
+      workspace_signals: 5,
+      by_state: [
+        { state: "online", count: 1 },
+        { state: "away", count: 1 },
+        { state: "offline", count: 0 },
+      ],
+    },
+    recent_signals: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the collaboration overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({ [`/collaboration/${encodedKey}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getCollaborationOverview(signalKey, { recentLimit: 2 })).resolves.toEqual(
+      overview,
+    );
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/collaboration/${encodedKey}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces validation and other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "collaboration_signal_not_found", message: "missing" } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(missing.getCollaborationOverview(signalKey)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "bad key" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getCollaborationOverview("not-a-key")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+  });
+});
+
 describe("createHttpApiClient lineage overview (C258)", () => {
   const relationshipId = "0b5c1e2a-5000-4000-8000-000000000001";
   const overview = {

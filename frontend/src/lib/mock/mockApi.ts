@@ -31,6 +31,11 @@ import {
 } from "../collaborationFeed";
 import type { CollaborationFeedOptions } from "../collaborationFeed";
 import {
+  deriveCollaborationOverview,
+  validateCollaborationOverviewArgs,
+} from "../collaborationOverview";
+import type { CollaborationOverviewOptions } from "../collaborationOverview";
+import {
   deriveCollaborationStats,
   validateCollaborationStatsArgs,
 } from "../collaborationStats";
@@ -212,6 +217,7 @@ import type {
   AuditTrail,
   ChainOverview,
   CollaborationFeed,
+  CollaborationOverview,
   CollaborationStats,
   Comment,
   CommentFeed,
@@ -340,7 +346,7 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `commentOverview`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `retryOverview`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `publishOverview`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
- * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
+ * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `collaborationOverview`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `messageOverview`, `jobOverview`,
  * `eventOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`,
@@ -1043,6 +1049,39 @@ export async function fetchCollaborationFeed(
     });
   }
   return delay(deriveCollaborationFeed(PRESENCE, COMMENTS, PROJECTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single collaboration-signal overview (C294 follow-up) derived
+ * from the same presence/comment/project seeds as the live
+ * `/collaboration/{signal_key}/overview` endpoint. Router-style 422 validation
+ * (composite signal key + recent limit) and a normalized 404 for a well-formed
+ * key with no live signal (resolved to `undefined`, matching the live detail
+ * mapping) plus the injectable `"collaborationOverview"` failure domain keep
+ * error and empty states at parity.
+ */
+export async function fetchCollaborationOverview(
+  signalKey: string,
+  options?: CollaborationOverviewOptions,
+): Promise<CollaborationOverview | undefined> {
+  failIfEnabled("collaborationOverview");
+  validateCollaborationOverviewArgs(signalKey, options);
+  try {
+    const overview = deriveCollaborationOverview(
+      signalKey,
+      {
+        presences: PRESENCE,
+        comments: COMMENTS,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+    return delay(overview);
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 404) return delay(undefined);
+    throw cause;
+  }
 }
 
 /**

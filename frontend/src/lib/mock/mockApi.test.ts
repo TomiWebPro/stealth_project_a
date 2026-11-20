@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { StreamEvent } from "../../types";
+import { buildCollaborationSignalKey } from "../collaborationOverview";
 import { extensionId } from "../extensionFeed";
 import {
   ASSETS,
@@ -39,6 +40,7 @@ import {
   fetchCapabilities,
   fetchChainOverview,
   fetchCollaborationFeed,
+  fetchCollaborationOverview,
   fetchCollaborationStats,
   fetchConversation,
   fetchComments,
@@ -3004,6 +3006,73 @@ describe("mock API collaboration feed (C197 follow-up)", () => {
 
     setMockFailure("collaborationFeed");
     await expect(fetchCollaborationFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API collaboration overview (C294 follow-up)", () => {
+  const film = PROJECTS.find((project) => project.name.startsWith("Moonshot"));
+  const filmId = film?.id ?? "";
+  const seededPresence = PRESENCE.find((entry) => entry.project_id === filmId);
+  const signalKey = buildCollaborationSignalKey(
+    "presence",
+    filmId,
+    seededPresence?.user_id ?? "",
+  );
+
+  it("derives a populated single-signal snapshot with joined project and scoped counts", async () => {
+    const overview = await fetchCollaborationOverview(signalKey);
+    expect(overview).toBeDefined();
+    expect(overview).toMatchObject({
+      signal: "presence",
+      signal_id: seededPresence?.user_id,
+      project_id: filmId,
+      project_name: film?.name,
+      generated_at: REFERENCE_NOW,
+    });
+    const projectSignals =
+      PRESENCE.filter((entry) => entry.project_id === filmId).length +
+      COMMENTS.filter((entry) => entry.project_id === filmId).length;
+    expect(overview?.counts).toMatchObject({
+      project_signals: projectSignals,
+      project_presence: PRESENCE.filter((entry) => entry.project_id === filmId).length,
+      project_comments: COMMENTS.filter((entry) => entry.project_id === filmId).length,
+      workspace_signals: PRESENCE.length + COMMENTS.length,
+    });
+    expect(overview?.counts?.by_state?.reduce((sum, entry) => sum + entry.count, 0)).toBe(
+      PRESENCE.filter((entry) => entry.project_id === filmId).length,
+    );
+    expect((overview?.recent_signals ?? []).every((item) => item.project_id === filmId)).toBe(true);
+  });
+
+  it("bounds the sibling page without bounding the counts and normalizes a missing key", async () => {
+    const full = await fetchCollaborationOverview(signalKey);
+    const limited = await fetchCollaborationOverview(signalKey, { recentLimit: 1 });
+    expect(limited?.recent_signals).toHaveLength(1);
+    expect(limited?.counts).toEqual(full?.counts);
+
+    const missingKey = buildCollaborationSignalKey(
+      "presence",
+      filmId,
+      "00000000-0000-4000-8000-000000000000",
+    );
+    await expect(fetchCollaborationOverview(missingKey)).resolves.toBeUndefined();
+  });
+
+  it("mirrors router validation and the injectable failure domain", async () => {
+    await expect(fetchCollaborationOverview("not-a-key")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchCollaborationOverview(signalKey, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("collaborationOverview");
+    await expect(fetchCollaborationOverview(signalKey)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
