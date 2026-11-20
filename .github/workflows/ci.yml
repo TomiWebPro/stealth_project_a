@@ -1543,6 +1543,112 @@ jobs:
                 and bool(pvbadbody.get("error", {}).get("request_id")),
                 pov_bad_id.text)
 
+          # Authoritative single-tag overview (C282/C284) is the newest /api/v1
+          # URL the live client calls (getTagOverview). Reuse the on-demand asset
+          # registered above with the "ci-smoke" tag so the derived snapshot has
+          # real identity/counts/recent assets. Probe the full snapshot shape, the
+          # stats-shared whole-scope counts, the newest-first recent page and its
+          # recent_limit bound (page only, counts unchanged), the request-id
+          # header, project scoping, both 404 envelopes (unknown tag vs unknown
+          # project) and the shared 422 envelope (malformed id + invalid limit).
+          if asset_id:
+              tov = httpx.get(f"{base}/tags/ci-smoke/overview", timeout=5)
+              tovbody = tov.json() if tov.status_code == 200 else {}
+              check("tags/{tag}/overview 200 snapshot shape",
+                    tov.status_code == 200 and all(
+                        k in tovbody for k in ("tag", "project_id",
+                        "project_name", "counts", "recent_assets", "generated_at"))
+                    and tovbody.get("tag") == "ci-smoke",
+                    tov.text)
+              check("tags/{tag}/overview workspace counts",
+                    tov.status_code == 200
+                    and isinstance(tovbody.get("counts"), dict)
+                    and all(k in tovbody["counts"] for k in (
+                        "tagged_assets", "tagged_projects", "scope_assets"))
+                    and tovbody["counts"].get("tagged_assets", 0) >= 1
+                    and tovbody["counts"].get("tagged_projects", 0) >= 1
+                    and tovbody["counts"].get("scope_assets", 0) >= 1,
+                    tov.text)
+              recent = tovbody.get("recent_assets", [])
+              check("tags/{tag}/overview recent page shape + target",
+                    tov.status_code == 200 and isinstance(recent, list)
+                    and any(i.get("asset_id") == asset_id for i in recent)
+                    and all(all(k in i for k in (
+                        "asset_id", "project_id", "project_name", "type",
+                        "name", "status", "version", "size_bytes",
+                        "created_at", "updated_at")) for i in recent),
+                    tov.text)
+              recent_times = [i.get("created_at") for i in recent]
+              check("tags/{tag}/overview recent newest-first",
+                    tov.status_code == 200
+                    and recent_times == sorted(recent_times, reverse=True),
+                    tov.text)
+              check("tags/{tag}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in tov.headers},
+                    str(dict(tov.headers)))
+              tov_limited = httpx.get(
+                  f"{base}/tags/ci-smoke/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              tlbody = tov_limited.json() if tov_limited.status_code == 200 else {}
+              check("tags/{tag}/overview recent_limit bounds page only",
+                    tov_limited.status_code == 200
+                    and len(tlbody.get("recent_assets", [])) <= 1
+                    and tlbody.get("counts") == tovbody.get("counts"),
+                    tov_limited.text)
+              for bad_limit in (0, 51):
+                  tov_bad = httpx.get(
+                      f"{base}/tags/ci-smoke/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  tlbadbody = tov_bad.json() if tov_bad.status_code == 422 else {}
+                  check(f"tags/{{tag}}/overview 422 invalid limit {bad_limit}",
+                        tov_bad.status_code == 422
+                        and tlbadbody.get("error", {}).get("code") == "validation_error"
+                        and bool(tlbadbody.get("error", {}).get("request_id")),
+                        tov_bad.text)
+              if project_id:
+                  tov_scoped = httpx.get(
+                      f"{base}/tags/ci-smoke/overview",
+                      params={"project_id": project_id}, timeout=5)
+                  tscbody = tov_scoped.json() if tov_scoped.status_code == 200 else {}
+                  check("tags/{tag}/overview project scope 200",
+                        tov_scoped.status_code == 200
+                        and tscbody.get("project_id") == project_id
+                        and isinstance(tscbody.get("project_name"), str)
+                        and isinstance(tscbody.get("counts"), dict)
+                        and tscbody["counts"].get("tagged_assets", 0) >= 1,
+                        tov_scoped.text)
+          else:
+              check("tags/{tag}/overview setup", False,
+                    "could not register a tagged asset for the overview probe")
+
+          tov_unknown = httpx.get(
+              f"{base}/tags/definitely-no-such-tag-ci-smoke/overview", timeout=5)
+          t404body = tov_unknown.json() if tov_unknown.status_code == 404 else {}
+          check("tags/{tag}/overview 404 tag_not_found envelope",
+                tov_unknown.status_code == 404
+                and t404body.get("error", {}).get("code") == "tag_not_found"
+                and bool(t404body.get("error", {}).get("request_id")),
+                tov_unknown.text)
+          tov_missing_project = httpx.get(
+              f"{base}/tags/ci-smoke/overview",
+              params={"project_id": "00000000-0000-4000-8000-000000000000"}, timeout=5)
+          tp404body = (tov_missing_project.json()
+                       if tov_missing_project.status_code == 404 else {})
+          check("tags/{tag}/overview 404 project_not_found envelope",
+                tov_missing_project.status_code == 404
+                and tp404body.get("error", {}).get("code") == "project_not_found"
+                and bool(tp404body.get("error", {}).get("request_id")),
+                tov_missing_project.text)
+          tov_bad_id = httpx.get(
+              f"{base}/tags/ci-smoke/overview",
+              params={"project_id": "not-a-uuid"}, timeout=5)
+          tbadidbody = tov_bad_id.json() if tov_bad_id.status_code == 422 else {}
+          check("tags/{tag}/overview 422 malformed id envelope",
+                tov_bad_id.status_code == 422
+                and tbadidbody.get("error", {}).get("code") == "validation_error"
+                and bool(tbadidbody.get("error", {}).get("request_id")),
+                tov_bad_id.text)
+
           # Authoritative per-job execution log (C117/C119) is the newest /api/v1
           # URL the live client calls (getJobLogs). Submit a job on demand so the
           # derived frame has a real event stream, then probe the frame shape,
