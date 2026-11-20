@@ -47,6 +47,7 @@ from .repositories.job_logs import JobLogsRepository
 from .repositories.job_queue import JobQueueRepository
 from .repositories.jobs import JobRepository
 from .repositories.operation_feed import OperationFeedRepository
+from .repositories.operation_overview import OperationOverviewRepository
 from .repositories.operation_stats import OperationStatsRepository
 from .repositories.pipeline_stats import PipelineStatsRepository
 from .repositories.pipeline_feed import PipelineFeedRepository
@@ -329,6 +330,12 @@ def get_operation_feed_repository(
     return repositories.operation_feed
 
 
+def get_operation_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> OperationOverviewRepository:
+    return repositories.operation_overview
+
+
 def get_operation_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> OperationStatsRepository:
@@ -608,6 +615,7 @@ __all__ = [
     "get_lineage_stats_repository",
     "get_link_service",
     "get_operation_feed_repository",
+    "get_operation_overview_repository",
     "get_operation_stats_repository",
     "get_pipeline_stats_repository",
     "get_pipeline_feed_repository",

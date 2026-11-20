@@ -220,6 +220,11 @@ from .operation_feed import (
     OperationFeed,
     OperationFeedItem,
 )
+from .operation_overview import (
+    OperationOverview,
+    OperationOverviewCounts,
+    OperationProviderBinding,
+)
 from .operation_stats import (
     OperationStats,
     OperationTypeCount,
@@ -578,6 +583,10 @@ __all__ = [
     # operation feed
     "OperationFeed",
     "OperationFeedItem",
+    # operation overview
+    "OperationOverview",
+    "OperationOverviewCounts",
+    "OperationProviderBinding",
     # operation stats
     "OperationStats",
     "OperationTypeCount",

@@ -141,6 +141,11 @@ All paths are prefixed with `/api/v1`.
   sorted/deduplicated provider bindings; whole-scope `total` before the bounded
   page) projected fresh from the authoritative catalog, with optional
   `streaming`/`provider_id` filters;
+  `GET /operations/{operation_id}/overview` — authoritative single-operation
+  snapshot (catalog identity/shape, declared provider ids and the actual
+  advertising fleet with advertised-vs-catalog schema-drift flags, plus
+  zero-filled shape/coverage counts) derived from the catalog + provider store;
+  shared 404 envelope for an unknown operation;
   `GET /operations/stats` — authoritative catalog metrics (total/streaming/
   provider coverage, setting counts and zero-free asset-type breakdowns) derived
   from the operation catalog

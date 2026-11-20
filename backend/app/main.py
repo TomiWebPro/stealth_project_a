@@ -58,6 +58,7 @@ from .routers import (
     lineage_stats,
     links,
     operation_feed,
+    operation_overview,
     operation_stats,
     pipeline_feed,
     pipeline_stats,
@@ -248,11 +249,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # --- Routes -------------------------------------------------------------
 
-    # "/operations/stats" and "/operations/feed" must be registered before
-    # "/operations/{operation_id}" so the literal paths win over the
-    # operation-id-templated one.
+    # "/operations/stats", "/operations/feed" and "/operations/{id}/overview"
+    # must be registered before "/operations/{operation_id}" so the literal
+    # paths win over the operation-id-templated one.
     app.include_router(operation_stats.router, prefix=API_PREFIX)
     app.include_router(operation_feed.router, prefix=API_PREFIX)
+    app.include_router(operation_overview.router, prefix=API_PREFIX)
 
     app.include_router(health.router, prefix=API_PREFIX)
     # "/activity/stats" is registered before the activity feed router so the
