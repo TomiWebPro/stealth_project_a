@@ -45,6 +45,7 @@ from .job_overview import JobOverviewRepository
 from .job_logs import JobLogsRepository
 from .job_queue import JobQueueRepository
 from .jobs import JobRepository
+from .capability_overview import CapabilityOverviewRepository
 from .operation_feed import OperationFeedRepository
 from .operation_overview import OperationOverviewRepository
 from .operation_stats import OperationStatsRepository
@@ -137,6 +138,7 @@ class Repositories:
     organization_stats: OrganizationStatsRepository
     organization_overview: OrganizationOverviewRepository
     providers: ProviderRepository
+    capability_overview: CapabilityOverviewRepository
     provider_feed: ProviderFeedRepository
     provider_stats: ProviderStatsRepository
     provider_overview: ProviderOverviewRepository
@@ -223,6 +225,7 @@ class Repositories:
         organization_feed = OrganizationFeedRepository(store, clock=clock)
         organization_stats = OrganizationStatsRepository(store, clock=clock)
         providers = ProviderRepository(store, clock=clock)
+        capability_overview = CapabilityOverviewRepository(store, providers, clock=clock)
         operation_overview = OperationOverviewRepository(store, providers, clock=clock)
         provider_feed = ProviderFeedRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
@@ -321,6 +324,7 @@ class Repositories:
             organization_stats=organization_stats,
             organization_overview=organization_overview,
             providers=providers,
+            capability_overview=capability_overview,
             provider_feed=provider_feed,
             provider_stats=provider_stats,
             provider_overview=provider_overview,

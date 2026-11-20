@@ -243,7 +243,12 @@ All paths are prefixed with `/api/v1`.
   and catalog-backed operations with advertised-vs-catalog schema matching)
   joined fresh from the provider store and the versioned operation catalog;
   unknown provider uses the shared 404 `provider_not_found` envelope
-  `GET /capabilities`, `GET /adapters`, `GET /adapters/{id}/health`
+  `GET /capabilities`, `GET /capabilities/{operation_id}/overview` — authoritative
+  single-capability snapshot (catalog binding, sorted/deduplicated advertising
+  providers with advertised-vs-catalog schema matching and a zero-filled
+  health/location breakdown) derived fresh from the provider store and the
+  versioned catalog; unknown capability → shared 404 `capability_not_found`;
+  `GET /adapters`, `GET /adapters/{id}/health`
 - **Orchestration/collaboration:** `GET|POST /orchestration/plans`,
   `GET|POST /orchestration/runs`, `GET /orchestration/plans/{id}`,
   `GET /orchestration/runs/{id}`, `GET /orchestration/stats?project_id=` —

@@ -30,6 +30,7 @@ from .routers import (
     assets,
     audit,
     auth,
+    capability_overview,
     conversations,
     conversation_feed,
     conversation_stats,
@@ -378,6 +379,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # it beside the provider routers and before providers so its literal suffix
     # stays explicit.
     app.include_router(provider_overview.router, prefix=API_PREFIX)
+    # "/capabilities/{operation_id}/overview" is a nested single-capability view;
+    # mount it beside the provider routers so its literal suffix stays explicit
+    # against the "/capabilities" discovery endpoint in providers.router.
+    app.include_router(capability_overview.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
     # "/retries/feed" and "/retries/stats" have no templated sibling; register
     # them directly to keep both retry paths explicit.

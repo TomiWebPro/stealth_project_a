@@ -328,6 +328,11 @@ from .project_overview import (
     ProjectOverview,
     ProjectOverviewCounts,
 )
+from .capability_overview import (
+    CapabilityOverview,
+    CapabilityOverviewCounts,
+    CapabilityProvider,
+)
 from .provider_feed import (
     ProviderFeed,
     ProviderFeedItem,
@@ -555,6 +560,10 @@ __all__ = [
     # project overview
     "ProjectOverview",
     "ProjectOverviewCounts",
+    # capability overview
+    "CapabilityOverview",
+    "CapabilityOverviewCounts",
+    "CapabilityProvider",
     # provider feed
     "ProviderFeed",
     "ProviderFeedItem",

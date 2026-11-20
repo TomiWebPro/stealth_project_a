@@ -18,6 +18,7 @@ from .repositories.activity import ActivityRepository
 from .repositories.activity_stats import ActivityStatsRepository
 from .repositories.activity_overview import ActivityOverviewRepository
 from .repositories.auth import AuthRepository
+from .repositories.capability_overview import CapabilityOverviewRepository
 from .repositories.assets import AssetRepository
 from .repositories.asset_feed import AssetFeedRepository
 from .repositories.asset_stats import AssetStatsRepository
@@ -442,6 +443,12 @@ def get_provider_repository(
     return repositories.providers
 
 
+def get_capability_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> CapabilityOverviewRepository:
+    return repositories.capability_overview
+
+
 def get_provider_feed_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ProviderFeedRepository:
@@ -699,6 +706,7 @@ __all__ = [
     "get_audit_repository",
     "get_auth_repository",
     "get_bearer_token",
+    "get_capability_overview_repository",
     "get_collaboration_stats_repository",
     "get_collaboration_feed_repository",
     "get_collaboration_overview_repository",
