@@ -3502,6 +3502,28 @@ this file is the execution checklist.
   so C252 was added under the Never-empty well. Lint clean, 1763 tests, build green.
   ✅ 2026-11-20 — `15d8c8f`
 
+- [x] C253 (CI) Extend the live-mode HTTP smoke job with the authoritative single
+  asset-version overview endpoint from C250/C252
+  (`GET /api/v1/assets/{asset_id}/versions/{version}/overview?recent_limit=`): reuse
+  the on-demand registered asset — which carries the v1 from registration plus the
+  v2 appended in the versions/stats probe — so both the latest and an earlier
+  sibling snapshot have real identity/storage/context, then probe the full snapshot
+  shape, identity + joined project name + canonical asset type + `is_latest` against
+  the parent asset, the stats-shared whole-asset counts (`asset_versions`/`revisions`
+  with the contiguous-version invariant), the newest-first `recent_versions` page
+  (item shapes + version ordering), the `recent_limit` bound (page only — counts
+  unchanged), the request-id header, both 404 envelopes (unknown `asset_not_found`
+  vs unknown `version_not_found`) and the shared 422 `validation_error` envelope
+  (malformed id + invalid version + invalid limit), keeping CI aligned with the
+  exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  No unchecked CI row remained, so C253 was added under the Never-empty well;
+  resolves the C250/C252 CI live-smoke follow-up. Verified the exact embedded smoke
+  script against a real ASGI server on a dynamically chosen free port (all checks
+  OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites
+  green (frontend lint clean/1763 tests/build, backend pytest 1425).
+  ✅ 2026-11-20 — `e3c193e`
+  Screens version-overview rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3791,3 +3813,4 @@ this file is the execution checklist.
 - 2026-11-20 — `c05005f` — C250 (backend): added authoritative `GET /api/v1/assets/{asset_id}/versions/{version}/overview?recent_limit=` — a single-version snapshot derived fresh from the authoritative `ASSET_VERSIONS`/`ASSETS`/`PROJECTS` stores, carrying the requested version's identity + storage, joined parent-asset/project context ("Unknown project" fallback), an `is_latest` flag, whole-asset version/revision counts reusing `/versions/stats` semantics and a bounded newest-first sibling list; unknown asset → shared 404 `asset_not_found`, unknown version → shared 404 `version_not_found`, malformed id/version/`recent_limit` → shared 422 envelope. `VersionOverview`/`VersionOverviewCounts` mirrored in TS + exported from the types index, README endpoint list synced, 11 tests × 2 storage backends green (1425 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring is a follow-up.
 - 2026-11-20 — `03bc124` — C251 (screens): rendered the authoritative single-upload-ticket overview (C246/C248/C249 follow-up) via `useUploadOverview` — a reusable `UploadOverviewPanel` on Home (workspace-wide) and project detail (project-scoped) with a ticket picker fed by the authoritative `useUploadFeed`, an identity/status/byte header with a project deep link, four zero-filled byte-accounting stat cards (declared/uploaded/remaining/progress), a determinate progress bar and a whole-project activity block (tickets/completed/bytes shared with `/uploads/stats`), plus loading/error/missing/empty/populated states — every display value derived in tested `uploadOverviewHelpers` reusing the canonical upload feed/stats helpers. Rows stay read-only (no upload-detail route); no new route was added. Resolves the C249 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C251 was added under the Never-empty well. Lint clean, 1748 tests, build green.
 - 2026-11-20 — `15d8c8f` — C252 (mocks): wired the authoritative single asset-version overview (C250 follow-up) end to end — `getVersionOverview`/`useVersionOverview` atomically across mockApi (seed-derived identity + parent-asset storage, joined project name with "Unknown project" fallback, `is_latest`, whole-asset version/revision counts reusing `/versions/stats` semantics and a bounded `(version, created_at, asset_id)` newest-first sibling list; router-style 422 for a malformed id/version/limit, both 404s normalized to undefined + injectable `versionOverview` failure), the stable ApiClient facade, live httpApiClient (`GET /assets/{id}/versions/{version}/overview` with 404-to-undefined), queryKeys and useQueries, with a shared `lib/versionOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/limited/missing/422 + surface guard), plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C250 mocks-transport follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C252 was added under the Never-empty well. Lint clean, 1763 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-20 — `e3c193e` — C253 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/assets/{asset_id}/versions/{version}/overview?recent_limit=` single asset-version overview (the C250/C252 follow-up) — reusing the on-demand registered asset (v1 from registration + v2 appended in the versions/stats probe) so both the latest and an earlier sibling snapshot have real identity/storage/context, then probing the full snapshot shape, identity + joined project name + canonical asset type + `is_latest` against the parent asset, the stats-shared `asset_versions`/`revisions` counts (including the contiguous-version invariant), the newest-first `recent_versions` page (item shapes + version ordering), the `recent_limit` bound (page only — counts unchanged), the request-id header, both 404 envelopes (unknown `asset_not_found` vs unknown `version_not_found`) and the shared 422 `validation_error` envelope (malformed id + invalid version + invalid limit), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C253 was added under the Never-empty well; resolves the C250/C252 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (all checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/1763 tests/build, backend pytest 1425). Screens version-overview rendering remains a screens follow-up.
