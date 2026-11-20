@@ -6,6 +6,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ActivityOverviewPanel } from "../activity/ActivityOverviewPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
 import { CommentOverviewPanel } from "../comments/CommentOverviewPanel";
@@ -207,6 +208,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project activity stats"
         description="Authoritative event metrics scoped to this project."
+      />
+      <ActivityOverviewPanel
+        projectId={projectId}
+        title="Project activity overview"
+        description="Select an event in this project to inspect its identity, activity and newest siblings."
       />
       <AssetStatsPanel
         projectId={projectId}

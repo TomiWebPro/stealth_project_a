@@ -9,6 +9,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
+import { ActivityOverviewPanel } from "../activity/ActivityOverviewPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
 import { CommentOverviewPanel } from "../comments/CommentOverviewPanel";
@@ -164,6 +165,10 @@ export function HomeScreen() {
         <ActivityStatsPanel
           title="Workspace activity stats"
           description="Authoritative event metrics across every project in the workspace."
+        />
+        <ActivityOverviewPanel
+          title="Workspace activity overview"
+          description="Select any activity event to inspect its identity, project activity and newest siblings."
         />
         <ProjectStatsPanel
           title="Workspace project stats"
