@@ -13,6 +13,7 @@ import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
 import { OrganizationFeedPanel } from "./OrganizationFeedPanel";
 import { OrganizationOverviewPanel } from "./OrganizationOverviewPanel";
 import { OrganizationStatsPanel } from "./OrganizationStatsPanel";
+import { UserOverviewPanel } from "./UserOverviewPanel";
 
 export function WorkspacesScreen() {
   const { data, isPending, isError, error, refetch } = useAssets();
@@ -33,6 +34,8 @@ export function WorkspacesScreen() {
       />
 
       <CollaborationPanel />
+
+      <UserOverviewPanel />
 
       <OrganizationFeedPanel />
 
