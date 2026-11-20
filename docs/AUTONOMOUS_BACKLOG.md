@@ -2980,6 +2980,24 @@ this file is the execution checklist.
   Never-empty well. ✅ 2026-11-20 — `d026a2e`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C225 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  single-extension overview endpoint from C222/C224
+  (`GET /api/v1/extensions/{id}/overview`): reuse the extension installed in the
+  extension-feed probe so the derived snapshot has real manifest identity, trust
+  flags and a declared permission/capability/provider/UI/dependency scope, then
+  probe the full snapshot shape, identity/trust fields, sorted/deduplicated scope
+  lists, count-list length invariants, the request-id header and the shared 404
+  `extension_not_found` / 422 `validation_error` envelopes (malformed id),
+  keeping CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live`
+  client calls as the repo grows. No unchecked CI row remained, so C225 was
+  added under the Never-empty well; resolves the C222/C224 CI live-smoke
+  follow-up. Verified the exact embedded smoke script against a real ASGI
+  server on a dynamically chosen free port (432 checks OK, exit 0) with YAML
+  parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint
+  clean/1548 tests/build, backend pytest 1307).
+  ✅ 2026-11-20 — `00eabd2`
+  Screens single-extension overview rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3241,3 +3259,4 @@ this file is the execution checklist.
 - 2026-11-20 — `195c76d` — C222 (backend): added authoritative `GET /api/v1/extensions/{extension_id}/overview` — a compact single-extension snapshot derived fresh from the authoritative installed-extension store (no second index): manifest identity (id/name/version/publisher/type/app_versions/runtime), lifecycle status and trust flags (signed/verified), and a declared scope of sorted, deduplicated permission names, capabilities, provider ids, UI contributions and dependency ids whose `ExtensionOverviewCounts` totals always equal the emitted list lengths (so the two cannot drift); unknown extension → shared 404 `extension_not_found`, malformed id → shared 422 `validation_error`. `ExtensionOverview`/`ExtensionOverviewCounts` mirrored in `frontend/src/types/extensionOverview.ts` + exported from the types index, README endpoint list synced, 8 tests × 2 storage backends green (1307 passed, contract parity + route-surface guard clean). Mocks/screens/CI wiring of the snapshot is a follow-up. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C222 was added under the Never-empty well.
 - 2026-11-20 — `d045e74` — C223 (screens): rendered the authoritative single-provider overview (C217/C220/C221 follow-up) via `useProviderOverview` — a reusable `ProviderOverviewPanel` on the Providers screen with a provider picker, identity/health badges, four zero-filled coverage stat cards, a schema-match coverage bar, catalog-bound operation rows with schema-drift badges and advertised-but-unbound chips, plus loading/error/missing/empty/populated states — every display value derived in 16 new tested `providerOverviewHelpers` cases. Resolves the C221 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C223 was added under the Never-empty well. Lint clean, 1539 tests, build green.
 - 2026-11-20 — `d026a2e` — C224 (mocks): wired the authoritative single-extension overview (C222 follow-up) end to end — `getExtensionOverview`/`useExtensionOverview` atomically across mockApi (seed-derived manifest identity/lifecycle/trust with sorted, deduplicated permission/capability/provider/UI/dependency scope and counts equal to list lengths, deterministic uuid5 id lookup shared with `/extensions` + `/extensions/feed`, unknown-extension 404-to-undefined + injectable `extensionOverview` failure), the stable ApiClient facade, live `httpApiClient` (`GET /extensions/{id}/overview` with 404-to-undefined + non-404 propagation), queryKeys (`extensionOverview.detail`) and useQueries, with a shared `lib/extensionOverview` derivation helper and populated/empty/error/missing tests; parity guard extended to both transports (shape/missing parity + surface guard), plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C222 mocks-transport follow-up. My owned column had no unchecked rows, so C224 was added under the Never-empty well. Lint clean, 1548 tests, build green. Screens rendering + CI live-smoke probe remain follow-ups.
+- 2026-11-20 — `00eabd2` — C225 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/extensions/{id}/overview` single-extension overview (the C222/C224 follow-up) — reusing the extension installed in the extensions/feed probe so the derived snapshot has real manifest identity (com.studio.comfyui-bridge / ComfyUI Bridge / 1.2.0), trust flags and a declared permission/capability/provider/UI/dependency scope, then probing the full snapshot shape, identity/trust fields, sorted/deduplicated scope lists, count-list length invariants, the request-id header and the shared 404 `extension_not_found` / 422 `validation_error` envelopes (malformed id), keeping CI aligned with the exact `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI row remained, so C225 was added under the Never-empty well; resolves the C222/C224 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (432 checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1548 tests/build green and backend pytest (1307) green. Screens single-extension overview rendering remains a screens follow-up.
