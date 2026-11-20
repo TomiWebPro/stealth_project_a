@@ -1,4 +1,4 @@
-import { useJobs } from "../../hooks/useQueries";
+import { useJobs, useOperations } from "../../hooks/useQueries";
 import { errorMessage } from "../../lib/errors";
 import { findNavItem } from "../../navigation/routes";
 import { PageHeader } from "../../layout/AppLayout";
@@ -19,6 +19,7 @@ import { OrchestrationStatsPanel } from "./OrchestrationStatsPanel";
 import { RetryFeedPanel } from "./RetryFeedPanel";
 import { RetryStatsPanel } from "./RetryStatsPanel";
 import { OperationFeedPanel } from "../operations/OperationFeedPanel";
+import { OperationOverviewPanel } from "../operations/OperationOverviewPanel";
 import { OperationStatsPanel } from "../operations/OperationStatsPanel";
 
 /**
@@ -29,6 +30,7 @@ export function JobsScreen() {
   const activeRoute = useUiStore((state) => state.activeRoute);
   const item = findNavItem(activeRoute);
   const { data, isPending, isError, error, refetch } = useJobs();
+  const { data: operationCatalog } = useOperations();
 
   return (
     <div className="space-y-6">
@@ -77,6 +79,12 @@ export function JobsScreen() {
       <OperationFeedPanel
         title="Global operation catalog feed"
         description="Operations from the authoritative catalog, ordered by title, with streaming and provider filters."
+      />
+
+      <OperationOverviewPanel
+        operations={operationCatalog?.operations ?? []}
+        title="Global operation overview"
+        description="Select a catalog operation to inspect its shape, provider bindings and schema drift."
       />
 
       <OrchestrationStatsPanel
