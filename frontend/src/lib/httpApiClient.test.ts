@@ -932,6 +932,73 @@ describe("createHttpApiClient provider overview (C217)", () => {
   });
 });
 
+describe("createHttpApiClient operation overview (C230)", () => {
+  const operationId = "text-to-image";
+  const overview = {
+    operation_id: operationId,
+    title: "Text to image",
+    description: "Generate a frame.",
+    schema_version: "v1",
+    input_types: [],
+    output_types: ["image"],
+    setting_keys: ["width"],
+    streaming: false,
+    provider_ids: ["prov_local"],
+    provider_bindings: [
+      {
+        provider_id: "prov_local",
+        name: "Local Runtime",
+        location: "local",
+        status: "available",
+        advertised_versions: ["v1"],
+        schema_match: true,
+      },
+    ],
+    counts: {
+      settings: 1,
+      input_types: 0,
+      output_types: 1,
+      provider_bindings: 1,
+      matching_providers: 1,
+    },
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the operation overview path and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/operations/${operationId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getOperationOverview(operationId)).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/operations/${operationId}/overview`);
+    expect(url.search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "operation_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getOperationOverview(operationId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getOperationOverview(operationId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient extension overview (C222)", () => {
   const extensionId = "0f1f2a3b-4c5d-5e6f-8a9b-0c1d2e3f4a5b";
   const overview = {

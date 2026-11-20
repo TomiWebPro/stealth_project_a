@@ -144,6 +144,7 @@ import type {
   MessageCreate,
   OperationCatalog,
   OperationFeed,
+  OperationOverview,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -757,6 +758,22 @@ export function createHttpApiClient(
 
     /** Authoritative catalog metrics derived by the backend `/operations/stats`. */
     getOperationStats: () => request<OperationStats>("/operations/stats"),
+
+    /**
+     * Authoritative single-operation overview; the backend 404s on an unknown
+     * operation, which is normalized to `undefined` like the other detail
+     * lookups (C230).
+     */
+    async getOperationOverview(operationId: string): Promise<OperationOverview | undefined> {
+      try {
+        return await request<OperationOverview>(
+          `/operations/${encodeURIComponent(operationId)}/overview`,
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
 
     async listCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]> {
       // `/capabilities` may return flat rows or full providers depending on the

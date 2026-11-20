@@ -13,6 +13,7 @@ import {
   JOB_EVENTS,
   JOB_RETRIES,
   MESSAGES,
+  OPERATION_CATALOG,
   ORGANIZATIONS,
   ORGANIZATION_MEMBERS,
   ORCHESTRATION_PLANS,
@@ -60,6 +61,7 @@ import {
   fetchLineageStats,
   fetchMessages,
   fetchOperations,
+  fetchOperationOverview,
   fetchOrganizationOverview,
   fetchOrganizationStats,
   fetchPipelineStats,
@@ -2144,6 +2146,39 @@ describe("mock API provider overview (C217 follow-up)", () => {
 
     setMockFailure("providerOverview");
     await expect(fetchProviderOverview(providerId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API operation overview (C230 follow-up)", () => {
+  const operationId = OPERATION_CATALOG.operations?.[0]?.id ?? "";
+
+  it("derives a populated snapshot with catalog identity, shape and provider bindings", async () => {
+    const overview = await fetchOperationOverview(operationId);
+    const spec = OPERATION_CATALOG.operations?.find((operation) => operation.id === operationId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.operation_id).toBe(operationId);
+    expect(overview?.title).toBe(spec?.title);
+    expect(overview?.schema_version).toBe(spec?.schema_version);
+    expect(overview?.setting_keys).toEqual(
+      (spec?.settings ?? []).map((setting) => setting.key).sort(),
+    );
+    expect(overview?.counts.settings).toBe(spec?.settings?.length ?? 0);
+    expect((overview?.provider_bindings ?? []).length).toBeGreaterThan(0);
+    expect(overview?.counts.provider_bindings).toBe(overview?.provider_bindings?.length);
+    expect(overview?.counts.matching_providers).toBe(
+      (overview?.provider_bindings ?? []).filter((binding) => binding.schema_match).length,
+    );
+  });
+
+  it("resolves an unknown operation to undefined and injects a failure", async () => {
+    await expect(fetchOperationOverview("missing-operation")).resolves.toBeUndefined();
+
+    setMockFailure("operationOverview");
+    await expect(fetchOperationOverview(operationId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

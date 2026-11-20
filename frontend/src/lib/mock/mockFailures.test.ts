@@ -44,6 +44,7 @@ import {
   fetchLineageStats,
   fetchOperations,
   fetchOperationFeed,
+  fetchOperationOverview,
   fetchOperationStats,
   fetchOrganizationFeed,
   fetchOrganizationOverview,
@@ -354,6 +355,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchOperationStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the operation overview domain", async () => {
+    const operationId = "text-to-image";
+    setMockFailure("operationOverview");
+
+    await expect(fetchOperationOverview(operationId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchOperationOverview(operationId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the organization feed domain", async () => {
@@ -785,6 +799,7 @@ describe("mock error-state fakes", () => {
         ["providerStats", () => fetchProviderStats()],
         ["providerFeed", () => fetchProviderFeed()],
         ["providerOverview", () => fetchProviderOverview(providerId)],
+        ["operationOverview", () => fetchOperationOverview("text-to-image")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],

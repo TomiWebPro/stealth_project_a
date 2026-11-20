@@ -82,6 +82,7 @@ import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
 import type { JobStatsOptions } from "../jobStats";
 import { deriveOperationFeed, validateOperationFeedArgs } from "../operationFeed";
 import type { OperationFeedOptions } from "../operationFeed";
+import { deriveOperationOverview } from "../operationOverview";
 import { deriveOperationStats } from "../operationStats";
 import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "../organizationFeed";
 import type { OrganizationFeedOptions } from "../organizationFeed";
@@ -185,6 +186,7 @@ import type {
   MessageCreate,
   OperationCatalog,
   OperationFeed,
+  OperationOverview,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -272,7 +274,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
@@ -1307,6 +1309,23 @@ export async function fetchOperationFeed(options?: OperationFeedOptions): Promis
 export async function fetchOperationStats(): Promise<OperationStats> {
   failIfEnabled("operationStats");
   return delay(deriveOperationStats(OPERATION_CATALOG.operations ?? [], REFERENCE_NOW));
+}
+
+/**
+ * Authoritative single-operation overview (C230 follow-up) derived from the same
+ * catalog/provider stores as the live `/operations/{id}/overview` endpoint. An
+ * unknown operation resolves to `undefined`, matching the live 404-to-undefined
+ * detail mapping, and the injectable `"operationOverview"` failure domain keeps
+ * error and empty states at parity with live mode.
+ */
+export async function fetchOperationOverview(
+  operationId: string,
+): Promise<OperationOverview | undefined> {
+  failIfEnabled("operationOverview");
+  if (!(OPERATION_CATALOG.operations ?? []).some((operation) => operation.id === operationId)) {
+    return delay(undefined);
+  }
+  return delay(deriveOperationOverview(operationId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW));
 }
 
 /** Flattened capability rows, optionally filtered to one operation id. */

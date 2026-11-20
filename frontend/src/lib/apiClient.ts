@@ -91,6 +91,7 @@ import type {
   MessageCreate,
   OperationCatalog,
   OperationFeed,
+  OperationOverview,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -285,6 +286,12 @@ export interface ApiClient {
   getOperationFeed(options?: OperationFeedOptions): Promise<OperationFeed>;
   /** Authoritative catalog metrics derived by `/operations/stats` (C65). */
   getOperationStats(): Promise<OperationStats>;
+  /**
+   * Authoritative single-operation snapshot (catalog identity, shape and
+   * declared/actual provider bindings) from `/operations/{id}/overview`;
+   * unknown operations resolve to `undefined` (C230).
+   */
+  getOperationOverview(operationId: string): Promise<OperationOverview | undefined>;
   /** Flattened provider capability rows, optionally filtered by operation id. */
   listCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]>;
   listConversations(projectId: string): Promise<readonly Conversation[]>;
@@ -389,6 +396,7 @@ export const mockApiClient: ApiClient = {
   getOperations: mockApi.fetchOperations,
   getOperationFeed: mockApi.fetchOperationFeed,
   getOperationStats: mockApi.fetchOperationStats,
+  getOperationOverview: mockApi.fetchOperationOverview,
   listCapabilities: mockApi.fetchCapabilities,
   listConversations: mockApi.fetchConversations,
   getConversation: mockApi.fetchConversation,

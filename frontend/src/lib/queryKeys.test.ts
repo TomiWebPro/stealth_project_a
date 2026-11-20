@@ -572,6 +572,11 @@ describe("queryKeys", () => {
   it("scopes the new catalog, conversation and message keys", () => {
     expect(queryKeys.operations.catalog()).toEqual(["operations", "catalog"]);
     expect(queryKeys.operationStats.summary()).toEqual(["operation-stats", "summary"]);
+    expect(queryKeys.operationOverview.detail("text-to-image")).toEqual([
+      "operation-overview",
+      "detail",
+      "text-to-image",
+    ]);
     expect(queryKeys.operationFeed.feed()).toEqual([
       "operation-feed",
       "feed",

@@ -58,6 +58,7 @@ import type { LineageFeedOptions } from "./lineageFeed";
 import { deriveLineageStats, validateLineageStatsArgs } from "./lineageStats";
 import { deriveOperationFeed, validateOperationFeedArgs } from "./operationFeed";
 import type { OperationFeedOptions } from "./operationFeed";
+import { deriveOperationOverview } from "./operationOverview";
 import { deriveOperationStats } from "./operationStats";
 import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
@@ -1052,6 +1053,18 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveOperationStats(OPERATION_CATALOG.operations ?? [], REFERENCE_NOW);
   }
 
+  // Authoritative single-operation overview derives a compact snapshot from the
+  // same catalog/provider stores on every call; mirror the router's unknown
+  // operation 404 and repository derivation over the seeds. This must precede
+  // any dynamic `/operations/{operation_id}` detail branch.
+  if (/^\/operations\/[^/]+\/overview$/.test(path)) {
+    const operationId = pathParts[2] ?? "";
+    if (!(OPERATION_CATALOG.operations ?? []).some((operation) => operation.id === operationId)) {
+      return NOT_FOUND;
+    }
+    return deriveOperationOverview(operationId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW);
+  }
+
   // Authoritative conversation feed derives the same newest-first view as the
   // `/conversations/feed` endpoint from the shared conversation/message seeds;
   // mirror its 422 validation, unknown-project 404, page bound and repository
@@ -1772,6 +1785,7 @@ describe("live vs mock transport parity", () => {
       ["getOperationFeed non-streaming", (api) => api.getOperationFeed({ streaming: false })],
       ["getOperationFeed limited", (api) => api.getOperationFeed({ limit: 2 })],
       ["getOperationStats", (api) => api.getOperationStats()],
+      ["getOperationOverview", (api) => api.getOperationOverview("text-to-image")],
       ["listCapabilities", (api) => api.listCapabilities()],
       ["listConversations", (api) => api.listConversations(filmId)],
       ["getConversation", (api) => api.getConversation(conversationId)],
@@ -2005,6 +2019,13 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getProviderOverview("missing-provider")).toBeUndefined();
     expect(await mockApiClient.getProviderOverview("missing-provider")).toBeUndefined();
+    // The operation overview resolves an unknown operation to undefined on both
+    // transports and returns a derived snapshot for a seeded catalog operation.
+    expect(await live.getOperationOverview("text-to-image")).toEqual(
+      await mockApiClient.getOperationOverview("text-to-image"),
+    );
+    expect(await live.getOperationOverview("missing-operation")).toBeUndefined();
+    expect(await mockApiClient.getOperationOverview("missing-operation")).toBeUndefined();
     // The extension overview resolves an unknown extension to undefined on both
     // transports and returns a derived snapshot for a seeded extension id.
     const seededExtensionId = computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "");
@@ -2851,5 +2872,6 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrchestrationFeed).toBe("function");
     expect(typeof typed.getOperationFeed).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
+    expect(typeof typed.getOperationOverview).toBe("function");
   });
 });

@@ -93,6 +93,7 @@ import type {
   MessageCreate,
   OperationCatalog,
   OperationFeed,
+  OperationOverview,
   OperationStats,
   Organization,
   OrganizationFeed,
@@ -699,6 +700,17 @@ export function useOperationStats(): UseQueryResult<OperationStats> {
   return useQuery({
     queryKey: queryKeys.operationStats.summary(),
     queryFn: () => api.getOperationStats(),
+  });
+}
+
+/** Authoritative single-operation snapshot from `/operations/{id}/overview` (C230). */
+export function useOperationOverview(
+  operationId: string,
+): UseQueryResult<OperationOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.operationOverview.detail(operationId),
+    queryFn: () => api.getOperationOverview(operationId),
   });
 }
 
