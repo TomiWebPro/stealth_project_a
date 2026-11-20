@@ -6255,6 +6255,127 @@ jobs:
                     and bool(evbadseqbody.get("error", {}).get("request_id")),
                     evov_bad_seq.text)
 
+          # Authoritative single activity event overview (C290/C292) is the newest
+          # /api/v1 URL the live client calls (getActivityOverview). Reuse a real
+          # event id from the activity feed so the snapshot has identity,
+          # stats-shared counts and same-project siblings, then probe the full
+          # snapshot shape, the canonical four-kind by_kind breakdown, the bounded
+          # newest-first recent_events page, the recent_limit bound (page only —
+          # counts unchanged), the request-id header, the 404 activity_not_found
+          # envelope for a well-formed unknown id and the shared 422
+          # validation_error envelope (malformed id + invalid limit), keeping CI
+          # aligned with the exact /api/v1 URLs the VITE_API_MODE=live client calls.
+          actov_feed = httpx.get(f"{base}/activity", timeout=5)
+          actov_events = (actov_feed.json().get("events", [])
+                          if actov_feed.status_code == 200 else [])
+          actov_event_id = actov_events[0]["id"] if actov_events else None
+          if actov_event_id:
+              actov = httpx.get(f"{base}/activity/{actov_event_id}/overview", timeout=5)
+              actovbody = actov.json() if actov.status_code == 200 else {}
+              check("activity/{id}/overview 200 snapshot shape",
+                    actov.status_code == 200
+                    and all(k in actovbody for k in (
+                        "id", "kind", "project_id", "project_name", "actor_id",
+                        "label", "detail", "timestamp", "tone", "counts",
+                        "recent_events", "generated_at")),
+                    actov.text)
+              check("activity/{id}/overview identity + joined context",
+                    actovbody.get("id") == actov_event_id
+                    and actovbody.get("kind") in ("asset", "publish", "job", "comment")
+                    and bool(actovbody.get("project_id"))
+                    and isinstance(actovbody.get("project_name"), str)
+                    and bool(actovbody.get("actor_id"))
+                    and bool(actovbody.get("label"))
+                    and bool(actovbody.get("detail"))
+                    and bool(actovbody.get("timestamp"))
+                    and actovbody.get("tone") in ("neutral", "accent", "success",
+                                                  "warning", "danger", "info")
+                    and bool(actovbody.get("generated_at")),
+                    actov.text)
+              check("activity/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in actov.headers},
+                    str(dict(actov.headers)))
+              actov_counts = actovbody.get("counts", {})
+              check("activity/{id}/overview stats-shared counts block",
+                    isinstance(actov_counts, dict)
+                    and all(k in actov_counts for k in (
+                        "total_events", "total_participants",
+                        "workspace_events", "by_kind"))
+                    and isinstance(actov_counts.get("total_events"), int)
+                    and isinstance(actov_counts.get("total_participants"), int)
+                    and isinstance(actov_counts.get("workspace_events"), int)
+                    and isinstance(actov_counts.get("by_kind"), list),
+                    actov.text)
+              actov_kinds = {b.get("kind"): b.get("count")
+                             for b in actov_counts.get("by_kind", [])
+                             if isinstance(b, dict)}
+              check("activity/{id}/overview four kinds + bucket invariants",
+                    set(actov_kinds) == {"asset", "publish", "job", "comment"}
+                    and all(isinstance(v, int) and v >= 0 for v in actov_kinds.values())
+                    and sum(actov_kinds.values()) == actov_counts.get("total_events")
+                    and actov_counts.get("workspace_events", 0) >= actov_counts.get("total_events", 0),
+                    actov.text)
+              check("activity/{id}/overview derived non-zero values",
+                    actov_counts.get("total_events", 0) >= 1
+                    and actov_counts.get("workspace_events", 0) >= 1,
+                    actov.text)
+              actov_recent = actovbody.get("recent_events", [])
+              check("activity/{id}/overview recent_events item shapes",
+                    isinstance(actov_recent, list)
+                    and all(isinstance(e, dict) and all(
+                        k in e for k in ("id", "kind", "project_id", "actor_id",
+                                         "label", "detail", "timestamp", "tone"))
+                        for e in actov_recent),
+                    actov.text)
+              check("activity/{id}/overview siblings newest-first",
+                    all(actov_recent[i]["timestamp"] >= actov_recent[i + 1]["timestamp"]
+                        for i in range(len(actov_recent) - 1)),
+                    actov.text)
+              check("activity/{id}/overview newest event is target",
+                    bool(actov_recent) and actov_recent[0].get("id") == actov_event_id,
+                    actov.text)
+              actov_limited = httpx.get(
+                  f"{base}/activity/{actov_event_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              actov_lbody = actov_limited.json() if actov_limited.status_code == 200 else {}
+              check("activity/{id}/overview recent_limit=1 page bound",
+                    actov_limited.status_code == 200
+                    and len(actov_lbody.get("recent_events", [])) <= 1
+                    and actov_lbody.get("counts", {}).get("total_events") == actov_counts.get("total_events")
+                    and actov_lbody.get("counts", {}).get("workspace_events") == actov_counts.get("workspace_events"),
+                    actov_limited.text)
+              for bad_limit in (0, 51):
+                  actov_bad_limit = httpx.get(
+                      f"{base}/activity/{actov_event_id}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  actov_blbody = (actov_bad_limit.json()
+                                  if actov_bad_limit.status_code == 422 else {})
+                  check(f"activity/{{id}}/overview 422 invalid limit {bad_limit}",
+                        actov_bad_limit.status_code == 422
+                        and actov_blbody.get("error", {}).get("code") == "validation_error"
+                        and bool(actov_blbody.get("error", {}).get("request_id")),
+                        actov_bad_limit.text)
+          else:
+              check("activity/{id}/overview setup", False,
+                    "could not obtain a live activity event id")
+
+          actov_unknown = httpx.get(
+              f"{base}/activity/job-00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          actov_404body = actov_unknown.json() if actov_unknown.status_code == 404 else {}
+          check("activity/{id}/overview 404 activity_not_found envelope",
+                actov_unknown.status_code == 404
+                and actov_404body.get("error", {}).get("code") == "activity_not_found"
+                and bool(actov_404body.get("error", {}).get("request_id")),
+                actov_unknown.text)
+          actov_bad = httpx.get(f"{base}/activity/not-a-valid-id/overview", timeout=5)
+          actov_badbody = actov_bad.json() if actov_bad.status_code == 422 else {}
+          check("activity/{id}/overview 422 malformed id envelope",
+                actov_bad.status_code == 422
+                and actov_badbody.get("error", {}).get("code") == "validation_error"
+                and bool(actov_badbody.get("error", {}).get("request_id")),
+                actov_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
