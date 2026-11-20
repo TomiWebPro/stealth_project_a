@@ -2,6 +2,7 @@ import type { ActivityOptions } from "./activity";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetOverviewOptions } from "./assetOverview";
+import type { VersionOverviewOptions } from "./versionOverview";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { ChainOverviewOptions } from "./chainOverview";
@@ -102,6 +103,10 @@ export const queryKeys = {
   assetOverview: {
     detail: (assetId: string, options: AssetOverviewOptions = {}) =>
       ["asset-overview", "detail", assetId, options.recentLimit ?? "all"] as const,
+  },
+  versionOverview: {
+    detail: (assetId: string, version: number, options: VersionOverviewOptions = {}) =>
+      ["version-overview", "detail", assetId, version, options.recentLimit ?? "all"] as const,
   },
   assetStats: {
     summary: (options: AssetStatsOptions = {}) =>

@@ -168,6 +168,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the version overview key by asset, version and recent limit", () => {
+    expect(queryKeys.versionOverview.detail("a1", 2)).toEqual([
+      "version-overview",
+      "detail",
+      "a1",
+      2,
+      "all",
+    ]);
+    expect(queryKeys.versionOverview.detail("a1", 2, { recentLimit: 3 })).toEqual([
+      "version-overview",
+      "detail",
+      "a1",
+      2,
+      3,
+    ]);
+  });
+
   it("scopes the conversation overview key by conversation and recent limit", () => {
     expect(queryKeys.conversationOverview.detail("c1")).toEqual([
       "conversation-overview",

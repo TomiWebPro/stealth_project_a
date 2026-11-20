@@ -6,6 +6,7 @@ import type { ActivityOptions } from "../lib/activity";
 import type { ActivityStatsOptions } from "../lib/activityStats";
 import type { AssetFeedOptions } from "../lib/assetFeed";
 import type { AssetOverviewOptions } from "../lib/assetOverview";
+import type { VersionOverviewOptions } from "../lib/versionOverview";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
@@ -133,6 +134,7 @@ import type {
   UploadStats,
   User,
   VersionFeed,
+  VersionOverview,
   VersionStats,
 } from "../lib/types";
 import { queryKeys } from "../lib/queryKeys";
@@ -539,6 +541,23 @@ export function useAssetOverview(
   return useQuery({
     queryKey: queryKeys.assetOverview.detail(assetId, options),
     queryFn: () => api.getAssetOverview(assetId, options),
+  });
+}
+
+/**
+ * Authoritative single asset-version snapshot (identity + storage, joined
+ * project context, `is_latest` and whole-asset version counts with a bounded
+ * sibling list) from `/assets/{id}/versions/{version}/overview` (C250).
+ */
+export function useVersionOverview(
+  assetId: string,
+  version: number,
+  options?: VersionOverviewOptions,
+): UseQueryResult<VersionOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.versionOverview.detail(assetId, version, options),
+    queryFn: () => api.getVersionOverview(assetId, version, options),
   });
 }
 

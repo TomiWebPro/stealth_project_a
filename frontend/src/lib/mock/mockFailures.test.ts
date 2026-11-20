@@ -93,6 +93,7 @@ import {
   fetchUploadOverview,
   fetchUploadStats,
   fetchVersionFeed,
+  fetchVersionOverview,
   fetchVersionStats,
   fetchWorkflowTemplates,
   setMockFailure,
@@ -625,6 +626,19 @@ describe("mock error-state fakes", () => {
     await expect(fetchUploadOverview(uploadId)).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the version overview domain", async () => {
+    const assetId = ASSETS[0]?.id ?? "";
+    setMockFailure("versionOverview");
+
+    await expect(fetchVersionOverview(assetId, ASSETS[0]?.version ?? 1)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchVersionOverview(assetId, ASSETS[0]?.version ?? 1)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the asset feed domain", async () => {
     setMockFailure("assetFeed");
 
@@ -875,6 +889,7 @@ describe("mock error-state fakes", () => {
         ["planOverview", () => fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")],
         ["runOverview", () => fetchRunOverview(ORCHESTRATION_RUNS[0]?.run_id ?? "")],
         ["uploadOverview", () => fetchUploadOverview("0b5c1e2a-7000-4000-8000-000000000001")],
+        ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],

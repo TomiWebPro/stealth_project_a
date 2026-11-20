@@ -146,6 +146,8 @@ import { deriveUploadOverview, validateUploadOverviewArgs } from "./uploadOvervi
 import { deriveUploadStats, validateUploadStatsArgs } from "./uploadStats";
 import { deriveVersionFeed, validateVersionFeedArgs } from "./versionFeed";
 import type { VersionFeedOptions } from "./versionFeed";
+import { deriveVersionOverview, validateVersionOverviewArgs } from "./versionOverview";
+import type { VersionOverviewOptions } from "./versionOverview";
 import { deriveVersionStats, validateVersionStatsArgs } from "./versionStats";
 import type { TagOptions } from "./tags";
 
@@ -810,6 +812,42 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       },
       options,
     );
+  }
+
+  // Authoritative single-version overview derives a compact snapshot from the
+  // same asset/version/project stores as the live
+  // `/assets/{id}/versions/{version}/overview` endpoint; mirror the router's 422
+  // id/version/limit validation, unknown-asset/unknown-version 404 and repository
+  // derivation. This must precede the dynamic /assets/{id} branch below.
+  if (/^\/assets\/[^/]+\/versions\/[^/]+\/overview$/.test(path)) {
+    const assetId = pathParts[2] ?? "";
+    const version = Number(pathParts[4]);
+    const recentLimitRaw = params.get("recent_limit");
+    const options: VersionOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateVersionOverviewArgs(assetId, version, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ASSETS.some((asset) => asset.id === assetId)) return NOT_FOUND;
+    try {
+      return deriveVersionOverview(
+        assetId,
+        version,
+        { projects: PROJECTS, assets: ASSETS, assetVersions: ASSET_VERSIONS, now: REFERENCE_NOW },
+        options,
+      );
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) return NOT_FOUND;
+      throw cause;
+    }
   }
 
   if (path.startsWith("/assets/")) return ASSETS.find((a) => a.id === id) ?? NOT_FOUND;
@@ -1742,6 +1780,8 @@ const planId = ORCHESTRATION_PLANS[0]?.plan_id ?? "";
 const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
 /** Moonshot concept asset whose descendants exercise the full impact chain. */
 const impactRootId = "0b5c1e2a-2000-4000-8000-000000000011";
+/** Seeded asset (with version records) used by the single-version overview probes. */
+const versionOverviewAssetId = ASSETS[0]?.id ?? "";
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -1983,6 +2023,15 @@ describe("live vs mock transport parity", () => {
         "getVersionFeed scoped and limited",
         (api) => api.getVersionFeed({ projectId: filmId, limit: 1 }),
       ],
+      ["getVersionOverview", (api) => api.getVersionOverview(versionOverviewAssetId, 1)],
+      [
+        "getVersionOverview limited",
+        (api) => api.getVersionOverview(versionOverviewAssetId, 1, { recentLimit: 1 }),
+      ],
+      [
+        "getVersionOverview missing",
+        (api) => api.getVersionOverview("00000000-0000-4000-8000-000000000000", 1),
+      ],
       ["getPublishStats", (api) => api.getPublishStats()],
       ["getPublishStats scoped", (api) => api.getPublishStats({ projectId: filmId })],
       ["getPublishFeed", (api) => api.getPublishFeed()],
@@ -2219,6 +2268,20 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getUploadOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The version overview resolves an unknown asset/version to undefined on both
+    // transports and returns a derived snapshot for a seeded asset version.
+    expect(await live.getVersionOverview(versionOverviewAssetId, 1)).toEqual(
+      await mockApiClient.getVersionOverview(versionOverviewAssetId, 1),
+    );
+    expect(await live.getVersionOverview(versionOverviewAssetId, 1, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getVersionOverview(versionOverviewAssetId, 1, { recentLimit: 1 }),
+    );
+    expect(await live.getVersionOverview("00000000-0000-4000-8000-000000000000", 1)).toBeUndefined();
+    expect(
+      await mockApiClient.getVersionOverview("00000000-0000-4000-8000-000000000000", 1),
+    ).toBeUndefined();
+    expect(await live.getVersionOverview(versionOverviewAssetId, 9999)).toBeUndefined();
+    expect(await mockApiClient.getVersionOverview(versionOverviewAssetId, 9999)).toBeUndefined();
     // The extension overview resolves an unknown extension to undefined on both
     // transports and returns a derived snapshot for a seeded extension id.
     const seededExtensionId = computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "");
@@ -2502,6 +2565,28 @@ describe("live vs mock transport parity", () => {
       ]);
       expect(mockVersionFeed422).toMatchObject({ status: 422, code: "validation_error" });
       expect(liveVersionFeed422).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
+    // Both transports resolve an unknown asset/version to undefined for the
+    // single-version overview and reject a malformed id/version/limit with the
+    // same 422 envelope (C250).
+    expect(await live.getVersionOverview(missingId, 1)).toBeUndefined();
+    expect(await mockApiClient.getVersionOverview(missingId, 1)).toBeUndefined();
+    expect(await live.getVersionOverview(versionOverviewAssetId, 9999)).toBeUndefined();
+    expect(await mockApiClient.getVersionOverview(versionOverviewAssetId, 9999)).toBeUndefined();
+    for (const bad of [
+      ["not-a-uuid", 1, {}],
+      [versionOverviewAssetId, 0, {}],
+      [versionOverviewAssetId, 1.5, {}],
+      [versionOverviewAssetId, 1, { recentLimit: 0 }],
+      [versionOverviewAssetId, 1, { recentLimit: 51 }],
+    ] as const) {
+      const [mockVersionOverview422, liveVersionOverview422] = await Promise.all([
+        mockApiClient.getVersionOverview(bad[0], bad[1], bad[2]).catch((cause) => cause),
+        live.getVersionOverview(bad[0], bad[1], bad[2]).catch((cause) => cause),
+      ]);
+      expect(mockVersionOverview422).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveVersionOverview422).toMatchObject({ status: 422, code: "validation_error" });
     }
 
     // Both transports 404 identically for an unknown publish-stats project scope
@@ -3094,6 +3179,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getRetryFeed).toBe("function");
     expect(typeof typed.getVersionStats).toBe("function");
     expect(typeof typed.getVersionFeed).toBe("function");
+    expect(typeof typed.getVersionOverview).toBe("function");
     expect(typeof typed.getPublishStats).toBe("function");
     expect(typeof typed.getPublishFeed).toBe("function");
     expect(typeof typed.getTags).toBe("function");

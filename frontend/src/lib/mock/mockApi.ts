@@ -157,6 +157,8 @@ import { deriveUploadOverview, validateUploadOverviewArgs } from "../uploadOverv
 import { deriveUploadStats, validateUploadStatsArgs } from "../uploadStats";
 import type { UploadStatsOptions } from "../uploadStats";
 import { deriveVersionFeed, validateVersionFeedArgs } from "../versionFeed";
+import { deriveVersionOverview, validateVersionOverviewArgs } from "../versionOverview";
+import type { VersionOverviewOptions } from "../versionOverview";
 import type { VersionFeedOptions } from "../versionFeed";
 import { deriveVersionStats, validateVersionStatsArgs } from "../versionStats";
 import type { VersionStatsOptions } from "../versionStats";
@@ -233,6 +235,7 @@ import type {
   UploadStats,
   User,
   VersionFeed,
+  VersionOverview,
   VersionStats,
 } from "../types";
 import {
@@ -288,7 +291,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
@@ -1114,6 +1117,39 @@ export async function fetchAssetOverview(
       options,
     ),
   );
+}
+
+/**
+ * Authoritative single asset-version overview (C250) derived from the same
+ * stores as the live `/assets/{id}/versions/{version}/overview` endpoint.
+ * Router-style 422 validation (asset id / version / recent_limit), a normalized
+ * 404-to-`undefined` for an unknown asset or version and the `"versionOverview"`
+ * failure domain keep error and empty states at parity with live mode.
+ */
+export async function fetchVersionOverview(
+  assetId: string,
+  version: number,
+  options?: VersionOverviewOptions,
+): Promise<VersionOverview | undefined> {
+  failIfEnabled("versionOverview");
+  validateVersionOverviewArgs(assetId, version, options);
+  try {
+    const overview = deriveVersionOverview(
+      assetId,
+      version,
+      {
+        projects: PROJECTS,
+        assets: ASSETS,
+        assetVersions: ASSET_VERSIONS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+    return delay(overview);
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 404) return delay(undefined);
+    throw cause;
+  }
 }
 
 /**

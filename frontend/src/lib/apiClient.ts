@@ -2,6 +2,7 @@ import type { ActivityOptions } from "./activity";
 import type { ActivityStatsOptions } from "./activityStats";
 import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetOverviewOptions } from "./assetOverview";
+import type { VersionOverviewOptions } from "./versionOverview";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
@@ -130,6 +131,7 @@ import type {
   UploadStats,
   User,
   VersionFeed,
+  VersionOverview,
   VersionStats,
 } from "./types";
 import * as mockApi from "./mock/mockApi";
@@ -276,6 +278,17 @@ export interface ApiClient {
     assetId: string,
     options?: AssetOverviewOptions,
   ): Promise<AssetOverview | undefined>;
+  /**
+   * Authoritative single asset-version snapshot (identity + storage, joined
+   * project context, `is_latest` and whole-asset version counts with a bounded
+   * sibling list) from `/assets/{id}/versions/{version}/overview`; an unknown
+   * asset or version resolves to `undefined` (C250).
+   */
+  getVersionOverview(
+    assetId: string,
+    version: number,
+    options?: VersionOverviewOptions,
+  ): Promise<VersionOverview | undefined>;
   /**
    * Authoritative single-project snapshot (identity, cross-domain counts and a
    * bounded newest-first jobs/assets list) from `/projects/{id}/overview`;
@@ -466,6 +479,7 @@ export const mockApiClient: ApiClient = {
   getRetryFeed: mockApi.fetchRetryFeed,
   getVersionStats: mockApi.fetchVersionStats,
   getVersionFeed: mockApi.fetchVersionFeed,
+  getVersionOverview: mockApi.fetchVersionOverview,
   getPublishStats: mockApi.fetchPublishStats,
   getPublishFeed: mockApi.fetchPublishFeed,
   getTags: mockApi.fetchTags,

@@ -96,6 +96,7 @@ import {
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
+  fetchVersionOverview,
   fetchWorkflowTemplates,
   resetMockAssets,
   updateAsset,
@@ -2338,6 +2339,55 @@ describe("mock API upload overview (C246 follow-up)", () => {
   it("injects a failure for the uploadOverview domain", async () => {
     setMockFailure("uploadOverview");
     await expect(fetchUploadOverview(uploadId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API version overview (C250 follow-up)", () => {
+  const assetId = ASSETS[0]?.id ?? "";
+  const targetVersion = ASSETS[0]?.version ?? 1;
+
+  it("derives a populated snapshot from the version/asset/project seeds", async () => {
+    const overview = await fetchVersionOverview(assetId, targetVersion);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.asset_id).toBe(assetId);
+    expect(overview?.version).toBe(targetVersion);
+    expect(overview?.is_latest).toBe(true);
+    expect(overview?.counts.asset_versions).toBeGreaterThanOrEqual(1);
+    expect(overview?.storage).toEqual(ASSETS[0]?.storage);
+  });
+
+  it("bounds the sibling list without changing whole-asset counts", async () => {
+    const overview = await fetchVersionOverview(assetId, targetVersion, { recentLimit: 1 });
+    expect(overview?.recent_versions).toHaveLength(1);
+    expect(overview?.counts.asset_versions).toBeGreaterThanOrEqual(1);
+  });
+
+  it("rejects a malformed id/version/limit and resolves an unknown asset/version to undefined", async () => {
+    await expect(fetchVersionOverview("not-a-uuid", 1)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchVersionOverview(assetId, 0)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchVersionOverview(assetId, 1, { recentLimit: 51 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchVersionOverview("00000000-0000-4000-8000-000000000000", 1),
+    ).resolves.toBeUndefined();
+    await expect(fetchVersionOverview(assetId, 9999)).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the versionOverview domain", async () => {
+    setMockFailure("versionOverview");
+    await expect(fetchVersionOverview(assetId, targetVersion)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

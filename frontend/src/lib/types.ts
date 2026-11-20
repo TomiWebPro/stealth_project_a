@@ -198,6 +198,8 @@ export type {
   VersionFeed,
   VersionFeedItem,
   VersionNumberCount,
+  VersionOverview,
+  VersionOverviewCounts,
   VersionProjectCount,
   VersionStats,
 } from "../types";

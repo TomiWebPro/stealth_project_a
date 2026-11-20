@@ -1214,6 +1214,59 @@ describe("createHttpApiClient upload overview (C246)", () => {
   });
 });
 
+describe("createHttpApiClient version overview (C250)", () => {
+  const assetId = "0b5c1e2a-2000-4000-8000-000000000001";
+  const overview = {
+    asset_id: assetId,
+    asset_name: "concept_frame",
+    asset_type: "image",
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    version: 2,
+    storage: { key: "Publish/concept.png", size_bytes: 1000, content_type: "image/png" },
+    created_by: "0b5c1e2a-0000-4000-8000-0000000000aa",
+    created_at: "2026-03-17T10:30:00.000Z",
+    is_latest: true,
+    counts: { asset_versions: 2, revisions: 1 },
+    recent_versions: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the version overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({
+      [`/assets/${assetId}/versions/2/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getVersionOverview(assetId, 2, { recentLimit: 1 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/assets/${assetId}/versions/2/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("1");
+  });
+
+  it("maps both 404s to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "version_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getVersionOverview(assetId, 9)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getVersionOverview(assetId, 2)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient extension overview (C222)", () => {
   const extensionId = "0f1f2a3b-4c5d-5e6f-8a9b-0c1d2e3f4a5b";
   const overview = {

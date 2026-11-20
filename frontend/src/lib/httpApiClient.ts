@@ -110,6 +110,8 @@ import { uploadStatsQueryParams } from "./uploadStats";
 import type { UploadStatsOptions } from "./uploadStats";
 import { versionFeedQueryParams } from "./versionFeed";
 import type { VersionFeedOptions } from "./versionFeed";
+import { versionOverviewQueryParams } from "./versionOverview";
+import type { VersionOverviewOptions } from "./versionOverview";
 import { versionStatsQueryParams } from "./versionStats";
 import type { VersionStatsOptions } from "./versionStats";
 import type {
@@ -186,6 +188,7 @@ import type {
   UploadStats,
   User,
   VersionFeed,
+  VersionOverview,
   VersionStats,
 } from "./types";
 
@@ -720,6 +723,26 @@ export function createHttpApiClient(
         return await request<AssetOverview>(
           `/assets/${encodeURIComponent(assetId)}/overview`,
           assetOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-asset-version overview; both 404s (unknown asset and
+     * unknown version) normalize to `undefined` like the other detail lookups.
+     */
+    async getVersionOverview(
+      assetId: string,
+      version: number,
+      options?: VersionOverviewOptions,
+    ): Promise<VersionOverview | undefined> {
+      try {
+        return await request<VersionOverview>(
+          `/assets/${encodeURIComponent(assetId)}/versions/${version}/overview`,
+          versionOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;
