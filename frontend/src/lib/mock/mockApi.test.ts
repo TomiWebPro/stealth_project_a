@@ -51,6 +51,7 @@ import {
   fetchHomeSummary,
   fetchJob,
   fetchJobLogs,
+  fetchJobOverview,
   fetchJobQueue,
   fetchJobs,
   fetchJobsByProject,
@@ -1999,6 +2000,63 @@ describe("mock API conversation overview (C209 follow-up)", () => {
 
     setMockFailure("conversationOverview");
     await expect(fetchConversationOverview(conversationId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API job overview (C213 follow-up)", () => {
+  const jobId = JOB_EVENTS[0]?.job_id ?? "";
+  const quietJobId = JOBS.find((job) => !JOB_EVENTS.some((event) => event.job_id === job.id))?.id ?? "";
+
+  it("derives a populated snapshot with identity, event/retry counts and recent events", async () => {
+    const overview = await fetchJobOverview(jobId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.job_id).toBe(jobId);
+    expect(overview?.counts.events).toBe(
+      JOB_EVENTS.filter((event) => event.job_id === jobId).length,
+    );
+    expect(overview?.counts.retries).toBe(
+      JOB_RETRIES.filter((entry) => entry.job_id === jobId).length,
+    );
+    expect((overview?.counts.by_event_type ?? []).reduce((sum, row) => sum + row.count, 0)).toBe(
+      overview?.counts.events,
+    );
+    expect((overview?.recent_events ?? []).length).toBeGreaterThan(0);
+  });
+
+  it("derives a zero-filled snapshot for a job with no events or retries", async () => {
+    const overview = await fetchJobOverview(quietJobId);
+    expect(overview?.counts.events).toBe(0);
+    expect(overview?.counts.retries).toBe(0);
+    expect((overview?.counts.by_event_type ?? []).every((row) => row.count === 0)).toBe(true);
+    expect(overview?.recent_events).toEqual([]);
+  });
+
+  it("bounds the recent-event list without changing the totals", async () => {
+    const whole = await fetchJobOverview(jobId);
+    const limited = await fetchJobOverview(jobId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.recent_events).toHaveLength(1);
+  });
+
+  it("mirrors router validation, the unknown-job 404 and the injected failure", async () => {
+    await expect(fetchJobOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchJobOverview(jobId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchJobOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+
+    setMockFailure("jobOverview");
+    await expect(fetchJobOverview(jobId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

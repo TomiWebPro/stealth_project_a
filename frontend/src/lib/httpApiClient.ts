@@ -47,6 +47,8 @@ import { jobFeedQueryParams } from "./jobFeed";
 import type { JobFeedOptions } from "./jobFeed";
 import { jobLogsQueryParams } from "./jobLogs";
 import type { JobLogsOptions } from "./jobLogs";
+import { jobOverviewQueryParams } from "./jobOverview";
+import type { JobOverviewOptions } from "./jobOverview";
 import { jobQueueQueryParams } from "./jobQueue";
 import type { JobQueueOptions } from "./jobQueue";
 import { jobStatsQueryParams } from "./jobStats";
@@ -130,6 +132,7 @@ import type {
   Job,
   JobFeed,
   JobLogFrame,
+  JobOverview,
   JobQueueView,
   JobStats,
   LineageFeed,
@@ -631,6 +634,25 @@ export function createHttpApiClient(
         return await request<ConversationOverview>(
           `/conversations/${encodeURIComponent(conversationId)}/overview`,
           conversationOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-job overview; the backend 404s on an unknown job,
+     * which is normalized to `undefined` like the other detail lookups.
+     */
+    async getJobOverview(
+      jobId: string,
+      options?: JobOverviewOptions,
+    ): Promise<JobOverview | undefined> {
+      try {
+        return await request<JobOverview>(
+          `/jobs/${encodeURIComponent(jobId)}/overview`,
+          jobOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

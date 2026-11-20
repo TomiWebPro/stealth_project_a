@@ -34,6 +34,7 @@ import {
   fetchJob,
   fetchJobFeed,
   fetchJobLogs,
+  fetchJobOverview,
   fetchJobQueue,
   fetchJobs,
   fetchJobStats,
@@ -136,6 +137,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchProjectOverview(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchAssetOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationOverview(CONVERSATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchJobOverview(JOBS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
@@ -196,6 +198,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchJobLogs(jobId)).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the job overview domain", async () => {
+    const jobId = JOBS[0]?.id ?? "";
+    setMockFailure("jobOverview");
+
+    await expect(fetchJobOverview(jobId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchJobOverview(jobId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the asset stats domain", async () => {

@@ -19,6 +19,7 @@ import type { ExtensionStatsOptions } from "./extensionStats";
 import type { ImpactOptions } from "./impact";
 import type { JobFeedOptions } from "./jobFeed";
 import type { JobLogsOptions } from "./jobLogs";
+import type { JobOverviewOptions } from "./jobOverview";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
@@ -89,6 +90,10 @@ export const queryKeys = {
         options.status ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  jobOverview: {
+    detail: (jobId: string, options: JobOverviewOptions = {}) =>
+      ["job-overview", "detail", jobId, options.recentLimit ?? "all"] as const,
   },
   assetOverview: {
     detail: (assetId: string, options: AssetOverviewOptions = {}) =>

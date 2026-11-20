@@ -25,6 +25,7 @@ import type { HomeSummary } from "../lib/homeSummary";
 import type { ImpactOptions } from "../lib/impact";
 import type { JobFeedOptions } from "../lib/jobFeed";
 import type { JobLogsOptions } from "../lib/jobLogs";
+import type { JobOverviewOptions } from "../lib/jobOverview";
 import type { JobQueueOptions } from "../lib/jobQueue";
 import type { JobStatsOptions } from "../lib/jobStats";
 import type { LineageFeedOptions } from "../lib/lineageFeed";
@@ -81,6 +82,7 @@ import type {
   Job,
   JobFeed,
   JobLogFrame,
+  JobOverview,
   JobQueueView,
   JobStats,
   LineageFeed,
@@ -454,6 +456,21 @@ export function useConversationOverview(
   return useQuery({
     queryKey: queryKeys.conversationOverview.detail(conversationId, options),
     queryFn: () => api.getConversationOverview(conversationId, options),
+  });
+}
+
+/**
+ * Authoritative single-job snapshot (identity, event/retry counts and a bounded
+ * newest-event list) from `/jobs/{id}/overview` (C213).
+ */
+export function useJobOverview(
+  jobId: string,
+  options?: JobOverviewOptions,
+): UseQueryResult<JobOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.jobOverview.detail(jobId, options),
+    queryFn: () => api.getJobOverview(jobId, options),
   });
 }
 

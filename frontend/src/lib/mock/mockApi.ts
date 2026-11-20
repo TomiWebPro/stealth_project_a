@@ -70,6 +70,11 @@ import { deriveJobFeed, validateJobFeedArgs } from "../jobFeed";
 import type { JobFeedOptions } from "../jobFeed";
 import { deriveJobLogs, validateJobLogsArgs } from "../jobLogs";
 import type { JobLogsOptions } from "../jobLogs";
+import {
+  deriveJobOverview,
+  validateJobOverviewArgs,
+} from "../jobOverview";
+import type { JobOverviewOptions } from "../jobOverview";
 import { deriveJobQueue, validateJobQueueArgs } from "../jobQueue";
 import type { JobQueueOptions } from "../jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "../jobStats";
@@ -163,6 +168,7 @@ import type {
   Job,
   JobFeed,
   JobLogFrame,
+  JobOverview,
   JobQueueView,
   JobStats,
   LineageFeed,
@@ -258,8 +264,8 @@ function delay<T>(value: T): Promise<T> {
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
- * `projectOverview`, `assetOverview`, `conversationOverview`, `jobLogs`, `jobFeed`
- * and `jobQueue`.
+ * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
+ * `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -1011,6 +1017,37 @@ export async function fetchConversationOverview(
       {
         conversations: CONVERSATIONS,
         messages: MESSAGES,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-job overview (C213) derived from the same stores as the
+ * live `/jobs/{id}/overview` endpoint. Router-style 422 validation (job id /
+ * recent_limit), a normalized 404-to-`undefined` for an unknown job and the
+ * `"jobOverview"` failure domain keep error and empty states at parity with
+ * live mode.
+ */
+export async function fetchJobOverview(
+  jobId: string,
+  options?: JobOverviewOptions,
+): Promise<JobOverview | undefined> {
+  failIfEnabled("jobOverview");
+  validateJobOverviewArgs(jobId, options);
+  if (!JOBS.some((job) => job.id === jobId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveJobOverview(
+      jobId,
+      {
+        jobs: JOBS,
+        events: JOB_EVENTS,
+        retries: JOB_RETRIES,
         projects: PROJECTS,
         now: REFERENCE_NOW,
       },

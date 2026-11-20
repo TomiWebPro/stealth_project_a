@@ -23,6 +23,7 @@ import type { HomeSummary } from "./homeSummary";
 import type { ImpactOptions } from "./impact";
 import type { JobFeedOptions } from "./jobFeed";
 import type { JobLogsOptions } from "./jobLogs";
+import type { JobOverviewOptions } from "./jobOverview";
 import type { JobQueueOptions } from "./jobQueue";
 import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
@@ -79,6 +80,7 @@ import type {
   Job,
   JobFeed,
   JobLogFrame,
+  JobOverview,
   JobQueueView,
   JobStats,
   LineageFeed,
@@ -238,6 +240,15 @@ export interface ApiClient {
     conversationId: string,
     options?: ConversationOverviewOptions,
   ): Promise<ConversationOverview | undefined>;
+  /**
+   * Authoritative single-job snapshot (identity, event/retry counts and a
+   * bounded newest-event list) from `/jobs/{id}/overview`; unknown jobs resolve
+   * to `undefined` (C213).
+   */
+  getJobOverview(
+    jobId: string,
+    options?: JobOverviewOptions,
+  ): Promise<JobOverview | undefined>;
   /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
@@ -342,6 +353,7 @@ export const mockApiClient: ApiClient = {
   getAssetOverview: mockApi.fetchAssetOverview,
   getProjectOverview: mockApi.fetchProjectOverview,
   getConversationOverview: mockApi.fetchConversationOverview,
+  getJobOverview: mockApi.fetchJobOverview,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,

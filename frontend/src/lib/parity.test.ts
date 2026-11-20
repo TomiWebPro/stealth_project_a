@@ -47,6 +47,8 @@ import { deriveJobFeed, validateJobFeedArgs } from "./jobFeed";
 import type { JobFeedOptions } from "./jobFeed";
 import { deriveJobLogs, validateJobLogsArgs } from "./jobLogs";
 import type { JobLogsOptions } from "./jobLogs";
+import { deriveJobOverview, validateJobOverviewArgs } from "./jobOverview";
+import type { JobOverviewOptions } from "./jobOverview";
 import { deriveJobQueue, validateJobQueueArgs } from "./jobQueue";
 import type { JobQueueOptions } from "./jobQueue";
 import { deriveJobStats, validateJobStatsArgs } from "./jobStats";
@@ -852,6 +854,34 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveJobFeed(JOBS, PROJECTS, REFERENCE_NOW, options);
   }
 
+  // Authoritative single-job overview derives a compact snapshot from the same
+  // job/event/retry/project stores on every call; mirror the router's 422
+  // validation, unknown-job 404 and repository derivation over the seeds. This
+  // must precede the dynamic `/jobs/{id}` detail branch below.
+  if (/^\/jobs\/[^/]+\/overview$/.test(path)) {
+    const jobId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options: JobOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateJobOverviewArgs(jobId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!JOBS.some((job) => job.id === jobId)) return NOT_FOUND;
+    return deriveJobOverview(
+      jobId,
+      { jobs: JOBS, events: JOB_EVENTS, retries: JOB_RETRIES, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+  }
+
   // Authoritative per-job execution log is derived from the same JOB_EVENTS
   // stream the endpoint reads; mirror its 422 validation, unknown-job 404 and
   // repository derivation (severity filter + resume cursor + page) over seeds.
@@ -1585,6 +1615,8 @@ describe("live vs mock transport parity", () => {
         "getConversationOverview limited",
         (api) => api.getConversationOverview(conversationId, { recentLimit: 2 }),
       ],
+      ["getJobOverview", (api) => api.getJobOverview(failedJobId)],
+      ["getJobOverview limited", (api) => api.getJobOverview(failedJobId, { recentLimit: 2 })],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -1886,6 +1918,15 @@ describe("live vs mock transport parity", () => {
     expect(await live.getConversationOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getConversationOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The job overview resolves an unknown job to undefined on both transports
+    // and returns a derived snapshot (with event/retry counts) for a seeded job.
+    expect(await live.getJobOverview(failedJobId)).toEqual(
+      await mockApiClient.getJobOverview(failedJobId),
+    );
+    expect(await live.getJobOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getJobOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
@@ -2484,6 +2525,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed job id or an out-of-range
+    // recent_limit with the same 422 envelope for the single-job overview.
+    const badJobOverviewOptions: Array<[string, string, JobOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [failedJobId, failedJobId, { recentLimit: 0 }],
+      [failedJobId, failedJobId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badJobOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getJobOverview(mockId, options).catch((cause) => cause),
+        live.getJobOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -2662,6 +2719,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getProjectOverview).toBe("function");
     expect(typeof typed.getAssetOverview).toBe("function");
     expect(typeof typed.getConversationOverview).toBe("function");
+    expect(typeof typed.getJobOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");

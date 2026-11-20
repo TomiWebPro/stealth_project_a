@@ -183,6 +183,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the job overview key by job and recent limit", () => {
+    expect(queryKeys.jobOverview.detail("j1")).toEqual([
+      "job-overview",
+      "detail",
+      "j1",
+      "all",
+    ]);
+    expect(queryKeys.jobOverview.detail("j1", { recentLimit: 3 })).toEqual([
+      "job-overview",
+      "detail",
+      "j1",
+      3,
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

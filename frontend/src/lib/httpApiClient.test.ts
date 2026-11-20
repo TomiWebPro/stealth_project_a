@@ -775,6 +775,101 @@ describe("createHttpApiClient conversation overview (C209)", () => {
   });
 });
 
+describe("createHttpApiClient job overview (C213)", () => {
+  const jobId = "0b5c1e2a-3000-4000-8000-000000000001";
+  const overview = {
+    job_id: jobId,
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    operation_id: "dataset-prep",
+    schema_version: "1.0",
+    status: "running",
+    progress: 0.4,
+    attempt: 1,
+    created_by: "0b5c1e2a-0000-4000-8000-0000000000aa",
+    created_at: "2026-01-01T00:00:00.000Z",
+    started_at: null,
+    finished_at: null,
+    result: null,
+    error: null,
+    counts: {
+      events: 2,
+      retries: 1,
+      by_event_type: [
+        { type: "status", count: 1 },
+        { type: "progress", count: 1 },
+        { type: "intermediate", count: 0 },
+        { type: "result", count: 0 },
+        { type: "error", count: 0 },
+        { type: "log", count: 0 },
+      ],
+    },
+    recent_events: [],
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the job overview path with the recent limit and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/jobs/${jobId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getJobOverview(jobId, { recentLimit: 3 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/jobs/${jobId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("3");
+  });
+
+  it("omits the query string when no recent limit is supplied", async () => {
+    const { fetchImpl, calls } = router({
+      [`/jobs/${jobId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+    await expect(api.getJobOverview(jobId)).resolves.toEqual(overview);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces validation and other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "job_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getJobOverview(jobId)).resolves.toBeUndefined();
+
+    const invalid = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          {
+            error: {
+              code: "validation_error",
+              message: "Invalid job id.",
+              details: [{ field: "job_id", message: "must be a UUID" }],
+            },
+          },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(invalid.getJobOverview("bad")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getJobOverview(jobId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient project overview (C201)", () => {
   const overview = {
     project_id: project.id,
