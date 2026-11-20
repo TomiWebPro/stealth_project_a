@@ -87,6 +87,7 @@ import type { ProjectOverviewOptions } from "./projectOverview";
 import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderFeed, validateProviderFeedArgs } from "./providerFeed";
 import type { ProviderFeedOptions } from "./providerFeed";
+import { deriveProviderOverview } from "./providerOverview";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
@@ -924,6 +925,16 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
   }
   if (path.startsWith("/jobs/")) return JOBS.find((j) => j.id === id) ?? NOT_FOUND;
 
+  // Authoritative single-provider overview derives a compact snapshot from the
+  // same provider/catalog stores on every call; mirror the router's unknown
+  // provider 404 and repository derivation over the seeds. This must precede
+  // the dynamic `/providers/{id}` detail branch below.
+  if (/^\/providers\/[^/]+\/overview$/.test(path)) {
+    const providerId = pathParts[2] ?? "";
+    if (!PROVIDERS.some((provider) => provider.id === providerId)) return NOT_FOUND;
+    return deriveProviderOverview(providerId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW);
+  }
+
   // Authoritative provider fleet stats are derived from the provider store on
   // every call; reproduce the router's 422 validation and repository derivation
   // over the shared seeds so live and mock agree. This must precede the dynamic
@@ -1617,6 +1628,7 @@ describe("live vs mock transport parity", () => {
       ],
       ["getJobOverview", (api) => api.getJobOverview(failedJobId)],
       ["getJobOverview limited", (api) => api.getJobOverview(failedJobId, { recentLimit: 2 })],
+      ["getProviderOverview", (api) => api.getProviderOverview("prov_local")],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -1928,6 +1940,13 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getJobOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The provider overview resolves an unknown provider to undefined on both
+    // transports and returns a derived snapshot for a seeded provider.
+    expect(await live.getProviderOverview("prov_local")).toEqual(
+      await mockApiClient.getProviderOverview("prov_local"),
+    );
+    expect(await live.getProviderOverview("missing-provider")).toBeUndefined();
+    expect(await mockApiClient.getProviderOverview("missing-provider")).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
     expect(await live.getJobLogs(missingId)).toBeUndefined();
@@ -2720,6 +2739,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getAssetOverview).toBe("function");
     expect(typeof typed.getConversationOverview).toBe("function");
     expect(typeof typed.getJobOverview).toBe("function");
+    expect(typeof typed.getProviderOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");

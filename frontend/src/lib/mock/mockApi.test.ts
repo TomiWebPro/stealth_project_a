@@ -76,6 +76,7 @@ import {
   fetchProvider,
   fetchProviders,
   fetchProviderFeed,
+  fetchProviderOverview,
   fetchProviderStats,
   fetchPublishFeed,
   fetchRecentAssets,
@@ -2057,6 +2058,37 @@ describe("mock API job overview (C213 follow-up)", () => {
 
     setMockFailure("jobOverview");
     await expect(fetchJobOverview(jobId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API provider overview (C217 follow-up)", () => {
+  const providerId = PROVIDERS.find((provider) => provider.capabilities?.length)?.id ?? "";
+
+  it("derives a populated snapshot with identity, advertised operations and catalog bindings", async () => {
+    const overview = await fetchProviderOverview(providerId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.provider_id).toBe(providerId);
+    const provider = PROVIDERS.find((candidate) => candidate.id === providerId);
+    expect(overview?.name).toBe(provider?.name);
+    expect(overview?.location).toBe(provider?.location);
+    expect(overview?.status).toBe(provider?.status);
+    expect(overview?.counts.capabilities).toBe(provider?.capabilities?.length);
+    expect(overview?.operation_ids).toEqual(
+      [...new Set((provider?.capabilities ?? []).map((capability) => capability.operation_id))].sort(),
+    );
+    expect((overview?.catalog_operations ?? []).length).toBeGreaterThan(0);
+    expect(overview?.counts.advertised_operations).toBe(overview?.operation_ids?.length);
+  });
+
+  it("resolves an unknown provider to undefined and injects a failure", async () => {
+    await expect(fetchProviderOverview("missing-provider")).resolves.toBeUndefined();
+
+    setMockFailure("providerOverview");
+    await expect(fetchProviderOverview(providerId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

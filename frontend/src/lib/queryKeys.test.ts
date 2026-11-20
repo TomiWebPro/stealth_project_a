@@ -198,6 +198,14 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the provider overview key by provider", () => {
+    expect(queryKeys.providerOverview.detail("prov_local")).toEqual([
+      "provider-overview",
+      "detail",
+      "prov_local",
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

@@ -61,6 +61,7 @@ import {
   fetchProvider,
   fetchProviders,
   fetchProviderFeed,
+  fetchProviderOverview,
   fetchProviderStats,
   fetchPublishFeed,
   fetchPublishStats,
@@ -138,6 +139,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchAssetOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationOverview(CONVERSATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobOverview(JOBS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchProviderOverview(PROVIDERS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchLineageFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCollaborationStats()).rejects.toBeInstanceOf(ApiError);
@@ -211,6 +213,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchJobOverview(jobId)).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the provider overview domain", async () => {
+    const providerId = PROVIDERS[0]?.id ?? "";
+    setMockFailure("providerOverview");
+
+    await expect(fetchProviderOverview(providerId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchProviderOverview(providerId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the asset stats domain", async () => {
@@ -736,6 +751,7 @@ describe("mock error-state fakes", () => {
         ["providers", () => fetchProvider(providerId)],
         ["providerStats", () => fetchProviderStats()],
         ["providerFeed", () => fetchProviderFeed()],
+        ["providerOverview", () => fetchProviderOverview(providerId)],
         ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],

@@ -145,6 +145,9 @@ export const queryKeys = {
     detail: (projectId: string, options: ProjectOverviewOptions = {}) =>
       ["project-overview", "detail", projectId, options.recentLimit ?? "all"] as const,
   },
+  providerOverview: {
+    detail: (providerId: string) => ["provider-overview", "detail", providerId] as const,
+  },
   providerStats: {
     summary: (options: ProviderStatsOptions = {}) =>
       [

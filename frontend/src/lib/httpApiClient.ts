@@ -157,6 +157,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderFeed,
+  ProviderOverview,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -426,6 +427,22 @@ export function createHttpApiClient(
     /** Deterministic authoritative provider feed derived by the backend `/providers/feed` (C185). */
     getProviderFeed(options?: ProviderFeedOptions): Promise<ProviderFeed> {
       return request<ProviderFeed>("/providers/feed", providerFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-provider overview; the backend 404s on an unknown
+     * provider, which is normalized to `undefined` like the other detail
+     * lookups (C217).
+     */
+    async getProviderOverview(providerId: string): Promise<ProviderOverview | undefined> {
+      try {
+        return await request<ProviderOverview>(
+          `/providers/${encodeURIComponent(providerId)}/overview`,
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative extension registry/installation metrics derived by `/extensions/stats`. */

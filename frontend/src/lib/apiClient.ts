@@ -105,6 +105,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderFeed,
+  ProviderOverview,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -253,6 +254,12 @@ export interface ApiClient {
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
   getProvider(providerId: string): Promise<Provider | undefined>;
+  /**
+   * Authoritative single-provider snapshot (identity, advertised operation ids
+   * and catalog bindings) from `/providers/{id}/overview`; unknown providers
+   * resolve to `undefined` (C217).
+   */
+  getProviderOverview(providerId: string): Promise<ProviderOverview | undefined>;
   listWorkflowTemplates(projectId?: string): Promise<readonly Asset[]>;
   /** Static operation catalog (pipeline stages 1-9). */
   getOperations(): Promise<OperationCatalog>;
@@ -357,6 +364,7 @@ export const mockApiClient: ApiClient = {
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,
+  getProviderOverview: mockApi.fetchProviderOverview,
   listWorkflowTemplates: mockApi.fetchWorkflowTemplates,
   getOperations: mockApi.fetchOperations,
   getOperationFeed: mockApi.fetchOperationFeed,

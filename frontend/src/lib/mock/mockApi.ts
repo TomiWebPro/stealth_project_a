@@ -120,6 +120,7 @@ import { deriveProviderFeed, validateProviderFeedArgs } from "../providerFeed";
 import type { ProviderFeedOptions } from "../providerFeed";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
 import type { ProviderStatsOptions } from "../providerStats";
+import { deriveProviderOverview } from "../providerOverview";
 import { derivePublishFeed, validatePublishFeedArgs } from "../publishFeed";
 import type { PublishFeedOptions } from "../publishFeed";
 import { derivePublishStats, validatePublishStatsArgs } from "../publishStats";
@@ -193,6 +194,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderFeed,
+  ProviderOverview,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -265,7 +267,7 @@ function delay<T>(value: T): Promise<T> {
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
- * `jobLogs`, `jobFeed` and `jobQueue`.
+ * `providerOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -1193,6 +1195,25 @@ export async function fetchJobFeed(options?: JobFeedOptions): Promise<JobFeed> {
 export async function fetchProvider(providerId: string): Promise<Provider | undefined> {
   failIfEnabled("providers");
   return delay(PROVIDERS.find((provider) => provider.id === providerId));
+}
+
+/**
+ * Authoritative single-provider overview (C217) derived from the same provider
+ * and operation-catalog stores as the live `/providers/{id}/overview` endpoint.
+ * A normalized 404-to-`undefined` for an unknown provider and the injectable
+ * `"providerOverview"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchProviderOverview(
+  providerId: string,
+): Promise<ProviderOverview | undefined> {
+  failIfEnabled("providerOverview");
+  if (!PROVIDERS.some((provider) => provider.id === providerId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveProviderOverview(providerId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW),
+  );
 }
 
 

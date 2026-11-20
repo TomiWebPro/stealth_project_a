@@ -870,6 +870,68 @@ describe("createHttpApiClient job overview (C213)", () => {
   });
 });
 
+describe("createHttpApiClient provider overview (C217)", () => {
+  const providerId = "prov_local";
+  const overview = {
+    provider_id: providerId,
+    name: "Local Runtime",
+    location: "local",
+    status: "available",
+    metadata: {},
+    operation_ids: ["image-to-image", "text-to-image", "upscale"],
+    catalog_operations: [
+      {
+        operation_id: "image-to-image",
+        title: "Image to image",
+        catalog_version: "v1",
+        advertised_versions: ["v1"],
+        schema_match: true,
+      },
+    ],
+    counts: {
+      capabilities: 3,
+      advertised_operations: 3,
+      catalog_operations: 3,
+      schema_versions: 1,
+    },
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the provider overview path and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/providers/${providerId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getProviderOverview(providerId)).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/providers/${providerId}/overview`);
+    expect(url.search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "provider_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getProviderOverview(providerId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getProviderOverview(providerId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient project overview (C201)", () => {
   const overview = {
     project_id: project.id,

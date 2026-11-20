@@ -107,6 +107,7 @@ import type {
   ProjectStats,
   Provider,
   ProviderFeed,
+  ProviderOverview,
   ProviderStats,
   PublishFeed,
   PublishStats,
@@ -269,6 +270,18 @@ export function useProviderFeed(options?: ProviderFeedOptions): UseQueryResult<P
   return useQuery({
     queryKey: queryKeys.providerFeed.feed(options),
     queryFn: () => api.getProviderFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-provider snapshot (identity, advertised operations and
+ * catalog bindings) from `/providers/{id}/overview` (C217).
+ */
+export function useProviderOverview(providerId: string): UseQueryResult<ProviderOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.providerOverview.detail(providerId),
+    queryFn: () => api.getProviderOverview(providerId),
   });
 }
 
