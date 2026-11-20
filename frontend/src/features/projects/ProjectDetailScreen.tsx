@@ -12,6 +12,7 @@ import { CommentOverviewPanel } from "../comments/CommentOverviewPanel";
 import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { EventFeedPanel } from "../jobs/EventFeedPanel";
+import { EventOverviewPanel } from "../jobs/EventOverviewPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobFeedPanel } from "../jobs/JobFeedPanel";
 import { JobLogConsole } from "../jobs/JobLogConsole";
@@ -358,6 +359,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project job event feed"
         description="Newest-first job events from the authoritative event stream, scoped to this project."
+      />
+      <EventOverviewPanel
+        projectId={projectId}
+        title="Project event overview"
+        description="Select an event in this project to inspect its authoritative snapshot, whole-job counts and newest siblings."
       />
       <RetryStatsPanel
         projectId={projectId}

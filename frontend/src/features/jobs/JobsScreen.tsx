@@ -7,6 +7,7 @@ import { Button } from "../../ui/Button";
 import { Card } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { EventFeedPanel } from "./EventFeedPanel";
+import { EventOverviewPanel } from "./EventOverviewPanel";
 import { EventStatsPanel } from "./EventStatsPanel";
 import { JobFeedPanel } from "./JobFeedPanel";
 import { JobLogConsole } from "./JobLogConsole";
@@ -117,6 +118,11 @@ export function JobsScreen() {
       <EventFeedPanel
         title="Global job event feed"
         description="Newest-first job events from the authoritative event stream, with type filters."
+      />
+
+      <EventOverviewPanel
+        title="Global event overview"
+        description="Select a job event to inspect its authoritative snapshot, whole-job counts and newest siblings."
       />
 
       <RetryStatsPanel
