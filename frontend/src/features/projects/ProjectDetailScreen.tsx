@@ -30,6 +30,7 @@ import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { AuditFeedPanel } from "../lineage/AuditFeedPanel";
 import { LineageFeedPanel } from "../lineage/LineageFeedPanel";
 import { LineageGraph } from "../lineage/LineageGraph";
+import { LineageOverviewPanel } from "../lineage/LineageOverviewPanel";
 import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { StoragePanel } from "../storage/StoragePanel";
 import { LineageView } from "../lineage/LineageView";
@@ -267,6 +268,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project lineage feed"
         description="Newest-first typed asset relationships scoped to this project."
+      />
+      <LineageOverviewPanel
+        projectId={projectId}
+        title="Project relationship overview"
+        description="Select any relationship in this project to inspect both endpoints and whole-source-asset lineage activity."
       />
       <JobStatsPanel
         projectId={projectId}

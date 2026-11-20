@@ -12,6 +12,7 @@ import { formatProjectUpdatedAt } from "./helpers";
 import { PipelineFeedPanel } from "./PipelineFeedPanel";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
 import { LineageFeedPanel } from "../lineage/LineageFeedPanel";
+import { LineageOverviewPanel } from "../lineage/LineageOverviewPanel";
 import { LineageStatsPanel } from "../lineage/LineageStatsPanel";
 import { ProjectDetailScreen } from "./ProjectDetailScreen";
 import { ProjectFeedPanel } from "./ProjectFeedPanel";
@@ -109,6 +110,11 @@ export function ProjectsScreen() {
       <LineageFeedPanel
         title="Workspace asset lineage"
         description="Newest-first typed asset relationships across every project in the workspace."
+      />
+
+      <LineageOverviewPanel
+        title="Workspace relationship overview"
+        description="Select any asset relationship to inspect both endpoints and whole-source-asset lineage activity."
       />
 
       {isPending ? <ProjectsSkeleton /> : null}
