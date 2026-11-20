@@ -11,6 +11,7 @@ import { ProgressBar } from "../../ui/ProgressBar";
 import { ActivityFeedPanel } from "../activity/ActivityFeedPanel";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
+import { CommentOverviewPanel } from "../comments/CommentOverviewPanel";
 import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
@@ -185,6 +186,10 @@ export function HomeScreen() {
         <CommentStatsPanel
           title="Workspace comment stats"
           description="Authoritative comment metrics across every project in the workspace."
+        />
+        <CommentOverviewPanel
+          title="Workspace comment overview"
+          description="Select any comment to inspect its identity, reference and whole-project comment activity."
         />
         <AssetStatsPanel
           title="Workspace asset stats"

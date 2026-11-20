@@ -8,6 +8,7 @@ import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ActivityStatsPanel } from "../activity/ActivityStatsPanel";
 import { CommentFeedPanel } from "../comments/CommentFeedPanel";
+import { CommentOverviewPanel } from "../comments/CommentOverviewPanel";
 import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { ExportPanel } from "../export/ExportPanel";
 import { EventFeedPanel } from "../jobs/EventFeedPanel";
@@ -291,6 +292,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project comment stats"
         description="Authoritative comment metrics scoped to this project."
+      />
+      <CommentOverviewPanel
+        projectId={projectId}
+        title="Project comment overview"
+        description="Select any project comment to inspect its identity, reference and comment activity."
       />
       <PipelineStatsPanel
         projectId={projectId}
