@@ -344,6 +344,10 @@ from .publish_stats import (
     PublishStats,
     PublishVersionCount,
 )
+from .publish_overview import (
+    PublishOverview,
+    PublishOverviewCounts,
+)
 from .retry_feed import (
     RetryFeed,
     RetryFeedItem,
@@ -551,6 +555,9 @@ __all__ = [
     "PublishProjectCount",
     "PublishStats",
     "PublishVersionCount",
+    # publish overview
+    "PublishOverview",
+    "PublishOverviewCounts",
     # auth
     "LoginRequest",
     "Member",

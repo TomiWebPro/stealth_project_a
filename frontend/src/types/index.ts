@@ -49,6 +49,7 @@ export * from "./providerOverview";
 export * from "./providerStats";
 export * from "./publishStats";
 export * from "./publishFeed";
+export * from "./publishOverview";
 export * from "./extensionFeed";
 export * from "./extensionOverview";
 export * from "./extensionStats";

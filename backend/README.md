@@ -144,7 +144,12 @@ All paths are prefixed with `/api/v1`.
   `GET /publishes/stats?project_id=` — authoritative publish metrics (total
   published assets and bytes, by-version distribution, per-project activity and
   newest-publish recency) derived from publish receipts in the asset store;
-  soft-deleted/unpublished assets and malformed receipts are excluded
+  soft-deleted/unpublished assets and malformed receipts are excluded;
+  `GET /publishes/{asset_id}/overview?recent_limit=` — single-publication snapshot
+  (receipt identity + joined project name, whole-project publish count/byte totals
+  and a bounded newest-first sibling page reusing the feed item shape); unknown
+  asset → shared 404 `asset_not_found`, no usable receipt → shared 404
+  `publish_not_found`, malformed path/`recent_limit` → shared 422 envelope
 - **Uploads:** `POST /uploads`, `PUT /uploads/{id}`, `GET /uploads/{id}/content`,
   `GET /uploads/feed?project_id=&limit=` — newest-first upload-ticket feed (ticket
   + project identity, filename/content type, lifecycle status, declared/uploaded

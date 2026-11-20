@@ -67,6 +67,7 @@ from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
 from .publish_feed import PublishFeedRepository
 from .publish_stats import PublishStatsRepository
+from .publish_overview import PublishOverviewRepository
 from .retry_feed import RetryFeedRepository
 from .retry_stats import RetryStatsRepository
 from .search import SearchRepository
@@ -135,6 +136,7 @@ class Repositories:
     provider_overview: ProviderOverviewRepository
     publish_feed: PublishFeedRepository
     publish_stats: PublishStatsRepository
+    publish_overview: PublishOverviewRepository
     retry_feed: RetryFeedRepository
     retry_stats: RetryStatsRepository
     orchestration: OrchestrationRepository
@@ -216,6 +218,7 @@ class Repositories:
         provider_overview = ProviderOverviewRepository(store, providers, clock=clock)
         publish_feed = PublishFeedRepository(store, projects, clock=clock)
         publish_stats = PublishStatsRepository(store, projects, clock=clock)
+        publish_overview = PublishOverviewRepository(store, assets, projects, clock=clock)
         retry_feed = RetryFeedRepository(store, projects, clock=clock)
         retry_stats = RetryStatsRepository(store, projects, clock=clock)
         orchestration = OrchestrationRepository(
@@ -305,6 +308,7 @@ class Repositories:
             provider_overview=provider_overview,
             publish_feed=publish_feed,
             publish_stats=publish_stats,
+            publish_overview=publish_overview,
             retry_feed=retry_feed,
             retry_stats=retry_stats,
             orchestration=orchestration,

@@ -87,6 +87,7 @@ from .routers import (
     publish,
     publish_feed,
     publish_stats,
+    publish_overview,
     retry_feed,
     retry_stats,
     search,
@@ -427,6 +428,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # mount it beside publish-stats so both publish views stay explicit.
     app.include_router(publish_stats.router, prefix=API_PREFIX)
     app.include_router(publish_feed.router, prefix=API_PREFIX)
+    # "/publishes/{asset_id}/overview" is a nested single-publish view; mount it
+    # beside the other publish routers and before publish so its literal suffix
+    # stays explicit.
+    app.include_router(publish_overview.router, prefix=API_PREFIX)
     app.include_router(publish.router, prefix=API_PREFIX)
     app.include_router(links.router, prefix=API_PREFIX)
     # "/pipelines/stats" and "/pipelines/feed" are literal paths; register them
