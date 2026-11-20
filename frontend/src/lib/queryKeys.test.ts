@@ -262,6 +262,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the event overview key by job, sequence and recent limit", () => {
+    expect(queryKeys.eventOverview.detail("j1", 2)).toEqual([
+      "event-overview",
+      "detail",
+      "j1",
+      2,
+      "all",
+    ]);
+    expect(queryKeys.eventOverview.detail("j1", 2, { recentLimit: 3 })).toEqual([
+      "event-overview",
+      "detail",
+      "j1",
+      2,
+      3,
+    ]);
+  });
+
   it("scopes the provider overview key by provider", () => {
     expect(queryKeys.providerOverview.detail("prov_local")).toEqual([
       "provider-overview",

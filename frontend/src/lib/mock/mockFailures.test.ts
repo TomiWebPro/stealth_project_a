@@ -7,6 +7,7 @@ import {
   CONVERSATIONS,
   EXTENSIONS,
   JOBS,
+  JOB_EVENTS,
   MESSAGES,
   ORGANIZATIONS,
   ORCHESTRATION_PLANS,
@@ -42,6 +43,7 @@ import {
   fetchMessageOverview,
   fetchCurrentUser,
   fetchEventFeed,
+  fetchEventOverview,
   fetchEventStats,
   fetchExtension,
   fetchExtensionFeed,
@@ -191,6 +193,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchEventFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchExtensionFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchMembershipOverview(ORGANIZATIONS[0]?.id ?? "", USERS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchEventOverview(JOB_EVENTS[0]?.job_id ?? "", JOB_EVENTS[0]?.seq ?? 0)).rejects.toBeInstanceOf(ApiError);
   });
 
   it("can be switched off per domain without clearing the rest", async () => {
@@ -575,6 +578,20 @@ describe("mock error-state fakes", () => {
     await expect(fetchMessageOverview(overviewConversationId, overviewMessageId)).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the event overview domain", async () => {
+    const overviewJobId = JOB_EVENTS[0]?.job_id ?? "";
+    const overviewSeq = JOB_EVENTS[0]?.seq ?? 0;
+    setMockFailure("eventOverview");
+
+    await expect(fetchEventOverview(overviewJobId, overviewSeq)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchEventOverview(overviewJobId, overviewSeq)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the project overview domain", async () => {
     const overviewProjectId = PROJECTS[0]?.id ?? "";
     setMockFailure("projectOverview");
@@ -927,6 +944,7 @@ describe("mock error-state fakes", () => {
         ["uploadOverview", () => fetchUploadOverview("0b5c1e2a-7000-4000-8000-000000000001")],
         ["commentOverview", () => fetchCommentOverview("0b5c1e2a-6200-4000-8000-000000000001")],
         ["messageOverview", () => fetchMessageOverview(CONVERSATIONS[0]?.id ?? "", MESSAGES[0]?.id ?? "")],
+        ["eventOverview", () => fetchEventOverview(JOB_EVENTS[0]?.job_id ?? "", JOB_EVENTS[0]?.seq ?? 0)],
         ["lineageOverview", () => fetchLineageOverview("0b5c1e2a-5000-4000-8000-000000000001")],
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],

@@ -40,6 +40,8 @@ import { dashboardQueryParams } from "./dashboard";
 import type { DashboardOptions } from "./dashboard";
 import { eventFeedQueryParams } from "./eventFeed";
 import type { EventFeedOptions } from "./eventFeed";
+import { eventOverviewQueryParams } from "./eventOverview";
+import type { EventOverviewOptions } from "./eventOverview";
 import { eventStatsQueryParams } from "./eventStats";
 import type { EventStatsOptions } from "./eventStats";
 import { extensionFeedQueryParams } from "./extensionFeed";
@@ -147,6 +149,7 @@ import type {
   ConversationStats,
   DashboardSummary,
   EventFeed,
+  EventOverview,
   EventStats,
   Extension,
   ExtensionFeed,
@@ -918,6 +921,27 @@ export function createHttpApiClient(
         return await request<JobOverview>(
           `/jobs/${encodeURIComponent(jobId)}/overview`,
           jobOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-event overview; the backend 404s on an unknown job or
+     * a sequence absent from it, both normalized to `undefined` like the other
+     * detail lookups.
+     */
+    async getEventOverview(
+      jobId: string,
+      seq: number,
+      options?: EventOverviewOptions,
+    ): Promise<EventOverview | undefined> {
+      try {
+        return await request<EventOverview>(
+          `/jobs/${encodeURIComponent(jobId)}/events/${seq}/overview`,
+          eventOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

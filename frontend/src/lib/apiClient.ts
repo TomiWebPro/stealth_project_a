@@ -19,6 +19,7 @@ import type { ConversationStream } from "./conversationStream";
 export type { ConversationStream };
 import type { DashboardOptions } from "./dashboard";
 import type { EventFeedOptions } from "./eventFeed";
+import type { EventOverviewOptions } from "./eventOverview";
 import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionFeedOptions } from "./extensionFeed";
 import type { ExtensionStatsOptions } from "./extensionStats";
@@ -85,6 +86,7 @@ import type {
   ConversationStats,
   DashboardSummary,
   EventFeed,
+  EventOverview,
   EventStats,
   Extension,
   ExtensionFeed,
@@ -377,6 +379,17 @@ export interface ApiClient {
     jobId: string,
     options?: JobOverviewOptions,
   ): Promise<JobOverview | undefined>;
+  /**
+   * Authoritative single-event snapshot (identity, joined job/project context,
+   * whole-job zero-filled type counts and a bounded newest-first sibling page)
+   * from `/jobs/{id}/events/{seq}/overview`; an unknown job or event resolves to
+   * `undefined` (C274).
+   */
+  getEventOverview(
+    jobId: string,
+    seq: number,
+    options?: EventOverviewOptions,
+  ): Promise<EventOverview | undefined>;
   /** Newest-first authoritative audit feed; unknown projects resolve to undefined. */
   getProjectAudit(projectId: string, query?: AuditQuery): Promise<AuditTrail | undefined>;
   listProviders(): Promise<readonly Provider[]>;
@@ -510,6 +523,7 @@ export const mockApiClient: ApiClient = {
   getConversationOverview: mockApi.fetchConversationOverview,
   getMessageOverview: mockApi.fetchMessageOverview,
   getJobOverview: mockApi.fetchJobOverview,
+  getEventOverview: mockApi.fetchEventOverview,
   getProjectAudit: mockApi.fetchProjectAudit,
   listProviders: mockApi.fetchProviders,
   getProvider: mockApi.fetchProvider,

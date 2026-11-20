@@ -61,6 +61,8 @@ export type {
   EventFeed,
   EventFeedItem,
   EventJobCount,
+  EventOverview,
+  EventOverviewCounts,
   EventStats,
   EventTypeCount,
   Extension,

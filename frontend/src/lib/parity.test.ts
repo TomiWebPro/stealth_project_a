@@ -4,6 +4,8 @@ import { ApiError } from "../api/client";
 import { API_PREFIX } from "../types/common";
 import { deriveEventFeed, validateEventFeedArgs } from "./eventFeed";
 import type { EventFeedOptions } from "./eventFeed";
+import { deriveEventOverview, validateEventOverviewArgs } from "./eventOverview";
+import type { EventOverviewOptions } from "./eventOverview";
 import { deriveActivityFeed, validateActivityArgs } from "./activity";
 import type { ActivityOptions } from "./activity";
 import { deriveActivityStats, validateActivityStatsArgs } from "./activityStats";
@@ -969,6 +971,37 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveJobOverview(
       jobId,
       { jobs: JOBS, events: JOB_EVENTS, retries: JOB_RETRIES, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+  }
+
+  // Authoritative single-event overview derives a compact snapshot from the
+  // same job/event/project stores; mirror the router's 422 validation and both
+  // 404s (unknown job vs sequence absent from it). This must precede the
+  // dynamic `/jobs/{id}` detail branch below.
+  if (/^\/jobs\/[^/]+\/events\/[^/]+\/overview$/.test(path)) {
+    const jobId = pathParts[2] ?? "";
+    const seq = Number(pathParts[4] ?? "");
+    const recentLimitRaw = params.get("recent_limit");
+    const options: EventOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateEventOverviewArgs(jobId, seq, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!JOBS.some((job) => job.id === jobId)) return NOT_FOUND;
+    if (!JOB_EVENTS.some((event) => event.job_id === jobId && event.seq === seq)) return NOT_FOUND;
+    return deriveEventOverview(
+      jobId,
+      seq,
+      { jobs: JOBS, events: JOB_EVENTS, projects: PROJECTS, now: REFERENCE_NOW },
       options,
     );
   }
@@ -1967,6 +2000,9 @@ const filmId = PROJECTS.find((p) => p.name.startsWith("Moonshot"))?.id ?? "";
 const orgId = PROJECTS[0]?.org_id ?? "";
 const emptyId = PROJECTS.find((p) => p.name.startsWith("Blank Slate"))?.id ?? "";
 const failedJobId = JOBS.find((j) => j.status === "failed")?.id ?? "";
+/** A seeded job event (and its parent job) used by the single-event overview probes. */
+const eventOverviewJobId = JOB_EVENTS[0]?.job_id ?? "";
+const eventOverviewSeq = JOB_EVENTS[0]?.seq ?? 0;
 const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ?? "";
 /** A seeded message in the film conversation, used by the single-message overview probes. */
 const messageId = MESSAGES.find((m) => m.conversation_id === conversationId)?.id ?? "";
@@ -2079,6 +2115,12 @@ describe("live vs mock transport parity", () => {
       ],
       ["getJobOverview", (api) => api.getJobOverview(failedJobId)],
       ["getJobOverview limited", (api) => api.getJobOverview(failedJobId, { recentLimit: 2 })],
+      ["getEventOverview", (api) => api.getEventOverview(eventOverviewJobId, eventOverviewSeq)],
+      [
+        "getEventOverview limited",
+        (api) => api.getEventOverview(eventOverviewJobId, eventOverviewSeq, { recentLimit: 2 }),
+      ],
+      ["getEventOverview missing sequence", (api) => api.getEventOverview(eventOverviewJobId, 999)],
       ["getProviderOverview", (api) => api.getProviderOverview("prov_local")],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
@@ -2445,6 +2487,20 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getJobOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The event overview resolves an unknown job or a sequence absent from it
+    // to undefined on both transports; the page bound changes siblings, not counts.
+    expect(await live.getEventOverview(eventOverviewJobId, eventOverviewSeq)).toEqual(
+      await mockApiClient.getEventOverview(eventOverviewJobId, eventOverviewSeq),
+    );
+    expect(await live.getEventOverview(eventOverviewJobId, eventOverviewSeq, { recentLimit: 2 })).toEqual(
+      await mockApiClient.getEventOverview(eventOverviewJobId, eventOverviewSeq, { recentLimit: 2 }),
+    );
+    expect(await live.getEventOverview("00000000-0000-4000-8000-000000000000", eventOverviewSeq)).toBeUndefined();
+    expect(
+      await mockApiClient.getEventOverview("00000000-0000-4000-8000-000000000000", eventOverviewSeq),
+    ).toBeUndefined();
+    expect(await live.getEventOverview(eventOverviewJobId, 999)).toBeUndefined();
+    expect(await mockApiClient.getEventOverview(eventOverviewJobId, 999)).toBeUndefined();
     // The provider overview resolves an unknown provider to undefined on both
     // transports and returns a derived snapshot for a seeded provider.
     expect(await live.getProviderOverview("prov_local")).toEqual(
@@ -3314,6 +3370,25 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed job id, a negative sequence or an
+    // out-of-range recent_limit with the same 422 envelope for the event overview.
+    const badEventOverviewOptions: Array<
+      [string, string, number, number, EventOverviewOptions | undefined]
+    > = [
+      ["not-a-uuid", "not-a-uuid", 0, 0, undefined],
+      [eventOverviewJobId, eventOverviewJobId, -1, -1, undefined],
+      [eventOverviewJobId, eventOverviewJobId, eventOverviewSeq, eventOverviewSeq, { recentLimit: 0 }],
+      [eventOverviewJobId, eventOverviewJobId, eventOverviewSeq, eventOverviewSeq, { recentLimit: 51 }],
+    ];
+    for (const [mockJob, liveJob, mockSeqValue, liveSeqValue, options] of badEventOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getEventOverview(mockJob, mockSeqValue, options).catch((cause) => cause),
+        live.getEventOverview(liveJob, liveSeqValue, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports reject a malformed chain id or an out-of-range
     // recent_limit with the same 422 envelope for the single-chain overview.
     const badChainOverviewOptions: Array<[string, string, ChainOverviewOptions | undefined]> = [
@@ -3585,6 +3660,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getConversationOverview).toBe("function");
     expect(typeof typed.getMessageOverview).toBe("function");
     expect(typeof typed.getJobOverview).toBe("function");
+    expect(typeof typed.getEventOverview).toBe("function");
     expect(typeof typed.getProviderOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");

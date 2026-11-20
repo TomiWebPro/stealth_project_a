@@ -970,6 +970,98 @@ describe("createHttpApiClient job overview (C213)", () => {
   });
 });
 
+describe("createHttpApiClient event overview (C274)", () => {
+  const jobId = "0b5c1e2a-3000-4000-8000-000000000001";
+  const overview = {
+    job_id: jobId,
+    seq: 2,
+    type: "progress",
+    operation_id: "text-to-image",
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    status: "running",
+    progress: 0.62,
+    message: "Sampling step 260/420",
+    asset_id: null,
+    error: null,
+    timestamp: "2026-03-18T10:02:00.000Z",
+    counts: {
+      total: 4,
+      by_type: [
+        { type: "status", count: 1 },
+        { type: "progress", count: 2 },
+        { type: "intermediate", count: 0 },
+        { type: "result", count: 0 },
+        { type: "error", count: 0 },
+        { type: "log", count: 1 },
+      ],
+    },
+    recent_siblings: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the single-event overview path with the recent limit and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/jobs/${jobId}/events/2/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getEventOverview(jobId, 2, { recentLimit: 3 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/jobs/${jobId}/events/2/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("3");
+  });
+
+  it("omits the query string when no recent limit is supplied", async () => {
+    const { fetchImpl, calls } = router({
+      [`/jobs/${jobId}/events/2/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+    await expect(api.getEventOverview(jobId, 2)).resolves.toEqual(overview);
+    expect(new URL(calls[0] ?? "").search).toBe("");
+  });
+
+  it("maps both 404s to undefined but surfaces validation and other failures", async () => {
+    for (const code of ["job_not_found", "event_not_found"]) {
+      const missing = createHttpApiClient("http://localhost:8000", {
+        fetchImpl: (async () =>
+          jsonResponse({ error: { code, message: "missing" } }, { status: 404 })) as typeof fetch,
+      });
+      await expect(missing.getEventOverview(jobId, 2)).resolves.toBeUndefined();
+    }
+
+    const invalid = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          {
+            error: {
+              code: "validation_error",
+              message: "Invalid job id.",
+              details: [{ field: "job_id", message: "must be a UUID" }],
+            },
+          },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(invalid.getEventOverview("bad", -1)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getEventOverview(jobId, 2)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient provider overview (C217)", () => {
   const providerId = "prov_local";
   const overview = {

@@ -49,6 +49,7 @@ import {
   fetchMessageOverview,
   fetchCurrentUser,
   fetchDashboard,
+  fetchEventOverview,
   fetchEventStats,
   fetchExtension,
   fetchExtensions,
@@ -2184,6 +2185,62 @@ describe("mock API job overview (C213 follow-up)", () => {
 
     setMockFailure("jobOverview");
     await expect(fetchJobOverview(jobId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API event overview (C274 follow-up)", () => {
+  const seed = JOB_EVENTS[0];
+  const jobId = seed?.job_id ?? "";
+  const seq = seed?.seq ?? 0;
+  const jobEvents = JOB_EVENTS.filter((event) => event.job_id === jobId);
+
+  it("derives a populated snapshot with joined context and whole-job counts", async () => {
+    const overview = await fetchEventOverview(jobId, seq);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.job_id).toBe(jobId);
+    expect(overview?.seq).toBe(seq);
+    expect(overview?.type).toBe(seed?.type);
+    expect(overview?.operation_id).toBe(JOBS.find((job) => job.id === jobId)?.operation_id);
+    expect(overview?.counts.total).toBe(jobEvents.length);
+    expect((overview?.counts.by_type ?? []).reduce((sum, row) => sum + row.count, 0)).toBe(
+      overview?.counts.total,
+    );
+    expect(overview?.recent_siblings?.[0]?.seq).toBe(
+      [...jobEvents].sort((a, b) => b.timestamp.localeCompare(a.timestamp) || b.seq - a.seq)[0]?.seq,
+    );
+  });
+
+  it("bounds the sibling page without changing counts", async () => {
+    const whole = await fetchEventOverview(jobId, seq);
+    const limited = await fetchEventOverview(jobId, seq, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.recent_siblings).toHaveLength(1);
+  });
+
+  it("mirrors router validation, both 404s and the injected failure", async () => {
+    await expect(fetchEventOverview("not-a-uuid", seq)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchEventOverview(jobId, -1)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchEventOverview(jobId, seq, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchEventOverview("00000000-0000-4000-8000-000000000000", seq),
+    ).resolves.toBeUndefined();
+    await expect(fetchEventOverview(jobId, 999)).resolves.toBeUndefined();
+
+    setMockFailure("eventOverview");
+    await expect(fetchEventOverview(jobId, seq)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

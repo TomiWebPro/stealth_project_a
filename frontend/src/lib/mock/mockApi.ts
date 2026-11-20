@@ -62,6 +62,8 @@ import type { DashboardOptions } from "../dashboard";
 import { env } from "../env";
 import { deriveEventFeed, validateEventFeedArgs } from "../eventFeed";
 import type { EventFeedOptions } from "../eventFeed";
+import { deriveEventOverview, validateEventOverviewArgs } from "../eventOverview";
+import type { EventOverviewOptions } from "../eventOverview";
 import { deriveEventStats, validateEventStatsArgs } from "../eventStats";
 import type { EventStatsOptions } from "../eventStats";
 import { deriveExtensionFeed, extensionId, validateExtensionFeedArgs } from "../extensionFeed";
@@ -202,6 +204,7 @@ import type {
   ConversationOverview,
   ConversationStats,
   EventFeed,
+  EventOverview,
   EventStats,
   Extension,
   ExtensionFeed,
@@ -318,6 +321,7 @@ function delay<T>(value: T): Promise<T> {
  * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `messageOverview`, `jobOverview`,
+ * `eventOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`,
  * `membershipOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
@@ -1420,6 +1424,39 @@ export async function fetchJobOverview(
         jobs: JOBS,
         events: JOB_EVENTS,
         retries: JOB_RETRIES,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-event overview (C274) derived from the same stores as the
+ * live `/jobs/{id}/events/{seq}/overview` endpoint. Router-style 422 validation
+ * (job id / sequence / recent_limit), normalized 404-to-`undefined` for an
+ * unknown job or a sequence absent from it, and the `"eventOverview"` failure
+ * domain keep error and empty states at parity with live mode.
+ */
+export async function fetchEventOverview(
+  jobId: string,
+  seq: number,
+  options?: EventOverviewOptions,
+): Promise<EventOverview | undefined> {
+  failIfEnabled("eventOverview");
+  validateEventOverviewArgs(jobId, seq, options);
+  if (!JOBS.some((job) => job.id === jobId)) return delay(undefined);
+  if (!JOB_EVENTS.some((event) => event.job_id === jobId && event.seq === seq)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveEventOverview(
+      jobId,
+      seq,
+      {
+        jobs: JOBS,
+        events: JOB_EVENTS,
         projects: PROJECTS,
         now: REFERENCE_NOW,
       },

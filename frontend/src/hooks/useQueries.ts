@@ -21,6 +21,7 @@ import type { ConversationOverviewOptions } from "../lib/conversationOverview";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
 import type { DashboardOptions } from "../lib/dashboard";
 import type { EventFeedOptions } from "../lib/eventFeed";
+import type { EventOverviewOptions } from "../lib/eventOverview";
 import type { EventStatsOptions } from "../lib/eventStats";
 import type { ExtensionFeedOptions } from "../lib/extensionFeed";
 import type { ExtensionStatsOptions } from "../lib/extensionStats";
@@ -87,6 +88,7 @@ import type {
   ConversationStats,
   DashboardSummary,
   EventFeed,
+  EventOverview,
   EventStats,
   Extension,
   ExtensionFeed,
@@ -682,6 +684,24 @@ export function useJobOverview(
   return useQuery({
     queryKey: queryKeys.jobOverview.detail(jobId, options),
     queryFn: () => api.getJobOverview(jobId, options),
+  });
+}
+
+/**
+ * Authoritative single-event snapshot (identity, joined job/project context,
+ * whole-job zero-filled type counts and a bounded newest-first sibling page)
+ * from `/jobs/{id}/events/{seq}/overview` (C274). Unknown jobs/events resolve to
+ * `undefined`.
+ */
+export function useEventOverview(
+  jobId: string,
+  seq: number,
+  options?: EventOverviewOptions,
+): UseQueryResult<EventOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.eventOverview.detail(jobId, seq, options),
+    queryFn: () => api.getEventOverview(jobId, seq, options),
   });
 }
 

@@ -16,6 +16,7 @@ import type { ConversationOverviewOptions } from "./conversationOverview";
 import type { ConversationStatsOptions } from "./conversationStats";
 import type { DashboardOptions } from "./dashboard";
 import type { EventFeedOptions } from "./eventFeed";
+import type { EventOverviewOptions } from "./eventOverview";
 import type { EventStatsOptions } from "./eventStats";
 import type { ExtensionFeedOptions } from "./extensionFeed";
 import type { ExtensionStatsOptions } from "./extensionStats";
@@ -435,6 +436,10 @@ export const queryKeys = {
         options.type ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  eventOverview: {
+    detail: (jobId: string, seq: number, options: EventOverviewOptions = {}) =>
+      ["event-overview", "detail", jobId, seq, options.recentLimit ?? "all"] as const,
   },
   retryStats: {
     summary: (options: RetryStatsOptions = {}) =>
