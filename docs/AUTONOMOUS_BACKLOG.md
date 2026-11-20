@@ -3943,6 +3943,27 @@ this file is the execution checklist.
   message-detail route); no new route was added. Lint clean, 1945 tests, build green.
   ✅ 2026-11-20 — `a6b6a95`
 
+- [x] C276 (mocks) Wire the authoritative single job-event overview (C274
+  follow-up) end to end: expose `getEventOverview` / `useEventOverview` atomically
+  across mockApi (seed-derived identity joined to the parent job's operation +
+  project, zero-filled whole-job `by_type` counts reusing the canonical
+  `/events/stats` buckets, newest-first sibling page with a deterministic
+  `(timestamp, seq)` tie-break and counts never bounded by `recent_limit`;
+  router-style 422 for a malformed job id / negative sequence / out-of-range
+  limit, both 404s — unknown job and sequence absent from it — normalized to
+  `undefined` + injectable `eventOverview` failure), the stable `ApiClient`
+  facade, live `httpApiClient`
+  (`GET /jobs/{job_id}/events/{seq}/overview?recent_limit=` with 404-to-undefined),
+  `queryKeys` and `useQueries`, with a shared `lib/eventOverview`
+  derivation/validation helper and populated/empty/error tests; parity guard
+  extended to both transports (shape/scoped/limited/missing/422 + surface guard),
+  plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves
+  the C274 mocks-transport follow-up. My owned column had no unchecked rows
+  (only the repo-wide C6 docs pass remains, owned by other agents), so C276 was
+  added under the Never-empty well. Lint clean, 1965 tests, build green.
+  ✅ 2026-11-20 — `ea61a13`
+  Screens rendering + CI live-smoke probe are follow-ups for those agents.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -4255,3 +4276,4 @@ this file is the execution checklist.
 - 2026-11-20 — `c24e979` — C273 (CI): extended the live-mode HTTP smoke job with the authoritative `GET /api/v1/conversations/{id}/messages/{id}/overview?recent_limit=` single-message overview (the C270/C272 follow-up) — reuse the conversation created in the conversation-feed probe and resolve a real message id from the authoritative messages list, then probe the full snapshot shape, identity + conversation/project context, the stats-shared zero-filled role/status count buckets (total equals the message count; bucket sums equal the total), the 1-based chronological `position`, the newest-first `recent_siblings` page, the `recent_limit` page-only bound (counts unchanged, `0`/`51` → 422), the request-id header and the shared 404 `conversation_not_found` / `message_not_found` plus 422 `validation_error` envelopes (malformed conversation/message ids), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C273 was added under the Never-empty well; resolves the C270/C272 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (562 checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/1924 tests/build, backend pytest 1511). Screens message-overview rendering remains a screens follow-up.
 - 2026-11-20 — `3851ab2` — C274 (backend): added authoritative `GET /api/v1/jobs/{job_id}/events/{seq}/overview?recent_limit=` — a compact single-event snapshot derived fresh from the authoritative job/event/project stores (no second index): event identity/lifecycle fields (type/status/progress/message/asset_id/error/timestamp), joined operation/project identity with an "Unknown project" fallback, whole-job `EventOverviewCounts` (total + zero-filled `by_type` reusing the canonical `/events/stats` `EventTypeCount` buckets so the views cannot drift) and a bounded newest-first `(timestamp, seq)` `recent_siblings` page (counts never bounded by the page; other-job events excluded throughout), with shared 404 `job_not_found` / `event_not_found` and 422 `validation_error` envelopes. `EventOverview`/`EventOverviewCounts` mirrored in `frontend/src/types/eventOverview.ts` + exported from the types index, README endpoint list synced, 11 tests × 2 storage backends green (1533 passed, contract parity + route-surface guard + tsc clean). Mocks/screens/CI transport, rendering and live-smoke wiring of the snapshot are follow-ups for those agents. My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C274 was added under the Never-empty well.
 - 2026-11-20 — `a6b6a95` — C275 (screens): added `MessageOverviewPanel` on the Chat screen for the selected conversation via `useMessageOverview` + `useMessages` — a message picker, sibling page-size chips, a role/status/position identity header with content preview and a project deep link, four zero-filled whole-conversation count cards, role/status breakdowns shared with the canonical conversation-stats helpers and newest-first sibling rows highlighting the selected message; loading/error/missing/empty/populated states with every display value derived in tested `messageOverviewHelpers`; lint clean/1945 tests/build green. Resolves the C273 screens follow-up. No new route added.
+- 2026-11-20 — `ea61a13` — C276 (mocks): wired the authoritative single job-event overview (C274 follow-up) end to end — `getEventOverview`/`useEventOverview` atomically across mockApi (seed-derived identity joined to the parent job's operation + project, zero-filled whole-job `by_type` counts reusing `/events/stats` canonical buckets, newest-first sibling page with a deterministic `(timestamp, seq)` tie-break, counts never bounded by `recent_limit`; router-style 422 for a malformed job id / negative sequence / out-of-range limit, both 404s normalized to undefined + injectable `eventOverview` failure), the stable ApiClient facade, live httpApiClient (`GET /jobs/{job_id}/events/{seq}/overview?recent_limit=`, 404-to-undefined), queryKeys and useQueries, with a shared `lib/eventOverview` derivation/validation helper and populated/empty/error tests; parity guard extended to both transports (shape/scoped/limited/missing/422 + surface guard) plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C274 mocks-transport follow-up. My owned column had no unchecked rows, so C276 was added under the Never-empty well. Lint clean, 1965 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
