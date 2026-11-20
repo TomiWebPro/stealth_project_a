@@ -23,6 +23,8 @@ import { collaborationStatsQueryParams } from "./collaborationStats";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import { commentFeedQueryParams } from "./commentFeed";
 import type { CommentFeedOptions } from "./commentFeed";
+import { commentOverviewQueryParams } from "./commentOverview";
+import type { CommentOverviewOptions } from "./commentOverview";
 import { commentStatsQueryParams } from "./commentStats";
 import type { CommentStatsOptions } from "./commentStats";
 import { conversationFeedQueryParams } from "./conversationFeed";
@@ -129,6 +131,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentOverview,
   CommentStats,
   Conversation,
   ConversationFeed,
@@ -425,6 +428,26 @@ export function createHttpApiClient(
     /** Authoritative comment metrics derived by `/comments/stats` (C165). */
     getCommentStats(options?: CommentStatsOptions): Promise<CommentStats> {
       return request<CommentStats>("/comments/stats", commentStatsQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-comment snapshot; the backend 404s on an unknown
+     * comment, which is normalized to `undefined` like the other detail lookups
+     * (C254).
+     */
+    async getCommentOverview(
+      commentId: string,
+      options?: CommentOverviewOptions,
+    ): Promise<CommentOverview | undefined> {
+      try {
+        return await request<CommentOverview>(
+          `/comments/${encodeURIComponent(commentId)}/overview`,
+          commentOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative project portfolio metrics derived by the backend `/projects/stats`. */

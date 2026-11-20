@@ -1214,6 +1214,60 @@ describe("createHttpApiClient upload overview (C246)", () => {
   });
 });
 
+describe("createHttpApiClient comment overview (C254)", () => {
+  const commentId = "0b5c1e2a-6200-4000-8000-000000000001";
+  const overview = {
+    comment_id: commentId,
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    asset_id: "0b5c1e2a-2000-4000-8000-000000000011",
+    author_id: "0b5c1e2a-0000-4000-8000-0000000000aa",
+    body: "Lock the character silhouette before we expand the dataset.",
+    created_at: "2026-03-17T10:30:00.000Z",
+    reference: "asset",
+    counts: {
+      project_comments: 3,
+      project_authors: 2,
+      project_assets: 1,
+      thread_comments: 2,
+    },
+    recent_comments: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the comment overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({ [`/comments/${commentId}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getCommentOverview(commentId, { recentLimit: 2 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/comments/${commentId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "comment_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getCommentOverview(commentId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getCommentOverview(commentId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient version overview (C250)", () => {
   const assetId = "0b5c1e2a-2000-4000-8000-000000000001";
   const overview = {

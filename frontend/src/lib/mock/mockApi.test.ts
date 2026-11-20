@@ -41,6 +41,7 @@ import {
   fetchCollaborationStats,
   fetchConversation,
   fetchComments,
+  fetchCommentOverview,
   fetchConversations,
   fetchConversationStats,
   fetchConversationFeed,
@@ -2305,6 +2306,51 @@ describe("mock API run overview (C242 follow-up)", () => {
   it("injects a failure for the runOverview domain", async () => {
     setMockFailure("runOverview");
     await expect(fetchRunOverview(runId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API comment overview (C254 follow-up)", () => {
+  const comment = COMMENTS[0];
+  const commentId = comment?.id ?? "";
+
+  it("derives a populated snapshot from the comment/project seeds", async () => {
+    const overview = await fetchCommentOverview(commentId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.comment_id).toBe(commentId);
+    expect(overview?.project_name).toBeTruthy();
+    expect(overview?.counts.project_comments).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.thread_comments).toBeGreaterThanOrEqual(1);
+    expect(overview?.recent_comments?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds the sibling page by recentLimit without bounding the counts", async () => {
+    const full = await fetchCommentOverview(commentId);
+    const limited = await fetchCommentOverview(commentId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.recent_comments).toHaveLength(1);
+  });
+
+  it("rejects a malformed id/limit and resolves an unknown comment to undefined", async () => {
+    await expect(fetchCommentOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchCommentOverview(commentId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchCommentOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the commentOverview domain", async () => {
+    setMockFailure("commentOverview");
+    await expect(fetchCommentOverview(commentId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -11,6 +11,7 @@ import type { CollaborationFeedOptions } from "./collaborationFeed";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
+import type { CommentOverviewOptions } from "./commentOverview";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import type { ConversationOverviewOptions } from "./conversationOverview";
 import type { ConversationStatsOptions } from "./conversationStats";
@@ -72,6 +73,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentOverview,
   CommentStats,
   Conversation,
   ConversationFeed,
@@ -171,6 +173,15 @@ export interface ApiClient {
   getCommentFeed(options?: CommentFeedOptions): Promise<CommentFeed>;
   /** Authoritative comment metrics derived by `/comments/stats`, optionally project-scoped (C165). */
   getCommentStats(options?: CommentStatsOptions): Promise<CommentStats>;
+  /**
+   * Authoritative single-comment snapshot (identity, joined project, reference,
+   * whole-project/thread activity and same-thread siblings) from
+   * `/comments/{id}/overview`; unknown comments resolve to `undefined` (C254).
+   */
+  getCommentOverview(
+    commentId: string,
+    options?: CommentOverviewOptions,
+  ): Promise<CommentOverview | undefined>;
   /** Authoritative project portfolio metrics derived by `/projects/stats`, optionally org-scoped (C53). */
   getProjectStats(options?: ProjectStatsOptions): Promise<ProjectStats>;
   /** Newest-first authoritative project feed derived by `/projects/feed`, optionally org/lifecycle-scoped (C145). */
@@ -407,6 +418,7 @@ export const mockApiClient: ApiClient = {
   getConversationFeed: mockApi.fetchConversationFeed,
   getCommentFeed: mockApi.fetchCommentFeed,
   getCommentStats: mockApi.fetchCommentStats,
+  getCommentOverview: mockApi.fetchCommentOverview,
   getProjectStats: mockApi.fetchProjectStats,
   getProjectFeed: mockApi.fetchProjectFeed,
   getProviderStats: mockApi.fetchProviderStats,

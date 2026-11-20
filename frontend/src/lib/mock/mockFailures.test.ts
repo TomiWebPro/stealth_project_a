@@ -30,6 +30,7 @@ import {
   fetchCollaborationStats,
   fetchCommentFeed,
   fetchCommentStats,
+  fetchCommentOverview,
   fetchComments,
   fetchConversation,
   fetchConversations,
@@ -138,6 +139,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchConversationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCommentFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCommentStats()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchCommentOverview("0b5c1e2a-6200-4000-8000-000000000001")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobs()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobLogs(JOBS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
@@ -711,6 +713,19 @@ describe("mock error-state fakes", () => {
     await expect(fetchCommentStats()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the comment overview domain", async () => {
+    const commentId = "0b5c1e2a-6200-4000-8000-000000000001";
+    setMockFailure("commentOverview");
+
+    await expect(fetchCommentOverview(commentId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchCommentOverview(commentId)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the event stats domain", async () => {
     setMockFailure("eventStats");
 
@@ -889,6 +904,7 @@ describe("mock error-state fakes", () => {
         ["planOverview", () => fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")],
         ["runOverview", () => fetchRunOverview(ORCHESTRATION_RUNS[0]?.run_id ?? "")],
         ["uploadOverview", () => fetchUploadOverview("0b5c1e2a-7000-4000-8000-000000000001")],
+        ["commentOverview", () => fetchCommentOverview("0b5c1e2a-6200-4000-8000-000000000001")],
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],

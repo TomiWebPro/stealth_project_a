@@ -41,6 +41,7 @@ import { deriveConversationStats, validateConversationStatsArgs } from "./conver
 import { deriveCommentFeed, validateCommentFeedArgs } from "./commentFeed";
 import type { CommentFeedOptions } from "./commentFeed";
 import { deriveCommentStats, validateCommentStatsArgs } from "./commentStats";
+import { deriveCommentOverview, validateCommentOverviewArgs } from "./commentOverview";
 import type { ApiClient } from "./apiClient";
 import { deriveDashboardSummary, validateDashboardArgs } from "./dashboard";
 import { deriveEventStats, validateEventStatsArgs } from "./eventStats";
@@ -1668,6 +1669,35 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return deriveCommentFeed(COMMENTS, PROJECTS, REFERENCE_NOW, options);
   }
 
+  // Authoritative single-comment overview derives a compact snapshot from the
+  // same comment/project stores as the live `/comments/{id}/overview` endpoint;
+  // mirror the router's 422 id + recent_limit validation, unknown-comment 404
+  // and repository derivation so live and mock agree exactly (C254). This must
+  // precede the generic `/comments` branch below.
+  if (/^\/comments\/[^/]+\/overview$/.test(path)) {
+    const commentId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : undefined;
+    try {
+      validateCommentOverviewArgs(commentId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!COMMENTS.some((comment) => comment.id === commentId)) return NOT_FOUND;
+    return deriveCommentOverview(
+      commentId,
+      { comments: COMMENTS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+  }
+
   if (path === "/comments") {
     const assetId = params.get("asset_id");
     return COMMENTS.filter(
@@ -1842,6 +1872,15 @@ describe("live vs mock transport parity", () => {
       ],
       ["getCommentStats", (api) => api.getCommentStats()],
       ["getCommentStats scoped", (api) => api.getCommentStats({ projectId: filmId })],
+      ["getCommentOverview", (api) => api.getCommentOverview(COMMENTS[0]?.id ?? "")],
+      [
+        "getCommentOverview limited",
+        (api) => api.getCommentOverview(COMMENTS[0]?.id ?? "", { recentLimit: 1 }),
+      ],
+      [
+        "getCommentOverview missing",
+        (api) => api.getCommentOverview("00000000-0000-4000-8000-000000000000"),
+      ],
       ["getProjectStats", (api) => api.getProjectStats()],
       ["getProjectStats scoped", (api) => api.getProjectStats({ orgId })],
       ["getProjectFeed", (api) => api.getProjectFeed()],
@@ -2257,6 +2296,21 @@ describe("live vs mock transport parity", () => {
     expect(await live.getRunOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getRunOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The comment overview resolves an unknown comment to undefined on both
+    // transports and returns an identity/count snapshot for a seeded comment.
+    const seededCommentId = COMMENTS[0]?.id ?? "";
+    expect(await live.getCommentOverview(seededCommentId)).toEqual(
+      await mockApiClient.getCommentOverview(seededCommentId),
+    );
+    expect(await live.getCommentOverview(seededCommentId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getCommentOverview(seededCommentId, { recentLimit: 1 }),
+    );
+    expect(
+      await live.getCommentOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    expect(
+      await mockApiClient.getCommentOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The upload overview resolves an unknown ticket to undefined on both
     // transports and returns a byte/count snapshot for a seeded ticket.
@@ -3009,6 +3063,21 @@ describe("live vs mock transport parity", () => {
     expect(badUploadMockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(badUploadLiveErr).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports reject a malformed comment id and out-of-range recent
+    // limit with the same 422 envelope for the single-comment overview (C254).
+    const [badCommentMockErr, badCommentLiveErr] = await Promise.all([
+      mockApiClient.getCommentOverview("not-a-uuid").catch((cause) => cause),
+      live.getCommentOverview("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(badCommentMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badCommentLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [badCommentLimitMockErr, badCommentLimitLiveErr] = await Promise.all([
+      mockApiClient.getCommentOverview(seededCommentId, { recentLimit: 0 }).catch((cause) => cause),
+      live.getCommentOverview(seededCommentId, { recentLimit: 0 }).catch((cause) => cause),
+    ]);
+    expect(badCommentLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badCommentLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -3167,6 +3236,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getConversationFeed).toBe("function");
     expect(typeof typed.getCommentFeed).toBe("function");
     expect(typeof typed.getCommentStats).toBe("function");
+    expect(typeof typed.getCommentOverview).toBe("function");
     expect(typeof typed.updateAsset).toBe("function");
     expect(typeof typed.search).toBe("function");
     expect(typeof typed.getSearchStats).toBe("function");

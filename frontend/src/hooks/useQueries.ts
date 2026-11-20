@@ -15,6 +15,7 @@ import type { CollaborationFeedOptions } from "../lib/collaborationFeed";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { CommentStatsOptions } from "../lib/commentStats";
 import type { CommentFeedOptions } from "../lib/commentFeed";
+import type { CommentOverviewOptions } from "../lib/commentOverview";
 import type { ConversationFeedOptions } from "../lib/conversationFeed";
 import type { ConversationOverviewOptions } from "../lib/conversationOverview";
 import type { ConversationStatsOptions } from "../lib/conversationStats";
@@ -74,6 +75,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentOverview,
   CommentStats,
   Conversation,
   ConversationFeed,
@@ -247,6 +249,21 @@ export function useCommentStats(options?: CommentStatsOptions): UseQueryResult<C
   return useQuery({
     queryKey: queryKeys.commentStats.summary(options),
     queryFn: () => api.getCommentStats(options),
+  });
+}
+
+/**
+ * Authoritative single-comment snapshot (identity, context, activity and
+ * same-thread siblings) from `/comments/{id}/overview` (C254).
+ */
+export function useCommentOverview(
+  commentId: string,
+  options?: CommentOverviewOptions,
+): UseQueryResult<CommentOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.commentOverview.detail(commentId, options),
+    queryFn: () => api.getCommentOverview(commentId, options),
   });
 }
 

@@ -34,6 +34,8 @@ import { deriveCommentFeed, validateCommentFeedArgs } from "../commentFeed";
 import type { CommentFeedOptions } from "../commentFeed";
 import { deriveCommentStats, validateCommentStatsArgs } from "../commentStats";
 import type { CommentStatsOptions } from "../commentStats";
+import { deriveCommentOverview, validateCommentOverviewArgs } from "../commentOverview";
+import type { CommentOverviewOptions } from "../commentOverview";
 import {
   deriveConversationFeed,
   validateConversationFeedArgs,
@@ -176,6 +178,7 @@ import type {
   CollaborationStats,
   Comment,
   CommentFeed,
+  CommentOverview,
   CommentStats,
   Conversation,
   ConversationFeed,
@@ -289,7 +292,7 @@ function delay<T>(value: T): Promise<T> {
  * `activityStats`, `jobStats`,
  * `assetStats`, `assetFeed`, `conversationStats`, `projectStats`, `projectFeed`, `providerStats`, `providerFeed`, `extensionStats`, `projects` (incl. detail/recent/by-project), `jobs`, `assets` (incl. detail,
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
- * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
+ * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `commentOverview`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
@@ -540,6 +543,26 @@ export async function fetchCommentStats(
     });
   }
   return delay(deriveCommentStats(COMMENTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single-comment overview (C254 follow-up) derived from the same
+ * comment/project seeds as the live `/comments/{id}/overview` endpoint.
+ * Router-style 422 validation (comment id + recent limit), an unknown comment
+ * resolving to `undefined` (matching the live 404-to-undefined detail mapping)
+ * and the injectable `"commentOverview"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchCommentOverview(
+  commentId: string,
+  options?: CommentOverviewOptions,
+): Promise<CommentOverview | undefined> {
+  failIfEnabled("commentOverview");
+  validateCommentOverviewArgs(commentId, options);
+  if (!COMMENTS.some((comment) => comment.id === commentId)) return delay(undefined);
+  return delay(
+    deriveCommentOverview(commentId, { comments: COMMENTS, projects: PROJECTS, now: REFERENCE_NOW }, options),
+  );
 }
 
 /**

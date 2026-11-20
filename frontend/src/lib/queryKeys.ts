@@ -10,6 +10,7 @@ import type { CollaborationFeedOptions } from "./collaborationFeed";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
 import type { CommentFeedOptions } from "./commentFeed";
+import type { CommentOverviewOptions } from "./commentOverview";
 import type { ConversationFeedOptions } from "./conversationFeed";
 import type { ConversationOverviewOptions } from "./conversationOverview";
 import type { ConversationStatsOptions } from "./conversationStats";
@@ -135,6 +136,10 @@ export const queryKeys = {
   commentStats: {
     summary: (options: CommentStatsOptions = {}) =>
       ["comment-stats", "summary", options.projectId ?? "all"] as const,
+  },
+  commentOverview: {
+    detail: (commentId: string, options: CommentOverviewOptions = {}) =>
+      ["comment-overview", "detail", commentId, options.recentLimit ?? "all"] as const,
   },
   projectStats: {
     summary: (options: ProjectStatsOptions = {}) =>

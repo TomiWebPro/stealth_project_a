@@ -133,6 +133,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the comment overview key by comment id and recent limit", () => {
+    expect(queryKeys.commentOverview.detail("c1")).toEqual([
+      "comment-overview",
+      "detail",
+      "c1",
+      "all",
+    ]);
+    expect(queryKeys.commentOverview.detail("c1", { recentLimit: 3 })).toEqual([
+      "comment-overview",
+      "detail",
+      "c1",
+      3,
+    ]);
+  });
+
   it("scopes the project stats key by organization", () => {
     expect(queryKeys.projectStats.summary()).toEqual(["project-stats", "summary", "all"]);
     expect(queryKeys.projectStats.summary({ orgId: "o1" })).toEqual([

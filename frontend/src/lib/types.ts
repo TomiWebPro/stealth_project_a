@@ -44,6 +44,8 @@ export type {
   CommentAuthorCount,
   CommentFeed,
   CommentFeedItem,
+  CommentOverview,
+  CommentOverviewCounts,
   CommentProjectCount,
   CommentReference,
   CommentReferenceCount,
