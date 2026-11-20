@@ -280,6 +280,11 @@ All paths are prefixed with `/api/v1`.
   (coarse presence/comment kind, joined project name, unified recency and
   whole-scope total before the `limit` page; optional project + signal filters with
   shared 404/422 envelopes)
+  `GET /collaboration/{signal_key}/overview?recent_limit=` — authoritative
+  single-signal snapshot (identity + joined project name, project-scoped
+  presence/comment/participant counts and zero-filled `by_state` shared with
+  `/collaboration/stats`, plus a bounded newest-first same-project sibling page)
+  addressed by `<signal>:<project_id>:<signal_id>`, with shared 404/422 envelopes
   `GET /comments/stats?project_id=` — authoritative comment metrics (zero-filled
   asset/project reference breakdown, per-project and per-author comment counts,
   distinct author/project totals and newest-comment recency) derived from the

@@ -37,6 +37,7 @@ from .routers import (
     message_overview,
     collaboration_stats,
     collaboration_feed,
+    collaboration_overview,
     comment_feed,
     comment_stats,
     comment_overview,
@@ -315,6 +316,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/collaboration/feed" is a literal path with no templated sibling; register
     # it beside the collaboration stats router so both views stay explicit.
     app.include_router(collaboration_feed.router, prefix=API_PREFIX)
+    # "/collaboration/{signal_key}/overview" is a nested single-signal view; mount
+    # it beside the other collaboration routers so its literal suffix stays explicit.
+    app.include_router(collaboration_overview.router, prefix=API_PREFIX)
     # "/comments/feed" is a literal path; register it before the orchestration
     # router (which owns "/comments") so the feed path stays explicit.
     app.include_router(comment_feed.router, prefix=API_PREFIX)

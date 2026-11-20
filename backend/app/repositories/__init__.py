@@ -23,6 +23,7 @@ from .conversation_overview import ConversationOverviewRepository
 from .message_overview import MessageOverviewRepository
 from .collaboration_stats import CollaborationStatsRepository
 from .collaboration_feed import CollaborationFeedRepository
+from .collaboration_overview import CollaborationOverviewRepository
 from .comment_feed import CommentFeedRepository
 from .comment_stats import CommentStatsRepository
 from .comment_overview import CommentOverviewRepository
@@ -107,6 +108,7 @@ class Repositories:
     message_overview: MessageOverviewRepository
     collaboration_stats: CollaborationStatsRepository
     collaboration_feed: CollaborationFeedRepository
+    collaboration_overview: CollaborationOverviewRepository
     comment_feed: CommentFeedRepository
     comment_stats: CommentStatsRepository
     comment_overview: CommentOverviewRepository
@@ -190,6 +192,9 @@ class Repositories:
         message_overview = MessageOverviewRepository(store, conversations, clock=clock)
         collaboration_stats = CollaborationStatsRepository(store, projects, clock=clock)
         collaboration_feed = CollaborationFeedRepository(store, projects, clock=clock)
+        collaboration_overview = CollaborationOverviewRepository(
+            store, collaboration_feed, clock=clock
+        )
         comment_feed = CommentFeedRepository(store, projects, clock=clock)
         comment_stats = CommentStatsRepository(store, projects, clock=clock)
         comment_overview = CommentOverviewRepository(store, projects, clock=clock)
@@ -287,6 +292,7 @@ class Repositories:
             message_overview=message_overview,
             collaboration_stats=collaboration_stats,
             collaboration_feed=collaboration_feed,
+            collaboration_overview=collaboration_overview,
             comment_feed=comment_feed,
             comment_stats=comment_stats,
             comment_overview=comment_overview,

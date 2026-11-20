@@ -203,6 +203,10 @@ from .collaboration_feed import (
     CollaborationFeedItem,
     CollaborationSignal,
 )
+from .collaboration_overview import (
+    CollaborationOverview,
+    CollaborationOverviewCounts,
+)
 from .comment_feed import (
     CommentFeed,
     CommentFeedItem,
@@ -634,6 +638,9 @@ __all__ = [
     "CollaborationFeed",
     "CollaborationFeedItem",
     "CollaborationSignal",
+    # collaboration overview
+    "CollaborationOverview",
+    "CollaborationOverviewCounts",
     # comment feed
     "CommentFeed",
     "CommentFeedItem",
