@@ -357,6 +357,10 @@ from .retry_stats import (
     RetryStats,
     RetryStatusCount,
 )
+from .retry_overview import (
+    RetryOverview,
+    RetryOverviewCounts,
+)
 from .provider import (
     CapabilityQuery,
     Extension,
@@ -734,6 +738,9 @@ __all__ = [
     "RetryProjectCount",
     "RetryStats",
     "RetryStatusCount",
+    # retry overview
+    "RetryOverview",
+    "RetryOverviewCounts",
     # search
     "SearchResponse",
     "SearchResult",

@@ -219,6 +219,12 @@ All paths are prefixed with `/api/v1`.
   (operation/lifecycle fields, accepted-retry count and joined project name;
   whole-scope `total` before the bounded page); orphan entries are excluded and
   an optional project scope uses shared 404/422 envelopes
+  `GET /retries/{job_id}/overview?recent_limit=` — authoritative single-retry
+  snapshot (job identity/lifecycle, joined project name, whole-project/whole-
+  workspace retry counts and a bounded newest-first sibling page reusing the
+  `RetryFeedItem` shape) derived fresh from the same ledger; unknown job → shared
+  404 `job_not_found`, no accepted retries → shared 404 `retry_not_found`, bad
+  id/`recent_limit` → shared 422 envelope
 - **Providers/adapters:** `GET /providers`, `GET /providers/{id}`,
   `GET /providers/feed?location=&status=&limit=` — deterministic provider feed
   (identity/health, sorted advertised operation ids and capability count;

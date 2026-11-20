@@ -90,6 +90,7 @@ from .routers import (
     publish_overview,
     retry_feed,
     retry_stats,
+    retry_overview,
     search,
     search_stats,
     shots,
@@ -373,6 +374,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # them directly to keep both retry paths explicit.
     app.include_router(retry_feed.router, prefix=API_PREFIX)
     app.include_router(retry_stats.router, prefix=API_PREFIX)
+    # "/retries/{job_id}/overview" is a nested single-retry view; mount it beside
+    # the other retry routers so its literal suffix stays explicit.
+    app.include_router(retry_overview.router, prefix=API_PREFIX)
     # "/orchestration/feed" and "/orchestration/stats" have no templated sibling
     # at that segment; register them before the orchestration router so both
     # aggregate/feed paths stay explicit.

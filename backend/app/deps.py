@@ -77,6 +77,7 @@ from .repositories.publish_stats import PublishStatsRepository
 from .repositories.publish_overview import PublishOverviewRepository
 from .repositories.retry_feed import RetryFeedRepository
 from .repositories.retry_stats import RetryStatsRepository
+from .repositories.retry_overview import RetryOverviewRepository
 from .repositories.search import SearchRepository
 from .repositories.search_stats import SearchStatsRepository
 from .repositories.tags import TagRepository
@@ -481,6 +482,12 @@ def get_retry_stats_repository(
     return repositories.retry_stats
 
 
+def get_retry_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> RetryOverviewRepository:
+    return repositories.retry_overview
+
+
 def get_orchestration_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> OrchestrationRepository:
@@ -737,6 +744,7 @@ __all__ = [
     "get_publish_overview_repository",
     "get_retry_feed_repository",
     "get_retry_stats_repository",
+    "get_retry_overview_repository",
     "get_publish_service",
     "get_repositories",
     "get_settings",

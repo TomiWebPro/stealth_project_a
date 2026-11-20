@@ -76,6 +76,7 @@ export * from "./jobFeed";
 export * from "./jobOverview";
 export * from "./retryFeed";
 export * from "./retryStats";
+export * from "./retryOverview";
 export * from "./versionFeed";
 export * from "./versionStats";
 export * from "./versionOverview";

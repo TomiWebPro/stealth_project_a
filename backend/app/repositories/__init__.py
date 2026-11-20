@@ -70,6 +70,7 @@ from .publish_stats import PublishStatsRepository
 from .publish_overview import PublishOverviewRepository
 from .retry_feed import RetryFeedRepository
 from .retry_stats import RetryStatsRepository
+from .retry_overview import RetryOverviewRepository
 from .search import SearchRepository
 from .search_stats import SearchStatsRepository
 from .tags import TagRepository
@@ -140,6 +141,7 @@ class Repositories:
     publish_overview: PublishOverviewRepository
     retry_feed: RetryFeedRepository
     retry_stats: RetryStatsRepository
+    retry_overview: RetryOverviewRepository
     orchestration: OrchestrationRepository
     orchestration_feed: OrchestrationFeedRepository
     orchestration_stats: OrchestrationStatsRepository
@@ -223,6 +225,7 @@ class Repositories:
         publish_overview = PublishOverviewRepository(store, assets, projects, clock=clock)
         retry_feed = RetryFeedRepository(store, projects, clock=clock)
         retry_stats = RetryStatsRepository(store, projects, clock=clock)
+        retry_overview = RetryOverviewRepository(store, jobs, clock=clock)
         orchestration = OrchestrationRepository(
             store,
             projects,
@@ -314,6 +317,7 @@ class Repositories:
             publish_overview=publish_overview,
             retry_feed=retry_feed,
             retry_stats=retry_stats,
+            retry_overview=retry_overview,
             orchestration=orchestration,
             orchestration_feed=orchestration_feed,
             orchestration_stats=orchestration_stats,
