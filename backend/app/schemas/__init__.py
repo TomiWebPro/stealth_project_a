@@ -281,6 +281,11 @@ from .orchestration_stats import (
     OrchestrationStageCount,
     OrchestrationStats,
 )
+from .plan_overview import (
+    PlanOverview,
+    PlanOverviewCounts,
+    PlanOverviewRunRef,
+)
 from .project_feed import (
     ProjectFeed,
     ProjectFeedItem,
@@ -639,6 +644,10 @@ __all__ = [
     "OrchestrationProjectCount",
     "OrchestrationStageCount",
     "OrchestrationStats",
+    # plan overview
+    "PlanOverview",
+    "PlanOverviewCounts",
+    "PlanOverviewRunRef",
     # provider
     "CapabilityQuery",
     "Extension",

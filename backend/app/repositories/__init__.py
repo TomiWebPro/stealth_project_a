@@ -51,6 +51,7 @@ from .organization_overview import OrganizationOverviewRepository
 from .orchestration import OrchestrationRepository
 from .orchestration_feed import OrchestrationFeedRepository
 from .orchestration_stats import OrchestrationStatsRepository
+from .plan_overview import PlanOverviewRepository
 from .projects import ProjectRepository
 from .project_feed import ProjectFeedRepository
 from .project_stats import ProjectStatsRepository
@@ -124,6 +125,7 @@ class Repositories:
     orchestration: OrchestrationRepository
     orchestration_feed: OrchestrationFeedRepository
     orchestration_stats: OrchestrationStatsRepository
+    plan_overview: PlanOverviewRepository
     auth: AuthRepository
     event_feed: EventFeedRepository
     event_stats: EventStatsRepository
@@ -201,6 +203,7 @@ class Repositories:
         )
         orchestration_feed = OrchestrationFeedRepository(store, projects, clock=clock)
         orchestration_stats = OrchestrationStatsRepository(store, projects, clock=clock)
+        plan_overview = PlanOverviewRepository(store, projects, clock=clock)
         auth = AuthRepository(
             store,
             default_user_id=settings.default_user_id,
@@ -274,6 +277,7 @@ class Repositories:
             orchestration=orchestration,
             orchestration_feed=orchestration_feed,
             orchestration_stats=orchestration_stats,
+            plan_overview=plan_overview,
             auth=auth,
             event_feed=event_feed,
             event_stats=event_stats,

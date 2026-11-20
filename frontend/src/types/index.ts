@@ -33,6 +33,7 @@ export * from "./provider";
 export * from "./orchestration";
 export * from "./orchestrationFeed";
 export * from "./orchestrationStats";
+export * from "./planOverview";
 export * from "./search";
 export * from "./searchStats";
 export * from "./dashboard";

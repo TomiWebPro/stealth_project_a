@@ -211,6 +211,11 @@ All paths are prefixed with `/api/v1`.
   feed of plans and runs derived from the same plan/run stores (kind + project
   scope, joined project name, plan-step/run-job counts, whole-scope total before
   the `limit` page; orphan runs excluded, shared 404/422 envelopes)
+  `GET /orchestration/plans/{plan_id}/overview?recent_limit=` — compact single-plan
+  snapshot (identity + joined project name, whole-scope step/run/job totals,
+  zero-filled run-stage breakdown shared with `/orchestration/stats` and newest
+  runs bounded by `recent_limit`) derived fresh from the plan/run stores; unknown
+  plan uses the shared 404 `plan_not_found` envelope
   `GET|POST /presence`,
   `GET|POST /comments`, `GET /storage/stats`,
   `GET /comments/feed?project_id=&limit=` — authoritative newest-first comment
