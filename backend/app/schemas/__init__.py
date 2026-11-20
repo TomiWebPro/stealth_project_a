@@ -198,6 +198,10 @@ from .comment_stats import (
     CommentReferenceCount,
     CommentStats,
 )
+from .comment_overview import (
+    CommentOverview,
+    CommentOverviewCounts,
+)
 from .operation import (
     Job,
     JobCancelRequest,
@@ -584,6 +588,8 @@ __all__ = [
     # comment stats
     "CommentAuthorCount",
     "CommentProjectCount",
+    "CommentOverview",
+    "CommentOverviewCounts",
     "CommentReference",
     "CommentReferenceCount",
     "CommentStats",

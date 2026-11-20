@@ -250,6 +250,11 @@ All paths are prefixed with `/api/v1`.
   asset/project reference breakdown, per-project and per-author comment counts,
   distinct author/project totals and newest-comment recency) derived from the
   comment store; optional project scope with shared 404/422 envelopes
+  `GET /comments/{comment_id}/overview?recent_limit=` — single-comment snapshot
+  (identity + joined project name, canonical asset/project reference, whole-project
+  and same-thread comment activity shared with `/comments/stats`, newest-first
+  same-thread comments bounded by `recent_limit`) derived fresh from the comment
+  store; unknown comment uses the shared 404 `comment_not_found` envelope
 - **Auth/orgs:** `POST /auth/login|refresh`, `GET /auth/session|me`,
   `GET|POST /orgs` (alias `/organizations`), `GET /orgs/{id}`,
   `GET|POST /orgs/{id}/members`,
