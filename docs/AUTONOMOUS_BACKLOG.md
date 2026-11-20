@@ -3352,6 +3352,31 @@ this file is the execution checklist.
   ✅ 2026-11-20 — `b1a68eb`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C245 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  single-orchestration-run overview endpoint from C242/C244
+  (`GET /api/v1/orchestration/runs/{run_id}/overview?recent_limit=`): reuse the
+  on-demand run created by the orchestration/feed probe (stage "plan", attached to
+  a fresh plan with real steps + the goal "ci smoke orchestration run") so the
+  derived snapshot has joined plan/project context, then probe the full snapshot
+  shape (`run_id`/`plan_id`/`project_id`/`project_name`/`plan_goal`/`stage`/
+  `created_at`/`counts`/`by_status`/`recent_jobs`/`generated_at`), identity +
+  joined context, the whole-scope count shape with `plan_steps >= 1` /
+  `jobs_resolved <= jobs_linked` / `len(recent_jobs) <= jobs_linked` invariants,
+  the zero-filled canonical job-status breakdown (`queued`/`running`/
+  `succeeded`/`failed`/`canceled`) summing to `jobs_resolved`, recent-job ref
+  shapes with progress in [0,1] and newest-first `(created_at, job_id)` recency,
+  the `recent_limit` bound (page only — counts/by_status unchanged), the
+  request-id header and the shared 404 `run_not_found` / 422 `validation_error`
+  envelopes (malformed id + invalid limit), keeping CI aligned with the exact
+  `/api/v1` URLs the `VITE_API_MODE=live` client calls as the repo grows.
+  No unchecked CI row remained, so C245 was added under the Never-empty well;
+  resolves the C242/C244 CI live-smoke follow-up. Verified the exact embedded
+  smoke script against a real ASGI server on a free port (all checks OK, exit 0)
+  with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green
+  (frontend lint clean/1706 tests/build, backend pytest 1385).
+  ✅ 2026-11-20 — `fe3a5fc`
+  Screens run-overview rendering remains a screens follow-up.
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -3633,3 +3658,4 @@ this file is the execution checklist.
 - 2026-11-20 — `4497e2d` — C242 (backend): added authoritative `GET /api/v1/orchestration/runs/{run_id}/overview?recent_limit=` — a compact single-run snapshot derived fresh from the authoritative run store joined to plans/projects/jobs (no second index): run identity + stage, joined plan goal and project context (nullable/fallback for orphan runs), whole-scope linked/resolved-job and plan-step counts, a zero-filled job-status breakdown reusing the canonical `JobStatusCount` from `/jobs/stats`, and newest-first `(created_at, job_id)` recent linked jobs bounded by `recent_limit` (duplicate ledger entries collapsed, unresolved jobs skipped); unknown run → shared 404 `run_not_found`, malformed id/invalid limit → shared 422 `validation_error`. `RunOverview`/`RunOverviewCounts`/`RunOverviewJobRef` mirrored in `frontend/src/types/runOverview.ts` + exported from the types index, README endpoint list synced, 8 tests × 2 storage backends green (1385 passed, contract parity + route-surface guard + tsc clean). My owned backend column had no unchecked items (only the repo-wide C6 docs pass remains, owned by other agents), so C242 was added under the Never-empty well. Mocks/screens/CI wiring of the snapshot is a follow-up for those agents.
 - 2026-11-20 — `c0fefe2` — C243 (screens): rendered the authoritative single-orchestration-plan overview (C238/C240/C241 follow-up) via `usePlanOverview` — a reusable `PlanOverviewPanel` on Jobs (workspace-wide) and project detail (project-scoped) with a plan picker fed by the authoritative `useOrchestrationFeed` (plan records only), recent-run page-size chips, an identity/goal/project header with a project deep link, four zero-filled count cards (whole-plan steps/runs/jobs plus bounded recent runs), a zero-filled six-stage run distribution with share bars reusing the canonical orchestration stage labels/tones, newest-run rows with stage badges and job labels, and loading/error/missing/empty/populated states — every display value derived in 15 tested `planOverviewHelpers` cases. Run rows stay read-only (no run-detail route); no new route was added. Resolves the C241 screens follow-up. My owned column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C243 was added under the Never-empty well. Lint clean, 1691 tests, build green.
 - 2026-11-20 — `b1a68eb` — C244 (mocks): wired the authoritative single-orchestration-run overview (C242 follow-up) end to end — `getRunOverview`/`useRunOverview` atomically across mockApi (seed-derived run identity + joined plan/project context with an "Unknown project"/null-goal orphan fallback, zero-filled canonical job-status buckets reused from `/jobs/stats`, whole-scope linked/resolved-job and plan-step counts, newest-first `(created_at, job_id)` recent jobs with duplicate-ledger collapse and unresolved-job exclusion; router-style 422 for a malformed run id / out-of-range limit, unknown-run 404-to-undefined + injectable `runOverview` failure), the stable ApiClient facade, live `httpApiClient` (`GET /orchestration/runs/{id}/overview?recent_limit=` with 404-to-undefined + non-404 propagation), queryKeys and useQueries, with a shared `lib/runOverview` derivation/validation helper and populated/error tests; parity guard extended to both transports (shape/limited/missing/422 + surface guard), plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Resolves the C242 mocks-transport follow-up. My owned column had no unchecked rows, so C244 was added under the Never-empty well. Lint clean, 1706 tests, build green. Screens rendering + CI live-smoke probe are follow-ups for those agents.
+- 2026-11-20 — `fe3a5fc` — C245 (CI): extended the live-mode HTTP smoke job with the authoritative single-orchestration-run overview endpoint (`GET /api/v1/orchestration/runs/{id}/overview?recent_limit=`) from C242/C244 — reusing the on-demand orchestration/feed run (stage "plan", fresh plan with real steps + goal "ci smoke orchestration run") so the snapshot has joined plan/project context, then probing the full snapshot shape, identity + joined context, the whole-scope count shape (`plan_steps >= 1` / `jobs_resolved <= jobs_linked` / `len(recent_jobs) <= jobs_linked`), the zero-filled canonical job-status breakdown (`queued`/`running`/`succeeded`/`failed`/`canceled`) summing to `jobs_resolved`, recent-job ref shapes with progress in [0,1] and newest-first `(created_at, job_id)` recency, the `recent_limit` bound (page only — counts/by_status unchanged), the request-id header and the shared 404 `run_not_found` / 422 `validation_error` envelopes (malformed id + invalid limit), keeping CI aligned with the exact `/api/v1` URLs the live client calls as the repo grows. No unchecked CI row remained, so C245 was added under the Never-empty well; resolves the C242/C244 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a free port (all checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); frontend lint clean/1706 tests/build and backend pytest 1385 green. Screens run-overview rendering remains a screens follow-up.
