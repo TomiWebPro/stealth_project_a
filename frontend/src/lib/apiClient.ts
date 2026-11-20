@@ -32,6 +32,7 @@ import type { JobStatsOptions } from "./jobStats";
 import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageOverviewOptions } from "./lineageOverview";
 import type { LineageStatsOptions } from "./lineageStats";
+import type { MembershipOverviewOptions } from "./membershipOverview";
 import type { UserOverviewOptions } from "./userOverview";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
@@ -97,6 +98,7 @@ import type {
   LineageFeed,
   LineageOverview,
   LineageStats,
+  MembershipOverview,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -226,6 +228,17 @@ export interface ApiClient {
     userId: string,
     options?: UserOverviewOptions,
   ): Promise<UserOverview | undefined>;
+  /**
+   * Authoritative single-membership snapshot (joined org/user identity, role and
+   * whole-scope org-scoped counts plus bounded recent projects/comments) from
+   * `/orgs/{org}/members/{user}/overview`; unknown org/user/membership resolve to
+   * `undefined` (C266).
+   */
+  getMembershipOverview(
+    orgId: string,
+    userId: string,
+    options?: MembershipOverviewOptions,
+  ): Promise<MembershipOverview | undefined>;
   /** Authoritative production-pipeline metrics derived by `/pipelines/stats`, optionally project-scoped (C73). */
   getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats>;
   /** Newest-first authoritative production-pipeline feed derived by `/pipelines/feed`, optionally project/kind-scoped (C177). */
@@ -453,6 +466,7 @@ export const mockApiClient: ApiClient = {
   getOrganizationStats: mockApi.fetchOrganizationStats,
   getOrganizationOverview: mockApi.fetchOrganizationOverview,
   getUserOverview: mockApi.fetchUserOverview,
+  getMembershipOverview: mockApi.fetchMembershipOverview,
   getPipelineStats: mockApi.fetchPipelineStats,
   getPipelineFeed: mockApi.fetchPipelineFeed,
   getChainOverview: mockApi.fetchChainOverview,

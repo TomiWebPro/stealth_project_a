@@ -1388,6 +1388,62 @@ describe("createHttpApiClient user overview (C262)", () => {
   });
 });
 
+describe("createHttpApiClient membership overview (C266)", () => {
+  const orgId = "0b5c1e2a-1000-4000-8000-000000000001";
+  const userId = "0b5c1e2a-0000-4000-8000-0000000000aa";
+  const overview = {
+    org_id: orgId,
+    org_name: "Studio Northlight",
+    org_slug: "studio-northlight",
+    user_id: userId,
+    email: "director@studio.local",
+    display_name: "Avery Director",
+    avatar_url: null,
+    role: "owner",
+    joined_at: "2026-01-05T00:00:00.000Z",
+    counts: { projects: 2, conversations: 3, comments: 1, presence: 1 },
+    recent_projects: [],
+    recent_comments: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the nested membership overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({
+      [`/orgs/${orgId}/members/${userId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getMembershipOverview(orgId, userId, { recentLimit: 2 })).resolves.toEqual(
+      overview,
+    );
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/orgs/${orgId}/members/${userId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps every 404 to undefined but surfaces other failures", async () => {
+    for (const code of ["organization_not_found", "user_not_found", "membership_not_found"]) {
+      const missing = createHttpApiClient("http://localhost:8000", {
+        fetchImpl: (async () =>
+          jsonResponse({ error: { code, message: "missing" } }, { status: 404 })) as typeof fetch,
+      });
+      await expect(missing.getMembershipOverview(orgId, userId)).resolves.toBeUndefined();
+    }
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getMembershipOverview(orgId, userId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient version overview (C250)", () => {
   const assetId = "0b5c1e2a-2000-4000-8000-000000000001";
   const overview = {

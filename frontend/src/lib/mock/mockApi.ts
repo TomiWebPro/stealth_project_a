@@ -103,6 +103,11 @@ import {
   validateOrganizationOverviewArgs,
 } from "../organizationOverview";
 import type { OrganizationOverviewOptions } from "../organizationOverview";
+import {
+  deriveMembershipOverview,
+  validateMembershipOverviewArgs,
+} from "../membershipOverview";
+import type { MembershipOverviewOptions } from "../membershipOverview";
 import { deriveUserOverview, validateUserOverviewArgs } from "../userOverview";
 import type { UserOverviewOptions } from "../userOverview";
 import {
@@ -206,6 +211,7 @@ import type {
   LineageFeed,
   LineageOverview,
   LineageStats,
+  MembershipOverview,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -306,8 +312,8 @@ function delay<T>(value: T): Promise<T> {
  * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
- * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`, `jobLogs`,
- * `jobFeed` and `jobQueue`.
+ * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`,
+ * `membershipOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -748,6 +754,46 @@ export async function fetchUserOverview(
       {
         users: USERS,
         organizations: ORGANIZATIONS,
+        members: ORGANIZATION_MEMBERS,
+        projects: PROJECTS,
+        conversations: CONVERSATIONS,
+        comments: COMMENTS,
+        presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-membership overview (C266 follow-up) derived from the same
+ * auth/project/conversation/comment/presence seeds as the live
+ * `/orgs/{org}/members/{user}/overview` endpoint. Router-style 422 validation for
+ * a malformed org/user id / out-of-range recent limit, a normalized 404-to-
+ * `undefined` for an unknown org/user/membership and the injectable
+ * `"membershipOverview"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchMembershipOverview(
+  orgId: string,
+  userId: string,
+  options?: MembershipOverviewOptions,
+): Promise<MembershipOverview | undefined> {
+  failIfEnabled("membershipOverview");
+  validateMembershipOverviewArgs(orgId, userId, options);
+  if (!ORGANIZATIONS.some((org) => org.id === orgId)) return delay(undefined);
+  if (!USERS.some((user) => user.id === userId)) return delay(undefined);
+  if (!ORGANIZATION_MEMBERS.some((member) => member.org_id === orgId && member.user_id === userId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveMembershipOverview(
+      orgId,
+      userId,
+      {
+        organizations: ORGANIZATIONS,
+        users: USERS,
         members: ORGANIZATION_MEMBERS,
         projects: PROJECTS,
         conversations: CONVERSATIONS,

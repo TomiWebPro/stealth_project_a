@@ -95,6 +95,7 @@ import {
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
+  fetchMembershipOverview,
   fetchUserOverview,
   fetchVersionFeed,
   fetchVersionOverview,
@@ -187,6 +188,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchExtensions()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchExtensionFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchMembershipOverview(ORGANIZATIONS[0]?.id ?? "", USERS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
   });
 
   it("can be switched off per domain without clearing the rest", async () => {
@@ -913,6 +915,7 @@ describe("mock error-state fakes", () => {
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["userOverview", () => fetchUserOverview(USERS[0]?.id ?? "")],
+        ["membershipOverview", () => fetchMembershipOverview(ORGANIZATIONS[0]?.id ?? "", USERS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],

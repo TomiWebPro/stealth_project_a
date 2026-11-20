@@ -291,6 +291,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the membership overview key by org, user and recent limit", () => {
+    expect(queryKeys.membershipOverview.detail("org-1", "user-1")).toEqual([
+      "membership-overview",
+      "detail",
+      "org-1",
+      "user-1",
+      "all",
+    ]);
+    expect(queryKeys.membershipOverview.detail("org-1", "user-1", { recentLimit: 3 })).toEqual([
+      "membership-overview",
+      "detail",
+      "org-1",
+      "user-1",
+      3,
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

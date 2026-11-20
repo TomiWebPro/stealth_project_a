@@ -78,6 +78,11 @@ import {
   validateOrganizationOverviewArgs,
 } from "./organizationOverview";
 import type { OrganizationOverviewOptions } from "./organizationOverview";
+import {
+  deriveMembershipOverview,
+  validateMembershipOverviewArgs,
+} from "./membershipOverview";
+import type { MembershipOverviewOptions } from "./membershipOverview";
 import { deriveUserOverview, validateUserOverviewArgs } from "./userOverview";
 import type { UserOverviewOptions } from "./userOverview";
 import {
@@ -1227,6 +1232,54 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return CONVERSATIONS.find((c) => c.id === id) ?? NOT_FOUND;
   }
 
+  // Authoritative single-membership overview derives a compact snapshot from the
+  // same auth/project/conversation/comment/presence stores on every call; mirror
+  // the router's org/user/membership 404s, recent_limit 422 validation and
+  // repository derivation over the shared seeds. This must precede the
+  // /orgs/{id}/overview branch below (C266).
+  if (/^\/orgs\/[^/]+\/members\/[^/]+\/overview$/.test(path)) {
+    const orgIdValue = pathParts[2] ?? "";
+    const userIdValue = pathParts[4] ?? "";
+    const limitRaw = params.get("recent_limit");
+    const options: MembershipOverviewOptions =
+      limitRaw !== null ? { recentLimit: Number(limitRaw) } : {};
+    try {
+      validateMembershipOverviewArgs(orgIdValue, userIdValue, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ORGANIZATIONS.some((org) => org.id === orgIdValue)) return NOT_FOUND;
+    if (!USERS.some((user) => user.id === userIdValue)) return NOT_FOUND;
+    if (
+      !ORGANIZATION_MEMBERS.some(
+        (member) => member.org_id === orgIdValue && member.user_id === userIdValue,
+      )
+    ) {
+      return NOT_FOUND;
+    }
+    return deriveMembershipOverview(
+      orgIdValue,
+      userIdValue,
+      {
+        organizations: ORGANIZATIONS,
+        users: USERS,
+        members: ORGANIZATION_MEMBERS,
+        projects: PROJECTS,
+        conversations: CONVERSATIONS,
+        comments: COMMENTS,
+        presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+  }
+
   // Authoritative single-organization overview derives a compact snapshot from
   // the same auth/project stores on every call; mirror the router's
   // unknown-organization 404, recent_limit 422 validation and repository
@@ -2009,6 +2062,11 @@ describe("live vs mock transport parity", () => {
       ["getOrganizationOverview limited", (api) => api.getOrganizationOverview(orgId, { recentLimit: 2 })],
       ["getUserOverview", (api) => api.getUserOverview(CURRENT_USER.id)],
       ["getUserOverview limited", (api) => api.getUserOverview(CURRENT_USER.id, { recentLimit: 2 })],
+      ["getMembershipOverview", (api) => api.getMembershipOverview(orgId, CURRENT_USER.id)],
+      [
+        "getMembershipOverview limited",
+        (api) => api.getMembershipOverview(orgId, CURRENT_USER.id, { recentLimit: 2 }),
+      ],
       ["getPipelineStats", (api) => api.getPipelineStats()],
       ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
       ["getPipelineFeed", (api) => api.getPipelineFeed()],
@@ -2169,8 +2227,9 @@ describe("live vs mock transport parity", () => {
       expect(liveValue, `${name} differs between mock and live`).toEqual(mockValue);
     }
     // Each mock call carries 300ms simulated latency; the parity surface grows
-    // with every newly wired transport (provider feed added 4 more cases here).
-  }, 60_000);
+    // with every newly wired transport (membership overview added 2 more cases
+    // here), so keep the cap comfortably above the sequential mock latency.
+  }, 120_000);
 
   it("returns identical empty/not-found shapes for both transports", async () => {
     expect(await live.listAssetsByProject(emptyId)).toEqual(
@@ -2460,6 +2519,32 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getUserOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The membership overview resolves unknown org/user/membership to undefined
+    // on both transports and returns an identical joined snapshot for a seeded
+    // membership (C266).
+    expect(await live.getMembershipOverview(orgId, CURRENT_USER.id)).toEqual(
+      await mockApiClient.getMembershipOverview(orgId, CURRENT_USER.id),
+    );
+    expect(
+      await live.getMembershipOverview(orgId, CURRENT_USER.id, { recentLimit: 1 }),
+    ).toEqual(
+      await mockApiClient.getMembershipOverview(orgId, CURRENT_USER.id, { recentLimit: 1 }),
+    );
+    expect(await live.getMembershipOverview(missingId, CURRENT_USER.id)).toBeUndefined();
+    expect(
+      await mockApiClient.getMembershipOverview(missingId, CURRENT_USER.id),
+    ).toBeUndefined();
+    expect(await live.getMembershipOverview(orgId, missingId)).toBeUndefined();
+    expect(await mockApiClient.getMembershipOverview(orgId, missingId)).toBeUndefined();
+    // An org/user that both exist but have no membership row also resolves to
+    // undefined. The other seeded org has no membership for the current user.
+    const otherOrgId = ORGANIZATIONS.find((org) => org.id !== orgId)?.id;
+    if (otherOrgId) {
+      expect(await live.getMembershipOverview(otherOrgId, CURRENT_USER.id)).toBeUndefined();
+      expect(
+        await mockApiClient.getMembershipOverview(otherOrgId, CURRENT_USER.id),
+      ).toBeUndefined();
+    }
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
     expect(await live.getJobLogs(missingId)).toBeUndefined();
@@ -3077,6 +3162,24 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed org/user id or an out-of-range
+    // recent_limit with the same 422 envelope for the single-membership overview.
+    const badMembershipOverviewOptions: Array<
+      [string, string, string, string, MembershipOverviewOptions | undefined]
+    > = [
+      ["not-a-uuid", CURRENT_USER.id, "not-a-uuid", CURRENT_USER.id, undefined],
+      [orgId, CURRENT_USER.id, orgId, CURRENT_USER.id, { recentLimit: 0 }],
+      [orgId, CURRENT_USER.id, orgId, CURRENT_USER.id, { recentLimit: 51 }],
+    ];
+    for (const [mockOrg, mockUser, liveOrg, liveUser, options] of badMembershipOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getMembershipOverview(mockOrg, mockUser, options).catch((cause) => cause),
+        live.getMembershipOverview(liveOrg, liveUser, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports reject a malformed asset id or an out-of-range
     // recent_limit with the same 422 envelope for the single-asset overview.
     const badAssetOverviewOptions: Array<[string, string, AssetOverviewOptions | undefined]> = [
@@ -3407,6 +3510,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getOrganizationOverview).toBe("function");
     expect(typeof typed.getUserOverview).toBe("function");
+    expect(typeof typed.getMembershipOverview).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getPipelineFeed).toBe("function");
     expect(typeof typed.getChainOverview).toBe("function");

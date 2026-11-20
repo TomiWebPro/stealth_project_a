@@ -65,6 +65,8 @@ import { organizationFeedQueryParams } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import { organizationOverviewQueryParams } from "./organizationOverview";
 import type { OrganizationOverviewOptions } from "./organizationOverview";
+import { membershipOverviewQueryParams } from "./membershipOverview";
+import type { MembershipOverviewOptions } from "./membershipOverview";
 import { userOverviewQueryParams } from "./userOverview";
 import type { UserOverviewOptions } from "./userOverview";
 import { organizationStatsQueryParams } from "./organizationStats";
@@ -157,6 +159,7 @@ import type {
   LineageFeed,
   LineageOverview,
   LineageStats,
+  MembershipOverview,
   Message,
   MessageCreate,
   OperationCatalog,
@@ -561,6 +564,27 @@ export function createHttpApiClient(
         return await request<UserOverview>(
           `/users/${encodeURIComponent(userId)}/overview`,
           userOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-membership snapshot; the backend 404s on an unknown
+     * organization, user or membership, which is normalized to `undefined` like
+     * the other detail lookups (C266).
+     */
+    async getMembershipOverview(
+      orgId: string,
+      userId: string,
+      options?: MembershipOverviewOptions,
+    ): Promise<MembershipOverview | undefined> {
+      try {
+        return await request<MembershipOverview>(
+          `/orgs/${encodeURIComponent(orgId)}/members/${encodeURIComponent(userId)}/overview`,
+          membershipOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

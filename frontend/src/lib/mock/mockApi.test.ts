@@ -98,6 +98,7 @@ import {
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
+  fetchMembershipOverview,
   fetchUserOverview,
   fetchVersionOverview,
   fetchWorkflowTemplates,
@@ -2447,6 +2448,63 @@ describe("mock API user overview (C262 follow-up)", () => {
   it("injects a failure for the userOverview domain", async () => {
     setMockFailure("userOverview");
     await expect(fetchUserOverview(userId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API membership overview (C266 follow-up)", () => {
+  const orgId = ORGANIZATIONS[0]?.id ?? "";
+  const userId = USERS[0]?.id ?? "";
+
+  it("derives a populated joined snapshot from the auth/project/conversation seeds", async () => {
+    const overview = await fetchMembershipOverview(orgId, userId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.org_id).toBe(orgId);
+    expect(overview?.org_name).toBe(ORGANIZATIONS[0]?.name);
+    expect(overview?.org_slug).toBe(ORGANIZATIONS[0]?.slug);
+    expect(overview?.user_id).toBe(userId);
+    expect(overview?.display_name).toBe(USERS[0]?.display_name);
+    expect(overview?.role).toBe("owner");
+    expect(overview?.counts.projects).toBeGreaterThanOrEqual(1);
+    expect(overview?.recent_projects?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds only the recent pages by recentLimit without bounding counts", async () => {
+    const full = await fetchMembershipOverview(orgId, userId);
+    const limited = await fetchMembershipOverview(orgId, userId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.recent_projects).toHaveLength(1);
+    expect(limited?.recent_comments?.length).toBeLessThanOrEqual(1);
+  });
+
+  it("rejects malformed ids/limits and resolves unknown org/user/membership to undefined", async () => {
+    await expect(fetchMembershipOverview("not-a-uuid", userId)).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchMembershipOverview(orgId, "not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchMembershipOverview(orgId, userId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    const missingId = "00000000-0000-4000-8000-000000000000";
+    await expect(fetchMembershipOverview(missingId, userId)).resolves.toBeUndefined();
+    await expect(fetchMembershipOverview(orgId, missingId)).resolves.toBeUndefined();
+    const otherOrgId = ORGANIZATIONS.find((candidate) => candidate.id !== orgId)?.id;
+    if (otherOrgId) {
+      await expect(fetchMembershipOverview(otherOrgId, userId)).resolves.toBeUndefined();
+    }
+  });
+
+  it("injects a failure for the membershipOverview domain", async () => {
+    setMockFailure("membershipOverview");
+    await expect(fetchMembershipOverview(orgId, userId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

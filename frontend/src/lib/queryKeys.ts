@@ -31,6 +31,7 @@ import type { LineageStatsOptions } from "./lineageStats";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import type { OrganizationOverviewOptions } from "./organizationOverview";
+import type { MembershipOverviewOptions } from "./membershipOverview";
 import type { UserOverviewOptions } from "./userOverview";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
@@ -215,6 +216,10 @@ export const queryKeys = {
   userOverview: {
     detail: (userId: string, options: UserOverviewOptions = {}) =>
       ["user-overview", "detail", userId, options.recentLimit ?? "all"] as const,
+  },
+  membershipOverview: {
+    detail: (orgId: string, userId: string, options: MembershipOverviewOptions = {}) =>
+      ["membership-overview", "detail", orgId, userId, options.recentLimit ?? "all"] as const,
   },
   pipelineStats: {
     summary: (options: PipelineStatsOptions = {}) =>

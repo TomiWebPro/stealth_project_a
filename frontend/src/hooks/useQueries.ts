@@ -37,6 +37,7 @@ import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OperationFeedOptions } from "../lib/operationFeed";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationOverviewOptions } from "../lib/organizationOverview";
+import type { MembershipOverviewOptions } from "../lib/membershipOverview";
 import type { UserOverviewOptions } from "../lib/userOverview";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
@@ -109,6 +110,7 @@ import type {
   OrganizationFeed,
   OrganizationOverview,
   OrganizationStats,
+  MembershipOverview,
   UserOverview,
   OrchestrationFeed,
   OrchestrationRun,
@@ -406,6 +408,24 @@ export function useUserOverview(
   return useQuery({
     queryKey: queryKeys.userOverview.detail(userId, options),
     queryFn: () => api.getUserOverview(userId, options),
+  });
+}
+
+/**
+ * Authoritative single-membership snapshot (joined org/user identity, role,
+ * whole-scope org-scoped counts and bounded recent projects/comments) from
+ * `/orgs/{org}/members/{user}/overview`, optionally bounding the recent lists
+ * (C266).
+ */
+export function useMembershipOverview(
+  orgId: string,
+  userId: string,
+  options?: MembershipOverviewOptions,
+): UseQueryResult<MembershipOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.membershipOverview.detail(orgId, userId, options),
+    queryFn: () => api.getMembershipOverview(orgId, userId, options),
   });
 }
 

@@ -97,6 +97,8 @@ export type {
   LineageTypeCount,
   Member,
   MemberRole,
+  MembershipOverview,
+  MembershipOverviewCounts,
   Message,
   MessageCreate,
   MessageRole,
