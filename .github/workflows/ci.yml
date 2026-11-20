@@ -4020,6 +4020,179 @@ jobs:
                 and bool(covbadbody.get("error", {}).get("request_id")),
                 cov_bad_id.text)
 
+          # Authoritative single conversation-message overview (C270/C272) is the
+          # newest /api/v1 URL the live client calls (getMessageOverview). Reuse the
+          # conversation created in the conversation-feed probe (seed user message +
+          # appended assistant reply) and resolve one of its real message ids from
+          # the authoritative messages list, so the snapshot has real identity, a
+          # 1-based chronological position, whole-conversation counts and a sibling
+          # page. Probe the full snapshot shape, identity + conversation/project
+          # context, the stats-shared zero-filled role/status buckets, the sibling
+          # page shape + newest-first recency, the recent_limit bound (page only —
+          # counts never bounded), the request-id header, the 404
+          # conversation_not_found / message_not_found envelopes and the shared 422
+          # validation envelope, keeping CI aligned with the exact /api/v1 URLs the
+          # live client calls as the repo grows.
+          if conversation_id:
+              msg_list = httpx.get(
+                  f"{base}/conversations/{conversation_id}/messages", timeout=5)
+              msgs = msg_list.json() if msg_list.status_code == 200 else []
+              check("messages/{id}/overview list setup",
+                    msg_list.status_code == 200
+                    and isinstance(msgs, list) and len(msgs) >= 1,
+                    msg_list.text)
+          else:
+              msgs = []
+              check("messages/{id}/overview setup", False,
+                    "could not obtain a conversation id")
+
+          if isinstance(msgs, list) and msgs and msgs[0].get("id"):
+              target_msg = msgs[0]
+              message_id = target_msg["id"]
+              mov = httpx.get(
+                  f"{base}/conversations/{conversation_id}/messages/{message_id}/overview",
+                  timeout=5)
+              movbody = mov.json() if mov.status_code == 200 else {}
+              check("messages/{id}/overview 200 snapshot shape",
+                    mov.status_code == 200 and all(
+                        k in movbody for k in ("message_id", "conversation_id",
+                                              "conversation_title", "project_id",
+                                              "project_name", "role", "content",
+                                              "status", "position", "created_at",
+                                              "counts", "recent_siblings",
+                                              "generated_at")),
+                    mov.text)
+              check("messages/{id}/overview identity + context",
+                    mov.status_code == 200
+                    and movbody.get("message_id") == message_id
+                    and movbody.get("conversation_id") == conversation_id
+                    and movbody.get("conversation_title") == "CI smoke conversation"
+                    and movbody.get("project_id") == project_id
+                    and isinstance(movbody.get("project_name"), str)
+                    and bool(movbody.get("project_name"))
+                    and movbody.get("role") == target_msg.get("role")
+                    and movbody.get("content") == target_msg.get("content")
+                    and movbody.get("status") == target_msg.get("status")
+                    and movbody.get("position") == 1
+                    and isinstance(movbody.get("created_at"), str)
+                    and isinstance(movbody.get("generated_at"), str),
+                    mov.text)
+              mov_counts = movbody.get("counts", {})
+              check("messages/{id}/overview stats-shared counts",
+                    mov.status_code == 200
+                    and isinstance(mov_counts, dict)
+                    and isinstance(mov_counts.get("total"), int)
+                    and mov_counts["total"] == len(msgs)
+                    and mov_counts["total"] >= 2
+                    and isinstance(mov_counts.get("by_role"), list)
+                    and isinstance(mov_counts.get("by_status"), list)
+                    and {r.get("role") for r in mov_counts["by_role"]} >= {
+                        "system", "user", "assistant", "tool"}
+                    and {s.get("status") for s in mov_counts["by_status"]} >= {
+                        "pending", "streaming", "complete", "error"}
+                    and {r.get("role"): r.get("count")
+                         for r in mov_counts["by_role"]}.get("user", 0) >= 1
+                    and {r.get("role"): r.get("count")
+                         for r in mov_counts["by_role"]}.get("assistant", 0) >= 1
+                    and sum(r.get("count", 0) for r in mov_counts["by_role"])
+                        == mov_counts["total"]
+                    and sum(s.get("count", 0) for s in mov_counts["by_status"])
+                        == mov_counts["total"],
+                    mov.text)
+              mov_siblings = movbody.get("recent_siblings", [])
+              check("messages/{id}/overview sibling page + recency",
+                    mov.status_code == 200
+                    and isinstance(mov_siblings, list)
+                    and len(mov_siblings) == min(mov_counts["total"], 5)
+                    and all(isinstance(s.get("id"), str)
+                            and isinstance(s.get("content"), str)
+                            and isinstance(s.get("role"), str)
+                            and isinstance(s.get("status"), str)
+                            and isinstance(s.get("created_at"), str)
+                            for s in mov_siblings)
+                    and all(s.get("conversation_id") == conversation_id
+                            for s in mov_siblings)
+                    and [s.get("created_at") for s in mov_siblings]
+                        == sorted((s.get("created_at")
+                                   for s in mov_siblings), reverse=True),
+                    mov.text)
+              check("messages/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in mov.headers},
+                    str(dict(mov.headers)))
+              mov_limited = httpx.get(
+                  f"{base}/conversations/{conversation_id}/messages/{message_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              movlbody = (mov_limited.json()
+                          if mov_limited.status_code == 200 else {})
+              check("messages/{id}/overview recent_limit bounds page only",
+                    mov_limited.status_code == 200
+                    and len(movlbody.get("recent_siblings", [])) <= 1
+                    and movlbody.get("counts") == mov_counts
+                    and movlbody.get("position") == movbody.get("position")
+                    and movlbody.get("message_id") == message_id,
+                    mov_limited.text)
+              for bad_limit in (0, 51):
+                  mov_bad_limit = httpx.get(
+                      f"{base}/conversations/{conversation_id}/messages/{message_id}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  movblbody = (mov_bad_limit.json()
+                               if mov_bad_limit.status_code == 422 else {})
+                  check(f"messages/{{id}}/overview 422 invalid limit {bad_limit}",
+                        mov_bad_limit.status_code == 422
+                        and movblbody.get("error", {}).get("code") == "validation_error"
+                        and bool(movblbody.get("error", {}).get("request_id")),
+                        mov_bad_limit.text)
+          else:
+              check("messages/{id}/overview setup", False,
+                    "could not obtain a real message id for the overview probe")
+
+          # The 404/422 envelope probes below need only well-formed ids, so they
+          # run even when the on-demand conversation could not be created.
+          mov_missing_conv = httpx.get(
+              f"{base}/conversations/00000000-0000-4000-8000-000000000000"
+              "/messages/00000000-0000-4000-8000-000000000001/overview",
+              timeout=5)
+          movmcbody = (mov_missing_conv.json()
+                       if mov_missing_conv.status_code == 404 else {})
+          check("messages/{id}/overview 404 conversation_not_found envelope",
+                mov_missing_conv.status_code == 404
+                and movmcbody.get("error", {}).get("code") == "conversation_not_found"
+                and bool(movmcbody.get("error", {}).get("request_id")),
+                mov_missing_conv.text)
+          if conversation_id:
+              mov_missing_msg = httpx.get(
+                  f"{base}/conversations/{conversation_id}"
+                  "/messages/00000000-0000-4000-8000-000000000001/overview",
+                  timeout=5)
+              movmmbody = (mov_missing_msg.json()
+                           if mov_missing_msg.status_code == 404 else {})
+              check("messages/{id}/overview 404 message_not_found envelope",
+                    mov_missing_msg.status_code == 404
+                    and movmmbody.get("error", {}).get("code") == "message_not_found"
+                    and bool(movmmbody.get("error", {}).get("request_id")),
+                    mov_missing_msg.text)
+              mov_bad_conv = httpx.get(
+                  f"{base}/conversations/not-a-uuid"
+                  "/messages/00000000-0000-4000-8000-000000000001/overview",
+                  timeout=5)
+              movbcbody = (mov_bad_conv.json()
+                           if mov_bad_conv.status_code == 422 else {})
+              check("messages/{id}/overview 422 malformed conversation id envelope",
+                    mov_bad_conv.status_code == 422
+                    and movbcbody.get("error", {}).get("code") == "validation_error"
+                    and bool(movbcbody.get("error", {}).get("request_id")),
+                    mov_bad_conv.text)
+              mov_bad_msg = httpx.get(
+                  f"{base}/conversations/{conversation_id}/messages/not-a-uuid/overview",
+                  timeout=5)
+              movbmbody = (mov_bad_msg.json()
+                           if mov_bad_msg.status_code == 422 else {})
+              check("messages/{id}/overview 422 malformed message id envelope",
+                    mov_bad_msg.status_code == 422
+                    and movbmbody.get("error", {}).get("code") == "validation_error"
+                    and bool(movbmbody.get("error", {}).get("request_id")),
+                    mov_bad_msg.text)
+
           # Authoritative single-job overview (C213/C215) is the newest /api/v1
           # URL the live client calls (getJobOverview). Reuse the on-demand
           # submitted + cancelled + retried job from the retry-feed probe above
