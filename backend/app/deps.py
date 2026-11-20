@@ -81,6 +81,7 @@ from .repositories.upload_overview import UploadOverviewRepository
 from .repositories.upload_stats import UploadStatsRepository
 from .repositories.version_feed import VersionFeedRepository
 from .repositories.version_stats import VersionStatsRepository
+from .repositories.version_overview import VersionOverviewRepository
 from .storage.base import DocumentStore
 from .tree import ProjectTree
 from .shots import ShotPipelineService
@@ -568,6 +569,12 @@ def get_version_stats_repository(
     return repositories.version_stats
 
 
+def get_version_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> VersionOverviewRepository:
+    return repositories.version_overview
+
+
 def get_bearer_token(
     authorization: Annotated[str | None, Header(alias="Authorization")] = None,
 ) -> str:
@@ -685,4 +692,5 @@ __all__ = [
     "get_upload_stats_repository",
     "get_version_feed_repository",
     "get_version_stats_repository",
+    "get_version_overview_repository",
 ]

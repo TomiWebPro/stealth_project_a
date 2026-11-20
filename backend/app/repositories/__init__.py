@@ -74,6 +74,7 @@ from .upload_overview import UploadOverviewRepository
 from .upload_stats import UploadStatsRepository
 from .version_feed import VersionFeedRepository
 from .version_stats import VersionStatsRepository
+from .version_overview import VersionOverviewRepository
 
 
 @dataclass(slots=True)
@@ -145,6 +146,7 @@ class Repositories:
     impact: ImpactRepository
     version_feed: VersionFeedRepository
     version_stats: VersionStatsRepository
+    version_overview: VersionOverviewRepository
 
     @classmethod
     def build(
@@ -233,6 +235,7 @@ class Repositories:
         impact = ImpactRepository(store, assets, clock=clock)
         version_feed = VersionFeedRepository(store, projects, clock=clock)
         version_stats = VersionStatsRepository(store, projects, clock=clock)
+        version_overview = VersionOverviewRepository(store, assets, projects, clock=clock)
         return cls(
             activity=activity,
             activity_stats=activity_stats,
@@ -301,6 +304,7 @@ class Repositories:
             impact=impact,
             version_feed=version_feed,
             version_stats=version_stats,
+            version_overview=version_overview,
         )
 
 

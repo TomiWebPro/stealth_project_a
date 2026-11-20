@@ -97,6 +97,7 @@ from .routers import (
     uploads,
     version_feed,
     version_stats,
+    version_overview,
 )
 from .schemas.common import API_PREFIX, ErrorBody, ErrorDetail, ErrorResponse, HealthResponse
 from .storage import create_store
@@ -312,6 +313,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # beside the asset routers and before the assets router so its literal
     # suffix stays explicit.
     app.include_router(asset_overview.router, prefix=API_PREFIX)
+    # "/assets/{asset_id}/versions/{version}/overview" is a nested single-version
+    # view; mount it beside the asset routers and before assets so its literal
+    # suffix stays explicit against "/assets/{asset_id}/versions".
+    app.include_router(version_overview.router, prefix=API_PREFIX)
     app.include_router(assets.router, prefix=API_PREFIX)
     # "/uploads/stats" must be registered before "/uploads/{id}" so the literal
     # stats path wins over the upload-id-templated one.

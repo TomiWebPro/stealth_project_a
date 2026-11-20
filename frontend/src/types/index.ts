@@ -70,3 +70,4 @@ export * from "./retryFeed";
 export * from "./retryStats";
 export * from "./versionFeed";
 export * from "./versionStats";
+export * from "./versionOverview";

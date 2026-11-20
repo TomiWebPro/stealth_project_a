@@ -389,6 +389,10 @@ from .version_stats import (
     VersionProjectCount,
     VersionStats,
 )
+from .version_overview import (
+    VersionOverview,
+    VersionOverviewCounts,
+)
 
 __all__ = [
     "API_PREFIX",
@@ -711,4 +715,7 @@ __all__ = [
     "VersionNumberCount",
     "VersionProjectCount",
     "VersionStats",
+    # version overview
+    "VersionOverview",
+    "VersionOverviewCounts",
 ]

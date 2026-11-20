@@ -118,6 +118,12 @@ All paths are prefixed with `/api/v1`.
   number, creator and creation time; whole-scope `total` before the `limit` page)
   derived from the version store with a deterministic `(created_at, asset_id,
   version)` tie-break; versions of soft-deleted/unknown assets are excluded
+  `GET /assets/{asset_id}/versions/{version}/overview?recent_limit=` — authoritative
+  single-version snapshot (the requested version's identity and storage, joined
+  parent-asset/project context, `is_latest` flag, whole-asset version/revision
+  counts that reuse `/versions/stats` semantics and a bounded newest-first sibling
+  list); unknown asset → shared 404 `asset_not_found`, unknown version → shared 404
+  `version_not_found`, malformed path/`recent_limit` → shared 422 envelope
   `GET /publishes?project_id=&limit=` — newest-first publish feed of published
   deliverables (asset/project id + name, type, receipt version/bytes, publish
   time) derived from the same authoritative receipts; soft-deleted/unpublished
