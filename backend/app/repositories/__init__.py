@@ -52,6 +52,7 @@ from .project_feed import ProjectFeedRepository
 from .project_stats import ProjectStatsRepository
 from .project_overview import ProjectOverviewRepository
 from .provider_feed import ProviderFeedRepository
+from .provider_overview import ProviderOverviewRepository
 from .provider_stats import ProviderStatsRepository
 from .providers import ProviderRepository
 from .publish_feed import PublishFeedRepository
@@ -108,6 +109,7 @@ class Repositories:
     providers: ProviderRepository
     provider_feed: ProviderFeedRepository
     provider_stats: ProviderStatsRepository
+    provider_overview: ProviderOverviewRepository
     publish_feed: PublishFeedRepository
     publish_stats: PublishStatsRepository
     retry_feed: RetryFeedRepository
@@ -175,6 +177,7 @@ class Repositories:
         providers = ProviderRepository(store, clock=clock)
         provider_feed = ProviderFeedRepository(store, clock=clock)
         provider_stats = ProviderStatsRepository(store, clock=clock)
+        provider_overview = ProviderOverviewRepository(store, providers, clock=clock)
         publish_feed = PublishFeedRepository(store, projects, clock=clock)
         publish_stats = PublishStatsRepository(store, projects, clock=clock)
         retry_feed = RetryFeedRepository(store, projects, clock=clock)
@@ -248,6 +251,7 @@ class Repositories:
             providers=providers,
             provider_feed=provider_feed,
             provider_stats=provider_stats,
+            provider_overview=provider_overview,
             publish_feed=publish_feed,
             publish_stats=publish_stats,
             retry_feed=retry_feed,

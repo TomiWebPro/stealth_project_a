@@ -189,6 +189,11 @@ All paths are prefixed with `/api/v1`.
   `GET /providers/stats?location=&status=` — authoritative fleet metrics
   (zero-filled health/location breakdowns, capability/operation coverage) derived
   from the provider store, with optional location/status filters
+  `GET /providers/{id}/overview` — authoritative single-provider snapshot
+  (identity/health, sorted advertised operation ids, capability/coverage totals
+  and catalog-backed operations with advertised-vs-catalog schema matching)
+  joined fresh from the provider store and the versioned operation catalog;
+  unknown provider uses the shared 404 `provider_not_found` envelope
   `GET /capabilities`, `GET /adapters`, `GET /adapters/{id}/health`
 - **Orchestration/collaboration:** `GET|POST /orchestration/plans`,
   `GET|POST /orchestration/runs`, `GET /orchestration/plans/{id}`,

@@ -71,6 +71,7 @@ from .routers import (
     project_stats,
     project_overview,
     provider_feed,
+    provider_overview,
     provider_stats,
     providers,
     publish,
@@ -331,6 +332,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/providers/{provider_id}" so the literal paths win over the dynamic one.
     app.include_router(provider_stats.router, prefix=API_PREFIX)
     app.include_router(provider_feed.router, prefix=API_PREFIX)
+    # "/providers/{provider_id}/overview" is a nested single-provider view; mount
+    # it beside the provider routers and before providers so its literal suffix
+    # stays explicit.
+    app.include_router(provider_overview.router, prefix=API_PREFIX)
     app.include_router(providers.router, prefix=API_PREFIX)
     # "/retries/feed" and "/retries/stats" have no templated sibling; register
     # them directly to keep both retry paths explicit.

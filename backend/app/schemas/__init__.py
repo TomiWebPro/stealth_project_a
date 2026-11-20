@@ -279,6 +279,11 @@ from .provider_feed import (
     ProviderFeed,
     ProviderFeedItem,
 )
+from .provider_overview import (
+    ProviderOverview,
+    ProviderOverviewCounts,
+    ProviderOverviewOperation,
+)
 from .provider_stats import (
     ProviderLocationCount,
     ProviderOperationStat,
@@ -459,6 +464,10 @@ __all__ = [
     # provider feed
     "ProviderFeed",
     "ProviderFeedItem",
+    # provider overview
+    "ProviderOverview",
+    "ProviderOverviewCounts",
+    "ProviderOverviewOperation",
     # provider stats
     "ProviderLocationCount",
     "ProviderOperationStat",

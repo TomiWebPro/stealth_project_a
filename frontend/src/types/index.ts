@@ -39,6 +39,7 @@ export * from "./tags";
 export * from "./impact";
 export * from "./lineageFeed";
 export * from "./providerFeed";
+export * from "./providerOverview";
 export * from "./providerStats";
 export * from "./publishStats";
 export * from "./publishFeed";
