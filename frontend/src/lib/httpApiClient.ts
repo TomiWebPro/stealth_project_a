@@ -65,6 +65,8 @@ import { organizationFeedQueryParams } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import { organizationOverviewQueryParams } from "./organizationOverview";
 import type { OrganizationOverviewOptions } from "./organizationOverview";
+import { userOverviewQueryParams } from "./userOverview";
+import type { UserOverviewOptions } from "./userOverview";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import { orchestrationFeedQueryParams } from "./orchestrationFeed";
@@ -193,6 +195,7 @@ import type {
   UploadOverview,
   UploadStats,
   User,
+  UserOverview,
   VersionFeed,
   VersionOverview,
   VersionStats,
@@ -538,6 +541,26 @@ export function createHttpApiClient(
         return await request<OrganizationOverview>(
           `/orgs/${encodeURIComponent(orgId)}/overview`,
           organizationOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-user profile snapshot; the backend 404s on an unknown
+     * user, which is normalized to `undefined` like the other detail lookups
+     * (C262).
+     */
+    async getUserOverview(
+      userId: string,
+      options?: UserOverviewOptions,
+    ): Promise<UserOverview | undefined> {
+      try {
+        return await request<UserOverview>(
+          `/users/${encodeURIComponent(userId)}/overview`,
+          userOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

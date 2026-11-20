@@ -98,6 +98,7 @@ import {
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
+  fetchUserOverview,
   fetchVersionOverview,
   fetchWorkflowTemplates,
   resetMockAssets,
@@ -2399,6 +2400,53 @@ describe("mock API lineage overview (C258 follow-up)", () => {
   it("injects a failure for the lineageOverview domain", async () => {
     setMockFailure("lineageOverview");
     await expect(fetchLineageOverview(relationshipId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API user overview (C262 follow-up)", () => {
+  const userId = USERS[0]?.id ?? "";
+
+  it("derives a populated snapshot from the auth/project/conversation/comment seeds", async () => {
+    const overview = await fetchUserOverview(userId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.user_id).toBe(userId);
+    expect(overview?.display_name).toBe(USERS[0]?.display_name);
+    expect(overview?.counts.organizations).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.projects).toBeGreaterThanOrEqual(1);
+    expect(overview?.memberships?.length).toBeGreaterThanOrEqual(1);
+    expect(overview?.recent_projects?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds only the recent pages by recentLimit without bounding counts/memberships", async () => {
+    const full = await fetchUserOverview(userId);
+    const limited = await fetchUserOverview(userId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.memberships).toEqual(full?.memberships);
+    expect(limited?.recent_projects).toHaveLength(1);
+    expect(limited?.recent_comments?.length).toBeLessThanOrEqual(1);
+  });
+
+  it("rejects a malformed id/limit and resolves an unknown user to undefined", async () => {
+    await expect(fetchUserOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchUserOverview(userId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchUserOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the userOverview domain", async () => {
+    setMockFailure("userOverview");
+    await expect(fetchUserOverview(userId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -78,6 +78,8 @@ import {
   validateOrganizationOverviewArgs,
 } from "./organizationOverview";
 import type { OrganizationOverviewOptions } from "./organizationOverview";
+import { deriveUserOverview, validateUserOverviewArgs } from "./userOverview";
+import type { UserOverviewOptions } from "./userOverview";
 import {
   deriveOrganizationStats,
   validateOrganizationStatsArgs,
@@ -1259,6 +1261,43 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative single-user overview derives a compact profile from the same
+  // auth/project/conversation/comment/presence stores on every call; mirror the
+  // router's 422 id + recent_limit validation, unknown-user 404 and repository
+  // derivation over the shared seeds so live and mock agree exactly (C262).
+  if (/^\/users\/[^/]+\/overview$/.test(path)) {
+    const userIdValue = pathParts[2] ?? "";
+    const limitRaw = params.get("recent_limit");
+    const options: UserOverviewOptions =
+      limitRaw !== null ? { recentLimit: Number(limitRaw) } : {};
+    try {
+      validateUserOverviewArgs(userIdValue, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!USERS.some((user) => user.id === userIdValue)) return NOT_FOUND;
+    return deriveUserOverview(
+      userIdValue,
+      {
+        users: USERS,
+        organizations: ORGANIZATIONS,
+        members: ORGANIZATION_MEMBERS,
+        projects: PROJECTS,
+        conversations: CONVERSATIONS,
+        comments: COMMENTS,
+        presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+  }
+
   // Authoritative organization feed derives the same newest-first organization
   // view as the `/orgs/feed` endpoint from the shared auth/project seeds; mirror
   // its 422 validation, page bound and repository derivation so live and mock
@@ -1968,6 +2007,8 @@ describe("live vs mock transport parity", () => {
       ["getOrganizationStats unknown", (api) => api.getOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" })],
       ["getOrganizationOverview", (api) => api.getOrganizationOverview(orgId)],
       ["getOrganizationOverview limited", (api) => api.getOrganizationOverview(orgId, { recentLimit: 2 })],
+      ["getUserOverview", (api) => api.getUserOverview(CURRENT_USER.id)],
+      ["getUserOverview limited", (api) => api.getUserOverview(CURRENT_USER.id, { recentLimit: 2 })],
       ["getPipelineStats", (api) => api.getPipelineStats()],
       ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
       ["getPipelineFeed", (api) => api.getPipelineFeed()],
@@ -2406,6 +2447,18 @@ describe("live vs mock transport parity", () => {
     expect(await live.getOrganizationOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getOrganizationOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The user overview resolves an unknown user to undefined on both transports
+    // and returns an identical identity/membership/count snapshot for a seeded user (C262).
+    expect(await live.getUserOverview(CURRENT_USER.id)).toEqual(
+      await mockApiClient.getUserOverview(CURRENT_USER.id),
+    );
+    expect(await live.getUserOverview(CURRENT_USER.id, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getUserOverview(CURRENT_USER.id, { recentLimit: 1 }),
+    );
+    expect(await live.getUserOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getUserOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
@@ -3008,6 +3061,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed user id or an out-of-range recent_limit
+    // with the same 422 envelope for the single-user overview (C262).
+    const badUserOverviewOptions: Array<[string, string, UserOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [CURRENT_USER.id, CURRENT_USER.id, { recentLimit: 0 }],
+      [CURRENT_USER.id, CURRENT_USER.id, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badUserOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getUserOverview(mockId, options).catch((cause) => cause),
+        live.getUserOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports reject a malformed asset id or an out-of-range
     // recent_limit with the same 422 envelope for the single-asset overview.
     const badAssetOverviewOptions: Array<[string, string, AssetOverviewOptions | undefined]> = [
@@ -3337,6 +3406,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrganizationFeed).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
     expect(typeof typed.getOrganizationOverview).toBe("function");
+    expect(typeof typed.getUserOverview).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getPipelineFeed).toBe("function");
     expect(typeof typed.getChainOverview).toBe("function");

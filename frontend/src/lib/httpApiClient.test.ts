@@ -1327,6 +1327,67 @@ describe("createHttpApiClient lineage overview (C258)", () => {
   });
 });
 
+describe("createHttpApiClient user overview (C262)", () => {
+  const userId = "0b5c1e2a-0000-4000-8000-0000000000aa";
+  const overview = {
+    user_id: userId,
+    email: "director@studio.local",
+    display_name: "Avery Director",
+    avatar_url: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    counts: {
+      organizations: 1,
+      projects: 2,
+      conversations: 3,
+      comments: 1,
+      presence: 1,
+    },
+    memberships: [
+      {
+        org_id: "0b5c1e2a-1000-4000-8000-000000000001",
+        org_name: "Studio Northlight",
+        role: "owner",
+        joined_at: "2026-01-05T00:00:00.000Z",
+      },
+    ],
+    recent_projects: [],
+    recent_comments: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the user overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({ [`/users/${userId}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getUserOverview(userId, { recentLimit: 2 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/users/${userId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "user_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getUserOverview(userId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getUserOverview(userId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient version overview (C250)", () => {
   const assetId = "0b5c1e2a-2000-4000-8000-000000000001";
   const overview = {

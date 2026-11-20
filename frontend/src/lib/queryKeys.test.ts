@@ -276,6 +276,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the user overview key by user and recent limit", () => {
+    expect(queryKeys.userOverview.detail("user-1")).toEqual([
+      "user-overview",
+      "detail",
+      "user-1",
+      "all",
+    ]);
+    expect(queryKeys.userOverview.detail("user-1", { recentLimit: 3 })).toEqual([
+      "user-overview",
+      "detail",
+      "user-1",
+      3,
+    ]);
+  });
+
   it("scopes the project overview key by project and recent limit", () => {
     expect(queryKeys.projectOverview.detail("p1")).toEqual([
       "project-overview",

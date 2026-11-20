@@ -13,6 +13,7 @@ import {
   PIPELINE_CHAINS,
   PROJECTS,
   PROVIDERS,
+  USERS,
 } from "./data";
 import {
   clearMockFailures,
@@ -94,6 +95,7 @@ import {
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
+  fetchUserOverview,
   fetchVersionFeed,
   fetchVersionOverview,
   fetchVersionStats,
@@ -910,6 +912,7 @@ describe("mock error-state fakes", () => {
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
+        ["userOverview", () => fetchUserOverview(USERS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],

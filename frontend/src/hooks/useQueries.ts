@@ -37,6 +37,7 @@ import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OperationFeedOptions } from "../lib/operationFeed";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
 import type { OrganizationOverviewOptions } from "../lib/organizationOverview";
+import type { UserOverviewOptions } from "../lib/userOverview";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
 import type { OrchestrationFeedOptions } from "../lib/orchestrationFeed";
@@ -108,6 +109,7 @@ import type {
   OrganizationFeed,
   OrganizationOverview,
   OrganizationStats,
+  UserOverview,
   OrchestrationFeed,
   OrchestrationRun,
   OrchestrationStats,
@@ -388,6 +390,22 @@ export function useOrganizationOverview(
   return useQuery({
     queryKey: queryKeys.organizationOverview.detail(orgId, options),
     queryFn: () => api.getOrganizationOverview(orgId, options),
+  });
+}
+
+/**
+ * Authoritative single-user profile snapshot (identity, memberships, whole-scope
+ * counts and bounded recent projects/comments) from `/users/{id}/overview`,
+ * optionally bounding the recent lists (C262).
+ */
+export function useUserOverview(
+  userId: string,
+  options?: UserOverviewOptions,
+): UseQueryResult<UserOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.userOverview.detail(userId, options),
+    queryFn: () => api.getUserOverview(userId, options),
   });
 }
 

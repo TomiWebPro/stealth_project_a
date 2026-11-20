@@ -103,6 +103,8 @@ import {
   validateOrganizationOverviewArgs,
 } from "../organizationOverview";
 import type { OrganizationOverviewOptions } from "../organizationOverview";
+import { deriveUserOverview, validateUserOverviewArgs } from "../userOverview";
+import type { UserOverviewOptions } from "../userOverview";
 import {
   deriveOrganizationStats,
   validateOrganizationStatsArgs,
@@ -243,6 +245,7 @@ import type {
   UploadOverview,
   UploadStats,
   User,
+  UserOverview,
   VersionFeed,
   VersionOverview,
   VersionStats,
@@ -303,7 +306,7 @@ function delay<T>(value: T): Promise<T> {
  * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
- * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
+ * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`, `jobLogs`,
  * `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
@@ -717,6 +720,41 @@ export async function fetchOrganizationOverview(
     deriveOrganizationOverview(
       orgId,
       { organizations: ORGANIZATIONS, members: ORGANIZATION_MEMBERS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-user overview (C262 follow-up) derived from the same
+ * auth/project/conversation/comment/presence seeds as the live
+ * `/users/{id}/overview` endpoint. Router-style 422 validation for a malformed
+ * id / out-of-range recent limit, a normalized 404-to-`undefined` for an unknown
+ * user and the injectable `"userOverview"` failure domain keep error and empty
+ * states at parity with live mode.
+ */
+export async function fetchUserOverview(
+  userId: string,
+  options?: UserOverviewOptions,
+): Promise<UserOverview | undefined> {
+  failIfEnabled("userOverview");
+  validateUserOverviewArgs(userId, options);
+  if (!USERS.some((user) => user.id === userId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveUserOverview(
+      userId,
+      {
+        users: USERS,
+        organizations: ORGANIZATIONS,
+        members: ORGANIZATION_MEMBERS,
+        projects: PROJECTS,
+        conversations: CONVERSATIONS,
+        comments: COMMENTS,
+        presence: PRESENCE,
+        now: REFERENCE_NOW,
+      },
       options,
     ),
   );
