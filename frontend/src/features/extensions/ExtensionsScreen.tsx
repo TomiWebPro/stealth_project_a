@@ -8,6 +8,7 @@ import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
 import { ExtensionFeedPanel } from "./ExtensionFeedPanel";
+import { ExtensionOverviewPanel } from "./ExtensionOverviewPanel";
 import { ExtensionStatsPanel } from "./ExtensionStatsPanel";
 import { buildExtensionCards, extensionSummary, SDK_EXAMPLES } from "./helpers";
 
@@ -146,6 +147,9 @@ function ExamplesCard() {
 }
 
 export function ExtensionsScreen() {
+  // Screen-level registry data feeds the overview picker; RegistryCard keeps its
+  // own useExtensions observer (React Query dedupes the shared query).
+  const { data: extensionsData } = useExtensions();
   const [type, setType] = useState<ExtensionType | "all">("all");
   const [status, setStatus] = useState<ExtensionStatus | "all">("all");
 
@@ -193,6 +197,7 @@ export function ExtensionsScreen() {
         type={type === "all" ? undefined : type}
         status={status === "all" ? undefined : status}
       />
+      <ExtensionOverviewPanel extensions={extensionsData ?? []} />
       <ExtensionFeedPanel />
       <RegistryCard />
       <ExamplesCard />
