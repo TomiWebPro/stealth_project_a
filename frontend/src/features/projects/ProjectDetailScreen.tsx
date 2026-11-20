@@ -20,6 +20,7 @@ import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
 import { OrchestrationFeedPanel } from "../jobs/OrchestrationFeedPanel";
 import { OrchestrationStatsPanel } from "../jobs/OrchestrationStatsPanel";
+import { PlanOverviewPanel } from "../jobs/PlanOverviewPanel";
 import { RetryFeedPanel } from "../jobs/RetryFeedPanel";
 import { RetryStatsPanel } from "../jobs/RetryStatsPanel";
 import { ConversationFeedPanel } from "../chat/ConversationFeedPanel";
@@ -312,6 +313,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project orchestration feed"
         description="Newest-first plans and runs from the authoritative orchestration stores, scoped to this project."
+      />
+      <PlanOverviewPanel
+        projectId={projectId}
+        title="Project plan overview"
+        description="Select a plan in this project to inspect its authoritative snapshot, run-stage distribution and newest runs."
       />
       <EventStatsPanel
         projectId={projectId}
