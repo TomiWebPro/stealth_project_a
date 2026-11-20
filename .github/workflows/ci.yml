@@ -4936,6 +4936,149 @@ jobs:
               check("uploads/{id}/overview setup", False,
                     "could not issue an upload ticket for the overview probe")
 
+          # Authoritative single asset-version overview (C250/C252) is the newest
+          # /api/v1 URL the live client calls (getVersionOverview). Reuse the
+          # on-demand registered asset — it carries the v1 from registration plus
+          # the v2 appended in the versions/stats probe — so both the latest and
+          # an earlier sibling snapshot have real identity/storage/context. Probe
+          # the full snapshot/count/ref shapes, is_latest against the parent asset,
+          # newest-first recent_versions, the recent_limit bound, both 404 envelopes
+          # (unknown asset vs unknown version) and the shared 422 envelope with
+          # request-id, keeping CI aligned with the exact /api/v1 URLs the live
+          # client calls as the repo grows.
+          vov_unknown_asset = httpx.get(
+              f"{base}/assets/00000000-0000-4000-8000-000000000000/versions/1/overview",
+              timeout=5)
+          vovua404 = (vov_unknown_asset.json()
+                      if vov_unknown_asset.status_code == 404 else {})
+          check("versions/{version}/overview unknown-asset 404 envelope",
+                vov_unknown_asset.status_code == 404
+                and vovua404.get("error", {}).get("code") == "asset_not_found"
+                and bool(vovua404.get("error", {}).get("request_id")),
+                vov_unknown_asset.text)
+          vov_bad_id = httpx.get(
+              f"{base}/assets/not-a-uuid/versions/1/overview", timeout=5)
+          vovbadbody = (vov_bad_id.json() if vov_bad_id.status_code == 422 else {})
+          check("versions/{version}/overview 422 malformed asset id envelope",
+                vov_bad_id.status_code == 422
+                and vovbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(vovbadbody.get("error", {}).get("request_id")),
+                vov_bad_id.text)
+          vov_bad_version = httpx.get(
+              f"{base}/assets/00000000-0000-4000-8000-000000000000/versions/0/overview",
+              timeout=5)
+          vovbvbody = (vov_bad_version.json()
+                       if vov_bad_version.status_code == 422 else {})
+          check("versions/{version}/overview 422 invalid version envelope",
+                vov_bad_version.status_code == 422
+                and vovbvbody.get("error", {}).get("code") == "validation_error"
+                and bool(vovbvbody.get("error", {}).get("request_id")),
+                vov_bad_version.text)
+          if asset_id:
+              vov_unknown_version = httpx.get(
+                  f"{base}/assets/{asset_id}/versions/999/overview", timeout=5)
+              vovuv404 = (vov_unknown_version.json()
+                          if vov_unknown_version.status_code == 404 else {})
+              check("versions/{version}/overview unknown-version 404 envelope",
+                    vov_unknown_version.status_code == 404
+                    and vovuv404.get("error", {}).get("code") == "version_not_found"
+                    and bool(vovuv404.get("error", {}).get("request_id")),
+                    vov_unknown_version.text)
+
+              # The appended v2 is the parent asset's current version.
+              vov = httpx.get(
+                  f"{base}/assets/{asset_id}/versions/2/overview", timeout=5)
+              vovb = vov.json() if vov.status_code == 200 else {}
+              check("versions/{version}/overview 200 snapshot shape",
+                    vov.status_code == 200 and all(
+                        k in vovb for k in (
+                            "asset_id", "asset_name", "asset_type", "project_id",
+                            "project_name", "version", "storage", "created_by",
+                            "created_at", "is_latest", "counts", "recent_versions",
+                            "generated_at")),
+                    vov.text)
+              check("versions/{version}/overview identity + joined context",
+                    vov.status_code == 200
+                    and vovb.get("asset_id") == asset_id
+                    and vovb.get("asset_name") == "CI smoke impact root"
+                    and vovb.get("asset_type") == "image"
+                    and vovb.get("project_id") == project_id
+                    and isinstance(vovb.get("project_name"), str)
+                    and bool(vovb.get("project_name"))
+                    and vovb.get("version") == 2
+                    and isinstance(vovb.get("storage"), dict)
+                    and "key" in vovb["storage"]
+                    and isinstance(vovb.get("created_by"), str)
+                    and isinstance(vovb.get("created_at"), str)
+                    and vovb.get("is_latest") is True
+                    and isinstance(vovb.get("generated_at"), str),
+                    vov.text)
+              vov_counts = vovb.get("counts", {})
+              check("versions/{version}/overview stats-shared counts",
+                    vov.status_code == 200
+                    and isinstance(vov_counts, dict)
+                    and all(isinstance(vov_counts.get(k), int) and vov_counts[k] >= 0
+                            for k in ("asset_versions", "revisions"))
+                    and vov_counts.get("asset_versions", 0) >= 2
+                    and vov_counts.get("revisions", 0) >= 1
+                    and vov_counts["revisions"] == vov_counts["asset_versions"] - 1,
+                    vov.text)
+              vov_recent = vovb.get("recent_versions", [])
+              check("versions/{version}/overview recent_versions shape + newest-first",
+                    vov.status_code == 200
+                    and isinstance(vov_recent, list)
+                    and len(vov_recent) >= 2
+                    and all(all(k in r for k in (
+                        "asset_id", "version", "storage", "created_at", "created_by"))
+                        and r["asset_id"] == asset_id
+                        and isinstance(r["version"], int) and r["version"] >= 1
+                        and isinstance(r["storage"], dict)
+                        and isinstance(r["created_at"], str)
+                        and isinstance(r["created_by"], str)
+                        for r in vov_recent)
+                    and [r["version"] for r in vov_recent]
+                        == sorted((r["version"] for r in vov_recent), reverse=True),
+                    vov.text)
+              check("versions/{version}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in vov.headers},
+                    str(dict(vov.headers)))
+              vov_limited = httpx.get(
+                  f"{base}/assets/{asset_id}/versions/2/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              vovlb = (vov_limited.json() if vov_limited.status_code == 200 else {})
+              check("versions/{version}/overview recent_limit bounds page only",
+                    vov_limited.status_code == 200
+                    and len(vovlb.get("recent_versions", [])) <= 1
+                    and vovlb.get("counts") == vovb.get("counts")
+                    and vovlb.get("version") == 2
+                    and vovlb.get("asset_id") == asset_id,
+                    vov_limited.text)
+              vov_bad_limit = httpx.get(
+                  f"{base}/assets/{asset_id}/versions/2/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              vovblbody = (vov_bad_limit.json()
+                           if vov_bad_limit.status_code == 422 else {})
+              check("versions/{version}/overview 422 invalid limit envelope",
+                    vov_bad_limit.status_code == 422
+                    and vovblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(vovblbody.get("error", {}).get("request_id")),
+                    vov_bad_limit.text)
+
+              # The earlier v1 sibling is not the parent asset's current version.
+              vov_v1 = httpx.get(
+                  f"{base}/assets/{asset_id}/versions/1/overview", timeout=5)
+              vov1b = vov_v1.json() if vov_v1.status_code == 200 else {}
+              check("versions/{version}/overview earlier version snapshot",
+                    vov_v1.status_code == 200
+                    and vov1b.get("version") == 1
+                    and vov1b.get("asset_id") == asset_id
+                    and vov1b.get("is_latest") is False
+                    and vov1b.get("counts") == vovb.get("counts"),
+                    vov_v1.text)
+          else:
+              check("versions/{version}/overview setup", False,
+                    "could not obtain an asset id for the version-overview probe")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
