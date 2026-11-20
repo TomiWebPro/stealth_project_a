@@ -43,6 +43,7 @@ from .routers import (
     event_stats,
     exports,
     extension_feed,
+    extension_overview,
     extension_stats,
     extensions,
     health,
@@ -363,6 +364,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # UUID-templated one.
     app.include_router(extension_feed.router, prefix=API_PREFIX)
     app.include_router(extension_stats.router, prefix=API_PREFIX)
+    # "/extensions/{extension_id}/overview" is a nested single-extension view;
+    # mount it beside the extension routers and before extensions so its literal
+    # suffix stays explicit.
+    app.include_router(extension_overview.router, prefix=API_PREFIX)
     app.include_router(extensions.router, prefix=API_PREFIX)
     app.include_router(tree.router, prefix=API_PREFIX)
     # "/publishes/stats" has no templated sibling; register it directly to keep

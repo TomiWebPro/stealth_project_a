@@ -89,6 +89,10 @@ from .extension_feed import (
     ExtensionFeed,
     ExtensionFeedItem,
 )
+from .extension_overview import (
+    ExtensionOverview,
+    ExtensionOverviewCounts,
+)
 from .extension_stats import (
     ExtensionPermissionStat,
     ExtensionStats,
@@ -382,6 +386,9 @@ __all__ = [
     # extension feed
     "ExtensionFeed",
     "ExtensionFeedItem",
+    # extension overview
+    "ExtensionOverview",
+    "ExtensionOverviewCounts",
     # extension stats
     "ExtensionPermissionStat",
     "ExtensionStats",

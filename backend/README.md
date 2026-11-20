@@ -246,6 +246,11 @@ All paths are prefixed with `/api/v1`.
   `GET /extensions/stats?type=&status=` — authoritative registry/installation
   metrics (zero-filled type/status breakdowns, trust flags, permission/capability
   coverage) derived from the extension stores, with optional type/status filters
+  `GET /extensions/{id}/overview` — authoritative single-extension snapshot
+  (manifest identity, lifecycle/trust state and a sorted deduplicated declared
+  permission/capability/provider/UI/dependency scope with counts agreeing with the
+  emitted lists) derived fresh from the extension store; shared 404
+  `extension_not_found` / 422 `validation_error` envelopes
 - **Pipelines:** `GET|POST /pipelines/lora`, `/pipelines/shot`, `/pipelines/splat`
   (each with `GET /pipelines/<kind>/{id}`)
   `GET /pipelines/feed?project_id=&kind=&limit=` — newest-first workspace feed of
