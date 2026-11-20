@@ -6376,6 +6376,138 @@ jobs:
                 and bool(actov_badbody.get("error", {}).get("request_id")),
                 actov_bad.text)
 
+          # Authoritative single collaboration-signal overview (C294/C296) is the
+          # newest /api/v1 URL the live client calls (getCollaborationOverview).
+          # Reuse a real signal id from the collaboration feed (the on-demand
+          # presence/comment signals seeded above) so the snapshot has identity,
+          # stats-shared counts and same-project siblings, then probe the full
+          # snapshot shape, the canonical three-state by_state breakdown, the
+          # bounded newest-first recent_signals page, the recent_limit bound
+          # (page only — counts unchanged), the request-id header, the 404
+          # collaboration_signal_not_found envelope for a well-formed unknown key
+          # and the shared 422 validation_error envelope (malformed key +
+          # invalid limit), keeping CI aligned with the exact /api/v1 URLs the
+          # VITE_API_MODE=live client calls as the repo grows.
+          colov_feed = httpx.get(f"{base}/collaboration/feed", timeout=5)
+          colov_items = (colov_feed.json().get("items", [])
+                         if colov_feed.status_code == 200 else [])
+          colov_item = colov_items[0] if colov_items else None
+          colov_key = (
+              f"{colov_item['signal']}:{colov_item['project_id']}:{colov_item['signal_id']}"
+              if colov_item else None)
+          if colov_key:
+              colov = httpx.get(f"{base}/collaboration/{colov_key}/overview", timeout=5)
+              colovbody = colov.json() if colov.status_code == 200 else {}
+              check("collaboration/{key}/overview 200 snapshot shape",
+                    colov.status_code == 200
+                    and all(k in colovbody for k in (
+                        "signal_id", "signal", "project_id", "project_name",
+                        "actor_id", "occurred_at", "counts", "recent_signals",
+                        "generated_at")),
+                    colov.text)
+              check("collaboration/{key}/overview identity + joined context",
+                    colovbody.get("signal_id") == colov_item["signal_id"]
+                    and colovbody.get("signal") in ("presence", "comment")
+                    and colovbody.get("project_id") == colov_item["project_id"]
+                    and isinstance(colovbody.get("project_name"), str)
+                    and bool(colovbody.get("actor_id"))
+                    and bool(colovbody.get("occurred_at"))
+                    and bool(colovbody.get("generated_at")),
+                    colov.text)
+              check("collaboration/{key}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in colov.headers},
+                    str(dict(colov.headers)))
+              colov_counts = colovbody.get("counts", {})
+              check("collaboration/{key}/overview stats-shared counts block",
+                    isinstance(colov_counts, dict)
+                    and all(k in colov_counts for k in (
+                        "project_signals", "project_presence", "project_comments",
+                        "project_participants", "workspace_signals", "by_state"))
+                    and isinstance(colov_counts.get("project_signals"), int)
+                    and isinstance(colov_counts.get("project_presence"), int)
+                    and isinstance(colov_counts.get("project_comments"), int)
+                    and isinstance(colov_counts.get("project_participants"), int)
+                    and isinstance(colov_counts.get("workspace_signals"), int)
+                    and isinstance(colov_counts.get("by_state"), list),
+                    colov.text)
+              colov_states = {b.get("state"): b.get("count")
+                              for b in colov_counts.get("by_state", [])
+                              if isinstance(b, dict)}
+              check("collaboration/{key}/overview three states + bucket invariants",
+                    set(colov_states) == {"online", "away", "offline"}
+                    and all(isinstance(v, int) and v >= 0 for v in colov_states.values())
+                    and sum(colov_states.values()) == colov_counts.get("project_presence")
+                    and colov_counts.get("project_presence", 0)
+                        + colov_counts.get("project_comments", 0)
+                        == colov_counts.get("project_signals")
+                    and colov_counts.get("workspace_signals", 0)
+                        >= colov_counts.get("project_signals", 0),
+                    colov.text)
+              check("collaboration/{key}/overview derived non-zero values",
+                    colov_counts.get("project_signals", 0) >= 1
+                    and colov_counts.get("workspace_signals", 0) >= 1,
+                    colov.text)
+              colov_recent = colovbody.get("recent_signals", [])
+              check("collaboration/{key}/overview recent_signals item shapes",
+                    isinstance(colov_recent, list)
+                    and all(isinstance(s, dict) and all(
+                        k in s for k in ("signal_id", "signal", "project_id",
+                                         "project_name", "actor_id", "state",
+                                         "body", "asset_id", "occurred_at"))
+                        for s in colov_recent),
+                    colov.text)
+              colov_times = [s.get("occurred_at") for s in colov_recent]
+              check("collaboration/{key}/overview siblings newest-first",
+                    colov_times == sorted(colov_times, reverse=True),
+                    colov.text)
+              check("collaboration/{key}/overview newest signal is target",
+                    bool(colov_recent)
+                    and colov_recent[0].get("signal_id") == colov_item["signal_id"],
+                    colov.text)
+              colov_limited = httpx.get(
+                  f"{base}/collaboration/{colov_key}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              colov_lbody = colov_limited.json() if colov_limited.status_code == 200 else {}
+              check("collaboration/{key}/overview recent_limit=1 page bound",
+                    colov_limited.status_code == 200
+                    and len(colov_lbody.get("recent_signals", [])) <= 1
+                    and colov_lbody.get("counts", {}).get("project_signals")
+                        == colov_counts.get("project_signals")
+                    and colov_lbody.get("counts", {}).get("workspace_signals")
+                        == colov_counts.get("workspace_signals"),
+                    colov_limited.text)
+              for bad_limit in (0, 51):
+                  colov_bad_limit = httpx.get(
+                      f"{base}/collaboration/{colov_key}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  colov_blbody = (colov_bad_limit.json()
+                                  if colov_bad_limit.status_code == 422 else {})
+                  check(f"collaboration/{{key}}/overview 422 invalid limit {bad_limit}",
+                        colov_bad_limit.status_code == 422
+                        and colov_blbody.get("error", {}).get("code") == "validation_error"
+                        and bool(colov_blbody.get("error", {}).get("request_id")),
+                        colov_bad_limit.text)
+          else:
+              check("collaboration/{key}/overview setup", False,
+                    "could not obtain a live collaboration signal from the feed")
+
+          colov_unknown = httpx.get(
+              f"{base}/collaboration/presence:00000000-0000-4000-8000-000000000000:"
+              "00000000-0000-4000-8000-000000000000/overview", timeout=5)
+          colov_404body = colov_unknown.json() if colov_unknown.status_code == 404 else {}
+          check("collaboration/{key}/overview 404 collaboration_signal_not_found envelope",
+                colov_unknown.status_code == 404
+                and colov_404body.get("error", {}).get("code") == "collaboration_signal_not_found"
+                and bool(colov_404body.get("error", {}).get("request_id")),
+                colov_unknown.text)
+          colov_bad = httpx.get(f"{base}/collaboration/not-a-valid-key/overview", timeout=5)
+          colov_badbody = colov_bad.json() if colov_bad.status_code == 422 else {}
+          check("collaboration/{key}/overview 422 malformed key envelope",
+                colov_bad.status_code == 422
+                and colov_badbody.get("error", {}).get("code") == "validation_error"
+                and bool(colov_badbody.get("error", {}).get("request_id")),
+                colov_bad.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
