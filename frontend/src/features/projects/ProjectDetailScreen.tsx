@@ -47,6 +47,7 @@ import { ProjectFeedPanel } from "./ProjectFeedPanel";
 import { ProjectOverviewPanel } from "./ProjectOverviewPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
 import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
+import { UploadOverviewPanel } from "../uploads/UploadOverviewPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
 import { CollaborationFeedPanel } from "../workspaces/CollaborationFeedPanel";
 import { CollaborationStatsPanel } from "../workspaces/CollaborationStatsPanel";
@@ -244,6 +245,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project upload stats"
         description="Authoritative upload-ticket metrics scoped to this project."
+      />
+      <UploadOverviewPanel
+        projectId={projectId}
+        title="Project upload overview"
+        description="Select an upload ticket in this project to inspect its byte accounting and whole-project activity."
       />
       <LineageStatsPanel
         projectId={projectId}

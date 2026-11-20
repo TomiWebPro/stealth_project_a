@@ -23,6 +23,7 @@ import { ConversationStatsPanel } from "../chat/ConversationStatsPanel";
 import { ProjectStatsPanel } from "../projects/ProjectStatsPanel";
 import { SearchStatsPanel } from "../search/SearchStatsPanel";
 import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
+import { UploadOverviewPanel } from "../uploads/UploadOverviewPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
 import { OrganizationStatsPanel } from "../workspaces/OrganizationStatsPanel";
 import { DashboardPanel } from "./DashboardPanel";
@@ -219,6 +220,10 @@ export function HomeScreen() {
         <UploadStatsPanel
           title="Workspace upload stats"
           description="Authoritative upload-ticket metrics across every project in the workspace."
+        />
+        <UploadOverviewPanel
+          title="Workspace upload overview"
+          description="Select an upload ticket to inspect its byte accounting and whole-project activity."
         />
 
         {isPending ? <HomeSkeleton /> : null}
