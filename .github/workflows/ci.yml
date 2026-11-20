@@ -4411,6 +4411,92 @@ jobs:
               check("orgs/{id}/overview setup", False,
                     "could not obtain an organization id for the overview probe")
 
+          # Authoritative single-operation overview (C230/C232) is the newest
+          # /api/v1 URL the live client calls (getOperationOverview). Use the
+          # seeded `text-to-image` catalog operation, whose declared bindings
+          # (local-comfyui + cloud-render) both advertise it with a matching
+          # schema, so the snapshot has real shape/coverage. Probe the full
+          # snapshot/count/binding shapes, the count-list and schema-drift
+          # invariants, the request-id header and the shared 404 envelope,
+          # keeping CI aligned with the exact /api/v1 URLs the live client calls.
+          opov = httpx.get(f"{base}/operations/text-to-image/overview", timeout=5)
+          oob = opov.json() if opov.status_code == 200 else {}
+          check("operations/{id}/overview 200 snapshot shape",
+                opov.status_code == 200 and all(
+                    k in oob for k in (
+                        "operation_id", "title", "description", "schema_version",
+                        "input_types", "output_types", "setting_keys", "streaming",
+                        "provider_ids", "provider_bindings", "counts",
+                        "generated_at")),
+                opov.text)
+          check("operations/{id}/overview identity + catalog shape",
+                opov.status_code == 200
+                and oob.get("operation_id") == "text-to-image"
+                and oob.get("title") == "Text to image"
+                and oob.get("schema_version") == "1.0.0"
+                and oob.get("streaming") is False
+                and oob.get("input_types") == []
+                and oob.get("output_types") == ["image"]
+                and oob.get("setting_keys") == ["height", "seed", "width"]
+                and isinstance(oob.get("generated_at"), str),
+                opov.text)
+          check("operations/{id}/overview provider_ids sorted/dedup",
+                opov.status_code == 200
+                and oob.get("provider_ids") == ["cloud-render", "local-comfyui"]
+                and oob["provider_ids"] == sorted(set(oob["provider_ids"])),
+                opov.text)
+          opov_bindings = oob.get("provider_bindings", [])
+          check("operations/{id}/overview binding shapes + sorted ids",
+                opov.status_code == 200
+                and isinstance(opov_bindings, list)
+                and {"local-comfyui", "cloud-render"} <= {
+                    b.get("provider_id") for b in opov_bindings}
+                and [b.get("provider_id") for b in opov_bindings]
+                    == sorted(b["provider_id"] for b in opov_bindings)
+                and all(all(k in b for k in (
+                    "provider_id", "name", "location", "status",
+                    "advertised_versions", "schema_match"))
+                    and b.get("location") in ("local", "studio", "cloud")
+                    and b.get("status") in ("available", "unavailable", "degraded")
+                    and isinstance(b.get("advertised_versions"), list)
+                    and all(isinstance(v, str) for v in b["advertised_versions"])
+                    and b["advertised_versions"] == sorted(set(b["advertised_versions"]))
+                    and isinstance(b.get("schema_match"), bool)
+                    for b in opov_bindings),
+                opov.text)
+          check("operations/{id}/overview counts shape + schema-drift invariants",
+                opov.status_code == 200
+                and isinstance(oob.get("counts"), dict)
+                and all(isinstance(oob["counts"].get(k), int)
+                        and oob["counts"][k] >= 0
+                        for k in ("settings", "input_types", "output_types",
+                                  "provider_bindings", "matching_providers"))
+                and oob["counts"].get("settings")
+                    == len(oob.get("setting_keys", []))
+                and oob["counts"].get("input_types")
+                    == len(oob.get("input_types", []))
+                and oob["counts"].get("output_types")
+                    == len(oob.get("output_types", []))
+                and oob["counts"].get("provider_bindings") == len(opov_bindings)
+                and oob["counts"].get("matching_providers")
+                    == sum(1 for b in opov_bindings if b.get("schema_match") is True)
+                and all(b.get("schema_match") is
+                        (oob.get("schema_version") in b.get("advertised_versions", []))
+                        for b in opov_bindings),
+                opov.text)
+          check("operations/{id}/overview request-id header",
+                "x-request-id" in {k.lower() for k in opov.headers},
+                str(dict(opov.headers)))
+          opov_missing = httpx.get(
+              f"{base}/operations/missing-operation/overview", timeout=5)
+          opov404 = (opov_missing.json()
+                     if opov_missing.status_code == 404 else {})
+          check("operations/{id}/overview 404 shared envelope",
+                opov_missing.status_code == 404
+                and opov404.get("error", {}).get("code") == "operation_not_found"
+                and bool(opov404.get("error", {}).get("request_id")),
+                opov_missing.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
