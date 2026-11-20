@@ -58,6 +58,7 @@ import { UploadFeedPanel } from "../uploads/UploadFeedPanel";
 import { UploadOverviewPanel } from "../uploads/UploadOverviewPanel";
 import { UploadStatsPanel } from "../uploads/UploadStatsPanel";
 import { CollaborationFeedPanel } from "../workspaces/CollaborationFeedPanel";
+import { CollaborationOverviewPanel } from "../workspaces/CollaborationOverviewPanel";
 import { CollaborationStatsPanel } from "../workspaces/CollaborationStatsPanel";
 import { formatProjectUpdatedAtLong } from "./helpers";
 
@@ -348,6 +349,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project collaboration feed"
         description="Newest-first presence and comment signals scoped to this project."
+      />
+      <CollaborationOverviewPanel
+        projectId={projectId}
+        title="Project collaboration overview"
+        description="Select a presence or comment signal in this project to inspect its authoritative snapshot and newest siblings."
       />
       <OrchestrationStatsPanel
         projectId={projectId}
