@@ -97,6 +97,7 @@ from .routers import (
     upload_overview,
     upload_stats,
     uploads,
+    user_overview,
     version_feed,
     version_stats,
     version_overview,
@@ -391,6 +392,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # beside the organization routers and before auth.router so its literal
     # suffix stays explicit.
     app.include_router(organization_overview.router, prefix=API_PREFIX)
+    # "/users/{user_id}/overview" is a nested single-user profile view; mount it
+    # beside the auth/organization routers so its literal suffix stays explicit.
+    app.include_router(user_overview.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
     # "/extensions/stats" and "/extensions/feed" must be registered before
     # "/extensions/{extension_id}" so the literal paths win over the

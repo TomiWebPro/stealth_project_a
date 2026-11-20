@@ -81,6 +81,7 @@ from .repositories.uploads import UploadRepository
 from .repositories.upload_feed import UploadFeedRepository
 from .repositories.upload_overview import UploadOverviewRepository
 from .repositories.upload_stats import UploadStatsRepository
+from .repositories.user_overview import UserOverviewRepository
 from .repositories.version_feed import VersionFeedRepository
 from .repositories.version_stats import VersionStatsRepository
 from .repositories.version_overview import VersionOverviewRepository
@@ -293,6 +294,12 @@ def get_upload_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> UploadStatsRepository:
     return repositories.upload_stats
+
+
+def get_user_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> UserOverviewRepository:
+    return repositories.user_overview
 
 
 def get_job_repository(
@@ -706,6 +713,7 @@ __all__ = [
     "get_upload_feed_repository",
     "get_upload_overview_repository",
     "get_upload_stats_repository",
+    "get_user_overview_repository",
     "get_version_feed_repository",
     "get_version_stats_repository",
     "get_version_overview_repository",

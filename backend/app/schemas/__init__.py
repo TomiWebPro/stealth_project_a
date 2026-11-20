@@ -388,6 +388,11 @@ from .upload_stats import (
     UploadStatus,
     UploadStatusCount,
 )
+from .user_overview import (
+    UserMembership,
+    UserOverview,
+    UserOverviewCounts,
+)
 from .version_feed import (
     VersionFeed,
     VersionFeedItem,
@@ -731,4 +736,8 @@ __all__ = [
     # version overview
     "VersionOverview",
     "VersionOverviewCounts",
+    # user overview
+    "UserMembership",
+    "UserOverview",
+    "UserOverviewCounts",
 ]
