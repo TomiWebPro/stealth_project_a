@@ -131,6 +131,7 @@ import { deriveProjectStats, validateProjectStatsArgs } from "./projectStats";
 import { deriveProviderFeed, validateProviderFeedArgs } from "./providerFeed";
 import type { ProviderFeedOptions } from "./providerFeed";
 import { deriveProviderOverview } from "./providerOverview";
+import { deriveCapabilityOverview, isKnownCapability } from "./capabilityOverview";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
@@ -1268,6 +1269,18 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
 
   if (path === "/providers") return PROVIDERS;
   if (path.startsWith("/providers/")) return PROVIDERS.find((p) => p.id === id) ?? NOT_FOUND;
+
+  // Authoritative single-capability overview derives a compact snapshot from the
+  // same provider/catalog stores on every call; mirror the router's unknown
+  // capability 404 and repository derivation over the seeds. A capability is
+  // known when the catalog or any provider advertises it. This must precede the
+  // flat `/capabilities` branch below.
+  if (/^\/capabilities\/[^/]+\/overview$/.test(path)) {
+    const operationId = pathParts[2] ?? "";
+    if (!isKnownCapability(operationId, PROVIDERS, OPERATION_CATALOG)) return NOT_FOUND;
+    return deriveCapabilityOverview(operationId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW);
+  }
+
   if (path === "/capabilities") {
     const operationId = params.get("operation_id");
     return PROVIDERS.flatMap((provider) =>
@@ -2347,6 +2360,7 @@ describe("live vs mock transport parity", () => {
       ],
       ["getEventOverview missing sequence", (api) => api.getEventOverview(eventOverviewJobId, 999)],
       ["getProviderOverview", (api) => api.getProviderOverview("prov_local")],
+      ["getCapabilityOverview", (api) => api.getCapabilityOverview("text-to-image")],
       ["getProviderStats", (api) => api.getProviderStats()],
       ["getProviderStats scoped", (api) => api.getProviderStats({ location: "cloud" })],
       ["getProviderStats filtered", (api) => api.getProviderStats({ location: "cloud", status: "degraded" })],
@@ -2755,6 +2769,13 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getProviderOverview("missing-provider")).toBeUndefined();
     expect(await mockApiClient.getProviderOverview("missing-provider")).toBeUndefined();
+    // The capability overview resolves an unknown capability to undefined on both
+    // transports and returns the same seed-derived snapshot for a known one.
+    expect(await live.getCapabilityOverview("text-to-image")).toEqual(
+      await mockApiClient.getCapabilityOverview("text-to-image"),
+    );
+    expect(await live.getCapabilityOverview("missing-capability")).toBeUndefined();
+    expect(await mockApiClient.getCapabilityOverview("missing-capability")).toBeUndefined();
     // The operation overview resolves an unknown operation to undefined on both
     // transports and returns a derived snapshot for a seeded catalog operation.
     expect(await live.getOperationOverview("text-to-image")).toEqual(
@@ -4123,6 +4144,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getJobOverview).toBe("function");
     expect(typeof typed.getEventOverview).toBe("function");
     expect(typeof typed.getProviderOverview).toBe("function");
+    expect(typeof typed.getCapabilityOverview).toBe("function");
     expect(typeof typed.getProviderStats).toBe("function");
     expect(typeof typed.getProviderFeed).toBe("function");
     expect(typeof typed.getExtensionStats).toBe("function");

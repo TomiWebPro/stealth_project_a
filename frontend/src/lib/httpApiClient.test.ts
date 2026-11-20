@@ -1124,6 +1124,69 @@ describe("createHttpApiClient provider overview (C217)", () => {
   });
 });
 
+describe("createHttpApiClient capability overview (C298)", () => {
+  const operationId = "text-to-image";
+  const overview = {
+    operation_id: operationId,
+    in_catalog: true,
+    catalog_title: "Text to image",
+    catalog_version: "v1",
+    providers: [
+      {
+        provider_id: "prov_local",
+        name: "Local Runtime",
+        location: "local",
+        status: "available",
+        schema_versions: ["v1"],
+        schema_match: true,
+      },
+    ],
+    counts: {
+      total_providers: 1,
+      available: 1,
+      degraded: 0,
+      unavailable: 0,
+      locations: 1,
+      schema_versions: 1,
+    },
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the capability overview path and forwards the snapshot", async () => {
+    const { fetchImpl, calls } = router({
+      [`/capabilities/${operationId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getCapabilityOverview(operationId)).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/capabilities/${operationId}/overview`);
+    expect(url.search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "capability_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getCapabilityOverview(operationId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getCapabilityOverview(operationId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient operation overview (C230)", () => {
   const operationId = "text-to-image";
   const overview = {

@@ -32,6 +32,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchCapabilityOverview,
   fetchChainOverview,
   fetchCollaborationFeed,
   fetchCollaborationOverview,
@@ -184,6 +185,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchConversationOverview(CONVERSATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchJobOverview(JOBS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProviderOverview(PROVIDERS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchCapabilityOverview("text-to-image")).rejects.toBeInstanceOf(ApiError);
     await expect(
       fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "")),
     ).rejects.toBeInstanceOf(ApiError);
@@ -211,6 +213,18 @@ describe("mock error-state fakes", () => {
     await expect(fetchExtensionFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchMembershipOverview(ORGANIZATIONS[0]?.id ?? "", USERS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventOverview(JOB_EVENTS[0]?.job_id ?? "", JOB_EVENTS[0]?.seq ?? 0)).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("exposes an injectable failure for the capability overview domain", async () => {
+    setMockFailure("capabilityOverview");
+
+    await expect(fetchCapabilityOverview("text-to-image")).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchCapabilityOverview("text-to-image")).resolves.toBeDefined();
   });
 
   it("can be switched off per domain without clearing the rest", async () => {
@@ -1019,6 +1033,7 @@ describe("mock error-state fakes", () => {
         ["providerStats", () => fetchProviderStats()],
         ["providerFeed", () => fetchProviderFeed()],
         ["providerOverview", () => fetchProviderOverview(providerId)],
+        ["capabilityOverview", () => fetchCapabilityOverview("text-to-image")],
         ["operationOverview", () => fetchOperationOverview("text-to-image")],
         ["chainOverview", () => fetchChainOverview(PIPELINE_CHAINS[0]?.id ?? "")],
         ["planOverview", () => fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")],

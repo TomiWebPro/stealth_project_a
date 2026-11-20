@@ -186,6 +186,9 @@ export const queryKeys = {
   providerOverview: {
     detail: (providerId: string) => ["provider-overview", "detail", providerId] as const,
   },
+  capabilityOverview: {
+    detail: (operationId: string) => ["capability-overview", "detail", operationId] as const,
+  },
   providerStats: {
     summary: (options: ProviderStatsOptions = {}) =>
       [

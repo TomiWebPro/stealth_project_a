@@ -81,6 +81,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CapabilityOverview,
   ChainOverview,
   CollaborationFeed,
   CollaborationOverview,
@@ -348,6 +349,21 @@ export function useProviderOverview(providerId: string): UseQueryResult<Provider
   return useQuery({
     queryKey: queryKeys.providerOverview.detail(providerId),
     queryFn: () => api.getProviderOverview(providerId),
+  });
+}
+
+/**
+ * Authoritative single-capability snapshot (catalog binding, advertising
+ * providers and zero-filled breakdowns) from `/capabilities/{id}/overview`
+ * (C298).
+ */
+export function useCapabilityOverview(
+  operationId: string,
+): UseQueryResult<CapabilityOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.capabilityOverview.detail(operationId),
+    queryFn: () => api.getCapabilityOverview(operationId),
   });
 }
 

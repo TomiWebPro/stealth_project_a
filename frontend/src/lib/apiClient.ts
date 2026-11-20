@@ -79,6 +79,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CapabilityOverview,
   ChainOverview,
   CollaborationFeed,
   CollaborationOverview,
@@ -442,6 +443,13 @@ export interface ApiClient {
    * unknown operations resolve to `undefined` (C230).
    */
   getOperationOverview(operationId: string): Promise<OperationOverview | undefined>;
+  /**
+   * Authoritative single-capability snapshot (catalog binding, providers
+   * advertising the operation and zero-filled health/location/version counts)
+   * from `/capabilities/{id}/overview`; unknown capabilities resolve to
+   * `undefined` (C298).
+   */
+  getCapabilityOverview(operationId: string): Promise<CapabilityOverview | undefined>;
   /** Flattened provider capability rows, optionally filtered by operation id. */
   listCapabilities(operationId?: string): Promise<readonly CapabilityMatch[]>;
   listConversations(projectId: string): Promise<readonly Conversation[]>;
@@ -592,6 +600,7 @@ export const mockApiClient: ApiClient = {
   getOperationFeed: mockApi.fetchOperationFeed,
   getOperationStats: mockApi.fetchOperationStats,
   getOperationOverview: mockApi.fetchOperationOverview,
+  getCapabilityOverview: mockApi.fetchCapabilityOverview,
   listCapabilities: mockApi.fetchCapabilities,
   listConversations: mockApi.fetchConversations,
   getConversation: mockApi.fetchConversation,

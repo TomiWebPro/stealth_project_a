@@ -168,6 +168,7 @@ import type { ProviderFeedOptions } from "../providerFeed";
 import { deriveProviderStats, validateProviderStatsArgs } from "../providerStats";
 import type { ProviderStatsOptions } from "../providerStats";
 import { deriveProviderOverview } from "../providerOverview";
+import { deriveCapabilityOverview, isKnownCapability } from "../capabilityOverview";
 import { derivePublishFeed, validatePublishFeedArgs } from "../publishFeed";
 import type { PublishFeedOptions } from "../publishFeed";
 import {
@@ -215,6 +216,7 @@ import type {
   ActivityOverview,
   ActivityStats,
   AuditTrail,
+  CapabilityOverview,
   ChainOverview,
   CollaborationFeed,
   CollaborationOverview,
@@ -349,7 +351,7 @@ function delay<T>(value: T): Promise<T> {
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `collaborationOverview`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `messageOverview`, `jobOverview`,
  * `eventOverview`,
- * `providerOverview`, `extensionOverview`, `organizationOverview`, `userOverview`,
+ * `providerOverview`, `capabilityOverview`, `extensionOverview`, `organizationOverview`, `userOverview`,
  * `membershipOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
@@ -1772,6 +1774,24 @@ export async function fetchOperationOverview(
     return delay(undefined);
   }
   return delay(deriveOperationOverview(operationId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW));
+}
+
+/**
+ * Authoritative single-capability overview (C298 follow-up) derived from the
+ * same provider/catalog stores as the live `/capabilities/{id}/overview`
+ * endpoint. A capability is known when the catalog or any provider advertises
+ * it; unknown capabilities resolve to `undefined`, matching the live 404 detail
+ * mapping. The injectable `"capabilityOverview"` failure domain keeps error and
+ * empty states at parity with live mode.
+ */
+export async function fetchCapabilityOverview(
+  operationId: string,
+): Promise<CapabilityOverview | undefined> {
+  failIfEnabled("capabilityOverview");
+  if (!isKnownCapability(operationId, PROVIDERS, OPERATION_CATALOG)) {
+    return delay(undefined);
+  }
+  return delay(deriveCapabilityOverview(operationId, PROVIDERS, OPERATION_CATALOG, REFERENCE_NOW));
 }
 
 /** Flattened capability rows, optionally filtered to one operation id. */

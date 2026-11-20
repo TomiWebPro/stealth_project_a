@@ -38,6 +38,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchCapabilityOverview,
   fetchChainOverview,
   fetchCollaborationFeed,
   fetchCollaborationOverview,
@@ -2328,6 +2329,46 @@ describe("mock API provider overview (C217 follow-up)", () => {
 
     setMockFailure("providerOverview");
     await expect(fetchProviderOverview(providerId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API capability overview (C298 follow-up)", () => {
+  const operationId = "text-to-image";
+
+  it("derives a catalog-backed snapshot with advertising providers and zero-filled counts", async () => {
+    const overview = await fetchCapabilityOverview(operationId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.operation_id).toBe(operationId);
+    expect(overview?.in_catalog).toBe(true);
+    const spec = OPERATION_CATALOG.operations?.find((operation) => operation.id === operationId);
+    expect(overview?.catalog_title).toBe(spec?.title);
+    expect(overview?.catalog_version).toBe(spec?.schema_version);
+
+    const expectedProviders = PROVIDERS.filter((provider) =>
+      (provider.capabilities ?? []).some((capability) => capability.operation_id === operationId),
+    ).sort((a, b) => a.id.localeCompare(b.id));
+    expect(overview?.providers?.map((item) => item.provider_id)).toEqual(
+      expectedProviders.map((provider) => provider.id),
+    );
+    expect(overview?.counts.total_providers).toBe(expectedProviders.length);
+    expect(overview?.counts.available).toBe(
+      expectedProviders.filter((provider) => provider.status === "available").length,
+    );
+    expect(overview?.counts).toMatchObject({
+      degraded: 0,
+      unavailable: 0,
+    });
+  });
+
+  it("resolves an unknown capability to undefined and injects a failure", async () => {
+    await expect(fetchCapabilityOverview("missing-capability")).resolves.toBeUndefined();
+
+    setMockFailure("capabilityOverview");
+    await expect(fetchCapabilityOverview(operationId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

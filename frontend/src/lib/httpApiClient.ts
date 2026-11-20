@@ -147,6 +147,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  CapabilityOverview,
   ChainOverview,
   CollaborationFeed,
   CollaborationOverview,
@@ -1054,6 +1055,22 @@ export function createHttpApiClient(
       try {
         return await request<OperationOverview>(
           `/operations/${encodeURIComponent(operationId)}/overview`,
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-capability overview; the backend 404s on an unknown
+     * capability (absent from both the catalog and every provider), which is
+     * normalized to `undefined` like the other detail lookups (C298).
+     */
+    async getCapabilityOverview(operationId: string): Promise<CapabilityOverview | undefined> {
+      try {
+        return await request<CapabilityOverview>(
+          `/capabilities/${encodeURIComponent(operationId)}/overview`,
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

@@ -287,6 +287,14 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the capability overview key by operation", () => {
+    expect(queryKeys.capabilityOverview.detail("text-to-image")).toEqual([
+      "capability-overview",
+      "detail",
+      "text-to-image",
+    ]);
+  });
+
   it("scopes the extension overview key by extension", () => {
     expect(queryKeys.extensionOverview.detail("ext-1")).toEqual([
       "extension-overview",
