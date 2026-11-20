@@ -37,6 +37,7 @@ import { StoragePanel } from "../storage/StoragePanel";
 import { LineageView } from "../lineage/LineageView";
 import { VersionPanel } from "../assets/VersionPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
+import { TagOverviewPanel } from "../tags/TagOverviewPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishOverviewPanel } from "../assets/PublishOverviewPanel";
@@ -215,6 +216,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project asset feed"
         description="Newest-first live assets scoped to this project."
+      />
+      <TagOverviewPanel
+        projectId={projectId}
+        title="Project tag overview"
+        description="Select a tag in this project to inspect its usage and newest tagged assets."
       />
       <VersionStatsPanel
         projectId={projectId}

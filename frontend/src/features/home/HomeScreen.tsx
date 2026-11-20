@@ -14,6 +14,7 @@ import { CommentFeedPanel } from "../comments/CommentFeedPanel";
 import { CommentOverviewPanel } from "../comments/CommentOverviewPanel";
 import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
+import { TagOverviewPanel } from "../tags/TagOverviewPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishOverviewPanel } from "../assets/PublishOverviewPanel";
@@ -199,6 +200,10 @@ export function HomeScreen() {
         <AssetFeedPanel
           title="Workspace assets"
           description="Newest-first live assets across every project in the workspace."
+        />
+        <TagOverviewPanel
+          title="Workspace tag overview"
+          description="Select any tag to inspect its usage and newest tagged assets across the workspace."
         />
         <VersionStatsPanel
           title="Workspace version stats"

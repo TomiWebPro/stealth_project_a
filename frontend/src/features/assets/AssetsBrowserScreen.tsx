@@ -25,6 +25,7 @@ import { PublishStatsPanel } from "./PublishStatsPanel";
 import { VersionStatsPanel } from "./VersionStatsPanel";
 import { VersionPanel } from "./VersionPanel";
 import { TagFacetPanel } from "../tags/TagFacetPanel";
+import { TagOverviewPanel } from "../tags/TagOverviewPanel";
 
 type ViewMode = "grid" | "list";
 
@@ -182,6 +183,12 @@ function AssetsContent({ projectId }: { readonly projectId: string }) {
       </Card>
 
       <TagFacetPanel projectId={projectId} onSelectTag={setSearch} />
+
+      <TagOverviewPanel
+        projectId={projectId}
+        title="Project tag overview"
+        description="Select a tag in this project to inspect its usage and newest tagged assets."
+      />
 
       <AssetStatsPanel
         projectId={projectId}
