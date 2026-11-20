@@ -18,6 +18,7 @@ export * from "./conversation";
 export * from "./conversationFeed";
 export * from "./conversationStats";
 export * from "./conversationOverview";
+export * from "./messageOverview";
 export * from "./collaborationStats";
 export * from "./collaborationFeed";
 export * from "./commentFeed";

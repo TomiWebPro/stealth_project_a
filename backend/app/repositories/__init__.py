@@ -19,6 +19,7 @@ from .conversations import ConversationRepository
 from .conversation_feed import ConversationFeedRepository
 from .conversation_stats import ConversationStatsRepository
 from .conversation_overview import ConversationOverviewRepository
+from .message_overview import MessageOverviewRepository
 from .collaboration_stats import CollaborationStatsRepository
 from .collaboration_feed import CollaborationFeedRepository
 from .comment_feed import CommentFeedRepository
@@ -97,6 +98,7 @@ class Repositories:
     conversation_feed: ConversationFeedRepository
     conversation_stats: ConversationStatsRepository
     conversation_overview: ConversationOverviewRepository
+    message_overview: MessageOverviewRepository
     collaboration_stats: CollaborationStatsRepository
     collaboration_feed: CollaborationFeedRepository
     comment_feed: CommentFeedRepository
@@ -175,6 +177,7 @@ class Repositories:
         conversation_feed = ConversationFeedRepository(store, projects, clock=clock)
         conversation_stats = ConversationStatsRepository(store, projects, clock=clock)
         conversation_overview = ConversationOverviewRepository(store, conversations, clock=clock)
+        message_overview = MessageOverviewRepository(store, conversations, clock=clock)
         collaboration_stats = CollaborationStatsRepository(store, projects, clock=clock)
         collaboration_feed = CollaborationFeedRepository(store, projects, clock=clock)
         comment_feed = CommentFeedRepository(store, projects, clock=clock)
@@ -263,6 +266,7 @@ class Repositories:
             conversation_feed=conversation_feed,
             conversation_stats=conversation_stats,
             conversation_overview=conversation_overview,
+            message_overview=message_overview,
             collaboration_stats=collaboration_stats,
             collaboration_feed=collaboration_feed,
             comment_feed=comment_feed,

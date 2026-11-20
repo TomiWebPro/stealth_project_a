@@ -82,7 +82,13 @@ All paths are prefixed with `/api/v1`.
   single-conversation snapshot with identity, zero-filled role/status message
   breakdowns, a last-message role/excerpt preview and the newest messages,
   derived fresh from the conversation/message stores (no second index; shared
-  404 `conversation_not_found` / 422 envelopes)
+  404 `conversation_not_found` / 422 envelopes);
+  `GET /conversations/{id}/messages/{message_id}/overview?recent_limit=` — compact
+  single-message snapshot with identity/content, its 1-based chronological
+  position, conversation-wide zero-filled role/status counts and a bounded
+  newest-first sibling page, derived fresh from the authoritative stores (no
+  second index; shared 404 `conversation_not_found` / `message_not_found` and 422
+  envelopes)
 - **Assets:** `GET /assets`, `POST /assets/register`,
   `GET|PATCH|DELETE /assets/{id}`,
   `GET|POST /assets/{id}/versions`, `GET /assets/{id}/relationships|lineage|download|content`,

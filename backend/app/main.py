@@ -33,6 +33,7 @@ from .routers import (
     conversation_feed,
     conversation_stats,
     conversation_overview,
+    message_overview,
     collaboration_stats,
     collaboration_feed,
     comment_feed,
@@ -295,6 +296,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # it beside the conversation routers and before the conversations router so
     # its literal suffix stays explicit.
     app.include_router(conversation_overview.router, prefix=API_PREFIX)
+    # "/conversations/{conversation_id}/messages/{message_id}/overview" is a
+    # nested single-message view; mount it beside the conversation routers and
+    # before conversations so its literal suffix stays explicit.
+    app.include_router(message_overview.router, prefix=API_PREFIX)
     app.include_router(conversations.router, prefix=API_PREFIX)
     # "/collaboration/stats" has no templated sibling; register it directly.
     app.include_router(collaboration_stats.router, prefix=API_PREFIX)

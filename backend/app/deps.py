@@ -26,6 +26,7 @@ from .repositories.conversations import ConversationRepository
 from .repositories.conversation_feed import ConversationFeedRepository
 from .repositories.conversation_stats import ConversationStatsRepository
 from .repositories.conversation_overview import ConversationOverviewRepository
+from .repositories.message_overview import MessageOverviewRepository
 from .repositories.collaboration_stats import CollaborationStatsRepository
 from .repositories.collaboration_feed import CollaborationFeedRepository
 from .repositories.comment_feed import CommentFeedRepository
@@ -241,6 +242,12 @@ def get_conversation_overview_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ConversationOverviewRepository:
     return repositories.conversation_overview
+
+
+def get_message_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> MessageOverviewRepository:
+    return repositories.message_overview
 
 
 def get_collaboration_stats_repository(
@@ -658,6 +665,7 @@ __all__ = [
     "get_conversation_feed_repository",
     "get_conversation_stats_repository",
     "get_conversation_overview_repository",
+    "get_message_overview_repository",
     "get_dashboard_repository",
     "get_event_feed_repository",
     "get_event_stats_repository",
