@@ -11,11 +11,13 @@ import { CollaborationPanel } from "./CollaborationPanel";
 import { CollaborationStatsPanel } from "./CollaborationStatsPanel";
 import { buildWorkflowTemplateCards, templateDescription } from "./helpers";
 import { OrganizationFeedPanel } from "./OrganizationFeedPanel";
+import { OrganizationOverviewPanel } from "./OrganizationOverviewPanel";
 import { OrganizationStatsPanel } from "./OrganizationStatsPanel";
 
 export function WorkspacesScreen() {
   const { data, isPending, isError, error, refetch } = useAssets();
-  const orgId = useOrganizations().data?.[0]?.id;
+  const organizations = useOrganizations().data ?? [];
+  const orgId = organizations[0]?.id;
   const templates = buildWorkflowTemplateCards(data ?? []);
 
   return (
@@ -33,6 +35,8 @@ export function WorkspacesScreen() {
       <CollaborationPanel />
 
       <OrganizationFeedPanel />
+
+      <OrganizationOverviewPanel organizations={organizations} />
 
       <ProjectStatsPanel
         orgId={orgId}
