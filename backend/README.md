@@ -49,7 +49,12 @@ All paths are prefixed with `/api/v1`.
   `GET /activity/stats?project_id=` — authoritative activity metrics (zero-filled
   per-kind breakdown, per-project event/participant counts, distinct participant
   total and newest-event recency) derived from the same event stream; optional
-  project scope with shared 404/422 envelopes
+  project scope with shared 404/422 envelopes;
+  `GET /activity/{event_id}/overview?recent_limit=` — authoritative single-event
+  snapshot (identity + joined project name, project-scoped counts reusing the
+  `/activity/stats` buckets plus workspace context, and a bounded newest-first
+  sibling page); malformed id → shared 422, unknown event → shared 404
+  `activity_not_found`
 - **Dashboard:** `GET /dashboard?recent_limit=` — authoritative workspace snapshot
   (entity counts, zero-filled job-status/asset-type breakdowns and the newest
   jobs/assets) derived from the stores; deleted assets are excluded

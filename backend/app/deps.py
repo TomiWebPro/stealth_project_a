@@ -16,6 +16,7 @@ from .publish import PublishService
 from .repositories import Repositories
 from .repositories.activity import ActivityRepository
 from .repositories.activity_stats import ActivityStatsRepository
+from .repositories.activity_overview import ActivityOverviewRepository
 from .repositories.auth import AuthRepository
 from .repositories.assets import AssetRepository
 from .repositories.asset_feed import AssetFeedRepository
@@ -542,6 +543,12 @@ def get_activity_stats_repository(
     return repositories.activity_stats
 
 
+def get_activity_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> ActivityOverviewRepository:
+    return repositories.activity_overview
+
+
 def get_event_feed_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> EventFeedRepository:
@@ -676,6 +683,7 @@ def get_current_org_id(
 __all__ = [
     "get_activity_repository",
     "get_activity_stats_repository",
+    "get_activity_overview_repository",
     "get_adapter_registry",
     "get_asset_repository",
     "get_asset_feed_repository",

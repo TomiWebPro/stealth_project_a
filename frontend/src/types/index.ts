@@ -9,6 +9,7 @@
 export * from "./common";
 export * from "./activity";
 export * from "./activityStats";
+export * from "./activityOverview";
 export * from "./audit";
 export * from "./auth";
 export * from "./projectFeed";

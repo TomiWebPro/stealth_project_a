@@ -15,6 +15,10 @@ from .activity_stats import (
     ActivityProjectCount,
     ActivityStats,
 )
+from .activity_overview import (
+    ActivityOverview,
+    ActivityOverviewCounts,
+)
 from .audit import (
     AuditEvent,
     AuditEventKind,
@@ -443,6 +447,9 @@ __all__ = [
     "ActivityKindCount",
     "ActivityProjectCount",
     "ActivityStats",
+    # activity overview
+    "ActivityOverview",
+    "ActivityOverviewCounts",
     # dashboard
     "DashboardCounts",
     "DashboardSummary",

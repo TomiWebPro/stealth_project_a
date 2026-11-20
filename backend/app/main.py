@@ -22,6 +22,7 @@ from .repositories import Repositories
 from .routers import (
     activity,
     activity_stats,
+    activity_overview,
     adapters,
     asset_feed,
     asset_stats,
@@ -274,6 +275,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/activity/stats" is registered before the activity feed router so the
     # literal stats path is unambiguous against the "/activity" feed path.
     app.include_router(activity_stats.router, prefix=API_PREFIX)
+    # "/activity/{event_id}/overview" is a nested single-event view; register it
+    # beside the activity routers (its literal suffix cannot collide with the
+    # "/activity" feed or "/activity/stats" literal paths).
+    app.include_router(activity_overview.router, prefix=API_PREFIX)
     app.include_router(activity.router, prefix=API_PREFIX)
     app.include_router(audit.router, prefix=API_PREFIX)
     # "/projects/{project_id}/overview" is a nested single-project view; mount it

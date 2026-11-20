@@ -9,6 +9,7 @@ from ..schemas.common import utcnow
 from ..storage.base import DocumentStore
 from .activity import ActivityRepository
 from .activity_stats import ActivityStatsRepository
+from .activity_overview import ActivityOverviewRepository
 from .assets import AssetRepository
 from .asset_feed import AssetFeedRepository
 from .asset_stats import AssetStatsRepository
@@ -90,6 +91,7 @@ from .version_overview import VersionOverviewRepository
 class Repositories:
     activity: ActivityRepository
     activity_stats: ActivityStatsRepository
+    activity_overview: ActivityOverviewRepository
     projects: ProjectRepository
     project_feed: ProjectFeedRepository
     project_stats: ProjectStatsRepository
@@ -257,6 +259,9 @@ class Repositories:
         dashboard = DashboardRepository(store, clock=clock)
         activity = ActivityRepository(store, projects, clock=clock)
         activity_stats = ActivityStatsRepository(activity, clock=clock)
+        activity_overview = ActivityOverviewRepository(
+            store, activity, projects, clock=clock
+        )
         tags = TagRepository(store, projects, clock=clock)
         tag_overview = TagOverviewRepository(store, projects, clock=clock)
         impact = ImpactRepository(store, assets, clock=clock)
@@ -266,6 +271,7 @@ class Repositories:
         return cls(
             activity=activity,
             activity_stats=activity_stats,
+            activity_overview=activity_overview,
             projects=projects,
             project_feed=project_feed,
             project_stats=project_stats,
