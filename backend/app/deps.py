@@ -77,6 +77,7 @@ from .repositories.search_stats import SearchStatsRepository
 from .repositories.tags import TagRepository
 from .repositories.uploads import UploadRepository
 from .repositories.upload_feed import UploadFeedRepository
+from .repositories.upload_overview import UploadOverviewRepository
 from .repositories.upload_stats import UploadStatsRepository
 from .repositories.version_feed import VersionFeedRepository
 from .repositories.version_stats import VersionStatsRepository
@@ -271,6 +272,12 @@ def get_upload_feed_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> UploadFeedRepository:
     return repositories.upload_feed
+
+
+def get_upload_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> UploadOverviewRepository:
+    return repositories.upload_overview
 
 
 def get_upload_stats_repository(
@@ -674,6 +681,7 @@ __all__ = [
     "get_training_service",
     "get_upload_repository",
     "get_upload_feed_repository",
+    "get_upload_overview_repository",
     "get_upload_stats_repository",
     "get_version_feed_repository",
     "get_version_stats_repository",

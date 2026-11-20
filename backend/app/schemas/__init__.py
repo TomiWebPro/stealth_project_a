@@ -370,6 +370,10 @@ from .upload_feed import (
     UploadFeed,
     UploadFeedItem,
 )
+from .upload_overview import (
+    UploadOverview,
+    UploadOverviewCounts,
+)
 from .upload_stats import (
     UploadProjectCount,
     UploadStats,
@@ -692,6 +696,9 @@ __all__ = [
     # upload feed
     "UploadFeed",
     "UploadFeedItem",
+    # upload overview
+    "UploadOverview",
+    "UploadOverviewCounts",
     # upload stats
     "UploadStatus",
     "UploadStatusCount",

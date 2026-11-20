@@ -92,6 +92,7 @@ from .routers import (
     tags,
     tree,
     upload_feed,
+    upload_overview,
     upload_stats,
     uploads,
     version_feed,
@@ -318,6 +319,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # "/uploads/feed" is a literal path; register it before the uploads router so
     # the feed is never parsed as an upload-id-templated path.
     app.include_router(upload_feed.router, prefix=API_PREFIX)
+    # "/uploads/{id}/overview" is a nested single-upload view; mount it beside the
+    # upload routers and before uploads so its literal suffix stays explicit.
+    app.include_router(upload_overview.router, prefix=API_PREFIX)
     app.include_router(uploads.router, prefix=API_PREFIX)
     # "/jobs/stats" must be registered before "/jobs/{job_id}" so the literal
     # path wins over the UUID-templated one.

@@ -134,7 +134,11 @@ All paths are prefixed with `/api/v1`.
   `GET /uploads/stats?project_id=` — authoritative upload-ticket metrics
   (zero-filled pending/complete breakdown, per-project activity, completed byte
   totals and newest-ticket recency) derived from the upload store; optional
-  project scope with shared 404/422 envelopes
+  project scope with shared 404/422 envelopes;
+  `GET /uploads/{id}/overview` — single-ticket snapshot (identity, joined project
+  name, byte accounting, derived remaining/progress/expiry and whole-project
+  upload activity reusing the stats per-project bucket); unknown ticket → shared
+  404 `upload_not_found`, malformed id → shared 422 envelope
 - **Operations/jobs:** `GET /operations`, `GET /operations/{id}`,
   `GET /operations/feed?streaming=&provider_id=&limit=` — deterministic operation
   catalog feed (identity/display, asset types, settings count, streaming flag and

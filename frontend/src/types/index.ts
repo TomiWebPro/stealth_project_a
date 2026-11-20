@@ -59,6 +59,7 @@ export * from "./chainOverview";
 export * from "./lineageStats";
 export * from "./uploadStats";
 export * from "./uploadFeed";
+export * from "./uploadOverview";
 export * from "./eventFeed";
 export * from "./eventStats";
 export * from "./jobLogs";
