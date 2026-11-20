@@ -4303,6 +4303,114 @@ jobs:
               check("extensions/{id}/overview setup", False,
                     "could not obtain an installed extension id for the overview probe")
 
+          # Authoritative single-organization overview (C226/C228) is the newest
+          # /api/v1 URL the live client calls (getOrganizationOverview). Reuse the
+          # org created in the /orgs/feed probe above so the derived snapshot has
+          # real identity; probe the snapshot/count/role-breakdown shapes, the
+          # recent-list bounds, the request-id header and the shared 404/422
+          # envelopes, keeping CI aligned with the exact /api/v1 URLs the
+          # VITE_API_MODE=live client calls as it grows.
+          if created_org_id:
+              orgov = httpx.get(
+                  f"{base}/orgs/{created_org_id}/overview", timeout=5)
+              oobdy = orgov.json() if orgov.status_code == 200 else {}
+              check("orgs/{id}/overview 200 snapshot shape",
+                    orgov.status_code == 200 and all(
+                        k in oobdy for k in (
+                            "org_id", "name", "slug", "created_at", "counts",
+                            "by_role", "recent_members", "recent_projects",
+                            "generated_at")),
+                    orgov.text)
+              check("orgs/{id}/overview identity",
+                    orgov.status_code == 200
+                    and oobdy.get("org_id") == created_org_id
+                    and oobdy.get("name") == "CI smoke org"
+                    and oobdy.get("slug") == "ci-smoke-org"
+                    and isinstance(oobdy.get("created_at"), str)
+                    and isinstance(oobdy.get("generated_at"), str),
+                    orgov.text)
+              check("orgs/{id}/overview counts shape",
+                    orgov.status_code == 200
+                    and isinstance(oobdy.get("counts"), dict)
+                    and all(isinstance(oobdy["counts"].get(k), int)
+                            and oobdy["counts"][k] >= 0
+                            for k in ("members", "projects")),
+                    orgov.text)
+              check("orgs/{id}/overview by_role canonical + sums to members",
+                    orgov.status_code == 200
+                    and [b.get("role") for b in oobdy.get("by_role", [])]
+                        == ["owner", "admin", "member", "viewer"]
+                    and all(isinstance(b.get("members"), int) and b["members"] >= 0
+                            for b in oobdy["by_role"])
+                    and sum(b["members"] for b in oobdy["by_role"])
+                        == oobdy["counts"]["members"],
+                    orgov.text)
+              check("orgs/{id}/overview recent lists bounded by recent_limit",
+                    orgov.status_code == 200
+                    and isinstance(oobdy.get("recent_members"), list)
+                    and isinstance(oobdy.get("recent_projects"), list)
+                    and len(oobdy["recent_members"]) <= 5
+                    and len(oobdy["recent_projects"]) <= 5,
+                    orgov.text)
+              # recent_limit bounds both recent lists but never the whole-scope counts
+              orgov_limited = httpx.get(
+                  f"{base}/orgs/{created_org_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              olbody = (orgov_limited.json()
+                        if orgov_limited.status_code == 200 else {})
+              check("orgs/{id}/overview recent_limit=1 bounds lists only",
+                    orgov_limited.status_code == 200
+                    and len(olbody.get("recent_members", [])) <= 1
+                    and len(olbody.get("recent_projects", [])) <= 1
+                    and olbody.get("counts") == oobdy.get("counts"),
+                    orgov_limited.text)
+              check("orgs/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in orgov.headers},
+                    str(dict(orgov.headers)))
+              # /organizations/{id}/overview alias serves the same snapshot
+              orgov_alias = httpx.get(
+                  f"{base}/organizations/{created_org_id}/overview", timeout=5)
+              oabdy = (orgov_alias.json()
+                       if orgov_alias.status_code == 200 else {})
+              check("organizations/{id}/overview alias parity",
+                    orgov_alias.status_code == 200
+                    and oabdy.get("org_id") == oobdy.get("org_id")
+                    and oabdy.get("counts") == oobdy.get("counts")
+                    and [b.get("role") for b in oabdy.get("by_role", [])]
+                        == [b.get("role") for b in oobdy.get("by_role", [])],
+                    orgov_alias.text)
+              orgov_missing = httpx.get(
+                  f"{base}/orgs/00000000-0000-4000-8000-000000000000/overview",
+                  timeout=5)
+              oo404body = (orgov_missing.json()
+                           if orgov_missing.status_code == 404 else {})
+              check("orgs/{id}/overview 404 shared envelope",
+                    orgov_missing.status_code == 404
+                    and oo404body.get("error", {}).get("code") == "organization_not_found"
+                    and bool(oo404body.get("error", {}).get("request_id")),
+                    orgov_missing.text)
+              orgov_bad_id = httpx.get(f"{base}/orgs/not-a-uuid/overview", timeout=5)
+              oobadbody = (orgov_bad_id.json()
+                           if orgov_bad_id.status_code == 422 else {})
+              check("orgs/{id}/overview 422 malformed id envelope",
+                    orgov_bad_id.status_code == 422
+                    and oobadbody.get("error", {}).get("code") == "validation_error"
+                    and bool(oobadbody.get("error", {}).get("request_id")),
+                    orgov_bad_id.text)
+              for bad_limit in (0, 51):
+                  olbad = httpx.get(
+                      f"{base}/orgs/{created_org_id}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  olbbody = (olbad.json() if olbad.status_code == 422 else {})
+                  check(f"orgs/{{id}}/overview 422 invalid recent_limit={bad_limit} envelope",
+                        olbad.status_code == 422
+                        and olbbody.get("error", {}).get("code") == "validation_error"
+                        and bool(olbbody.get("error", {}).get("request_id")),
+                        olbad.text)
+          else:
+              check("orgs/{id}/overview setup", False,
+                    "could not obtain an organization id for the overview probe")
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
