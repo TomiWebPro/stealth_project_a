@@ -56,6 +56,7 @@ import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishOverviewOptions } from "./publishOverview";
 import type { PublishStatsOptions } from "./publishStats";
 import type { RetryFeedOptions } from "./retryFeed";
+import type { RetryOverviewOptions } from "./retryOverview";
 import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
@@ -134,6 +135,7 @@ import type {
   PublishOverview,
   PublishStats,
   RetryFeed,
+  RetryOverview,
   RetryStats,
   RunOverview,
   SearchResponse,
@@ -456,6 +458,15 @@ export interface ApiClient {
   getRetryStats(options?: RetryStatsOptions): Promise<RetryStats>;
   /** Newest-first authoritative job retry feed derived by `/retries/feed`, optionally project-scoped (C193). */
   getRetryFeed(options?: RetryFeedOptions): Promise<RetryFeed>;
+  /**
+   * Authoritative single-retried-job snapshot (identity, joined project, whole-scope
+   * retry counts and same-project siblings) from `/retries/{id}/overview`; unknown
+   * jobs and jobs without accepted retries resolve to `undefined` (C286).
+   */
+  getRetryOverview(
+    jobId: string,
+    options?: RetryOverviewOptions,
+  ): Promise<RetryOverview | undefined>;
   /** Authoritative asset version metrics derived by `/versions/stats`, optionally project-scoped (C109). */
   getVersionStats(options?: VersionStatsOptions): Promise<VersionStats>;
   /** Newest-first authoritative asset version feed derived by `/versions/feed`, optionally project-scoped (C153). */
@@ -579,6 +590,7 @@ export const mockApiClient: ApiClient = {
   getEventFeed: mockApi.fetchEventFeed,
   getRetryStats: mockApi.fetchRetryStats,
   getRetryFeed: mockApi.fetchRetryFeed,
+  getRetryOverview: mockApi.fetchRetryOverview,
   getVersionStats: mockApi.fetchVersionStats,
   getVersionFeed: mockApi.fetchVersionFeed,
   getVersionOverview: mockApi.fetchVersionOverview,

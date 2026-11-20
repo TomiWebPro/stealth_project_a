@@ -1509,6 +1509,56 @@ describe("createHttpApiClient publish overview (C278)", () => {
   });
 });
 
+describe("createHttpApiClient retry overview (C286)", () => {
+  const jobId = "0b5c1e2a-3000-4000-8000-000000000016";
+  const overview = {
+    job_id: jobId,
+    project_id: "0b5c1e2a-1000-4000-8000-000000000002",
+    project_name: "Moonshot",
+    operation_id: "lora-train",
+    status: "failed",
+    attempt: 3,
+    retries: 2,
+    retried_at: "2026-03-18T09:20:00.000Z",
+    counts: { project_retries: 4, project_jobs: 3, total_retries: 7 },
+    recent_siblings: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the retry overview path with the recent_limit query", async () => {
+    const { fetchImpl, calls } = router({ [`/retries/${jobId}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getRetryOverview(jobId, { recentLimit: 2 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/retries/${jobId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps both 404s to undefined but surfaces validation and other failures", async () => {
+    for (const code of ["job_not_found", "retry_not_found"]) {
+      const missing = createHttpApiClient("http://localhost:8000", {
+        fetchImpl: (async () =>
+          jsonResponse({ error: { code, message: "missing" } }, { status: 404 })) as typeof fetch,
+      });
+      await expect(missing.getRetryOverview(jobId)).resolves.toBeUndefined();
+    }
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "bad limit" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getRetryOverview(jobId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+  });
+});
+
 describe("createHttpApiClient lineage overview (C258)", () => {
   const relationshipId = "0b5c1e2a-5000-4000-8000-000000000001";
   const overview = {

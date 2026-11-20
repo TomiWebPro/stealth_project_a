@@ -58,6 +58,7 @@ import type { PublishFeedOptions } from "../lib/publishFeed";
 import type { PublishOverviewOptions } from "../lib/publishOverview";
 import type { PublishStatsOptions } from "../lib/publishStats";
 import type { RetryFeedOptions } from "../lib/retryFeed";
+import type { RetryOverviewOptions } from "../lib/retryOverview";
 import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
@@ -138,6 +139,7 @@ import type {
   PublishOverview,
   PublishStats,
   RetryFeed,
+  RetryOverview,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -1140,6 +1142,22 @@ export function useRetryFeed(
   return useQuery({
     queryKey: queryKeys.retryFeed.feed(options),
     queryFn: () => api.getRetryFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-retried-job snapshot (identity, joined project, whole-scope
+ * retry counts and same-project siblings) from `/retries/{id}/overview` (C286);
+ * unknown jobs and jobs without accepted retries resolve to `undefined`.
+ */
+export function useRetryOverview(
+  jobId: string,
+  options?: RetryOverviewOptions,
+): UseQueryResult<RetryOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.retryOverview.detail(jobId, options),
+    queryFn: () => api.getRetryOverview(jobId, options),
   });
 }
 

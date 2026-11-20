@@ -51,6 +51,7 @@ import type { PublishFeedOptions } from "./publishFeed";
 import type { PublishOverviewOptions } from "./publishOverview";
 import type { PublishStatsOptions } from "./publishStats";
 import type { RetryFeedOptions } from "./retryFeed";
+import type { RetryOverviewOptions } from "./retryOverview";
 import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
@@ -450,6 +451,10 @@ export const queryKeys = {
   retryFeed: {
     feed: (options: RetryFeedOptions = {}) =>
       ["retry-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
+  },
+  retryOverview: {
+    detail: (jobId: string, options: RetryOverviewOptions = {}) =>
+      ["retry-overview", "detail", jobId, options.recentLimit ?? "all"] as const,
   },
   versionStats: {
     summary: (options: VersionStatsOptions = {}) =>

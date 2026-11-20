@@ -646,6 +646,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the retry overview key by job and recent limit", () => {
+    expect(queryKeys.retryOverview.detail("j1")).toEqual([
+      "retry-overview",
+      "detail",
+      "j1",
+      "all",
+    ]);
+    expect(queryKeys.retryOverview.detail("j1", { recentLimit: 3 })).toEqual([
+      "retry-overview",
+      "detail",
+      "j1",
+      3,
+    ]);
+  });
+
   it("scopes the version stats key by project", () => {
     expect(queryKeys.versionStats.summary()).toEqual(["version-stats", "summary", "all"]);
     expect(queryKeys.versionStats.summary({ projectId: "p1" })).toEqual([

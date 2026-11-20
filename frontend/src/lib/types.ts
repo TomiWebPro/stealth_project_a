@@ -177,6 +177,8 @@ export type {
   RelationshipType,
   RetryFeed,
   RetryFeedItem,
+  RetryOverview,
+  RetryOverviewCounts,
   RetryProjectCount,
   RetryStats,
   RetryStatusCount,

@@ -94,6 +94,7 @@ import {
   fetchPublishOverview,
   fetchRecentAssets,
   fetchRetryFeed,
+  fetchRetryOverview,
   fetchRetryStats,
   fetchSearch,
   fetchSearchStats,
@@ -3083,6 +3084,57 @@ describe("mock API publish feed (C125 follow-up)", () => {
 
     setMockFailure("publishFeed");
     await expect(fetchPublishFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API retry overview (C286 follow-up)", () => {
+  const retriedJobId = JOB_RETRIES.find((entry) => entry.job_id.length > 0)?.job_id ?? "";
+
+  it("derives a populated snapshot from the retry ledger/job/project seeds", async () => {
+    const overview = await fetchRetryOverview(retriedJobId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.job_id).toBe(retriedJobId);
+    expect(overview?.project_name).toBeTruthy();
+    expect(overview?.retries).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.total_retries).toBeGreaterThanOrEqual(overview?.retries ?? 0);
+    expect(overview?.counts.project_jobs).toBeGreaterThanOrEqual(1);
+    expect(overview?.recent_siblings?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds the sibling page by recentLimit without bounding the counts", async () => {
+    const full = await fetchRetryOverview(retriedJobId);
+    const limited = await fetchRetryOverview(retriedJobId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.recent_siblings).toHaveLength(1);
+  });
+
+  it("mirrors router validation and resolves both 404s to undefined", async () => {
+    await expect(fetchRetryOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchRetryOverview(retriedJobId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchRetryOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+    const neverRetried = JOBS.find(
+      (job) => !JOB_RETRIES.some((entry) => entry.job_id === job.id),
+    );
+    if (neverRetried) {
+      await expect(fetchRetryOverview(neverRetried.id)).resolves.toBeUndefined();
+    }
+  });
+
+  it("injects a failure for the retryOverview domain", async () => {
+    setMockFailure("retryOverview");
+    await expect(fetchRetryOverview(retriedJobId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

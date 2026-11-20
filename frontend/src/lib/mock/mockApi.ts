@@ -169,6 +169,11 @@ import { derivePublishStats, validatePublishStatsArgs } from "../publishStats";
 import type { PublishStatsOptions } from "../publishStats";
 import { deriveRetryFeed, validateRetryFeedArgs } from "../retryFeed";
 import type { RetryFeedOptions } from "../retryFeed";
+import {
+  deriveRetryOverview,
+  validateRetryOverviewArgs,
+} from "../retryOverview";
+import type { RetryOverviewOptions } from "../retryOverview";
 import { deriveRetryStats, validateRetryStatsArgs } from "../retryStats";
 import type { RetryStatsOptions } from "../retryStats";
 import { deriveSearchResponse, validateSearchArgs } from "../search";
@@ -258,6 +263,7 @@ import type {
   PublishOverview,
   PublishStats,
   RetryFeed,
+  RetryOverview,
   RetryStats,
   SearchResponse,
   SearchStats,
@@ -327,7 +333,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `commentOverview`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `publishOverview`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `retryOverview`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `publishOverview`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `messageOverview`, `jobOverview`,
  * `eventOverview`,
@@ -2052,6 +2058,33 @@ export async function fetchRetryFeed(options?: RetryFeedOptions): Promise<RetryF
     });
   }
   return delay(deriveRetryFeed(JOB_RETRIES, JOBS, PROJECTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single-retried-job overview (C286 follow-up) derived from the
+ * same retry ledger/job/project seeds as the live `/retries/{id}/overview`
+ * endpoint. Router-style 422 validation (job id + recent limit) and normalized
+ * 404s for an unknown job or one without accepted retries (both resolve to
+ * `undefined`, matching the live detail mapping) plus the injectable
+ * `"retryOverview"` failure domain keep error and empty states at parity.
+ */
+export async function fetchRetryOverview(
+  jobId: string,
+  options?: RetryOverviewOptions,
+): Promise<RetryOverview | undefined> {
+  failIfEnabled("retryOverview");
+  validateRetryOverviewArgs(jobId, options);
+  try {
+    const overview = deriveRetryOverview(
+      jobId,
+      { retries: JOB_RETRIES, jobs: JOBS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+    return delay(overview);
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 404) return delay(undefined);
+    throw cause;
+  }
 }
 
 /**

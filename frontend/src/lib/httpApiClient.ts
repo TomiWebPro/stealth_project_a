@@ -108,6 +108,8 @@ import { publishStatsQueryParams } from "./publishStats";
 import type { PublishStatsOptions } from "./publishStats";
 import { retryFeedQueryParams } from "./retryFeed";
 import type { RetryFeedOptions } from "./retryFeed";
+import { retryOverviewQueryParams } from "./retryOverview";
+import type { RetryOverviewOptions } from "./retryOverview";
 import { retryStatsQueryParams } from "./retryStats";
 import type { RetryStatsOptions } from "./retryStats";
 import { lineageFeedQueryParams } from "./lineageFeed";
@@ -199,6 +201,7 @@ import type {
   PublishOverview,
   PublishStats,
   RetryFeed,
+  RetryOverview,
   RetryStats,
   RunOverview,
   SearchResponse,
@@ -1184,6 +1187,26 @@ export function createHttpApiClient(
     /** Newest-first authoritative job retry feed derived by `/retries/feed` (C193). */
     getRetryFeed(options?: RetryFeedOptions): Promise<RetryFeed> {
       return request<RetryFeed>("/retries/feed", retryFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-retried-job snapshot; the backend 404s on an unknown
+     * job or one with no accepted retries, both normalized to `undefined` like
+     * the other detail lookups (C286).
+     */
+    async getRetryOverview(
+      jobId: string,
+      options?: RetryOverviewOptions,
+    ): Promise<RetryOverview | undefined> {
+      try {
+        return await request<RetryOverview>(
+          `/retries/${encodeURIComponent(jobId)}/overview`,
+          retryOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative asset version metrics derived by the backend `/versions/stats`. */

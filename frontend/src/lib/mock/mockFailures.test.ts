@@ -8,6 +8,7 @@ import {
   EXTENSIONS,
   JOBS,
   JOB_EVENTS,
+  JOB_RETRIES,
   MESSAGES,
   ORGANIZATIONS,
   ORCHESTRATION_PLANS,
@@ -93,6 +94,7 @@ import {
   fetchPublishStats,
   fetchRecentAssets,
   fetchRetryFeed,
+  fetchRetryOverview,
   fetchRetryStats,
   fetchSearchStats,
   fetchStorageStats,
@@ -876,6 +878,19 @@ describe("mock error-state fakes", () => {
     await expect(fetchPublishFeed()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the retry overview domain", async () => {
+    const jobId = JOBS.find((job) => JOB_RETRIES.some((entry) => entry.job_id === job.id))?.id ?? "";
+    setMockFailure("retryOverview");
+
+    await expect(fetchRetryOverview(jobId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchRetryOverview(jobId)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the publish overview domain", async () => {
     const assetId = ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined)?.id ?? "";
     setMockFailure("publishOverview");
@@ -944,6 +959,8 @@ describe("mock error-state fakes", () => {
       const projectId = PROJECTS[0]?.id ?? "";
       const assetId = ASSETS[0]?.id ?? "";
       const jobId = JOBS[0]?.id ?? "";
+      const retriedJobId =
+        JOB_RETRIES.find((entry) => JOBS.some((job) => job.id === entry.job_id))?.job_id ?? "";
       const providerId = PROVIDERS[0]?.id ?? "";
       const conversationId = CONVERSATIONS[0]?.id ?? "";
       const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
@@ -971,6 +988,7 @@ describe("mock error-state fakes", () => {
         ["lineageOverview", () => fetchLineageOverview("0b5c1e2a-5000-4000-8000-000000000001")],
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["publishOverview", () => fetchPublishOverview(assetId)],
+        ["retryOverview", () => fetchRetryOverview(retriedJobId)],
         ["tagOverview", () => fetchTagOverview("lora")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],

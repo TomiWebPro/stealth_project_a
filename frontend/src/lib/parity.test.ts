@@ -130,6 +130,8 @@ import {
 import { derivePublishStats, validatePublishStatsArgs } from "./publishStats";
 import { deriveRetryFeed, validateRetryFeedArgs } from "./retryFeed";
 import type { RetryFeedOptions } from "./retryFeed";
+import { deriveRetryOverview, validateRetryOverviewArgs } from "./retryOverview";
+import type { RetryOverviewOptions } from "./retryOverview";
 import { deriveRetryStats, validateRetryStatsArgs } from "./retryStats";
 import {
   ASSETS,
@@ -403,6 +405,39 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return deriveEventStats(JOB_EVENTS, JOBS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative single-retried-job overview derives a compact snapshot from
+  // the same ledger/job/project stores as `/retries/{id}/overview`; mirror the
+  // router's 422 id + recent_limit validation and both 404 envelopes over the
+  // shared seeds so live and mock agree exactly (C286). This must precede the
+  // literal /retries/feed and /retries/stats branches below.
+  if (/^\/retries\/[^/]+\/overview$/.test(path)) {
+    const jobId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options: RetryOverviewOptions =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {};
+    try {
+      validateRetryOverviewArgs(jobId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    try {
+      return deriveRetryOverview(
+        jobId,
+        { retries: JOB_RETRIES, jobs: JOBS, projects: PROJECTS, now: REFERENCE_NOW },
+        options,
+      );
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) return NOT_FOUND;
+      throw cause;
+    }
   }
 
   // Authoritative job retry feed derives the same ledger the `/retries/feed`
@@ -2091,6 +2126,9 @@ const publishOverviewAssetId =
   ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined)?.id ?? "";
 /** A seeded tag carried by assets across two projects (used by tag-overview probes, C282). */
 const tagOverviewTag = "lora";
+/** A seeded retried job (present in the ledger and the job store) used by retry-overview probes (C286). */
+const retryOverviewJobId =
+  JOB_RETRIES.find((entry) => JOBS.some((job) => job.id === entry.job_id))?.job_id ?? "";
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -2353,6 +2391,15 @@ describe("live vs mock transport parity", () => {
       [
         "getRetryFeed scoped and limited",
         (api) => api.getRetryFeed({ projectId: filmId, limit: 1 }),
+      ],
+      ["getRetryOverview", (api) => api.getRetryOverview(retryOverviewJobId)],
+      [
+        "getRetryOverview limited",
+        (api) => api.getRetryOverview(retryOverviewJobId, { recentLimit: 1 }),
+      ],
+      [
+        "getRetryOverview missing",
+        (api) => api.getRetryOverview("00000000-0000-4000-8000-000000000000"),
       ],
       ["getVersionStats", (api) => api.getVersionStats()],
       ["getVersionStats scoped", (api) => api.getVersionStats({ projectId: filmId })],
@@ -2689,6 +2736,29 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getTagOverview("no-such-tag-seed")).toBeUndefined();
     expect(await mockApiClient.getTagOverview("no-such-tag-seed")).toBeUndefined();
+    // The retry overview returns identity/whole-scope counts and a bounded
+    // newest-first same-project sibling page for a seeded retried job, and
+    // resolves unknown/unretriable jobs to undefined on both transports (C286).
+    const seededRetryOverview = await mockApiClient.getRetryOverview(retryOverviewJobId);
+    expect(seededRetryOverview).toBeDefined();
+    expect(await live.getRetryOverview(retryOverviewJobId)).toEqual(seededRetryOverview);
+    expect(seededRetryOverview).toMatchObject({
+      job_id: retryOverviewJobId,
+      counts: {
+        project_retries: expect.any(Number),
+        project_jobs: expect.any(Number),
+        total_retries: expect.any(Number),
+      },
+    });
+    expect(await live.getRetryOverview(retryOverviewJobId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getRetryOverview(retryOverviewJobId, { recentLimit: 1 }),
+    );
+    expect(
+      await live.getRetryOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    expect(
+      await mockApiClient.getRetryOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
     // The lineage overview resolves an unknown relationship to undefined on
     // both transports and returns a canonical-set count snapshot for a seeded
     // relationship (C258).
@@ -3597,6 +3667,23 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(badPublishLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(badPublishLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
+    // Both transports reject a malformed job id and out-of-range recent limit
+    // with the same 422 envelope for the single-retried-job overview (C286).
+    const [badRetryMockErr, badRetryLiveErr] = await Promise.all([
+      mockApiClient.getRetryOverview("not-a-uuid").catch((cause) => cause),
+      live.getRetryOverview("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(badRetryMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badRetryLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [badRetryLimitMockErr, badRetryLimitLiveErr] = await Promise.all([
+      mockApiClient
+        .getRetryOverview(retryOverviewJobId, { recentLimit: 0 })
+        .catch((cause) => cause),
+      live.getRetryOverview(retryOverviewJobId, { recentLimit: 0 }).catch((cause) => cause),
+    ]);
+    expect(badRetryLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badRetryLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
 
     // Both transports reject a malformed relationship id and out-of-range
     // recent limit with the same 422 envelope for the single-relationship
