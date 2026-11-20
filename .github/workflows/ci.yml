@@ -4148,6 +4148,82 @@ jobs:
                 and bool(jovbadbody.get("error", {}).get("request_id")),
                 jov_bad_id.text)
 
+          # Authoritative single-provider overview (C217/C220) is the newest /api/v1
+          # URL the live client calls (getProviderOverview). Reuse the seeded
+          # local-comfyui provider so the derived snapshot has real coverage — its
+          # three advertised catalog operations, one schema version and matching
+          # drift flags — and probe the snapshot/binding shapes, the count
+          # invariants, the request-id header and the shared 404 envelope for an
+          # unknown provider, keeping CI aligned with the exact /api/v1 URLs the
+          # VITE_API_MODE=live client calls as the repo grows.
+          pov = httpx.get(f"{base}/providers/local-comfyui/overview", timeout=5)
+          povbody = pov.json() if pov.status_code == 200 else {}
+          check("providers/{id}/overview 200 snapshot shape",
+                pov.status_code == 200 and all(
+                    k in povbody for k in ("provider_id", "name", "location",
+                                          "status", "metadata", "operation_ids",
+                                          "catalog_operations", "counts",
+                                          "generated_at")),
+                pov.text)
+          check("providers/{id}/overview identity + health",
+                pov.status_code == 200
+                and povbody.get("provider_id") == "local-comfyui"
+                and povbody.get("name") == "Local ComfyUI"
+                and povbody.get("location") in ("local", "studio", "cloud")
+                and povbody.get("status") in (
+                    "available", "unavailable", "degraded")
+                and isinstance(povbody.get("metadata"), dict)
+                and isinstance(povbody.get("generated_at"), str),
+                pov.text)
+          check("providers/{id}/overview operation ids sorted/dedup",
+                pov.status_code == 200
+                and povbody.get("operation_ids") == [
+                    "image-to-image", "text-to-image", "upscale"]
+                and povbody["operation_ids"] == sorted(set(povbody["operation_ids"])),
+                pov.text)
+          check("providers/{id}/overview catalog binding shapes",
+                pov.status_code == 200
+                and isinstance(povbody.get("catalog_operations"), list)
+                and len(povbody["catalog_operations"]) >= 1
+                and all(all(k in op for k in (
+                    "operation_id", "title", "catalog_version",
+                    "advertised_versions", "schema_match"))
+                    and isinstance(op.get("advertised_versions"), list)
+                    and all(isinstance(v, str) for v in op["advertised_versions"])
+                    and op["advertised_versions"] == sorted(set(op["advertised_versions"]))
+                    and isinstance(op.get("schema_match"), bool)
+                    and op.get("operation_id") in povbody.get("operation_ids", [])
+                    for op in povbody["catalog_operations"]),
+                pov.text)
+          check("providers/{id}/overview counts shape + invariants",
+                pov.status_code == 200
+                and isinstance(povbody.get("counts"), dict)
+                and all(isinstance(povbody["counts"].get(k), int)
+                        and povbody["counts"][k] >= 0
+                        for k in ("capabilities", "advertised_operations",
+                                  "catalog_operations", "schema_versions"))
+                and povbody["counts"].get("advertised_operations")
+                == len(povbody.get("operation_ids", []))
+                and povbody["counts"].get("catalog_operations")
+                == len(povbody.get("catalog_operations", []))
+                and povbody["counts"].get("capabilities", 0) >= 1
+                and povbody["counts"].get("schema_versions", 0) >= 1
+                and all(op.get("schema_match") is True
+                        for op in povbody.get("catalog_operations", [])),
+                pov.text)
+          check("providers/{id}/overview request-id header",
+                "x-request-id" in {k.lower() for k in pov.headers},
+                str(dict(pov.headers)))
+          pov_missing = httpx.get(
+              f"{base}/providers/missing-provider/overview", timeout=5)
+          pov404body = (pov_missing.json()
+                        if pov_missing.status_code == 404 else {})
+          check("providers/{id}/overview 404 shared envelope",
+                pov_missing.status_code == 404
+                and pov404body.get("error", {}).get("code") == "provider_not_found"
+                and bool(pov404body.get("error", {}).get("request_id")),
+                pov_missing.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
