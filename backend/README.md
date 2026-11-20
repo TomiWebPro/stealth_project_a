@@ -108,6 +108,13 @@ All paths are prefixed with `/api/v1`.
   `total` before the `limit` page) derived from the relationship store with a
   deterministic `(created_at, id)` tie-break; links from soft-deleted/unknown
   source assets are excluded
+  `GET /lineage/{relationship_id}/overview?recent_limit=` — compact single-relationship
+  snapshot (both endpoint assets' identity/type with joined names, project context,
+  whole-source-asset upstream/downstream/type/project counts reusing the canonical
+  relationship set, and a bounded newest-first `recent_relationships` page reusing
+  `LineageFeedItem`) derived fresh from the relationship store; links from
+  soft-deleted/unknown source assets are excluded (shared 404
+  `relationship_not_found` / 422 envelopes)
   `GET /versions/stats?project_id=` — authoritative version metrics (total version
   records, distinct versioned assets, revision count, by-version distribution,
   per-project activity and newest-version recency) derived from the asset version

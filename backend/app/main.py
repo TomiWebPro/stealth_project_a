@@ -57,6 +57,7 @@ from .routers import (
     jobs,
     lineage_feed,
     lineage_stats,
+    lineage_overview,
     links,
     operation_feed,
     operation_overview,
@@ -432,6 +433,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # sibling; register them directly to keep both lineage paths explicit.
     app.include_router(lineage_feed.router, prefix=API_PREFIX)
     app.include_router(lineage_stats.router, prefix=API_PREFIX)
+    # "/lineage/{relationship_id}/overview" is a nested single-relationship view;
+    # mount it beside the other lineage routers so its literal suffix stays explicit.
+    app.include_router(lineage_overview.router, prefix=API_PREFIX)
     # "/versions/feed" and "/versions/stats" are literal paths with no templated
     # sibling; register them directly to keep both version paths explicit.
     app.include_router(version_feed.router, prefix=API_PREFIX)

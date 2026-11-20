@@ -112,6 +112,10 @@ from .lineage_stats import (
     LineageStats,
     LineageTypeCount,
 )
+from .lineage_overview import (
+    LineageOverview,
+    LineageOverviewCounts,
+)
 from .job_stats import (
     JobStats,
     JobStatusCount,
@@ -441,6 +445,9 @@ __all__ = [
     "LineageProjectCount",
     "LineageStats",
     "LineageTypeCount",
+    # lineage overview
+    "LineageOverview",
+    "LineageOverviewCounts",
     # job stats
     "JobStats",
     "JobStatusCount",

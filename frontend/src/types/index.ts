@@ -42,6 +42,7 @@ export * from "./dashboard";
 export * from "./tags";
 export * from "./impact";
 export * from "./lineageFeed";
+export * from "./lineageOverview";
 export * from "./providerFeed";
 export * from "./providerOverview";
 export * from "./providerStats";

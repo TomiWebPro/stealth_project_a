@@ -34,6 +34,7 @@ from .extension_stats import ExtensionStatsRepository
 from .impact import ImpactRepository
 from .lineage_feed import LineageFeedRepository
 from .lineage_stats import LineageStatsRepository
+from .lineage_overview import LineageOverviewRepository
 from .job_stats import JobStatsRepository
 from .job_feed import JobFeedRepository
 from .job_overview import JobOverviewRepository
@@ -111,6 +112,7 @@ class Repositories:
     job_queue: JobQueueRepository
     lineage_feed: LineageFeedRepository
     lineage_stats: LineageStatsRepository
+    lineage_overview: LineageOverviewRepository
     operation_feed: OperationFeedRepository
     operation_overview: OperationOverviewRepository
     operation_stats: OperationStatsRepository
@@ -188,6 +190,7 @@ class Repositories:
         job_queue = JobQueueRepository(store, projects, clock=clock)
         lineage_feed = LineageFeedRepository(store, projects, clock=clock)
         lineage_stats = LineageStatsRepository(store, projects, clock=clock)
+        lineage_overview = LineageOverviewRepository(store, projects, clock=clock)
         operation_feed = OperationFeedRepository(store, clock=clock)
         operation_stats = OperationStatsRepository(store, clock=clock)
         pipeline_stats = PipelineStatsRepository(store, projects, clock=clock)
@@ -271,6 +274,7 @@ class Repositories:
             job_queue=job_queue,
             lineage_feed=lineage_feed,
             lineage_stats=lineage_stats,
+            lineage_overview=lineage_overview,
             operation_feed=operation_feed,
             operation_overview=operation_overview,
             operation_stats=operation_stats,

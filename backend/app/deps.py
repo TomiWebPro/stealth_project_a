@@ -41,6 +41,7 @@ from .repositories.extension_stats import ExtensionStatsRepository
 from .repositories.impact import ImpactRepository
 from .repositories.lineage_feed import LineageFeedRepository
 from .repositories.lineage_stats import LineageStatsRepository
+from .repositories.lineage_overview import LineageOverviewRepository
 from .repositories.job_stats import JobStatsRepository
 from .repositories.job_feed import JobFeedRepository
 from .repositories.job_overview import JobOverviewRepository
@@ -340,6 +341,12 @@ def get_lineage_stats_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> LineageStatsRepository:
     return repositories.lineage_stats
+
+
+def get_lineage_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> LineageOverviewRepository:
+    return repositories.lineage_overview
 
 
 def get_operation_feed_repository(
@@ -656,6 +663,7 @@ __all__ = [
     "get_job_queue_repository",
     "get_lineage_feed_repository",
     "get_lineage_stats_repository",
+    "get_lineage_overview_repository",
     "get_link_service",
     "get_operation_feed_repository",
     "get_operation_overview_repository",
