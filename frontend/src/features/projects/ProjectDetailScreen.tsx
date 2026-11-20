@@ -38,6 +38,7 @@ import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionFeedPanel } from "../assets/VersionFeedPanel";
+import { VersionOverviewPanel } from "../assets/VersionOverviewPanel";
 import { VersionStatsPanel } from "../assets/VersionStatsPanel";
 import { formatAssetMeta, isPublishAsset, assetTypeTone, assetPreviewUrl } from "../assets/helpers";
 import { ChainOverviewPanel } from "./ChainOverviewPanel";
@@ -220,6 +221,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project version feed"
         description="Newest-first asset version records scoped to this project."
+      />
+      <VersionOverviewPanel
+        projectId={projectId}
+        title="Project version overview"
+        description="Select a version of an asset in this project to inspect its identity and version activity."
       />
       <PublishFeedPanel
         projectId={projectId}
