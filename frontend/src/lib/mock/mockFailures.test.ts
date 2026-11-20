@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiError } from "../../api/client";
 import { extensionId as computeExtensionId } from "../extensionFeed";
-import { ASSETS, CONVERSATIONS, EXTENSIONS, JOBS, PROJECTS, PROVIDERS } from "./data";
+import { ASSETS, CONVERSATIONS, EXTENSIONS, JOBS, ORGANIZATIONS, PROJECTS, PROVIDERS } from "./data";
 import {
   clearMockFailures,
   fetchActivityStats,
@@ -46,6 +46,7 @@ import {
   fetchOperationFeed,
   fetchOperationStats,
   fetchOrganizationFeed,
+  fetchOrganizationOverview,
   fetchOrganizationStats,
   fetchPipelineFeed,
   fetchPipelineStats,
@@ -135,6 +136,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchOperationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrganizationStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchOrganizationFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectOverview(projectId)).rejects.toBeInstanceOf(ApiError);
@@ -376,6 +378,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchOrganizationStats()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the organization overview domain", async () => {
+    const orgId = ORGANIZATIONS[0]?.id ?? "";
+    setMockFailure("organizationOverview");
+
+    await expect(fetchOrganizationOverview(orgId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchOrganizationOverview(orgId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the pipeline stats domain", async () => {
@@ -771,6 +786,7 @@ describe("mock error-state fakes", () => {
         ["providerFeed", () => fetchProviderFeed()],
         ["providerOverview", () => fetchProviderOverview(providerId)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
+        ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],
         ["operations", () => fetchOperations()],
         ["capabilities", () => fetchCapabilities()],

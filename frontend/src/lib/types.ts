@@ -104,6 +104,8 @@ export type {
   OrganizationFeed,
   OrganizationFeedItem,
   OrganizationMemberCount,
+  OrganizationOverview,
+  OrganizationOverviewCounts,
   OrganizationStats,
   OrchestrationFeed,
   OrchestrationFeedItem,

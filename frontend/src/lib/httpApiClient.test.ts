@@ -3148,3 +3148,61 @@ describe("createHttpApiClient upload feed", () => {
     });
   });
 });
+
+describe("createHttpApiClient organization overview (C226)", () => {
+  const orgId = "11111111-1111-4111-8111-111111111111";
+  const overview = {
+    org_id: orgId,
+    name: "Studio Northlight",
+    slug: "studio-northlight",
+    created_at: "2026-01-01T00:00:00.000Z",
+    counts: { members: 3, projects: 2 },
+    by_role: [
+      { role: "owner", members: 1 },
+      { role: "admin", members: 0 },
+      { role: "member", members: 2 },
+      { role: "viewer", members: 0 },
+    ],
+    recent_members: [],
+    recent_projects: [],
+    generated_at: "2026-01-04T00:00:00.000Z",
+  };
+
+  it("GETs the org overview path and forwards the recent-limit query", async () => {
+    const { fetchImpl, calls } = router({
+      [`/orgs/${orgId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getOrganizationOverview(orgId, { recentLimit: 3 })).resolves.toEqual(overview);
+    await expect(api.getOrganizationOverview(orgId)).resolves.toEqual(overview);
+
+    const first = new URL(calls[0] ?? "");
+    expect(first.pathname).toBe(`${API_PREFIX}/orgs/${orgId}/overview`);
+    expect(first.searchParams.get("recent_limit")).toBe("3");
+    const second = new URL(calls[1] ?? "");
+    expect(second.search).toBe("");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "organization_not_found", message: "missing" } },
+          { status: 404 },
+        )) as typeof fetch,
+    });
+    await expect(missing.getOrganizationOverview(orgId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getOrganizationOverview(orgId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});

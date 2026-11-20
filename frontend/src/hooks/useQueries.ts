@@ -32,6 +32,7 @@ import type { LineageFeedOptions } from "../lib/lineageFeed";
 import type { LineageStatsOptions } from "../lib/lineageStats";
 import type { OperationFeedOptions } from "../lib/operationFeed";
 import type { OrganizationFeedOptions } from "../lib/organizationFeed";
+import type { OrganizationOverviewOptions } from "../lib/organizationOverview";
 import type { OrganizationStatsOptions } from "../lib/organizationStats";
 import type { OrchestrationStatsOptions } from "../lib/orchestrationStats";
 import type { OrchestrationFeedOptions } from "../lib/orchestrationFeed";
@@ -95,6 +96,7 @@ import type {
   OperationStats,
   Organization,
   OrganizationFeed,
+  OrganizationOverview,
   OrganizationStats,
   OrchestrationFeed,
   OrchestrationRun,
@@ -341,6 +343,22 @@ export function useOrganizationStats(
   return useQuery({
     queryKey: queryKeys.organizationStats.summary(options),
     queryFn: () => api.getOrganizationStats(options),
+  });
+}
+
+/**
+ * Authoritative single-organization snapshot (identity, whole-scope counts,
+ * zero-filled role breakdown and recent members/projects) from
+ * `/orgs/{id}/overview`, optionally bounding the recent lists (C226).
+ */
+export function useOrganizationOverview(
+  orgId: string,
+  options?: OrganizationOverviewOptions,
+): UseQueryResult<OrganizationOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.organizationOverview.detail(orgId, options),
+    queryFn: () => api.getOrganizationOverview(orgId, options),
   });
 }
 

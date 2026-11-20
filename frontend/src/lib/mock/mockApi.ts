@@ -86,6 +86,11 @@ import { deriveOperationStats } from "../operationStats";
 import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "../organizationFeed";
 import type { OrganizationFeedOptions } from "../organizationFeed";
 import {
+  deriveOrganizationOverview,
+  validateOrganizationOverviewArgs,
+} from "../organizationOverview";
+import type { OrganizationOverviewOptions } from "../organizationOverview";
+import {
   deriveOrganizationStats,
   validateOrganizationStatsArgs,
 } from "../organizationStats";
@@ -183,6 +188,7 @@ import type {
   OperationStats,
   Organization,
   OrganizationFeed,
+  OrganizationOverview,
   OrganizationStats,
   OrchestrationFeed,
   OrchestrationRun,
@@ -269,7 +275,8 @@ function delay<T>(value: T): Promise<T> {
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
- * `providerOverview`, `extensionOverview`, `jobLogs`, `jobFeed` and `jobQueue`.
+ * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
+ * `jobFeed` and `jobQueue`.
  * Always reset with {@link clearMockFailures} afterwards.
  */
 const activeFailures = new Set<string>();
@@ -638,6 +645,32 @@ export async function fetchOrganizationStats(
   validateOrganizationStatsArgs(options);
   return delay(
     deriveOrganizationStats(ORGANIZATIONS, ORGANIZATION_MEMBERS, USERS, REFERENCE_NOW, options),
+  );
+}
+
+/**
+ * Authoritative single-organization overview (C226) derived from the same
+ * auth/project seeds as the live `/orgs/{id}/overview` endpoint. Router-style
+ * 422 validation for a malformed id / out-of-range recent limit, a normalized
+ * 404-to-`undefined` for an unknown organization and the
+ * `"organizationOverview"` failure domain keep error and empty states at parity
+ * with live mode.
+ */
+export async function fetchOrganizationOverview(
+  orgId: string,
+  options?: OrganizationOverviewOptions,
+): Promise<OrganizationOverview | undefined> {
+  failIfEnabled("organizationOverview");
+  validateOrganizationOverviewArgs(orgId, options);
+  if (!ORGANIZATIONS.some((org) => org.id === orgId)) {
+    return delay(undefined);
+  }
+  return delay(
+    deriveOrganizationOverview(
+      orgId,
+      { organizations: ORGANIZATIONS, members: ORGANIZATION_MEMBERS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    ),
   );
 }
 

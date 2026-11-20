@@ -57,6 +57,8 @@ import { lineageStatsQueryParams } from "./lineageStats";
 import type { LineageStatsOptions } from "./lineageStats";
 import { organizationFeedQueryParams } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
+import { organizationOverviewQueryParams } from "./organizationOverview";
+import type { OrganizationOverviewOptions } from "./organizationOverview";
 import { organizationStatsQueryParams } from "./organizationStats";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import { orchestrationFeedQueryParams } from "./orchestrationFeed";
@@ -145,6 +147,7 @@ import type {
   OperationStats,
   Organization,
   OrganizationFeed,
+  OrganizationOverview,
   OrganizationStats,
   OrchestrationFeed,
   OrchestrationRun,
@@ -480,6 +483,26 @@ export function createHttpApiClient(
     /** Authoritative organization/membership metrics derived by `/orgs/stats`. */
     getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats> {
       return request<OrganizationStats>("/orgs/stats", organizationStatsQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-organization overview; the backend 404s on an unknown
+     * organization, which is normalized to `undefined` like the other detail
+     * lookups (C226).
+     */
+    async getOrganizationOverview(
+      orgId: string,
+      options?: OrganizationOverviewOptions,
+    ): Promise<OrganizationOverview | undefined> {
+      try {
+        return await request<OrganizationOverview>(
+          `/orgs/${encodeURIComponent(orgId)}/overview`,
+          organizationOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative production-pipeline metrics derived by `/pipelines/stats`. */

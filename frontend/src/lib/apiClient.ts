@@ -30,6 +30,7 @@ import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
+import type { OrganizationOverviewOptions } from "./organizationOverview";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { OrchestrationFeedOptions } from "./orchestrationFeed";
@@ -93,6 +94,7 @@ import type {
   OperationStats,
   Organization,
   OrganizationFeed,
+  OrganizationOverview,
   OrganizationStats,
   OrchestrationFeed,
   OrchestrationRun,
@@ -181,6 +183,15 @@ export interface ApiClient {
   getOrganizationFeed(options?: OrganizationFeedOptions): Promise<OrganizationFeed>;
   /** Authoritative organization/membership metrics derived by `/orgs/stats`, optionally org-scoped (C69). */
   getOrganizationStats(options?: OrganizationStatsOptions): Promise<OrganizationStats>;
+  /**
+   * Authoritative single-organization snapshot (identity, whole-scope counts,
+   * zero-filled role breakdown and recent members/projects) from
+   * `/orgs/{id}/overview`; unknown organizations resolve to `undefined` (C226).
+   */
+  getOrganizationOverview(
+    orgId: string,
+    options?: OrganizationOverviewOptions,
+  ): Promise<OrganizationOverview | undefined>;
   /** Authoritative production-pipeline metrics derived by `/pipelines/stats`, optionally project-scoped (C73). */
   getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats>;
   /** Newest-first authoritative production-pipeline feed derived by `/pipelines/feed`, optionally project/kind-scoped (C177). */
@@ -344,6 +355,7 @@ export const mockApiClient: ApiClient = {
   getExtensionOverview: mockApi.fetchExtensionOverview,
   getOrganizationFeed: mockApi.fetchOrganizationFeed,
   getOrganizationStats: mockApi.fetchOrganizationStats,
+  getOrganizationOverview: mockApi.fetchOrganizationOverview,
   getPipelineStats: mockApi.fetchPipelineStats,
   getPipelineFeed: mockApi.fetchPipelineFeed,
   getLineageStats: mockApi.fetchLineageStats,

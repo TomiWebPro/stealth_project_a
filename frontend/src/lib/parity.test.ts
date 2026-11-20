@@ -62,6 +62,11 @@ import { deriveOperationStats } from "./operationStats";
 import { deriveOrganizationFeed, validateOrganizationFeedArgs } from "./organizationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
 import {
+  deriveOrganizationOverview,
+  validateOrganizationOverviewArgs,
+} from "./organizationOverview";
+import type { OrganizationOverviewOptions } from "./organizationOverview";
+import {
   deriveOrganizationStats,
   validateOrganizationStatsArgs,
 } from "./organizationStats";
@@ -1136,6 +1141,40 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return CONVERSATIONS.find((c) => c.id === id) ?? NOT_FOUND;
   }
 
+  // Authoritative single-organization overview derives a compact snapshot from
+  // the same auth/project stores on every call; mirror the router's
+  // unknown-organization 404, recent_limit 422 validation and repository
+  // derivation over the shared seeds. This must precede the dynamic
+  // /orgs/{id} branches below (C226).
+  if (/^\/orgs\/[^/]+\/overview$/.test(path)) {
+    const orgIdValue = pathParts[2] ?? "";
+    const limitRaw = params.get("recent_limit");
+    const options: OrganizationOverviewOptions =
+      limitRaw !== null ? { recentLimit: Number(limitRaw) } : {};
+    try {
+      validateOrganizationOverviewArgs(orgIdValue, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ORGANIZATIONS.some((org) => org.id === orgIdValue)) return NOT_FOUND;
+    return deriveOrganizationOverview(
+      orgIdValue,
+      {
+        organizations: ORGANIZATIONS,
+        members: ORGANIZATION_MEMBERS,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+  }
+
   // Authoritative organization feed derives the same newest-first organization
   // view as the `/orgs/feed` endpoint from the shared auth/project seeds; mirror
   // its 422 validation, page bound and repository derivation so live and mock
@@ -1669,6 +1708,8 @@ describe("live vs mock transport parity", () => {
       ["getOrganizationStats", (api) => api.getOrganizationStats()],
       ["getOrganizationStats scoped", (api) => api.getOrganizationStats({ orgId })],
       ["getOrganizationStats unknown", (api) => api.getOrganizationStats({ orgId: "00000000-0000-4000-8000-000000000000" })],
+      ["getOrganizationOverview", (api) => api.getOrganizationOverview(orgId)],
+      ["getOrganizationOverview limited", (api) => api.getOrganizationOverview(orgId, { recentLimit: 2 })],
       ["getPipelineStats", (api) => api.getPipelineStats()],
       ["getPipelineStats scoped", (api) => api.getPipelineStats({ projectId: filmId })],
       ["getPipelineFeed", (api) => api.getPipelineFeed()],
@@ -1973,6 +2014,15 @@ describe("live vs mock transport parity", () => {
     expect(await live.getExtensionOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getExtensionOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The organization overview resolves an unknown organization to undefined on
+    // both transports and returns a derived snapshot for a seeded org id.
+    expect(await live.getOrganizationOverview(orgId)).toEqual(
+      await mockApiClient.getOrganizationOverview(orgId),
+    );
+    expect(await live.getOrganizationOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getOrganizationOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // Both resolve a job log for an unknown job to undefined and reject
     // malformed ids / out-of-range filters with the same 422 envelope.
@@ -2537,6 +2587,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed org id or an out-of-range
+    // recent_limit with the same 422 envelope for the single-org overview.
+    const badOrgOverviewOptions: Array<[string, string, OrganizationOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [orgId, orgId, { recentLimit: 0 }],
+      [orgId, orgId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badOrgOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getOrganizationOverview(mockId, options).catch((cause) => cause),
+        live.getOrganizationOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports reject a malformed asset id or an out-of-range
     // recent_limit with the same 422 envelope for the single-asset overview.
     const badAssetOverviewOptions: Array<[string, string, AssetOverviewOptions | undefined]> = [
@@ -2774,6 +2840,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getExtensionOverview).toBe("function");
     expect(typeof typed.getOrganizationFeed).toBe("function");
     expect(typeof typed.getOrganizationStats).toBe("function");
+    expect(typeof typed.getOrganizationOverview).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getPipelineFeed).toBe("function");
     expect(typeof typed.getLineageStats).toBe("function");

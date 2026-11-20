@@ -26,6 +26,7 @@ import type { LineageFeedOptions } from "./lineageFeed";
 import type { LineageStatsOptions } from "./lineageStats";
 import type { OperationFeedOptions } from "./operationFeed";
 import type { OrganizationFeedOptions } from "./organizationFeed";
+import type { OrganizationOverviewOptions } from "./organizationOverview";
 import type { OrganizationStatsOptions } from "./organizationStats";
 import type { OrchestrationStatsOptions } from "./orchestrationStats";
 import type { OrchestrationFeedOptions } from "./orchestrationFeed";
@@ -191,6 +192,10 @@ export const queryKeys = {
   organizationStats: {
     summary: (options: OrganizationStatsOptions = {}) =>
       ["organization-stats", "summary", options.orgId ?? "all"] as const,
+  },
+  organizationOverview: {
+    detail: (orgId: string, options: OrganizationOverviewOptions = {}) =>
+      ["organization-overview", "detail", orgId, options.recentLimit ?? "all"] as const,
   },
   pipelineStats: {
     summary: (options: PipelineStatsOptions = {}) =>

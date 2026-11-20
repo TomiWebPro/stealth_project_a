@@ -60,6 +60,7 @@ import {
   fetchLineageStats,
   fetchMessages,
   fetchOperations,
+  fetchOrganizationOverview,
   fetchOrganizationStats,
   fetchPipelineStats,
   fetchProjectOverview,
@@ -363,6 +364,58 @@ describe("mock API organization stats (C69 follow-up)", () => {
 
     setMockFailure("organizationStats");
     await expect(fetchOrganizationStats()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API organization overview (C226 follow-up)", () => {
+  const orgId = ORGANIZATIONS[0]?.id ?? "";
+
+  it("derives a populated snapshot from the authoritative auth/project seeds", async () => {
+    const overview = await fetchOrganizationOverview(orgId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.org_id).toBe(orgId);
+    expect(overview?.name).toBe(ORGANIZATIONS[0]?.name);
+    expect(overview?.slug).toBe(ORGANIZATIONS[0]?.slug);
+    expect(overview?.counts.members).toBe(
+      ORGANIZATION_MEMBERS.filter((member) => member.org_id === orgId).length,
+    );
+    expect(overview?.counts.projects).toBe(
+      PROJECTS.filter((project) => project.org_id === orgId).length,
+    );
+    expect(overview?.by_role?.reduce((sum, bucket) => sum + bucket.members, 0)).toBe(
+      overview?.counts.members,
+    );
+    expect(overview?.recent_members?.length).toBeLessThanOrEqual(5);
+    expect(overview?.recent_members?.[0]).not.toHaveProperty("org_id");
+  });
+
+  it("bounds the recent lists without bounding the whole-scope counts", async () => {
+    const whole = await fetchOrganizationOverview(orgId);
+    const limited = await fetchOrganizationOverview(orgId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(whole?.counts);
+    expect(limited?.recent_members).toHaveLength(1);
+    expect(limited?.recent_projects).toHaveLength(1);
+  });
+
+  it("resolves an unknown org to undefined and mirrors router validation/failure", async () => {
+    await expect(
+      fetchOrganizationOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+    await expect(fetchOrganizationOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchOrganizationOverview(orgId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+
+    setMockFailure("organizationOverview");
+    await expect(fetchOrganizationOverview(orgId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
