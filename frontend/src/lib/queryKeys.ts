@@ -4,6 +4,7 @@ import type { AssetFeedOptions } from "./assetFeed";
 import type { AssetOverviewOptions } from "./assetOverview";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
+import type { ChainOverviewOptions } from "./chainOverview";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
@@ -210,6 +211,10 @@ export const queryKeys = {
         options.kind ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  chainOverview: {
+    detail: (chainId: string, options: ChainOverviewOptions = {}) =>
+      ["chain-overview", "detail", chainId, options.recentLimit ?? "all"] as const,
   },
   lineageStats: {
     summary: (options: LineageStatsOptions = {}) =>

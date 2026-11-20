@@ -279,6 +279,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the chain overview key by chain id and recent limit", () => {
+    expect(queryKeys.chainOverview.detail("chain-1")).toEqual([
+      "chain-overview",
+      "detail",
+      "chain-1",
+      "all",
+    ]);
+    expect(queryKeys.chainOverview.detail("chain-1", { recentLimit: 2 })).toEqual([
+      "chain-overview",
+      "detail",
+      "chain-1",
+      2,
+    ]);
+  });
+
   it("scopes the lineage stats key by project", () => {
     expect(queryKeys.lineageStats.summary()).toEqual(["lineage-stats", "summary", "all"]);
     expect(queryKeys.lineageStats.summary({ projectId: "p1" })).toEqual([

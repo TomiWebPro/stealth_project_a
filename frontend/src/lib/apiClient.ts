@@ -5,6 +5,7 @@ import type { AssetOverviewOptions } from "./assetOverview";
 import type { AssetStatsOptions } from "./assetStats";
 import type { AuditQuery } from "./audit";
 import type { CapabilityMatch } from "./catalog";
+import type { ChainOverviewOptions } from "./chainOverview";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
 import type { CollaborationStatsOptions } from "./collaborationStats";
 import type { CommentStatsOptions } from "./commentStats";
@@ -63,6 +64,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  ChainOverview,
   CollaborationFeed,
   CollaborationStats,
   Comment,
@@ -197,6 +199,15 @@ export interface ApiClient {
   getPipelineStats(options?: PipelineStatsOptions): Promise<PipelineStats>;
   /** Newest-first authoritative production-pipeline feed derived by `/pipelines/feed`, optionally project/kind-scoped (C177). */
   getPipelineFeed(options?: PipelineFeedOptions): Promise<PipelineFeed>;
+  /**
+   * Authoritative single-chain snapshot (identity, whole-scope job/asset counts
+   * and a bounded newest-first list of linked jobs/assets) from
+   * `/pipelines/{id}/overview`; unknown chains resolve to `undefined` (C234).
+   */
+  getChainOverview(
+    chainId: string,
+    options?: ChainOverviewOptions,
+  ): Promise<ChainOverview | undefined>;
   /** Authoritative asset-lineage metrics derived by `/lineage/stats`, optionally project-scoped (C77). */
   getLineageStats(options?: LineageStatsOptions): Promise<LineageStats>;
   /** Newest-first authoritative asset lineage feed derived by `/lineage/feed`, optionally project-scoped (C157). */
@@ -365,6 +376,7 @@ export const mockApiClient: ApiClient = {
   getOrganizationOverview: mockApi.fetchOrganizationOverview,
   getPipelineStats: mockApi.fetchPipelineStats,
   getPipelineFeed: mockApi.fetchPipelineFeed,
+  getChainOverview: mockApi.fetchChainOverview,
   getLineageStats: mockApi.fetchLineageStats,
   getLineageFeed: mockApi.fetchLineageFeed,
   getCollaborationStats: mockApi.fetchCollaborationStats,

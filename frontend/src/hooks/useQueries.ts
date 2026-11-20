@@ -9,6 +9,7 @@ import type { AssetOverviewOptions } from "../lib/assetOverview";
 import type { AssetStatsOptions } from "../lib/assetStats";
 import type { AuditQuery } from "../lib/audit";
 import type { CapabilityMatch } from "../lib/catalog";
+import type { ChainOverviewOptions } from "../lib/chainOverview";
 import type { CollaborationFeedOptions } from "../lib/collaborationFeed";
 import type { CollaborationStatsOptions } from "../lib/collaborationStats";
 import type { CommentStatsOptions } from "../lib/commentStats";
@@ -65,6 +66,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  ChainOverview,
   CollaborationFeed,
   CollaborationStats,
   Comment,
@@ -382,6 +384,21 @@ export function usePipelineFeed(
   return useQuery({
     queryKey: queryKeys.pipelineFeed.feed(options),
     queryFn: () => api.getPipelineFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-chain snapshot (identity, counts and bounded recent
+ * linked jobs/assets) from `/pipelines/{id}/overview` (C234).
+ */
+export function useChainOverview(
+  chainId: string,
+  options?: ChainOverviewOptions,
+): UseQueryResult<ChainOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.chainOverview.detail(chainId, options),
+    queryFn: () => api.getChainOverview(chainId, options),
   });
 }
 

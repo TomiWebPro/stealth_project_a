@@ -16,6 +16,11 @@ import { filterAuditTrail } from "../audit";
 import type { AuditQuery } from "../audit";
 import type { CapabilityMatch } from "../catalog";
 import {
+  deriveChainOverview,
+  validateChainOverviewArgs,
+} from "../chainOverview";
+import type { ChainOverviewOptions } from "../chainOverview";
+import {
   deriveCollaborationFeed,
   validateCollaborationFeedArgs,
 } from "../collaborationFeed";
@@ -159,6 +164,7 @@ import type {
   AssetUpdate,
   ActivityStats,
   AuditTrail,
+  ChainOverview,
   CollaborationFeed,
   CollaborationStats,
   Comment,
@@ -274,7 +280,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
@@ -734,6 +740,36 @@ export async function fetchPipelineFeed(
     });
   }
   return delay(derivePipelineFeed(PIPELINE_CHAINS, PROJECTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single-chain overview (C234 follow-up) derived from the same
+ * chain/job/asset/project stores as the live `/pipelines/{id}/overview`
+ * endpoint. Router-style 422 validation (chain id / recent limit), an unknown
+ * chain resolving to `undefined` (matching the live 404-to-undefined detail
+ * mapping) and the injectable `"chainOverview"` failure domain keep error and
+ * empty states at parity with live mode.
+ */
+export async function fetchChainOverview(
+  chainId: string,
+  options?: ChainOverviewOptions,
+): Promise<ChainOverview | undefined> {
+  failIfEnabled("chainOverview");
+  validateChainOverviewArgs(chainId, options);
+  if (!PIPELINE_CHAINS.some((chain) => chain.id === chainId)) return delay(undefined);
+  return delay(
+    deriveChainOverview(
+      chainId,
+      {
+        chains: PIPELINE_CHAINS,
+        jobs: JOBS,
+        assets: ASSETS,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    ),
+  );
 }
 
 /**

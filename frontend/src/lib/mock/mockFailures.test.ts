@@ -2,7 +2,16 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ApiError } from "../../api/client";
 import { extensionId as computeExtensionId } from "../extensionFeed";
-import { ASSETS, CONVERSATIONS, EXTENSIONS, JOBS, ORGANIZATIONS, PROJECTS, PROVIDERS } from "./data";
+import {
+  ASSETS,
+  CONVERSATIONS,
+  EXTENSIONS,
+  JOBS,
+  ORGANIZATIONS,
+  PIPELINE_CHAINS,
+  PROJECTS,
+  PROVIDERS,
+} from "./data";
 import {
   clearMockFailures,
   fetchActivityStats,
@@ -14,6 +23,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchChainOverview,
   fetchCollaborationFeed,
   fetchCollaborationStats,
   fetchCommentFeed,
@@ -140,6 +150,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPipelineFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchChainOverview(PIPELINE_CHAINS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchProjectOverview(projectId)).rejects.toBeInstanceOf(ApiError);
     await expect(fetchAssetOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationOverview(CONVERSATIONS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
@@ -429,6 +440,19 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchPipelineFeed()).resolves.toBeDefined();
+  });
+
+  it("exposes an injectable failure for the chain overview domain", async () => {
+    const chainId = PIPELINE_CHAINS[0]?.id ?? "";
+    setMockFailure("chainOverview");
+
+    await expect(fetchChainOverview(chainId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchChainOverview(chainId)).resolves.toBeDefined();
   });
 
   it("exposes an injectable failure for the lineage stats domain", async () => {
@@ -800,6 +824,7 @@ describe("mock error-state fakes", () => {
         ["providerFeed", () => fetchProviderFeed()],
         ["providerOverview", () => fetchProviderOverview(providerId)],
         ["operationOverview", () => fetchOperationOverview("text-to-image")],
+        ["chainOverview", () => fetchChainOverview(PIPELINE_CHAINS[0]?.id ?? "")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],

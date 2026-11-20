@@ -15,6 +15,8 @@ import type { AuditQuery } from "./audit";
 import { API_PREFIX } from "../types/common";
 import type { ApiClient } from "./apiClient";
 import type { CapabilityMatch } from "./catalog";
+import { chainOverviewQueryParams } from "./chainOverview";
+import type { ChainOverviewOptions } from "./chainOverview";
 import { collaborationFeedQueryParams } from "./collaborationFeed";
 import type { CollaborationFeedOptions } from "./collaborationFeed";
 import { collaborationStatsQueryParams } from "./collaborationStats";
@@ -116,6 +118,7 @@ import type {
   AssetStats,
   AssetUpdate,
   AuditTrail,
+  ChainOverview,
   CollaborationFeed,
   CollaborationStats,
   Comment,
@@ -514,6 +517,25 @@ export function createHttpApiClient(
     /** Newest-first authoritative production-pipeline feed derived by `/pipelines/feed` (C177). */
     getPipelineFeed(options?: PipelineFeedOptions): Promise<PipelineFeed> {
       return request<PipelineFeed>("/pipelines/feed", pipelineFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-chain snapshot; the backend 404s on an unknown chain,
+     * which is normalized to `undefined` like the other detail lookups (C234).
+     */
+    async getChainOverview(
+      chainId: string,
+      options?: ChainOverviewOptions,
+    ): Promise<ChainOverview | undefined> {
+      try {
+        return await request<ChainOverview>(
+          `/pipelines/${encodeURIComponent(chainId)}/overview`,
+          chainOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative asset-lineage metrics derived by `/lineage/stats`. */

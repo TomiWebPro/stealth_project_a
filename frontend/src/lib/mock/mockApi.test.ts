@@ -36,6 +36,7 @@ import {
   fetchAssets,
   fetchAssetsByProject,
   fetchCapabilities,
+  fetchChainOverview,
   fetchCollaborationFeed,
   fetchCollaborationStats,
   fetchConversation,
@@ -2179,6 +2180,46 @@ describe("mock API operation overview (C230 follow-up)", () => {
 
     setMockFailure("operationOverview");
     await expect(fetchOperationOverview(operationId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API chain overview (C234 follow-up)", () => {
+  const chainId = PIPELINE_CHAINS[0]?.id ?? "";
+  const chain = PIPELINE_CHAINS.find((candidate) => candidate.id === chainId);
+
+  it("derives a populated snapshot from the chain/job/asset/project seeds", async () => {
+    const overview = await fetchChainOverview(chainId, { recentLimit: 2 });
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.chain_id).toBe(chainId);
+    expect(overview?.project_id).toBe(chain?.project_id);
+    expect(overview?.kind).toBe(chain?.kind);
+    expect(overview?.counts.jobs).toBeGreaterThan(0);
+    expect(overview?.counts.assets).toBeGreaterThan(0);
+    expect((overview?.recent_jobs ?? []).length).toBeLessThanOrEqual(2);
+    expect((overview?.recent_assets ?? []).length).toBeLessThanOrEqual(2);
+  });
+
+  it("rejects a malformed id / limit and resolves an unknown chain to undefined", async () => {
+    await expect(fetchChainOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchChainOverview(chainId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchChainOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the chainOverview domain", async () => {
+    setMockFailure("chainOverview");
+    await expect(fetchChainOverview(chainId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

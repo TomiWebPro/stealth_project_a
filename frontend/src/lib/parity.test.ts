@@ -10,6 +10,8 @@ import { deriveActivityStats, validateActivityStatsArgs } from "./activityStats"
 import { filterAuditTrail } from "./audit";
 import type { AuditQuery } from "./audit";
 import { mockApiClient } from "./apiClient";
+import { deriveChainOverview, validateChainOverviewArgs } from "./chainOverview";
+import type { ChainOverviewOptions } from "./chainOverview";
 import {
   deriveCollaborationFeed,
   validateCollaborationFeedArgs,
@@ -1282,6 +1284,41 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     return derivePipelineFeed(PIPELINE_CHAINS, PROJECTS, REFERENCE_NOW, options);
   }
 
+  // Authoritative single-chain overview derives a compact snapshot from the
+  // same chain/job/asset/project stores on every call; mirror the router's 422
+  // validation, unknown-chain 404 and repository derivation over the seeds.
+  // This must precede any dynamic `/pipelines/{...}` detail branch.
+  if (/^\/pipelines\/[^/]+\/overview$/.test(path)) {
+    const chainId = pathParts[2] ?? "";
+    const rawLimit = params.get("recent_limit");
+    const options: ChainOverviewOptions = {
+      ...(rawLimit !== null ? { recentLimit: Number(rawLimit) } : {}),
+    };
+    try {
+      validateChainOverviewArgs(chainId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!PIPELINE_CHAINS.some((chain) => chain.id === chainId)) return NOT_FOUND;
+    return deriveChainOverview(
+      chainId,
+      {
+        chains: PIPELINE_CHAINS,
+        jobs: JOBS,
+        assets: ASSETS,
+        projects: PROJECTS,
+        now: REFERENCE_NOW,
+      },
+      options,
+    );
+  }
+
   // Authoritative asset lineage feed derives the same newest-first typed
   // relationship view as the `/lineage/feed` endpoint from the shared
   // relationship/asset/project seeds; mirror its 422 validation, unknown-project
@@ -1609,6 +1646,7 @@ const conversationId = CONVERSATIONS.find((c) => c.project_id === filmId)?.id ??
 /** A project with no seeded conversations, so the feed scope is genuinely empty. */
 const noConversationsId = PROJECTS.find((p) => p.name.startsWith("Northlight"))?.id ?? "";
 const runId = ORCHESTRATION_RUNS[0]?.run_id ?? "";
+const chainId = PIPELINE_CHAINS[0]?.id ?? "";
 const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
 /** Moonshot concept asset whose descendants exercise the full impact chain. */
 const impactRootId = "0b5c1e2a-2000-4000-8000-000000000011";
@@ -1733,6 +1771,9 @@ describe("live vs mock transport parity", () => {
         "getPipelineFeed scoped, filtered and limited",
         (api) => api.getPipelineFeed({ projectId: filmId, kind: "training", limit: 1 }),
       ],
+      ["getChainOverview", (api) => api.getChainOverview(chainId)],
+      ["getChainOverview limited", (api) => api.getChainOverview(chainId, { recentLimit: 1 })],
+      ["getChainOverview missing", (api) => api.getChainOverview("00000000-0000-4000-8000-000000000000")],
       ["getLineageStats", (api) => api.getLineageStats()],
       ["getLineageStats scoped", (api) => api.getLineageStats({ projectId: filmId })],
       ["getLineageFeed", (api) => api.getLineageFeed()],
@@ -2026,6 +2067,19 @@ describe("live vs mock transport parity", () => {
     );
     expect(await live.getOperationOverview("missing-operation")).toBeUndefined();
     expect(await mockApiClient.getOperationOverview("missing-operation")).toBeUndefined();
+    // The chain overview resolves an unknown chain to undefined on both
+    // transports and returns a derived snapshot for a seeded chain (bounded by
+    // recent_limit, with counts never bounded).
+    expect(await live.getChainOverview(chainId)).toEqual(
+      await mockApiClient.getChainOverview(chainId),
+    );
+    expect(await live.getChainOverview(chainId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getChainOverview(chainId, { recentLimit: 1 }),
+    );
+    expect(await live.getChainOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getChainOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
     // The extension overview resolves an unknown extension to undefined on both
     // transports and returns a derived snapshot for a seeded extension id.
     const seededExtensionId = computeExtensionId(EXTENSIONS[0]?.manifest.id ?? "");
@@ -2674,6 +2728,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed chain id or an out-of-range
+    // recent_limit with the same 422 envelope for the single-chain overview.
+    const badChainOverviewOptions: Array<[string, string, ChainOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [chainId, chainId, { recentLimit: 0 }],
+      [chainId, chainId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badChainOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getChainOverview(mockId, options).catch((cause) => cause),
+        live.getChainOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -2864,6 +2934,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrganizationOverview).toBe("function");
     expect(typeof typed.getPipelineStats).toBe("function");
     expect(typeof typed.getPipelineFeed).toBe("function");
+    expect(typeof typed.getChainOverview).toBe("function");
     expect(typeof typed.getLineageStats).toBe("function");
     expect(typeof typed.getLineageFeed).toBe("function");
     expect(typeof typed.getCollaborationStats).toBe("function");
