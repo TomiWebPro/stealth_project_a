@@ -18,6 +18,7 @@ import { AudioPanel } from "../audio/AudioPanel";
 import { formatRelative } from "../home/format";
 import { ConversationOverviewPanel } from "./ConversationOverviewPanel";
 import { ConversationStatsPanel } from "./ConversationStatsPanel";
+import { MessageOverviewPanel } from "./MessageOverviewPanel";
 import {
   buildConversationRows,
   buildMessageRows,
@@ -333,6 +334,13 @@ export function ChatScreen() {
               conversationId={conversationId}
               title="Conversation overview"
               description="Authoritative snapshot of the selected conversation, derived from the conversation stores."
+            />
+          ) : null}
+          {conversationId ? (
+            <MessageOverviewPanel
+              conversationId={conversationId}
+              title="Message overview"
+              description="Authoritative snapshot of one message in the selected conversation, derived from the conversation stores."
             />
           ) : null}
           <div className="grid min-h-[34rem] gap-4 lg:grid-cols-[minmax(15rem,20rem)_1fr]">
