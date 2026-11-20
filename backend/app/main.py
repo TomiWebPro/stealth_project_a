@@ -70,6 +70,7 @@ from .routers import (
     orchestration_feed,
     orchestration_stats,
     plan_overview,
+    run_overview,
     pipelines,
     projects,
     project_feed,
@@ -356,6 +357,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # it beside the other orchestration routers and before orchestration so its
     # literal suffix stays explicit.
     app.include_router(plan_overview.router, prefix=API_PREFIX)
+    # "/orchestration/runs/{id}/overview" is a nested single-run view; mount it
+    # beside the other orchestration routers and before orchestration so its
+    # literal suffix stays explicit.
+    app.include_router(run_overview.router, prefix=API_PREFIX)
     app.include_router(orchestration.router, prefix=API_PREFIX)
     # "/events/feed" and "/events/stats" have no templated sibling at that
     # segment; register them before the events stream router to keep both

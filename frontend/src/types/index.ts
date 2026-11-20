@@ -34,6 +34,7 @@ export * from "./orchestration";
 export * from "./orchestrationFeed";
 export * from "./orchestrationStats";
 export * from "./planOverview";
+export * from "./runOverview";
 export * from "./search";
 export * from "./searchStats";
 export * from "./dashboard";

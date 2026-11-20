@@ -216,6 +216,11 @@ All paths are prefixed with `/api/v1`.
   zero-filled run-stage breakdown shared with `/orchestration/stats` and newest
   runs bounded by `recent_limit`) derived fresh from the plan/run stores; unknown
   plan uses the shared 404 `plan_not_found` envelope
+  `GET /orchestration/runs/{run_id}/overview?recent_limit=` — compact single-run
+  snapshot (run identity + joined plan/project context, whole-scope linked/resolved
+  job and plan-step counts, zero-filled job-status breakdown shared with
+  `/jobs/stats`, newest linked jobs bounded by `recent_limit`) derived fresh from
+  the run/plan/job stores; unknown run uses the shared 404 `run_not_found` envelope
   `GET|POST /presence`,
   `GET|POST /comments`, `GET /storage/stats`,
   `GET /comments/feed?project_id=&limit=` — authoritative newest-first comment

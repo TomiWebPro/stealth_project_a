@@ -286,6 +286,11 @@ from .plan_overview import (
     PlanOverviewCounts,
     PlanOverviewRunRef,
 )
+from .run_overview import (
+    RunOverview,
+    RunOverviewCounts,
+    RunOverviewJobRef,
+)
 from .project_feed import (
     ProjectFeed,
     ProjectFeedItem,
@@ -648,6 +653,10 @@ __all__ = [
     "PlanOverview",
     "PlanOverviewCounts",
     "PlanOverviewRunRef",
+    # run overview
+    "RunOverview",
+    "RunOverviewCounts",
+    "RunOverviewJobRef",
     # provider
     "CapabilityQuery",
     "Extension",
