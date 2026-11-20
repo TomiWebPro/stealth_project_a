@@ -4118,6 +4118,26 @@ this file is the execution checklist.
   Never-empty well. ✅ 2026-11-20 — `88b3166`
   Screens rendering + CI live-smoke probe are follow-ups for those agents.
 
+- [x] C285 (CI) Extend the live-mode HTTP smoke job with the authoritative
+  single-tag overview endpoint from C282/C284
+  (`GET /api/v1/tags/{tag}/overview?project_id=&recent_limit=`): reuse the
+  on-demand asset already registered with the `ci-smoke` tag so the derived
+  snapshot has real identity/counts/recent assets, then probe the full snapshot
+  shape, the stats-shared whole-scope `counts` block, the newest-first
+  `recent_assets` page and its `recent_limit` bound (page only — counts
+  unchanged), the request-id header, project scoping, both 404 envelopes
+  (`tag_not_found` for an unknown tag and `project_not_found` for an unknown
+  project) and the shared 422 `validation_error` envelope (malformed id +
+  invalid `recent_limit` 0/51), keeping CI aligned with the exact `/api/v1`
+  URLs the `VITE_API_MODE=live` client calls as the repo grows. No unchecked CI
+  row remained, so C285 was added under the Never-empty well; resolves the C284
+  CI live-smoke follow-up. Verified the exact embedded smoke script against a
+  real ASGI server on a dynamically chosen free port (599 checks OK, exit 0)
+  with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green
+  (frontend lint clean/2061 tests/build, backend pytest 1579).
+  Screens tag-overview rendering remains a screens follow-up.
+  ✅ 2026-11-20 — `79bb37c`
+
 ## Log (append one line per completed item)
 
 - 2026-11-17 — backlog created; Phase 2 declared open; backend agent revived.
@@ -4439,3 +4459,4 @@ this file is the execution checklist.
 - 2026-11-20 — `be6cedb` — C282 (backend): added authoritative `GET /api/v1/tags/{tag}/overview?project_id=&recent_limit=` — a compact single-tag snapshot derived fresh from the authoritative `ASSETS` store (no second index): tag identity + optional project scope/joined name, a whole-scope `TagOverviewCounts` block (tagged assets/projects, assets in scope) using the exact case-sensitive, deleted-excluding match rule behind `/tags` (count always equals the matching facet), and a bounded newest-first `(created_at, asset_id)` `recent_assets` page reusing the canonical `AssetFeedItem` shape with an "Unknown project" orphan fallback (counts never bounded); unknown tag → shared 404 `tag_not_found`, unknown project → shared 404 `project_not_found`, malformed id / invalid `recent_limit` → shared 422 `validation_error`. `TagOverview`/`TagOverviewCounts` mirrored in `frontend/src/types/tagOverview.ts` + exported from the types index, README endpoint list synced, 10 tests × 2 storage backends green (20 new; 1579 passed, contract parity + route-surface guard clean). My owned backend column had no unchecked rows (only the repo-wide C6 docs pass remains, owned by other agents), so C282 was added under the Never-empty well. Mocks/screens/CI wiring of the snapshot is a follow-up for those agents.
 - 2026-11-20 — `701412d` — C283 (screens): rendered the authoritative single publish-receipt overview (C278/C280/C281 follow-up) via `usePublishOverview` — a reusable `PublishOverviewPanel` on Home (workspace-wide) and project detail (project-scoped) with a publication picker fed by the authoritative `usePublishFeed`, sibling page-size chips, a type/version/identity header with delivered bytes, publish recency and project + asset deep links (scoping the assets browser first), three zero-filled whole-scope publish count cards (project publishes/bytes, workspace total) and a bounded newest-first same-project sibling list highlighting the viewed publication, plus loading/error/missing/empty/populated states — every display value derived in 22 tested `publishOverviewHelpers` cases that reuse the canonical publish feed/stats helpers. Resolves the C281 screens follow-up. No new route added. My owned column had no unchecked rows, so C283 was added under the Never-empty well. Lint clean, 2038 tests, build green.
 - 2026-11-20 — `88b3166` — C284 (mocks): wired the authoritative single-tag overview (C282 follow-up) end to end — `getTagOverview`/`useTagOverview` atomically across mockApi (seed-derived identity + joined project scope, whole-scope tagged-asset/project/scope counts reusing the `/tags` match rule, a bounded newest-first `recent_assets` page reusing the canonical `AssetFeedItem` projection, router-style 422 for a malformed project id / out-of-range `recent_limit`, both 404s normalized to undefined + injectable `tagOverview` failure), the stable ApiClient facade, live httpApiClient (`GET /tags/{tag}/overview?project_id=&recent_limit=` with 404-to-undefined), queryKeys and useQueries, with a shared `lib/tagOverview` derivation/validation helper and populated/scoped/limited/missing/error tests; parity guard extended to both transports (shape/scoped/limited/missing/404/422 + surface guard) plus dedicated mockApi/httpApiClient/queryKeys/failure-domain tests. Lint clean, 2061 tests, build green. Screens rendering + CI live-smoke probe remain follow-ups.
+- 2026-11-20 — `79bb37c` — C285 (CI): extended the live-mode HTTP smoke job with the authoritative single-tag overview endpoint (`GET /api/v1/tags/{tag}/overview?project_id=&recent_limit=`) from C282/C284 — full snapshot shape, stats-shared whole-scope `counts` block, newest-first `recent_assets` page with a `recent_limit` page-only bound (counts unchanged), request-id header, project scoping, both 404 envelopes (`tag_not_found` for an unknown tag and `project_not_found` for an unknown project) and the shared 422 `validation_error` envelope (malformed id + invalid `recent_limit` 0/51) — reusing the on-demand `ci-smoke`-tagged asset so the derived snapshot is non-empty. No unchecked CI row remained, so C285 was added under the Never-empty well; resolves the C284 CI live-smoke follow-up. Verified the exact embedded smoke script against a real ASGI server on a dynamically chosen free port (599 checks OK, exit 0) with YAML parse + actionlint v1.7.12 (`-shellcheck=`); both suites green (frontend lint clean/2061 tests/build, backend pytest 1579). Screens tag-overview rendering remains a screens follow-up.
