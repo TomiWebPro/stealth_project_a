@@ -346,6 +346,10 @@ All paths are prefixed with `/api/v1`.
 - **Tags:** `GET /tags?project_id=&prefix=&limit=` — most-used-first asset tag
   facets (count of non-deleted assets per tag) derived from the authoritative
   store; optional case-insensitive prefix filter for autocomplete
+  `GET /tags/{tag}/overview?project_id=&recent_limit=` — compact single-tag snapshot
+  with whole-scope counts (tagged assets/projects, assets in scope) and a bounded
+  newest-first page of tagged assets reusing the canonical `AssetFeedItem` shape;
+  unknown tag/project uses the shared 404 envelope, bad id/limit the shared 422
 
 All non-2xx responses use the shared `ErrorResponse` envelope with an
 `X-Request-ID` header. Bearer tokens from `POST /auth/login` authenticate

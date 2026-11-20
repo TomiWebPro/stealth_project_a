@@ -41,6 +41,7 @@ export * from "./search";
 export * from "./searchStats";
 export * from "./dashboard";
 export * from "./tags";
+export * from "./tagOverview";
 export * from "./impact";
 export * from "./lineageFeed";
 export * from "./lineageOverview";

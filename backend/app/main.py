@@ -95,6 +95,7 @@ from .routers import (
     shots,
     splat,
     tags,
+    tag_overview,
     tree,
     upload_feed,
     upload_overview,
@@ -452,6 +453,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(search.router, prefix=API_PREFIX)
     app.include_router(dashboard.router, prefix=API_PREFIX)
     app.include_router(tags.router, prefix=API_PREFIX)
+    # "/tags/{tag}/overview" is a nested single-tag view; mount it beside the
+    # tag facet router so its literal suffix stays explicit against "/tags".
+    app.include_router(tag_overview.router, prefix=API_PREFIX)
     app.include_router(impact.router, prefix=API_PREFIX)
     # "/lineage/feed" and "/lineage/stats" are literal paths with no templated
     # sibling; register them directly to keep both lineage paths explicit.

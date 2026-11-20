@@ -80,6 +80,7 @@ from .repositories.retry_stats import RetryStatsRepository
 from .repositories.search import SearchRepository
 from .repositories.search_stats import SearchStatsRepository
 from .repositories.tags import TagRepository
+from .repositories.tag_overview import TagOverviewRepository
 from .repositories.uploads import UploadRepository
 from .repositories.upload_feed import UploadFeedRepository
 from .repositories.upload_overview import UploadOverviewRepository
@@ -600,6 +601,12 @@ def get_tag_repository(
     return repositories.tags
 
 
+def get_tag_overview_repository(
+    repositories: Annotated[Repositories, Depends(get_repositories)],
+) -> TagOverviewRepository:
+    return repositories.tag_overview
+
+
 def get_impact_repository(
     repositories: Annotated[Repositories, Depends(get_repositories)],
 ) -> ImpactRepository:
@@ -738,6 +745,7 @@ __all__ = [
     "get_search_repository",
     "get_search_stats_repository",
     "get_tag_repository",
+    "get_tag_overview_repository",
     "get_store",
     "get_training_service",
     "get_upload_repository",

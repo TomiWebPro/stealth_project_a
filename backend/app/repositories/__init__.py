@@ -73,6 +73,7 @@ from .retry_stats import RetryStatsRepository
 from .search import SearchRepository
 from .search_stats import SearchStatsRepository
 from .tags import TagRepository
+from .tag_overview import TagOverviewRepository
 from .uploads import UploadRepository
 from .upload_feed import UploadFeedRepository
 from .upload_overview import UploadOverviewRepository
@@ -157,6 +158,7 @@ class Repositories:
     search_stats: SearchStatsRepository
     dashboard: DashboardRepository
     tags: TagRepository
+    tag_overview: TagOverviewRepository
     impact: ImpactRepository
     version_feed: VersionFeedRepository
     version_stats: VersionStatsRepository
@@ -253,6 +255,7 @@ class Repositories:
         activity = ActivityRepository(store, projects, clock=clock)
         activity_stats = ActivityStatsRepository(activity, clock=clock)
         tags = TagRepository(store, projects, clock=clock)
+        tag_overview = TagOverviewRepository(store, projects, clock=clock)
         impact = ImpactRepository(store, assets, clock=clock)
         version_feed = VersionFeedRepository(store, projects, clock=clock)
         version_stats = VersionStatsRepository(store, projects, clock=clock)
@@ -329,6 +332,7 @@ class Repositories:
             search_stats=search_stats,
             dashboard=dashboard,
             tags=tags,
+            tag_overview=tag_overview,
             impact=impact,
             version_feed=version_feed,
             version_stats=version_stats,
