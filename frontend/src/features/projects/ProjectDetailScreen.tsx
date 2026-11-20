@@ -39,6 +39,7 @@ import { VersionPanel } from "../assets/VersionPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
+import { PublishOverviewPanel } from "../assets/PublishOverviewPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionFeedPanel } from "../assets/VersionFeedPanel";
 import { VersionOverviewPanel } from "../assets/VersionOverviewPanel";
@@ -234,6 +235,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         projectId={projectId}
         title="Project published deliverables"
         description="Newest-first published assets scoped to this project."
+      />
+      <PublishOverviewPanel
+        projectId={projectId}
+        title="Project publication overview"
+        description="Select a publication in this project to inspect its receipt identity and publish activity."
       />
       <PublishStatsPanel
         projectId={projectId}

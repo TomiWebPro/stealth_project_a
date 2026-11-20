@@ -16,6 +16,7 @@ import { CommentStatsPanel } from "../comments/CommentStatsPanel";
 import { AssetFeedPanel } from "../assets/AssetFeedPanel";
 import { AssetStatsPanel } from "../assets/AssetStatsPanel";
 import { PublishFeedPanel } from "../assets/PublishFeedPanel";
+import { PublishOverviewPanel } from "../assets/PublishOverviewPanel";
 import { PublishStatsPanel } from "../assets/PublishStatsPanel";
 import { VersionFeedPanel } from "../assets/VersionFeedPanel";
 import { VersionOverviewPanel } from "../assets/VersionOverviewPanel";
@@ -214,6 +215,10 @@ export function HomeScreen() {
         <PublishFeedPanel
           title="Workspace published deliverables"
           description="Newest-first published assets across every project in the workspace."
+        />
+        <PublishOverviewPanel
+          title="Workspace publication overview"
+          description="Select any publication to inspect its receipt identity and whole-project publish activity."
         />
         <PublishStatsPanel
           title="Workspace publish stats"
