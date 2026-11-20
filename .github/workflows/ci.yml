@@ -5764,6 +5764,155 @@ jobs:
               check("users/{id}/overview setup", False,
                     "could not log in to obtain a user id for the overview probe")
 
+          # Authoritative single job-event overview (C274/C276) is the newest
+          # /api/v1 URL the live client calls (getEventOverview). Reuse the
+          # on-demand submitted + cancelled + retried job from the retry-feed
+          # probe (which carries a real JOB_EVENTS stream) and resolve a real
+          # sequence from its authoritative events, then probe the snapshot
+          # shape, identity + joined operation/project context, the stats-shared
+          # zero-filled by_type buckets and whole-job total, the newest-first
+          # sibling page, the recent_limit page-only bound, the request-id
+          # header and the shared 404 job_not_found / event_not_found plus 422
+          # validation_error envelopes, keeping CI aligned with the exact
+          # /api/v1 URLs the VITE_API_MODE=live client calls as the repo grows.
+          event_seq = None
+          if retry_job_id:
+              ev_frame = httpx.get(
+                  f"{base}/jobs/{retry_job_id}/events", timeout=5)
+              evframeb = ev_frame.json() if ev_frame.status_code == 200 else {}
+              event_seq = next(
+                  (e.get("seq") for e in evframeb.get("events", [])
+                   if isinstance(e.get("seq"), int)),
+                  None)
+              check("jobs/{id}/events/{seq}/overview event stream setup",
+                    ev_frame.status_code == 200
+                    and isinstance(evframeb.get("events"), list)
+                    and len(evframeb.get("events", [])) >= 1
+                    and event_seq is not None,
+                    ev_frame.text)
+
+          if retry_job_id and event_seq is not None:
+              evov = httpx.get(
+                  f"{base}/jobs/{retry_job_id}/events/{event_seq}/overview", timeout=5)
+              evob = evov.json() if evov.status_code == 200 else {}
+              check("jobs/{id}/events/{seq}/overview 200 snapshot shape",
+                    evov.status_code == 200 and all(
+                        k in evob for k in (
+                            "job_id", "seq", "type", "operation_id", "project_id",
+                            "project_name", "status", "progress", "message",
+                            "asset_id", "error", "timestamp", "counts",
+                            "recent_siblings", "generated_at")),
+                    evov.text)
+              check("jobs/{id}/events/{seq}/overview identity + context",
+                    evov.status_code == 200
+                    and evob.get("job_id") == retry_job_id
+                    and evob.get("seq") == event_seq
+                    and evob.get("type") in (
+                        "status", "progress", "intermediate", "result", "error", "log")
+                    and evob.get("operation_id") == "text-to-image"
+                    and evob.get("project_id") == project_id
+                    and isinstance(evob.get("project_name"), str)
+                    and bool(evob.get("project_name"))
+                    and isinstance(evob.get("timestamp"), str)
+                    and bool(evob.get("timestamp"))
+                    and isinstance(evob.get("generated_at"), str)
+                    and bool(evob.get("generated_at")),
+                    evov.text)
+              check("jobs/{id}/events/{seq}/overview stats-shared counts",
+                    evov.status_code == 200
+                    and isinstance(evob.get("counts"), dict)
+                    and isinstance(evob["counts"].get("total"), int)
+                    and evob["counts"]["total"] >= 1
+                    and isinstance(evob["counts"].get("by_type"), list)
+                    and {b.get("type") for b in evob["counts"]["by_type"]}
+                    == {"status", "progress", "intermediate", "result", "error", "log"}
+                    and all(isinstance(b.get("count"), int) and b["count"] >= 0
+                            for b in evob["counts"]["by_type"])
+                    and sum(b.get("count", 0)
+                            for b in evob["counts"]["by_type"])
+                    == evob["counts"]["total"],
+                    evov.text)
+              siblings = evob.get("recent_siblings", [])
+              check("jobs/{id}/events/{seq}/overview sibling page + recency",
+                    evov.status_code == 200
+                    and isinstance(siblings, list)
+                    and len(siblings) >= 1
+                    and all(all(k in s for k in ("type", "job_id", "seq", "timestamp"))
+                            for s in siblings)
+                    and all(s.get("job_id") == retry_job_id for s in siblings)
+                    and [(s["timestamp"], s["seq"]) for s in siblings]
+                    == sorted(((s["timestamp"], s["seq"])
+                               for s in siblings), reverse=True),
+                    evov.text)
+              check("jobs/{id}/events/{seq}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in evov.headers},
+                    str(dict(evov.headers)))
+              evov_limited = httpx.get(
+                  f"{base}/jobs/{retry_job_id}/events/{event_seq}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              evlb = (evov_limited.json() if evov_limited.status_code == 200 else {})
+              check("jobs/{id}/events/{seq}/overview recent_limit bounds page only",
+                    evov_limited.status_code == 200
+                    and len(evlb.get("recent_siblings", [])) <= 1
+                    and evlb.get("counts") == evob.get("counts")
+                    and evlb.get("seq") == event_seq
+                    and evlb.get("job_id") == retry_job_id,
+                    evov_limited.text)
+              for bad_limit in (0, 51):
+                  evov_bad = httpx.get(
+                      f"{base}/jobs/{retry_job_id}/events/{event_seq}/overview",
+                      params={"recent_limit": bad_limit}, timeout=5)
+                  evblbody = (evov_bad.json() if evov_bad.status_code == 422 else {})
+                  check(f"jobs/{{id}}/events/{{seq}}/overview 422 invalid limit {bad_limit}",
+                        evov_bad.status_code == 422
+                        and evblbody.get("error", {}).get("code") == "validation_error"
+                        and bool(evblbody.get("error", {}).get("request_id")),
+                        evov_bad.text)
+          else:
+              check("jobs/{id}/events/{seq}/overview setup", False,
+                    "could not obtain a real event sequence for the overview probe")
+
+          evov_missing_job = httpx.get(
+              f"{base}/jobs/00000000-0000-4000-8000-000000000000/events/0/overview",
+              timeout=5)
+          ev404jobbody = (evov_missing_job.json()
+                          if evov_missing_job.status_code == 404 else {})
+          check("jobs/{id}/events/{seq}/overview 404 job_not_found envelope",
+                evov_missing_job.status_code == 404
+                and ev404jobbody.get("error", {}).get("code") == "job_not_found"
+                and bool(ev404jobbody.get("error", {}).get("request_id")),
+                evov_missing_job.text)
+
+          if retry_job_id:
+              evov_missing_seq = httpx.get(
+                  f"{base}/jobs/{retry_job_id}/events/999999/overview", timeout=5)
+              ev404seqbody = (evov_missing_seq.json()
+                              if evov_missing_seq.status_code == 404 else {})
+              check("jobs/{id}/events/{seq}/overview 404 event_not_found envelope",
+                    evov_missing_seq.status_code == 404
+                    and ev404seqbody.get("error", {}).get("code") == "event_not_found"
+                    and bool(ev404seqbody.get("error", {}).get("request_id")),
+                    evov_missing_seq.text)
+
+          evov_bad_job = httpx.get(
+              f"{base}/jobs/not-a-uuid/events/0/overview", timeout=5)
+          evbadjobbody = (evov_bad_job.json() if evov_bad_job.status_code == 422 else {})
+          check("jobs/{id}/events/{seq}/overview 422 malformed job id envelope",
+                evov_bad_job.status_code == 422
+                and evbadjobbody.get("error", {}).get("code") == "validation_error"
+                and bool(evbadjobbody.get("error", {}).get("request_id")),
+                evov_bad_job.text)
+
+          if retry_job_id:
+              evov_bad_seq = httpx.get(
+                  f"{base}/jobs/{retry_job_id}/events/-1/overview", timeout=5)
+              evbadseqbody = (evov_bad_seq.json() if evov_bad_seq.status_code == 422 else {})
+              check("jobs/{id}/events/{seq}/overview 422 negative seq envelope",
+                    evov_bad_seq.status_code == 422
+                    and evbadseqbody.get("error", {}).get("code") == "validation_error"
+                    and bool(evbadseqbody.get("error", {}).get("request_id")),
+                    evov_bad_seq.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
