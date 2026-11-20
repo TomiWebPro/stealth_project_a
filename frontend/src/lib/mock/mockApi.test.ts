@@ -94,6 +94,7 @@ import {
   fetchSearchStats,
   fetchStorageStats,
   fetchUploadFeed,
+  fetchUploadOverview,
   fetchUploadStats,
   fetchWorkflowTemplates,
   resetMockAssets,
@@ -2303,6 +2304,40 @@ describe("mock API run overview (C242 follow-up)", () => {
   it("injects a failure for the runOverview domain", async () => {
     setMockFailure("runOverview");
     await expect(fetchRunOverview(runId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API upload overview (C246 follow-up)", () => {
+  const uploadId = UPLOADS[0]?.upload_id ?? "";
+  const upload = UPLOADS.find((candidate) => candidate.upload_id === uploadId);
+
+  it("derives a populated snapshot from the upload/project seeds", async () => {
+    const overview = await fetchUploadOverview(uploadId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.upload_id).toBe(uploadId);
+    expect(overview?.filename).toBe(upload?.filename);
+    expect(overview?.counts.project_tickets).toBeGreaterThanOrEqual(1);
+    expect(overview?.progress).toBeGreaterThanOrEqual(0);
+    expect(overview?.progress).toBeLessThanOrEqual(1);
+  });
+
+  it("rejects a malformed id and resolves an unknown ticket to undefined", async () => {
+    await expect(fetchUploadOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchUploadOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the uploadOverview domain", async () => {
+    setMockFailure("uploadOverview");
+    await expect(fetchUploadOverview(uploadId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

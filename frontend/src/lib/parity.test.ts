@@ -142,6 +142,7 @@ import { deriveSearchStats, validateSearchStatsArgs } from "./searchStats";
 import { deriveTagIndex, validateTagArgs } from "./tags";
 import { deriveUploadFeed, validateUploadFeedArgs } from "./uploadFeed";
 import type { UploadFeedOptions } from "./uploadFeed";
+import { deriveUploadOverview, validateUploadOverviewArgs } from "./uploadOverview";
 import { deriveUploadStats, validateUploadStatsArgs } from "./uploadStats";
 import { deriveVersionFeed, validateVersionFeedArgs } from "./versionFeed";
 import type { VersionFeedOptions } from "./versionFeed";
@@ -306,6 +307,27 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return deriveUploadFeed(UPLOADS, PROJECTS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative single-upload-ticket overview derives a compact snapshot from
+  // the same upload/project stores as the live `/uploads/{id}/overview` endpoint;
+  // mirror the router's 422 id validation, unknown-ticket 404 and repository
+  // derivation so live and mock agree exactly (C246).
+  if (/^\/uploads\/[^/]+\/overview$/.test(path)) {
+    const uploadId = pathParts[2] ?? "";
+    try {
+      validateUploadOverviewArgs(uploadId);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!UPLOADS.some((upload) => upload.upload_id === uploadId)) return NOT_FOUND;
+    return deriveUploadOverview(uploadId, UPLOADS, PROJECTS, REFERENCE_NOW);
   }
 
   // Authoritative job event feed derives the same event collection the
@@ -1928,6 +1950,11 @@ describe("live vs mock transport parity", () => {
         "getUploadFeed scoped and limited",
         (api) => api.getUploadFeed({ projectId: filmId, limit: 2 }),
       ],
+      ["getUploadOverview", (api) => api.getUploadOverview(UPLOADS[0]?.upload_id ?? "")],
+      [
+        "getUploadOverview missing",
+        (api) => api.getUploadOverview("00000000-0000-4000-8000-000000000000"),
+      ],
       ["getEventStats", (api) => api.getEventStats()],
       ["getEventStats scoped", (api) => api.getEventStats({ projectId: filmId })],
       ["getEventFeed", (api) => api.getEventFeed()],
@@ -2181,6 +2208,16 @@ describe("live vs mock transport parity", () => {
     expect(await live.getRunOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getRunOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The upload overview resolves an unknown ticket to undefined on both
+    // transports and returns a byte/count snapshot for a seeded ticket.
+    const seededUploadId = UPLOADS[0]?.upload_id ?? "";
+    expect(await live.getUploadOverview(seededUploadId)).toEqual(
+      await mockApiClient.getUploadOverview(seededUploadId),
+    );
+    expect(await live.getUploadOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getUploadOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The extension overview resolves an unknown extension to undefined on both
     // transports and returns a derived snapshot for a seeded extension id.
@@ -2878,6 +2915,15 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed upload id with the same 422 envelope
+    // for the single-upload-ticket overview (C246).
+    const [badUploadMockErr, badUploadLiveErr] = await Promise.all([
+      mockApiClient.getUploadOverview("not-a-uuid").catch((cause) => cause),
+      live.getUploadOverview("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(badUploadMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badUploadLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -3041,6 +3087,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getSearchStats).toBe("function");
     expect(typeof typed.getUploadStats).toBe("function");
     expect(typeof typed.getUploadFeed).toBe("function");
+    expect(typeof typed.getUploadOverview).toBe("function");
     expect(typeof typed.getEventStats).toBe("function");
     expect(typeof typed.getEventFeed).toBe("function");
     expect(typeof typed.getRetryStats).toBe("function");

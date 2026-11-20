@@ -187,6 +187,8 @@ export type {
   Timestamp,
   UploadFeed,
   UploadFeedItem,
+  UploadOverview,
+  UploadOverviewCounts,
   UploadProjectCount,
   UploadStats,
   UploadStatus,

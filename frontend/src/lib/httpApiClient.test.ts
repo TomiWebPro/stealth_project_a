@@ -1162,6 +1162,58 @@ describe("createHttpApiClient run overview (C242)", () => {
   });
 });
 
+describe("createHttpApiClient upload overview (C246)", () => {
+  const uploadId = "0b5c1e2a-7000-4000-8000-000000000001";
+  const overview = {
+    upload_id: uploadId,
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    filename: "concept_sheet.png",
+    content_type: "image/png",
+    status: "complete",
+    declared_size: 1_200_000,
+    size_bytes: 1_200_000,
+    bytes_remaining: 0,
+    progress: 1,
+    expired: false,
+    created_at: "2026-03-17T10:30:00.000Z",
+    expires_at: "2026-03-19T10:30:00.000Z",
+    counts: { project_tickets: 4, project_completed: 2, project_bytes_uploaded: 4_600_000 },
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the upload overview path", async () => {
+    const { fetchImpl, calls } = router({ [`/uploads/${uploadId}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getUploadOverview(uploadId)).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/uploads/${uploadId}/overview`);
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "upload_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getUploadOverview(uploadId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getUploadOverview(uploadId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient extension overview (C222)", () => {
   const extensionId = "0f1f2a3b-4c5d-5e6f-8a9b-0c1d2e3f4a5b";
   const overview = {

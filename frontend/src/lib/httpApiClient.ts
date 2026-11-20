@@ -182,6 +182,7 @@ import type {
   StorageStats,
   TagIndex,
   UploadFeed,
+  UploadOverview,
   UploadStats,
   User,
   VersionFeed,
@@ -977,6 +978,22 @@ export function createHttpApiClient(
     /** Newest-first authoritative upload-ticket feed derived by the backend `/uploads/feed`. */
     getUploadFeed(options?: UploadFeedOptions): Promise<UploadFeed> {
       return request<UploadFeed>("/uploads/feed", uploadFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-upload-ticket snapshot; the backend 404s on an
+     * unknown ticket, which is normalized to `undefined` like the other detail
+     * lookups (C246).
+     */
+    async getUploadOverview(uploadId: string): Promise<UploadOverview | undefined> {
+      try {
+        return await request<UploadOverview>(
+          `/uploads/${encodeURIComponent(uploadId)}/overview`,
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     /** Authoritative job event stream metrics derived by the backend `/events/stats`. */

@@ -383,6 +383,9 @@ export const queryKeys = {
     feed: (options: UploadFeedOptions = {}) =>
       ["upload-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
   },
+  uploadOverview: {
+    detail: (uploadId: string) => ["upload-overview", "detail", uploadId] as const,
+  },
   eventStats: {
     summary: (options: EventStatsOptions = {}) =>
       ["event-stats", "summary", options.projectId ?? "all"] as const,

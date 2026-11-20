@@ -126,6 +126,7 @@ import type {
   StorageStats,
   TagIndex,
   UploadFeed,
+  UploadOverview,
   UploadStats,
   User,
   VersionFeed,
@@ -351,6 +352,12 @@ export interface ApiClient {
   getUploadStats(options?: UploadStatsOptions): Promise<UploadStats>;
   /** Newest-first authoritative upload-ticket feed derived by `/uploads/feed`, optionally project-scoped (C129). */
   getUploadFeed(options?: UploadFeedOptions): Promise<UploadFeed>;
+  /**
+   * Authoritative single-upload-ticket snapshot (identity, joined project, byte
+   * accounting, derived byte signals and whole-project counts) from
+   * `/uploads/{id}/overview`; unknown tickets resolve to `undefined` (C246).
+   */
+  getUploadOverview(uploadId: string): Promise<UploadOverview | undefined>;
   /** Authoritative job event stream metrics derived by `/events/stats`, optionally project-scoped (C101). */
   getEventStats(options?: EventStatsOptions): Promise<EventStats>;
   /** Newest-first authoritative job event feed derived by `/events/feed`, optionally project/type-scoped (C169). */
@@ -452,6 +459,7 @@ export const mockApiClient: ApiClient = {
   getSearchStats: mockApi.fetchSearchStats,
   getUploadStats: mockApi.fetchUploadStats,
   getUploadFeed: mockApi.fetchUploadFeed,
+  getUploadOverview: mockApi.fetchUploadOverview,
   getEventStats: mockApi.fetchEventStats,
   getEventFeed: mockApi.fetchEventFeed,
   getRetryStats: mockApi.fetchRetryStats,

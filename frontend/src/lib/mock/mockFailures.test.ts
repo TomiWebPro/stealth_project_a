@@ -90,6 +90,7 @@ import {
   fetchStorageStats,
   fetchTags,
   fetchUploadFeed,
+  fetchUploadOverview,
   fetchUploadStats,
   fetchVersionFeed,
   fetchVersionStats,
@@ -125,6 +126,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchSearchStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchUploadStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchUploadFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchUploadOverview("0b5c1e2a-7000-4000-8000-000000000001")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchEventStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchRetryStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchRetryFeed()).rejects.toBeInstanceOf(ApiError);
@@ -610,6 +612,19 @@ describe("mock error-state fakes", () => {
     await expect(fetchUploadFeed()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the upload overview domain", async () => {
+    const uploadId = "0b5c1e2a-7000-4000-8000-000000000001";
+    setMockFailure("uploadOverview");
+
+    await expect(fetchUploadOverview(uploadId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchUploadOverview(uploadId)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the asset feed domain", async () => {
     setMockFailure("assetFeed");
 
@@ -859,6 +874,7 @@ describe("mock error-state fakes", () => {
         ["chainOverview", () => fetchChainOverview(PIPELINE_CHAINS[0]?.id ?? "")],
         ["planOverview", () => fetchPlanOverview(ORCHESTRATION_PLANS[0]?.plan_id ?? "")],
         ["runOverview", () => fetchRunOverview(ORCHESTRATION_RUNS[0]?.run_id ?? "")],
+        ["uploadOverview", () => fetchUploadOverview("0b5c1e2a-7000-4000-8000-000000000001")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["extensionStats", () => fetchExtensionStats()],

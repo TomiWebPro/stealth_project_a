@@ -153,6 +153,7 @@ import { deriveTagIndex, validateTagArgs } from "../tags";
 import type { TagOptions } from "../tags";
 import { deriveUploadFeed, validateUploadFeedArgs } from "../uploadFeed";
 import type { UploadFeedOptions } from "../uploadFeed";
+import { deriveUploadOverview, validateUploadOverviewArgs } from "../uploadOverview";
 import { deriveUploadStats, validateUploadStatsArgs } from "../uploadStats";
 import type { UploadStatsOptions } from "../uploadStats";
 import { deriveVersionFeed, validateVersionFeedArgs } from "../versionFeed";
@@ -228,6 +229,7 @@ import type {
   StreamEvent,
   TagIndex,
   UploadFeed,
+  UploadOverview,
   UploadStats,
   User,
   VersionFeed,
@@ -286,7 +288,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
@@ -1692,6 +1694,23 @@ export async function fetchUploadFeed(options?: UploadFeedOptions): Promise<Uplo
     });
   }
   return delay(deriveUploadFeed(UPLOADS, PROJECTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single-upload-ticket overview (C246 follow-up) derived from the
+ * same upload/project seeds as the live `/uploads/{id}/overview` endpoint.
+ * Router-style 422 validation (upload id), an unknown ticket resolving to
+ * `undefined` (matching the live 404-to-undefined detail mapping) and the
+ * injectable `"uploadOverview"` failure domain keep error and empty states at
+ * parity with live mode.
+ */
+export async function fetchUploadOverview(
+  uploadId: string,
+): Promise<UploadOverview | undefined> {
+  failIfEnabled("uploadOverview");
+  validateUploadOverviewArgs(uploadId);
+  if (!UPLOADS.some((upload) => upload.upload_id === uploadId)) return delay(undefined);
+  return delay(deriveUploadOverview(uploadId, UPLOADS, PROJECTS, REFERENCE_NOW));
 }
 
 /**

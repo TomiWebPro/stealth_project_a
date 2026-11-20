@@ -129,6 +129,7 @@ import type {
   StreamEvent,
   TagIndex,
   UploadFeed,
+  UploadOverview,
   UploadStats,
   User,
   VersionFeed,
@@ -947,6 +948,18 @@ export function useUploadFeed(options?: UploadFeedOptions): UseQueryResult<Uploa
   return useQuery({
     queryKey: queryKeys.uploadFeed.feed(options),
     queryFn: () => api.getUploadFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-upload-ticket snapshot (identity, byte accounting and
+ * whole-project counts) from `/uploads/{id}/overview` (C246).
+ */
+export function useUploadOverview(uploadId: string): UseQueryResult<UploadOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.uploadOverview.detail(uploadId),
+    queryFn: () => api.getUploadOverview(uploadId),
   });
 }
 
