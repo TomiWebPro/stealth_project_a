@@ -74,6 +74,7 @@ import {
   fetchOrchestrationRun,
   fetchOrchestrationStats,
   fetchPlanOverview,
+  fetchRunOverview,
   fetchPresence,
   fetchProject,
   fetchProjectAudit,
@@ -2261,6 +2262,47 @@ describe("mock API plan overview (C238 follow-up)", () => {
   it("injects a failure for the planOverview domain", async () => {
     setMockFailure("planOverview");
     await expect(fetchPlanOverview(planId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API run overview (C242 follow-up)", () => {
+  const runId = ORCHESTRATION_RUNS[0]?.run_id ?? "";
+  const run = ORCHESTRATION_RUNS.find((candidate) => candidate.run_id === runId);
+  const plan = ORCHESTRATION_PLANS.find((candidate) => candidate.plan_id === run?.plan_id);
+
+  it("derives a populated snapshot from the run/plan/job/project seeds", async () => {
+    const overview = await fetchRunOverview(runId, { recentLimit: 2 });
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.run_id).toBe(runId);
+    expect(overview?.plan_id).toBe(run?.plan_id);
+    expect(overview?.project_id).toBe(plan?.project_id ?? null);
+    expect(overview?.plan_goal).toBe(plan?.goal ?? null);
+    expect(overview?.counts.jobs_linked).toBe((run?.job_ids ?? []).length);
+    expect((overview?.recent_jobs ?? []).length).toBeLessThanOrEqual(2);
+    expect(overview?.by_status).toHaveLength(5);
+  });
+
+  it("rejects a malformed id / limit and resolves an unknown run to undefined", async () => {
+    await expect(fetchRunOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchRunOverview(runId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchRunOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the runOverview domain", async () => {
+    setMockFailure("runOverview");
+    await expect(fetchRunOverview(runId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

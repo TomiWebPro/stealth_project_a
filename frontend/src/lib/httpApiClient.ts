@@ -75,6 +75,8 @@ import { pipelineStatsQueryParams } from "./pipelineStats";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import { planOverviewQueryParams } from "./planOverview";
 import type { PlanOverviewOptions } from "./planOverview";
+import { runOverviewQueryParams } from "./runOverview";
+import type { RunOverviewOptions } from "./runOverview";
 import type { ProjectDetail } from "./projectDetail";
 import { projectFeedQueryParams } from "./projectFeed";
 import type { ProjectFeedOptions } from "./projectFeed";
@@ -174,6 +176,7 @@ import type {
   PublishStats,
   RetryFeed,
   RetryStats,
+  RunOverview,
   SearchResponse,
   SearchStats,
   StorageStats,
@@ -592,6 +595,25 @@ export function createHttpApiClient(
         return await request<PlanOverview>(
           `/orchestration/plans/${encodeURIComponent(planId)}/overview`,
           planOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
+    },
+
+    /**
+     * Authoritative single-run snapshot; the backend 404s on an unknown run,
+     * which is normalized to `undefined` like the other detail lookups (C242).
+     */
+    async getRunOverview(
+      runId: string,
+      options?: RunOverviewOptions,
+    ): Promise<RunOverview | undefined> {
+      try {
+        return await request<RunOverview>(
+          `/orchestration/runs/${encodeURIComponent(runId)}/overview`,
+          runOverviewQueryParams(options),
         );
       } catch (cause) {
         if (cause instanceof ApiError && cause.status === 404) return undefined;

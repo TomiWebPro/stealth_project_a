@@ -113,6 +113,8 @@ import {
 import type { OrchestrationStatsOptions } from "../orchestrationStats";
 import { derivePlanOverview, validatePlanOverviewArgs } from "../planOverview";
 import type { PlanOverviewOptions } from "../planOverview";
+import { deriveRunOverview, validateRunOverviewArgs } from "../runOverview";
+import type { RunOverviewOptions } from "../runOverview";
 import { derivePipelineFeed, validatePipelineFeedArgs } from "../pipelineFeed";
 import type { PipelineFeedOptions } from "../pipelineFeed";
 import {
@@ -206,6 +208,7 @@ import type {
   PipelineFeed,
   PipelineStats,
   PlanOverview,
+  RunOverview,
   Presence,
   Project,
   ProjectFeed,
@@ -284,7 +287,7 @@ function delay<T>(value: T): Promise<T> {
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
  * `searchStats`, `uploadStats`, `uploadFeed`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
- * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`,
+ * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `jobOverview`,
  * `providerOverview`, `extensionOverview`, `organizationOverview`, `jobLogs`,
  * `jobFeed` and `jobQueue`.
@@ -934,6 +937,34 @@ export async function fetchPlanOverview(
       planId,
       ORCHESTRATION_PLANS,
       ORCHESTRATION_RUNS,
+      PROJECTS,
+      REFERENCE_NOW,
+      options,
+    ),
+  );
+}
+
+/**
+ * Authoritative single-run overview (C242 follow-up) derived from the same
+ * run/plan/job/project seeds as the live `/orchestration/runs/{id}/overview`
+ * endpoint. Router-style 422 validation (run id / recent limit), an unknown
+ * run resolving to `undefined` (matching the live 404-to-undefined detail
+ * mapping) and the injectable `"runOverview"` failure domain keep error and
+ * empty states at parity with live mode.
+ */
+export async function fetchRunOverview(
+  runId: string,
+  options?: RunOverviewOptions,
+): Promise<RunOverview | undefined> {
+  failIfEnabled("runOverview");
+  validateRunOverviewArgs(runId, options);
+  if (!ORCHESTRATION_RUNS.some((run) => run.run_id === runId)) return delay(undefined);
+  return delay(
+    deriveRunOverview(
+      runId,
+      ORCHESTRATION_RUNS,
+      ORCHESTRATION_PLANS,
+      JOBS,
       PROJECTS,
       REFERENCE_NOW,
       options,

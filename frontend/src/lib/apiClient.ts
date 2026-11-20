@@ -38,6 +38,7 @@ import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { PlanOverviewOptions } from "./planOverview";
+import type { RunOverviewOptions } from "./runOverview";
 import type { ProjectDetail } from "./projectDetail";
 import type { ProjectFeedOptions } from "./projectFeed";
 import type { ProjectOverviewOptions } from "./projectOverview";
@@ -119,6 +120,7 @@ import type {
   PublishStats,
   RetryFeed,
   RetryStats,
+  RunOverview,
   SearchResponse,
   SearchStats,
   StorageStats,
@@ -231,6 +233,16 @@ export interface ApiClient {
     planId: string,
     options?: PlanOverviewOptions,
   ): Promise<PlanOverview | undefined>;
+  /**
+   * Authoritative single-run snapshot (identity, joined plan/project, whole-scope
+   * job/step totals, zero-filled job-status breakdown and bounded newest-first
+   * linked jobs) from `/orchestration/runs/{id}/overview`; unknown runs resolve to
+   * `undefined` (C242).
+   */
+  getRunOverview(
+    runId: string,
+    options?: RunOverviewOptions,
+  ): Promise<RunOverview | undefined>;
   listProjects(): Promise<readonly Project[]>;
   getProject(projectId: string): Promise<Project | undefined>;
   listAssets(): Promise<readonly Asset[]>;
@@ -395,6 +407,7 @@ export const mockApiClient: ApiClient = {
   getOrchestrationStats: mockApi.fetchOrchestrationStats,
   getOrchestrationFeed: mockApi.fetchOrchestrationFeed,
   getPlanOverview: mockApi.fetchPlanOverview,
+  getRunOverview: mockApi.fetchRunOverview,
   listProjects: mockApi.fetchProjects,
   getProject: mockApi.fetchProject,
   listAssets: mockApi.fetchAssets,

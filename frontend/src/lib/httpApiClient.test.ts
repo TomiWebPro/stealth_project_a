@@ -1105,6 +1105,63 @@ describe("createHttpApiClient plan overview (C238)", () => {
   });
 });
 
+describe("createHttpApiClient run overview (C242)", () => {
+  const runId = "0b5c1e2a-6000-4000-8000-000000000001";
+  const overview = {
+    run_id: runId,
+    plan_id: "0b5c1e2a-6100-4000-8000-000000000001",
+    project_id: "0b5c1e2a-1000-4000-8000-000000000001",
+    project_name: "Moonshot",
+    plan_goal: "Generate the s01_c01 shot video.",
+    stage: "await",
+    created_at: "2026-01-02T00:00:00.000Z",
+    counts: { jobs_linked: 2, jobs_resolved: 2, plan_steps: 3 },
+    by_status: [
+      { status: "queued", count: 0 },
+      { status: "running", count: 2 },
+      { status: "succeeded", count: 0 },
+      { status: "failed", count: 0 },
+      { status: "canceled", count: 0 },
+    ],
+    recent_jobs: [],
+    generated_at: "2026-01-04T00:00:00Z",
+  };
+
+  it("GETs the run overview path and forwards recent_limit", async () => {
+    const { fetchImpl, calls } = router({
+      [`/orchestration/runs/${runId}/overview`]: overview,
+    });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+
+    await expect(api.getRunOverview(runId, { recentLimit: 2 })).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/orchestration/runs/${runId}/overview`);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps a 404 to undefined but surfaces other failures", async () => {
+    const missing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "run_not_found", message: "missing" } }, {
+          status: 404,
+        })) as typeof fetch,
+    });
+    await expect(missing.getRunOverview(runId)).resolves.toBeUndefined();
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse({ error: { code: "internal_error", message: "boom" } }, {
+          status: 500,
+        })) as typeof fetch,
+    });
+    await expect(failing.getRunOverview(runId)).rejects.toMatchObject({
+      status: 500,
+      code: "internal_error",
+    });
+  });
+});
+
 describe("createHttpApiClient extension overview (C222)", () => {
   const extensionId = "0f1f2a3b-4c5d-5e6f-8a9b-0c1d2e3f4a5b";
   const overview = {

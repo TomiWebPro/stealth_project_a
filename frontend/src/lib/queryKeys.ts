@@ -34,6 +34,7 @@ import type { OrchestrationFeedOptions } from "./orchestrationFeed";
 import type { PipelineFeedOptions } from "./pipelineFeed";
 import type { PipelineStatsOptions } from "./pipelineStats";
 import type { PlanOverviewOptions } from "./planOverview";
+import type { RunOverviewOptions } from "./runOverview";
 import type { ProjectFeedOptions } from "./projectFeed";
 import type { ProjectOverviewOptions } from "./projectOverview";
 import type { ProjectStatsOptions } from "./projectStats";
@@ -256,6 +257,10 @@ export const queryKeys = {
   planOverview: {
     detail: (planId: string, options: PlanOverviewOptions = {}) =>
       ["plan-overview", "detail", planId, options.recentLimit ?? "all"] as const,
+  },
+  runOverview: {
+    detail: (runId: string, options: RunOverviewOptions = {}) =>
+      ["run-overview", "detail", runId, options.recentLimit ?? "all"] as const,
   },
   projects: {
     all: () => ["projects"] as const,

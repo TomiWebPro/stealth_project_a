@@ -309,6 +309,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the run overview key by run id and recent limit", () => {
+    expect(queryKeys.runOverview.detail("run-1")).toEqual([
+      "run-overview",
+      "detail",
+      "run-1",
+      "all",
+    ]);
+    expect(queryKeys.runOverview.detail("run-1", { recentLimit: 3 })).toEqual([
+      "run-overview",
+      "detail",
+      "run-1",
+      3,
+    ]);
+  });
+
   it("scopes the lineage stats key by project", () => {
     expect(queryKeys.lineageStats.summary()).toEqual(["lineage-stats", "summary", "all"]);
     expect(queryKeys.lineageStats.summary({ projectId: "p1" })).toEqual([

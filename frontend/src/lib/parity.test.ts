@@ -14,6 +14,8 @@ import { deriveChainOverview, validateChainOverviewArgs } from "./chainOverview"
 import type { ChainOverviewOptions } from "./chainOverview";
 import { derivePlanOverview, validatePlanOverviewArgs } from "./planOverview";
 import type { PlanOverviewOptions } from "./planOverview";
+import { deriveRunOverview, validateRunOverviewArgs } from "./runOverview";
+import type { RunOverviewOptions } from "./runOverview";
 import {
   deriveCollaborationFeed,
   validateCollaborationFeedArgs,
@@ -1517,6 +1519,39 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     );
   }
 
+  // Authoritative single-run overview derives a compact snapshot from the same
+  // run/plan/job/project stores on every call; mirror the router's 422 validation,
+  // unknown-run 404 and repository derivation over the seeds. This must precede
+  // the generic `/orchestration/runs/...` detail branch below.
+  if (/^\/orchestration\/runs\/[^/]+\/overview$/.test(path)) {
+    const runId = pathParts[3] ?? "";
+    const rawLimit = params.get("recent_limit");
+    const options: RunOverviewOptions = {
+      ...(rawLimit !== null ? { recentLimit: Number(rawLimit) } : {}),
+    };
+    try {
+      validateRunOverviewArgs(runId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    if (!ORCHESTRATION_RUNS.some((run) => run.run_id === runId)) return NOT_FOUND;
+    return deriveRunOverview(
+      runId,
+      ORCHESTRATION_RUNS,
+      ORCHESTRATION_PLANS,
+      JOBS,
+      PROJECTS,
+      REFERENCE_NOW,
+      options,
+    );
+  }
+
   if (path === "/auth/me") return CURRENT_USER;
   if (path === "/orgs") return ORGANIZATIONS;
   if (path.startsWith("/orchestration/runs/")) {
@@ -1841,6 +1876,9 @@ describe("live vs mock transport parity", () => {
       ["getPlanOverview", (api) => api.getPlanOverview(planId)],
       ["getPlanOverview limited", (api) => api.getPlanOverview(planId, { recentLimit: 1 })],
       ["getPlanOverview missing", (api) => api.getPlanOverview("00000000-0000-4000-8000-000000000000")],
+      ["getRunOverview", (api) => api.getRunOverview(runId)],
+      ["getRunOverview limited", (api) => api.getRunOverview(runId, { recentLimit: 1 })],
+      ["getRunOverview missing", (api) => api.getRunOverview("00000000-0000-4000-8000-000000000000")],
       ["listProjects", (api) => api.listProjects()],
       ["getProject", (api) => api.getProject(filmId)],
       ["listAssets", (api) => api.listAssets()],
@@ -2130,6 +2168,19 @@ describe("live vs mock transport parity", () => {
     expect(await live.getPlanOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
     expect(
       await mockApiClient.getPlanOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The run overview resolves an unknown run to undefined on both transports
+    // and returns a derived snapshot for a seeded run (bounded recent jobs, with
+    // counts and status buckets never bounded).
+    expect(await live.getRunOverview(runId)).toEqual(
+      await mockApiClient.getRunOverview(runId),
+    );
+    expect(await live.getRunOverview(runId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getRunOverview(runId, { recentLimit: 1 }),
+    );
+    expect(await live.getRunOverview("00000000-0000-4000-8000-000000000000")).toBeUndefined();
+    expect(
+      await mockApiClient.getRunOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The extension overview resolves an unknown extension to undefined on both
     // transports and returns a derived snapshot for a seeded extension id.
@@ -2811,6 +2862,22 @@ describe("live vs mock transport parity", () => {
       expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
     }
 
+    // Both transports reject a malformed run id or an out-of-range recent_limit
+    // with the same 422 envelope for the single-run overview.
+    const badRunOverviewOptions: Array<[string, string, RunOverviewOptions | undefined]> = [
+      ["not-a-uuid", "not-a-uuid", undefined],
+      [runId, runId, { recentLimit: 0 }],
+      [runId, runId, { recentLimit: 51 }],
+    ];
+    for (const [mockId, liveId, options] of badRunOverviewOptions) {
+      const [mockErr, liveErr] = await Promise.all([
+        mockApiClient.getRunOverview(mockId, options).catch((cause) => cause),
+        live.getRunOverview(liveId, options).catch((cause) => cause),
+      ]);
+      expect(mockErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+
     // Both transports zero-fill an unknown (well-formed) org scope for the
     // project feed and reject a malformed org id, invalid lifecycle or invalid
     // limit with the same 422 envelope.
@@ -3009,6 +3076,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getOrchestrationStats).toBe("function");
     expect(typeof typed.getOrchestrationFeed).toBe("function");
     expect(typeof typed.getPlanOverview).toBe("function");
+    expect(typeof typed.getRunOverview).toBe("function");
     expect(typeof typed.getOperationFeed).toBe("function");
     expect(typeof typed.getOperationStats).toBe("function");
     expect(typeof typed.getOperationOverview).toBe("function");
