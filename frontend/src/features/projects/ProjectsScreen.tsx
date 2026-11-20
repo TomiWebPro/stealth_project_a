@@ -7,6 +7,7 @@ import { Badge } from "../../ui/Badge";
 import { Button } from "../../ui/Button";
 import { Card, SectionHeader } from "../../ui/Card";
 import { EmptyState, Skeleton } from "../../ui/Feedback";
+import { ChainOverviewPanel } from "./ChainOverviewPanel";
 import { formatProjectUpdatedAt } from "./helpers";
 import { PipelineFeedPanel } from "./PipelineFeedPanel";
 import { PipelineStatsPanel } from "./PipelineStatsPanel";
@@ -93,6 +94,11 @@ export function ProjectsScreen() {
       <PipelineFeedPanel
         title="Global production pipeline feed"
         description="Newest-first training, shot and splat chains from the authoritative chain stores, with kind filters."
+      />
+
+      <ChainOverviewPanel
+        title="Global chain overview"
+        description="Select any training, shot or splat chain to inspect its authoritative snapshot and newest linked jobs/assets."
       />
 
       <LineageStatsPanel
