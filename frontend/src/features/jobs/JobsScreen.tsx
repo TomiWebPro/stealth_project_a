@@ -10,6 +10,7 @@ import { EventFeedPanel } from "./EventFeedPanel";
 import { EventStatsPanel } from "./EventStatsPanel";
 import { JobFeedPanel } from "./JobFeedPanel";
 import { JobLogConsole } from "./JobLogConsole";
+import { JobOverviewPanel } from "./JobOverviewPanel";
 import { JobQueuePanel } from "./JobQueuePanel";
 import { JobStatsPanel } from "./JobStatsPanel";
 import { JobsPanel } from "./JobsPanel";
@@ -125,6 +126,12 @@ export function JobsScreen() {
           description="All jobs from useJobs with progress and retry affordances."
         />
       ) : null}
+
+      <JobOverviewPanel
+        jobs={data ?? []}
+        title="Global job overview"
+        description="Select a job to inspect its authoritative snapshot: identity, counts and newest events."
+      />
 
       <JobLogConsole
         jobs={data ?? []}

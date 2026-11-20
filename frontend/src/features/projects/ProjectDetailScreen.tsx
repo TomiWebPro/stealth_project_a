@@ -14,6 +14,7 @@ import { EventFeedPanel } from "../jobs/EventFeedPanel";
 import { EventStatsPanel } from "../jobs/EventStatsPanel";
 import { JobFeedPanel } from "../jobs/JobFeedPanel";
 import { JobLogConsole } from "../jobs/JobLogConsole";
+import { JobOverviewPanel } from "../jobs/JobOverviewPanel";
 import { JobQueuePanel } from "../jobs/JobQueuePanel";
 import { JobStatsPanel } from "../jobs/JobStatsPanel";
 import { JobsPanel } from "../jobs/JobsPanel";
@@ -338,6 +339,11 @@ function ProjectDetailContent({ projectId }: { readonly projectId: string }) {
         description="Newest-first jobs from the authoritative job store, scoped to this project."
       />
       <JobsPanel jobs={jobs} title="Project jobs" description="Task panel for this project." />
+      <JobOverviewPanel
+        jobs={jobs}
+        title="Project job overview"
+        description="Select a project job to inspect its authoritative snapshot: identity, counts and newest events."
+      />
       <JobLogConsole
         jobs={jobs}
         title="Project job log console"
