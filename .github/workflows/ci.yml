@@ -4739,6 +4739,128 @@ jobs:
                 and bool(povbadbody.get("error", {}).get("request_id")),
                 pov_bad_id.text)
 
+          # Authoritative single-orchestration-run overview (C242/C244) is the
+          # newest /api/v1 URL the live client calls (getRunOverview). Reuse the
+          # on-demand run created in the orchestration/feed probe (stage "plan",
+          # attached to a fresh plan with real steps), then probe the full
+          # snapshot/count/ref shapes, the zero-filled canonical job-status
+          # breakdown, newest-first recency, the recent_limit bound, the
+          # request-id header and the shared 404/422 envelopes, keeping CI
+          # aligned with the exact /api/v1 URLs the live client calls as the
+          # repo grows.
+          rov_run_id = orch_run_id
+          if rov_run_id:
+              rov = httpx.get(
+                  f"{base}/orchestration/runs/{rov_run_id}/overview", timeout=5)
+              rovb = rov.json() if rov.status_code == 200 else {}
+              check("runs/{id}/overview 200 snapshot shape",
+                    rov.status_code == 200 and all(
+                        k in rovb for k in (
+                            "run_id", "plan_id", "project_id", "project_name",
+                            "plan_goal", "stage", "created_at", "counts",
+                            "by_status", "recent_jobs", "generated_at")),
+                    rov.text)
+              check("runs/{id}/overview identity + joined context",
+                    rov.status_code == 200
+                    and rovb.get("run_id") == rov_run_id
+                    and isinstance(rovb.get("plan_id"), str)
+                    and rovb.get("project_id") == project_id
+                    and rovb.get("plan_goal") == "ci smoke orchestration run"
+                    and rovb.get("stage") in (
+                        "plan", "resolve", "submit", "await", "collect", "done")
+                    and isinstance(rovb.get("project_name"), str)
+                    and bool(rovb.get("project_name"))
+                    and isinstance(rovb.get("created_at"), str)
+                    and isinstance(rovb.get("generated_at"), str),
+                    rov.text)
+              rov_counts = rovb.get("counts", {})
+              check("runs/{id}/overview counts shape + invariants",
+                    rov.status_code == 200
+                    and isinstance(rov_counts, dict)
+                    and all(isinstance(rov_counts.get(k), int)
+                            and rov_counts[k] >= 0
+                            for k in ("jobs_linked", "jobs_resolved", "plan_steps"))
+                    and rov_counts.get("plan_steps", 0) >= 1
+                    and rov_counts["jobs_resolved"] <= rov_counts["jobs_linked"]
+                    and isinstance(rovb.get("recent_jobs"), list)
+                    and len(rovb["recent_jobs"]) <= rov_counts["jobs_linked"],
+                    rov.text)
+              rov_statuses = rovb.get("by_status", [])
+              check("runs/{id}/overview by_status zero-filled shape",
+                    rov.status_code == 200
+                    and isinstance(rov_statuses, list)
+                    and {s.get("status") for s in rov_statuses} == {
+                        "queued", "running", "succeeded", "failed", "canceled"}
+                    and all(isinstance(s.get("count"), int) and s["count"] >= 0
+                            for s in rov_statuses)
+                    and sum(s["count"] for s in rov_statuses)
+                        == rov_counts["jobs_resolved"],
+                    rov.text)
+              check("runs/{id}/overview recent job ref shapes",
+                    rov.status_code == 200
+                    and all(all(k in j for k in (
+                        "job_id", "operation_id", "status", "progress", "created_at"))
+                        and isinstance(j["job_id"], str)
+                        and isinstance(j["operation_id"], str)
+                        and j.get("status") in (
+                            "queued", "running", "succeeded", "failed", "canceled")
+                        and isinstance(j.get("progress"), (int, float))
+                        and 0.0 <= j["progress"] <= 1.0
+                        and isinstance(j.get("created_at"), str)
+                        for j in rovb["recent_jobs"]),
+                    rov.text)
+              check("runs/{id}/overview recent newest-first",
+                    rov.status_code == 200
+                    and [(j["created_at"], j["job_id"]) for j in rovb["recent_jobs"]]
+                        == sorted(((j["created_at"], j["job_id"])
+                                   for j in rovb["recent_jobs"]), reverse=True),
+                    rov.text)
+              check("runs/{id}/overview request-id header",
+                    "x-request-id" in {k.lower() for k in rov.headers},
+                    str(dict(rov.headers)))
+              rov_limited = httpx.get(
+                  f"{base}/orchestration/runs/{rov_run_id}/overview",
+                  params={"recent_limit": 1}, timeout=5)
+              rovlb = (rov_limited.json()
+                       if rov_limited.status_code == 200 else {})
+              check("runs/{id}/overview recent_limit bounds page only",
+                    rov_limited.status_code == 200
+                    and len(rovlb.get("recent_jobs", [])) <= 1
+                    and rovlb.get("counts") == rovb.get("counts")
+                    and rovlb.get("by_status") == rovb.get("by_status")
+                    and rovlb.get("run_id") == rov_run_id,
+                    rov_limited.text)
+              rov_bad_limit = httpx.get(
+                  f"{base}/orchestration/runs/{rov_run_id}/overview",
+                  params={"recent_limit": 0}, timeout=5)
+              rovblbody = (rov_bad_limit.json()
+                           if rov_bad_limit.status_code == 422 else {})
+              check("runs/{id}/overview 422 invalid limit envelope",
+                    rov_bad_limit.status_code == 422
+                    and rovblbody.get("error", {}).get("code") == "validation_error"
+                    and bool(rovblbody.get("error", {}).get("request_id")),
+                    rov_bad_limit.text)
+          else:
+              check("runs/{id}/overview setup", False,
+                    "could not obtain a run id for the overview probe")
+          rov_missing = httpx.get(
+              f"{base}/orchestration/runs/00000000-0000-4000-8000-000000000000/overview",
+              timeout=5)
+          rov404 = (rov_missing.json() if rov_missing.status_code == 404 else {})
+          check("runs/{id}/overview 404 shared envelope",
+                rov_missing.status_code == 404
+                and rov404.get("error", {}).get("code") == "run_not_found"
+                and bool(rov404.get("error", {}).get("request_id")),
+                rov_missing.text)
+          rov_bad_id = httpx.get(
+              f"{base}/orchestration/runs/not-a-uuid/overview", timeout=5)
+          rovbadbody = (rov_bad_id.json() if rov_bad_id.status_code == 422 else {})
+          check("runs/{id}/overview 422 malformed id envelope",
+                rov_bad_id.status_code == 422
+                and rovbadbody.get("error", {}).get("code") == "validation_error"
+                and bool(rovbadbody.get("error", {}).get("request_id")),
+                rov_bad_id.text)
+
           invalid = httpx.get(f"{base}/projects/not-a-uuid", timeout=5)
           ebody = invalid.json()
           check("422 validation envelope", invalid.status_code == 422 and ebody.get("error", {}).get("code") == "validation_error", invalid.text)
