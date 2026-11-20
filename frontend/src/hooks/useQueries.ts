@@ -62,6 +62,7 @@ import type { RetryStatsOptions } from "../lib/retryStats";
 import type { SearchOptions } from "../lib/search";
 import type { SearchStatsOptions } from "../lib/searchStats";
 import type { TagOptions } from "../lib/tags";
+import type { TagOverviewOptions } from "../lib/tagOverview";
 import type { UploadFeedOptions } from "../lib/uploadFeed";
 import type { UploadStatsOptions } from "../lib/uploadStats";
 import type { VersionFeedOptions } from "../lib/versionFeed";
@@ -143,6 +144,7 @@ import type {
   StorageStats,
   StreamEvent,
   TagIndex,
+  TagOverview,
   UploadFeed,
   UploadOverview,
   UploadStats,
@@ -1205,6 +1207,22 @@ export function useTags(options?: TagOptions): UseQueryResult<TagIndex> {
   return useQuery({
     queryKey: queryKeys.tags.index(options),
     queryFn: () => api.getTags(options),
+  });
+}
+
+/**
+ * Authoritative single-tag snapshot (identity, joined project, whole-scope
+ * counts and a bounded newest-first tagged-asset page) from
+ * `/tags/{tag}/overview` (C282); unknown tags/projects resolve to `undefined`.
+ */
+export function useTagOverview(
+  tag: string,
+  options?: TagOverviewOptions,
+): UseQueryResult<TagOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.tagOverview.detail(tag, options),
+    queryFn: () => api.getTagOverview(tag, options),
   });
 }
 

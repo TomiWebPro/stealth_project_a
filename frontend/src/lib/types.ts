@@ -196,6 +196,8 @@ export type {
   StreamEventType,
   TagFacet,
   TagIndex,
+  TagOverview,
+  TagOverviewCounts,
   Timestamp,
   UploadFeed,
   UploadFeedItem,

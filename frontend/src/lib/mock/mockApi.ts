@@ -177,6 +177,8 @@ import { deriveSearchStats, validateSearchStatsArgs } from "../searchStats";
 import type { SearchStatsOptions } from "../searchStats";
 import { deriveTagIndex, validateTagArgs } from "../tags";
 import type { TagOptions } from "../tags";
+import { deriveTagOverview, validateTagOverviewArgs } from "../tagOverview";
+import type { TagOverviewOptions } from "../tagOverview";
 import { deriveUploadFeed, validateUploadFeedArgs } from "../uploadFeed";
 import type { UploadFeedOptions } from "../uploadFeed";
 import { deriveUploadOverview, validateUploadOverviewArgs } from "../uploadOverview";
@@ -262,6 +264,7 @@ import type {
   StorageStats,
   StreamEvent,
   TagIndex,
+  TagOverview,
   UploadFeed,
   UploadOverview,
   UploadStats,
@@ -2171,6 +2174,38 @@ export async function fetchTags(options?: TagOptions): Promise<TagIndex> {
     });
   }
   return delay(deriveTagIndex(ASSETS.map(withAssetOverrides), options));
+}
+
+/**
+ * Authoritative single-tag overview (C282 follow-up) derived from the same
+ * asset/project seeds as the live `/tags/{tag}/overview` endpoint. Router-style
+ * 422 validation (tag + project id + recent limit), normalized 404s for an
+ * unknown tag or project scope (both resolve to `undefined`, matching the live
+ * detail mapping) and the injectable `"tagOverview"` failure domain keep error
+ * and empty states at parity with live mode. Asset patches are consulted so the
+ * snapshot agrees with `/tags` after an edit.
+ */
+export async function fetchTagOverview(
+  tag: string,
+  options?: TagOverviewOptions,
+): Promise<TagOverview | undefined> {
+  failIfEnabled("tagOverview");
+  validateTagOverviewArgs(tag, options);
+  if (options?.projectId && !PROJECTS.some((project) => project.id === options.projectId)) {
+    return delay(undefined);
+  }
+  try {
+    return delay(
+      deriveTagOverview(
+        tag,
+        { assets: ASSETS.map(withAssetOverrides), projects: PROJECTS, now: REFERENCE_NOW },
+        options,
+      ),
+    );
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 404) return delay(undefined);
+    throw cause;
+  }
 }
 
 /**

@@ -60,6 +60,7 @@ import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
+import type { TagOverviewOptions } from "./tagOverview";
 import type { UploadFeedOptions } from "./uploadFeed";
 import type { UploadStatsOptions } from "./uploadStats";
 import type { VersionFeedOptions } from "./versionFeed";
@@ -139,6 +140,7 @@ import type {
   SearchStats,
   StorageStats,
   TagIndex,
+  TagOverview,
   UploadFeed,
   UploadOverview,
   UploadStats,
@@ -474,6 +476,15 @@ export interface ApiClient {
   ): Promise<PublishOverview | undefined>;
   /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
   getTags(options?: TagOptions): Promise<TagIndex>;
+  /**
+   * Authoritative single-tag snapshot (identity, joined project scope,
+   * whole-scope counts and a bounded newest-first tagged-asset page) from
+   * `/tags/{tag}/overview`; unknown tags/projects resolve to `undefined` (C282).
+   */
+  getTagOverview(
+    tag: string,
+    options?: TagOverviewOptions,
+  ): Promise<TagOverview | undefined>;
   /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
   getAssetImpact(assetId: string, options?: ImpactOptions): Promise<AssetImpact | undefined>;
 }
@@ -575,5 +586,6 @@ export const mockApiClient: ApiClient = {
   getPublishFeed: mockApi.fetchPublishFeed,
   getPublishOverview: mockApi.fetchPublishOverview,
   getTags: mockApi.fetchTags,
+  getTagOverview: mockApi.fetchTagOverview,
   getAssetImpact: mockApi.fetchAssetImpact,
 };

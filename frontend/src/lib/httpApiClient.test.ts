@@ -4012,3 +4012,52 @@ describe("createHttpApiClient organization overview (C226)", () => {
     });
   });
 });
+
+describe("createHttpApiClient tag overview (C282)", () => {
+  const tag = "lora";
+  const overview = {
+    tag,
+    project_id: null,
+    project_name: null,
+    counts: { tagged_assets: 4, tagged_projects: 2, scope_assets: 10 },
+    recent_assets: [],
+    generated_at: "2026-03-18T10:30:00.000Z",
+  };
+
+  it("GETs the encoded tag-overview path with scope and recent_limit queries", async () => {
+    const { fetchImpl, calls } = router({ [`/tags/${tag}/overview`]: overview });
+    const api = createHttpApiClient("http://localhost:8000", { fetchImpl });
+    const projectId = "0b5c1e2a-1000-4000-8000-000000000001";
+
+    await expect(
+      api.getTagOverview(tag, { projectId, recentLimit: 2 }),
+    ).resolves.toEqual(overview);
+
+    const url = new URL(calls[0] ?? "");
+    expect(url.pathname).toBe(`${API_PREFIX}/tags/${tag}/overview`);
+    expect(url.searchParams.get("project_id")).toBe(projectId);
+    expect(url.searchParams.get("recent_limit")).toBe("2");
+  });
+
+  it("maps both 404s to undefined but surfaces validation and other failures", async () => {
+    for (const code of ["tag_not_found", "project_not_found"]) {
+      const missing = createHttpApiClient("http://localhost:8000", {
+        fetchImpl: (async () =>
+          jsonResponse({ error: { code, message: "missing" } }, { status: 404 })) as typeof fetch,
+      });
+      await expect(missing.getTagOverview(tag)).resolves.toBeUndefined();
+    }
+
+    const failing = createHttpApiClient("http://localhost:8000", {
+      fetchImpl: (async () =>
+        jsonResponse(
+          { error: { code: "validation_error", message: "bad limit" } },
+          { status: 422 },
+        )) as typeof fetch,
+    });
+    await expect(failing.getTagOverview(tag, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+  });
+});

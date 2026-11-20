@@ -689,6 +689,23 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the tag overview key by tag, project and recent limit", () => {
+    expect(queryKeys.tagOverview.detail("lora")).toEqual([
+      "tag-overview",
+      "detail",
+      "lora",
+      "all",
+      "all",
+    ]);
+    expect(queryKeys.tagOverview.detail("lora", { projectId: "p1", recentLimit: 2 })).toEqual([
+      "tag-overview",
+      "detail",
+      "lora",
+      "p1",
+      2,
+    ]);
+  });
+
   it("scopes the upload feed key by project and limit", () => {
     expect(queryKeys.uploadFeed.feed()).toEqual(["upload-feed", "feed", "all", "all"]);
     expect(queryKeys.uploadFeed.feed({ projectId: "p1", limit: 5 })).toEqual([

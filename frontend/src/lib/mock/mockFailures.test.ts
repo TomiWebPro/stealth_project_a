@@ -97,6 +97,7 @@ import {
   fetchSearchStats,
   fetchStorageStats,
   fetchTags,
+  fetchTagOverview,
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
@@ -146,6 +147,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchPublishStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchTagOverview("lora")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCommentFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCommentStats()).rejects.toBeInstanceOf(ApiError);
@@ -911,12 +913,17 @@ describe("mock error-state fakes", () => {
     await expect(fetchOrchestrationFeed()).resolves.toBeDefined();
   });
 
-  it("exposes injectable failures for the tags and impact domains", async () => {
+  it("exposes injectable failures for the tags, tag-overview and impact domains", async () => {
     const assetId = "0b5c1e2a-2000-4000-8000-000000000011";
     setMockFailure("tags");
+    setMockFailure("tagOverview");
     setMockFailure("impact");
 
     await expect(fetchTags()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+    await expect(fetchTagOverview("lora")).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
@@ -927,6 +934,7 @@ describe("mock error-state fakes", () => {
 
     clearMockFailures();
     await expect(fetchTags()).resolves.toBeDefined();
+    await expect(fetchTagOverview("lora")).resolves.toBeDefined();
     await expect(fetchAssetImpact(assetId)).resolves.toBeDefined();
   });
 
@@ -963,6 +971,7 @@ describe("mock error-state fakes", () => {
         ["lineageOverview", () => fetchLineageOverview("0b5c1e2a-5000-4000-8000-000000000001")],
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
         ["publishOverview", () => fetchPublishOverview(assetId)],
+        ["tagOverview", () => fetchTagOverview("lora")],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["userOverview", () => fetchUserOverview(USERS[0]?.id ?? "")],

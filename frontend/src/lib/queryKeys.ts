@@ -55,6 +55,7 @@ import type { RetryStatsOptions } from "./retryStats";
 import type { SearchOptions } from "./search";
 import type { SearchStatsOptions } from "./searchStats";
 import type { TagOptions } from "./tags";
+import type { TagOverviewOptions } from "./tagOverview";
 import type { UploadFeedOptions } from "./uploadFeed";
 import type { UploadStatsOptions } from "./uploadStats";
 import type { VersionFeedOptions } from "./versionFeed";
@@ -479,6 +480,10 @@ export const queryKeys = {
         options.prefix ?? "all",
         options.limit ?? "all",
       ] as const,
+  },
+  tagOverview: {
+    detail: (tag: string, options: TagOverviewOptions = {}) =>
+      ["tag-overview", "detail", tag, options.projectId ?? "all", options.recentLimit ?? "all"] as const,
   },
   impact: {
     asset: (assetId: string, options: ImpactOptions = {}) =>

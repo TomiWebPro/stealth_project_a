@@ -163,6 +163,7 @@ import { deriveSearchResponse, validateSearchArgs } from "./search";
 import type { SearchOptions } from "./search";
 import { deriveSearchStats, validateSearchStatsArgs } from "./searchStats";
 import { deriveTagIndex, validateTagArgs } from "./tags";
+import { deriveTagOverview, validateTagOverviewArgs } from "./tagOverview";
 import { deriveUploadFeed, validateUploadFeedArgs } from "./uploadFeed";
 import type { UploadFeedOptions } from "./uploadFeed";
 import { deriveUploadOverview, validateUploadOverviewArgs } from "./uploadOverview";
@@ -173,6 +174,7 @@ import { deriveVersionOverview, validateVersionOverviewArgs } from "./versionOve
 import type { VersionOverviewOptions } from "./versionOverview";
 import { deriveVersionStats, validateVersionStatsArgs } from "./versionStats";
 import type { TagOptions } from "./tags";
+import type { TagOverviewOptions } from "./tagOverview";
 
 /**
  * C2 parity guard: the live and mock transports must return identical payloads
@@ -633,6 +635,38 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
       },
       options,
     );
+  }
+
+  // Authoritative single-tag overview derives a compact snapshot from the same
+  // asset/project stores as `/tags/{tag}/overview`; mirror the router's 422
+  // tag/project/limit validation and both 404 envelopes over the shared seeds
+  // so live and mock agree exactly (C282). This must precede the `/tags` index
+  // branch below.
+  if (/^\/tags\/[^/]+\/overview$/.test(path)) {
+    const tag = decodeURIComponent(pathParts[2] ?? "");
+    const projectId = params.get("project_id") ?? undefined;
+    const recentLimitRaw = params.get("recent_limit");
+    const options: TagOverviewOptions = {
+      ...(projectId !== undefined ? { projectId } : {}),
+      ...(recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : {}),
+    };
+    try {
+      validateTagOverviewArgs(tag, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    try {
+      return deriveTagOverview(tag, { assets: ASSETS, projects: PROJECTS, now: REFERENCE_NOW }, options);
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) return NOT_FOUND;
+      throw cause;
+    }
   }
 
   // Authoritative tag facets are derived from the asset store on every call;
@@ -2055,6 +2089,8 @@ const versionOverviewAssetId = ASSETS[0]?.id ?? "";
 /** Seeded published asset used by the single-publication overview probes (C278). */
 const publishOverviewAssetId =
   ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined)?.id ?? "";
+/** A seeded tag carried by assets across two projects (used by tag-overview probes, C282). */
+const tagOverviewTag = "lora";
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -2357,6 +2393,10 @@ describe("live vs mock transport parity", () => {
       ["getTags", (api) => api.getTags()],
       ["getTags scoped", (api) => api.getTags({ projectId: filmId })],
       ["getTags filtered", (api) => api.getTags({ projectId: filmId, prefix: "lora", limit: 3 })],
+      ["getTagOverview", (api) => api.getTagOverview(tagOverviewTag)],
+      ["getTagOverview scoped", (api) => api.getTagOverview(tagOverviewTag, { projectId: filmId })],
+      ["getTagOverview limited", (api) => api.getTagOverview(tagOverviewTag, { recentLimit: 1 })],
+      ["getTagOverview missing", (api) => api.getTagOverview("no-such-tag-seed")],
       ["getAssetImpact", (api) => api.getAssetImpact(impactRootId)],
       ["getAssetImpact limited", (api) => api.getAssetImpact(impactRootId, { maxDepth: 2 })],
     ];
@@ -2632,6 +2672,23 @@ describe("live vs mock transport parity", () => {
     expect(
       await mockApiClient.getPublishOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
+    // The tag overview returns identity/whole-scope counts and a newest-first
+    // tagged-asset page for a seeded tag, and resolves unknown tags/projects to
+    // undefined on both transports (C282).
+    const seededTagOverview = await mockApiClient.getTagOverview(tagOverviewTag);
+    expect(await live.getTagOverview(tagOverviewTag)).toEqual(seededTagOverview);
+    expect(seededTagOverview).toMatchObject({
+      tag: tagOverviewTag,
+      project_id: null,
+      project_name: null,
+      counts: { tagged_assets: 4, tagged_projects: 2, scope_assets: expect.any(Number) },
+    });
+    expect(seededTagOverview?.recent_assets?.length).toBeGreaterThan(0);
+    expect(await live.getTagOverview(tagOverviewTag, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getTagOverview(tagOverviewTag, { recentLimit: 1 }),
+    );
+    expect(await live.getTagOverview("no-such-tag-seed")).toBeUndefined();
+    expect(await mockApiClient.getTagOverview("no-such-tag-seed")).toBeUndefined();
     // The lineage overview resolves an unknown relationship to undefined on
     // both transports and returns a canonical-set count snapshot for a seeded
     // relationship (C258).
@@ -3675,6 +3732,24 @@ describe("live vs mock transport parity", () => {
     ]);
     expect(mockTagErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(liveTagErr).toMatchObject({ status: 422, code: "validation_error" });
+    // Both reject a malformed tag-overview project id / out-of-range recent
+    // limit with the same 422 envelope, and normalize both 404s to undefined.
+    for (const bad of [
+      { projectId: "not-a-uuid" },
+      { recentLimit: 0 },
+      { recentLimit: 51 },
+    ]) {
+      const [mockTagOverviewErr, liveTagOverviewErr] = await Promise.all([
+        mockApiClient.getTagOverview(tagOverviewTag, bad).catch((cause) => cause),
+        live.getTagOverview(tagOverviewTag, bad).catch((cause) => cause),
+      ]);
+      expect(mockTagOverviewErr).toMatchObject({ status: 422, code: "validation_error" });
+      expect(liveTagOverviewErr).toMatchObject({ status: 422, code: "validation_error" });
+    }
+    expect(await live.getTagOverview(tagOverviewTag, { projectId: missingId })).toBeUndefined();
+    expect(
+      await mockApiClient.getTagOverview(tagOverviewTag, { projectId: missingId }),
+    ).toBeUndefined();
     const [mockImpactErr, liveImpactErr] = await Promise.all([
       mockApiClient.getAssetImpact(impactRootId, { maxDepth: 0 }).catch((cause) => cause),
       live.getAssetImpact(impactRootId, { maxDepth: 0 }).catch((cause) => cause),
@@ -3733,6 +3808,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getPublishFeed).toBe("function");
     expect(typeof typed.getPublishOverview).toBe("function");
     expect(typeof typed.getTags).toBe("function");
+    expect(typeof typed.getTagOverview).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");
     expect(typeof typed.getProjectFeed).toBe("function");

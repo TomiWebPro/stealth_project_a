@@ -118,6 +118,8 @@ import { searchStatsQueryParams } from "./searchStats";
 import type { SearchStatsOptions } from "./searchStats";
 import { tagQueryParams } from "./tags";
 import type { TagOptions } from "./tags";
+import { tagOverviewQueryParams } from "./tagOverview";
+import type { TagOverviewOptions } from "./tagOverview";
 import { uploadFeedQueryParams } from "./uploadFeed";
 import type { UploadFeedOptions } from "./uploadFeed";
 import { uploadStatsQueryParams } from "./uploadStats";
@@ -203,6 +205,7 @@ import type {
   SearchStats,
   StorageStats,
   TagIndex,
+  TagOverview,
   UploadFeed,
   UploadOverview,
   UploadStats,
@@ -1225,6 +1228,26 @@ export function createHttpApiClient(
 
     getTags(options?: TagOptions): Promise<TagIndex> {
       return request<TagIndex>("/tags", tagQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-tag snapshot; the backend 404s on an unknown tag or
+     * project scope, both normalized to `undefined` like the other detail
+     * lookups (C282).
+     */
+    async getTagOverview(
+      tag: string,
+      options?: TagOverviewOptions,
+    ): Promise<TagOverview | undefined> {
+      try {
+        return await request<TagOverview>(
+          `/tags/${encodeURIComponent(tag)}/overview`,
+          tagOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     async getAssetImpact(

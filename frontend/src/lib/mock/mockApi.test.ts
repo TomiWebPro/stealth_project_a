@@ -98,6 +98,7 @@ import {
   fetchSearch,
   fetchSearchStats,
   fetchStorageStats,
+  fetchTagOverview,
   fetchUploadFeed,
   fetchUploadOverview,
   fetchUploadStats,
@@ -3134,6 +3135,52 @@ describe("mock API publish overview (C278 follow-up)", () => {
   it("injects a failure for the publishOverview domain", async () => {
     setMockFailure("publishOverview");
     await expect(fetchPublishOverview(assetId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("fetchTagOverview (C282)", () => {
+  it("derives a seed-backed snapshot with whole-scope counts and a bounded page", async () => {
+    const full = await fetchTagOverview("lora");
+    expect(full).toMatchObject({
+      tag: "lora",
+      project_id: null,
+      project_name: null,
+      counts: { tagged_assets: 4, tagged_projects: 2, scope_assets: expect.any(Number) },
+    });
+    const limited = await fetchTagOverview("lora", { recentLimit: 1 });
+    expect(limited?.recent_assets).toHaveLength(1);
+    expect(limited?.counts).toEqual(full?.counts);
+  });
+
+  it("scopes by project, joining its name", async () => {
+    const projectId = PROJECTS.find((p) => p.name.startsWith("Moonshot"))?.id ?? "";
+    const overview = await fetchTagOverview("lora", { projectId });
+    expect(overview?.project_id).toBe(projectId);
+    expect(overview?.project_name).toBe(PROJECTS.find((p) => p.id === projectId)?.name);
+    expect(overview?.counts.tagged_assets).toBe(3);
+  });
+
+  it("mirrors router validation and resolves both 404s to undefined", async () => {
+    await expect(fetchTagOverview("lora", { projectId: "not-a-uuid" })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchTagOverview("lora", { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchTagOverview("no-such-tag-seed")).resolves.toBeUndefined();
+    await expect(
+      fetchTagOverview("lora", { projectId: "00000000-0000-4000-8000-000000000000" }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("injects a failure for the tagOverview domain", async () => {
+    setMockFailure("tagOverview");
+    await expect(fetchTagOverview("lora")).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });
