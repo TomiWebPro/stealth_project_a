@@ -123,6 +123,10 @@ import { deriveProviderOverview } from "./providerOverview";
 import { deriveProviderStats, validateProviderStatsArgs } from "./providerStats";
 import { derivePublishFeed, validatePublishFeedArgs } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
+import {
+  derivePublishOverview,
+  validatePublishOverviewArgs,
+} from "./publishOverview";
 import { derivePublishStats, validatePublishStatsArgs } from "./publishStats";
 import { deriveRetryFeed, validateRetryFeedArgs } from "./retryFeed";
 import type { RetryFeedOptions } from "./retryFeed";
@@ -494,6 +498,38 @@ function resolveSeed(path: string, params: URLSearchParams): unknown {
     }
     if (projectId && !PROJECTS.some((project) => project.id === projectId)) return NOT_FOUND;
     return deriveVersionStats(ASSET_VERSIONS, ASSETS, REFERENCE_NOW, options);
+  }
+
+  // Authoritative single publish-receipt overview derives a compact snapshot
+  // from the same asset/project stores as `/publishes/{id}/overview`; mirror the
+  // router's 422 id + recent_limit validation and both 404 envelopes over the
+  // shared seeds so live and mock agree exactly (C278).
+  if (/^\/publishes\/[^/]+\/overview$/.test(path)) {
+    const assetId = pathParts[2] ?? "";
+    const recentLimitRaw = params.get("recent_limit");
+    const options =
+      recentLimitRaw !== null ? { recentLimit: Number(recentLimitRaw) } : undefined;
+    try {
+      validatePublishOverviewArgs(assetId, options);
+    } catch (cause) {
+      if (cause instanceof ApiError) {
+        return jsonResponse(
+          { error: { code: cause.code, message: cause.message, details: cause.details } },
+          422,
+        );
+      }
+      throw cause;
+    }
+    try {
+      return derivePublishOverview(
+        assetId,
+        { assets: ASSETS, projects: PROJECTS, now: REFERENCE_NOW },
+        options,
+      );
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 404) return NOT_FOUND;
+      throw cause;
+    }
   }
 
   // Authoritative publish statistics derive the same asset publish receipts the
@@ -2016,6 +2052,9 @@ const extensionId = EXTENSIONS[0]?.manifest.id ?? "";
 const impactRootId = "0b5c1e2a-2000-4000-8000-000000000011";
 /** Seeded asset (with version records) used by the single-version overview probes. */
 const versionOverviewAssetId = ASSETS[0]?.id ?? "";
+/** Seeded published asset used by the single-publication overview probes (C278). */
+const publishOverviewAssetId =
+  ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined)?.id ?? "";
 
 type Queries = {
   [K in keyof ApiClient]: ApiClient[K] extends (...args: infer A) => unknown
@@ -2306,6 +2345,15 @@ describe("live vs mock transport parity", () => {
         "getPublishFeed scoped and limited",
         (api) => api.getPublishFeed({ projectId: filmId, limit: 2 }),
       ],
+      ["getPublishOverview", (api) => api.getPublishOverview(publishOverviewAssetId)],
+      [
+        "getPublishOverview limited",
+        (api) => api.getPublishOverview(publishOverviewAssetId, { recentLimit: 1 }),
+      ],
+      [
+        "getPublishOverview missing",
+        (api) => api.getPublishOverview("00000000-0000-4000-8000-000000000000"),
+      ],
       ["getTags", (api) => api.getTags()],
       ["getTags scoped", (api) => api.getTags({ projectId: filmId })],
       ["getTags filtered", (api) => api.getTags({ projectId: filmId, prefix: "lora", limit: 3 })],
@@ -2568,6 +2616,21 @@ describe("live vs mock transport parity", () => {
     ).toBeUndefined();
     expect(
       await mockApiClient.getCommentOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    // The publish overview returns an identity/count snapshot for a seeded
+    // publication and resolves unknown/unpublished assets to undefined on both
+    // transports (C278).
+    expect(await live.getPublishOverview(publishOverviewAssetId)).toEqual(
+      await mockApiClient.getPublishOverview(publishOverviewAssetId),
+    );
+    expect(await live.getPublishOverview(publishOverviewAssetId, { recentLimit: 1 })).toEqual(
+      await mockApiClient.getPublishOverview(publishOverviewAssetId, { recentLimit: 1 }),
+    );
+    expect(
+      await live.getPublishOverview("00000000-0000-4000-8000-000000000000"),
+    ).toBeUndefined();
+    expect(
+      await mockApiClient.getPublishOverview("00000000-0000-4000-8000-000000000000"),
     ).toBeUndefined();
     // The lineage overview resolves an unknown relationship to undefined on
     // both transports and returns a canonical-set count snapshot for a seeded
@@ -3461,6 +3524,23 @@ describe("live vs mock transport parity", () => {
     expect(badCommentLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
     expect(badCommentLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
 
+    // Both transports reject a malformed asset id and out-of-range recent limit
+    // with the same 422 envelope for the single-publication overview (C278).
+    const [badPublishMockErr, badPublishLiveErr] = await Promise.all([
+      mockApiClient.getPublishOverview("not-a-uuid").catch((cause) => cause),
+      live.getPublishOverview("not-a-uuid").catch((cause) => cause),
+    ]);
+    expect(badPublishMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badPublishLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+    const [badPublishLimitMockErr, badPublishLimitLiveErr] = await Promise.all([
+      mockApiClient
+        .getPublishOverview(publishOverviewAssetId, { recentLimit: 0 })
+        .catch((cause) => cause),
+      live.getPublishOverview(publishOverviewAssetId, { recentLimit: 0 }).catch((cause) => cause),
+    ]);
+    expect(badPublishLimitMockErr).toMatchObject({ status: 422, code: "validation_error" });
+    expect(badPublishLimitLiveErr).toMatchObject({ status: 422, code: "validation_error" });
+
     // Both transports reject a malformed relationship id and out-of-range
     // recent limit with the same 422 envelope for the single-relationship
     // overview (C258).
@@ -3651,6 +3731,7 @@ describe("live vs mock transport parity", () => {
     expect(typeof typed.getVersionOverview).toBe("function");
     expect(typeof typed.getPublishStats).toBe("function");
     expect(typeof typed.getPublishFeed).toBe("function");
+    expect(typeof typed.getPublishOverview).toBe("function");
     expect(typeof typed.getTags).toBe("function");
     expect(typeof typed.getAssetImpact).toBe("function");
     expect(typeof typed.getProjectStats).toBe("function");

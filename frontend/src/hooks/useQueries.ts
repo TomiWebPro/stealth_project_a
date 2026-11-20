@@ -55,6 +55,7 @@ import type { ProjectStatsOptions } from "../lib/projectStats";
 import type { ProviderFeedOptions } from "../lib/providerFeed";
 import type { ProviderStatsOptions } from "../lib/providerStats";
 import type { PublishFeedOptions } from "../lib/publishFeed";
+import type { PublishOverviewOptions } from "../lib/publishOverview";
 import type { PublishStatsOptions } from "../lib/publishStats";
 import type { RetryFeedOptions } from "../lib/retryFeed";
 import type { RetryStatsOptions } from "../lib/retryStats";
@@ -133,6 +134,7 @@ import type {
   ProviderOverview,
   ProviderStats,
   PublishFeed,
+  PublishOverview,
   PublishStats,
   RetryFeed,
   RetryStats,
@@ -1178,6 +1180,22 @@ export function usePublishFeed(options?: PublishFeedOptions): UseQueryResult<Pub
   return useQuery({
     queryKey: queryKeys.publishFeed.feed(options),
     queryFn: () => api.getPublishFeed(options),
+  });
+}
+
+/**
+ * Authoritative single-publication snapshot (receipt identity, project context,
+ * whole-scope publish counts and same-project siblings) from
+ * `/publishes/{id}/overview` (C278).
+ */
+export function usePublishOverview(
+  assetId: string,
+  options?: PublishOverviewOptions,
+): UseQueryResult<PublishOverview | undefined> {
+  const api = useApiClient();
+  return useQuery({
+    queryKey: queryKeys.publishOverview.detail(assetId, options),
+    queryFn: () => api.getPublishOverview(assetId, options),
   });
 }
 

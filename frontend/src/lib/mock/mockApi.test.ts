@@ -91,6 +91,7 @@ import {
   fetchProviderOverview,
   fetchProviderStats,
   fetchPublishFeed,
+  fetchPublishOverview,
   fetchRecentAssets,
   fetchRetryFeed,
   fetchRetryStats,
@@ -3081,6 +3082,58 @@ describe("mock API publish feed (C125 follow-up)", () => {
 
     setMockFailure("publishFeed");
     await expect(fetchPublishFeed()).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+  });
+});
+
+describe("mock API publish overview (C278 follow-up)", () => {
+  const published =
+    ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined) ?? ASSETS[0];
+  const assetId = published?.id ?? "";
+
+  it("derives a populated snapshot from the asset/project seeds", async () => {
+    const overview = await fetchPublishOverview(assetId);
+    expect(overview).toBeDefined();
+    expect(overview?.generated_at).toBe(REFERENCE_NOW);
+    expect(overview?.asset_id).toBe(assetId);
+    expect(overview?.project_name).toBeTruthy();
+    expect(overview?.counts.project_published).toBeGreaterThanOrEqual(1);
+    expect(overview?.counts.total_published).toBeGreaterThanOrEqual(
+      overview?.counts.project_published ?? 0,
+    );
+    expect(overview?.recent_siblings?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("bounds the sibling page by recentLimit without bounding the counts", async () => {
+    const full = await fetchPublishOverview(assetId);
+    const limited = await fetchPublishOverview(assetId, { recentLimit: 1 });
+    expect(limited?.counts).toEqual(full?.counts);
+    expect(limited?.recent_siblings).toHaveLength(1);
+  });
+
+  it("mirrors router validation and resolves unknown/unpublished assets to undefined", async () => {
+    await expect(fetchPublishOverview("not-a-uuid")).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(fetchPublishOverview(assetId, { recentLimit: 0 })).rejects.toMatchObject({
+      status: 422,
+      code: "validation_error",
+    });
+    await expect(
+      fetchPublishOverview("00000000-0000-4000-8000-000000000000"),
+    ).resolves.toBeUndefined();
+    const unpublished = ASSETS.find((asset) => asset.metadata?.["publish_receipt"] === undefined);
+    if (unpublished) {
+      await expect(fetchPublishOverview(unpublished.id)).resolves.toBeUndefined();
+    }
+  });
+
+  it("injects a failure for the publishOverview domain", async () => {
+    setMockFailure("publishOverview");
+    await expect(fetchPublishOverview(assetId)).rejects.toMatchObject({
       status: 503,
       code: "mock_failure",
     });

@@ -160,6 +160,11 @@ import type { ProviderStatsOptions } from "../providerStats";
 import { deriveProviderOverview } from "../providerOverview";
 import { derivePublishFeed, validatePublishFeedArgs } from "../publishFeed";
 import type { PublishFeedOptions } from "../publishFeed";
+import {
+  derivePublishOverview,
+  validatePublishOverviewArgs,
+} from "../publishOverview";
+import type { PublishOverviewOptions } from "../publishOverview";
 import { derivePublishStats, validatePublishStatsArgs } from "../publishStats";
 import type { PublishStatsOptions } from "../publishStats";
 import { deriveRetryFeed, validateRetryFeedArgs } from "../retryFeed";
@@ -248,6 +253,7 @@ import type {
   ProviderOverview,
   ProviderStats,
   PublishFeed,
+  PublishOverview,
   PublishStats,
   RetryFeed,
   RetryStats,
@@ -318,7 +324,7 @@ function delay<T>(value: T): Promise<T> {
  * templates and writes), `providers`, `audit`, `operations`, `capabilities`,
  * `conversations`, `conversationFeed`, `commentFeed`, `commentStats`, `commentOverview`, `messages` (incl. sends), `stream`, `auth` (user + orgs),
  * `orchestration`, `presence`, `comments`, `storage`, `extensions`, `search`,
- * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
+ * `searchStats`, `uploadStats`, `uploadFeed`, `uploadOverview`, `eventStats`, `eventFeed`, `retryStats`, `retryFeed`, `versionStats`, `versionFeed`, `versionOverview`, `publishStats`, `publishFeed`, `publishOverview`, `tags`, `impact`, `operationStats`, `operationFeed`, `operationOverview`, `organizationStats`, `organizationFeed`, `extensionStats`, `extensionFeed`, `pipelineStats`, `pipelineFeed`, `chainOverview`,
  * `lineageStats`, `lineageFeed`, `collaborationStats`, `collaborationFeed`, `orchestrationStats`, `orchestrationFeed`, `planOverview`, `runOverview`,
  * `projectOverview`, `assetOverview`, `conversationOverview`, `messageOverview`, `jobOverview`,
  * `eventOverview`,
@@ -2120,6 +2126,33 @@ export async function fetchPublishFeed(options?: PublishFeedOptions): Promise<Pu
     });
   }
   return delay(derivePublishFeed(ASSETS, PROJECTS, REFERENCE_NOW, options));
+}
+
+/**
+ * Authoritative single-publication overview (C278 follow-up) derived from the
+ * same asset/project seeds as the live `/publishes/{id}/overview` endpoint.
+ * Router-style 422 validation (asset id + recent limit), normalized 404s for an
+ * unknown or unpublished asset (both resolve to `undefined`, matching the live
+ * detail mapping) and the injectable `"publishOverview"` failure domain keep
+ * error and empty states at parity with live mode.
+ */
+export async function fetchPublishOverview(
+  assetId: string,
+  options?: PublishOverviewOptions,
+): Promise<PublishOverview | undefined> {
+  failIfEnabled("publishOverview");
+  validatePublishOverviewArgs(assetId, options);
+  try {
+    const overview = derivePublishOverview(
+      assetId,
+      { assets: ASSETS, projects: PROJECTS, now: REFERENCE_NOW },
+      options,
+    );
+    return delay(overview);
+  } catch (cause) {
+    if (cause instanceof ApiError && cause.status === 404) return delay(undefined);
+    throw cause;
+  }
 }
 
 /**

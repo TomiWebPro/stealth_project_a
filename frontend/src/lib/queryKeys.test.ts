@@ -674,6 +674,21 @@ describe("queryKeys", () => {
     ]);
   });
 
+  it("scopes the publish overview key by asset id and recent limit", () => {
+    expect(queryKeys.publishOverview.detail("a1")).toEqual([
+      "publish-overview",
+      "detail",
+      "a1",
+      "all",
+    ]);
+    expect(queryKeys.publishOverview.detail("a1", { recentLimit: 3 })).toEqual([
+      "publish-overview",
+      "detail",
+      "a1",
+      3,
+    ]);
+  });
+
   it("scopes the upload feed key by project and limit", () => {
     expect(queryKeys.uploadFeed.feed()).toEqual(["upload-feed", "feed", "all", "all"]);
     expect(queryKeys.uploadFeed.feed({ projectId: "p1", limit: 5 })).toEqual([

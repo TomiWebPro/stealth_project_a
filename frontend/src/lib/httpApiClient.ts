@@ -102,6 +102,8 @@ import { providerStatsQueryParams } from "./providerStats";
 import type { ProviderStatsOptions } from "./providerStats";
 import { publishFeedQueryParams } from "./publishFeed";
 import type { PublishFeedOptions } from "./publishFeed";
+import { publishOverviewQueryParams } from "./publishOverview";
+import type { PublishOverviewOptions } from "./publishOverview";
 import { publishStatsQueryParams } from "./publishStats";
 import type { PublishStatsOptions } from "./publishStats";
 import { retryFeedQueryParams } from "./retryFeed";
@@ -192,6 +194,7 @@ import type {
   ProviderOverview,
   ProviderStats,
   PublishFeed,
+  PublishOverview,
   PublishStats,
   RetryFeed,
   RetryStats,
@@ -1198,6 +1201,26 @@ export function createHttpApiClient(
     /** Newest-first authoritative publish feed derived by the backend `/publishes`. */
     getPublishFeed(options?: PublishFeedOptions): Promise<PublishFeed> {
       return request<PublishFeed>("/publishes", publishFeedQueryParams(options));
+    },
+
+    /**
+     * Authoritative single-publication snapshot; the backend 404s on an unknown
+     * asset or one without a usable receipt, both normalized to `undefined` like
+     * the other detail lookups (C278).
+     */
+    async getPublishOverview(
+      assetId: string,
+      options?: PublishOverviewOptions,
+    ): Promise<PublishOverview | undefined> {
+      try {
+        return await request<PublishOverview>(
+          `/publishes/${encodeURIComponent(assetId)}/overview`,
+          publishOverviewQueryParams(options),
+        );
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 404) return undefined;
+        throw cause;
+      }
     },
 
     getTags(options?: TagOptions): Promise<TagIndex> {

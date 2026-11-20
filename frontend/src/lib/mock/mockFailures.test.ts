@@ -89,6 +89,7 @@ import {
   fetchProviderOverview,
   fetchProviderStats,
   fetchPublishFeed,
+  fetchPublishOverview,
   fetchPublishStats,
   fetchRecentAssets,
   fetchRetryFeed,
@@ -144,6 +145,7 @@ describe("mock error-state fakes", () => {
     await expect(fetchVersionFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishStats()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchPublishFeed()).rejects.toBeInstanceOf(ApiError);
+    await expect(fetchPublishOverview(ASSETS[0]?.id ?? "")).rejects.toBeInstanceOf(ApiError);
     await expect(fetchConversationFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCommentFeed()).rejects.toBeInstanceOf(ApiError);
     await expect(fetchCommentStats()).rejects.toBeInstanceOf(ApiError);
@@ -872,6 +874,19 @@ describe("mock error-state fakes", () => {
     await expect(fetchPublishFeed()).resolves.toBeDefined();
   });
 
+  it("exposes an injectable failure for the publish overview domain", async () => {
+    const assetId = ASSETS.find((asset) => asset.metadata?.["publish_receipt"] !== undefined)?.id ?? "";
+    setMockFailure("publishOverview");
+
+    await expect(fetchPublishOverview(assetId)).rejects.toMatchObject({
+      status: 503,
+      code: "mock_failure",
+    });
+
+    clearMockFailures();
+    await expect(fetchPublishOverview(assetId)).resolves.toBeDefined();
+  });
+
   it("exposes an injectable failure for the orchestration stats domain", async () => {
     setMockFailure("orchestrationStats");
 
@@ -947,6 +962,7 @@ describe("mock error-state fakes", () => {
         ["eventOverview", () => fetchEventOverview(JOB_EVENTS[0]?.job_id ?? "", JOB_EVENTS[0]?.seq ?? 0)],
         ["lineageOverview", () => fetchLineageOverview("0b5c1e2a-5000-4000-8000-000000000001")],
         ["versionOverview", () => fetchVersionOverview(ASSETS[0]?.id ?? "", ASSETS[0]?.version ?? 1)],
+        ["publishOverview", () => fetchPublishOverview(assetId)],
         ["extensionOverview", () => fetchExtensionOverview(computeExtensionId(EXTENSIONS[0]?.manifest.id ?? ""))],
         ["organizationOverview", () => fetchOrganizationOverview(ORGANIZATIONS[0]?.id ?? "")],
         ["userOverview", () => fetchUserOverview(USERS[0]?.id ?? "")],

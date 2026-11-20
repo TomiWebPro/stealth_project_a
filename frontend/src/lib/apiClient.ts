@@ -53,6 +53,7 @@ import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { PublishFeedOptions } from "./publishFeed";
+import type { PublishOverviewOptions } from "./publishOverview";
 import type { PublishStatsOptions } from "./publishStats";
 import type { RetryFeedOptions } from "./retryFeed";
 import type { RetryStatsOptions } from "./retryStats";
@@ -129,6 +130,7 @@ import type {
   ProviderOverview,
   ProviderStats,
   PublishFeed,
+  PublishOverview,
   PublishStats,
   RetryFeed,
   RetryStats,
@@ -460,6 +462,16 @@ export interface ApiClient {
   getPublishStats(options?: PublishStatsOptions): Promise<PublishStats>;
   /** Newest-first authoritative publish feed derived by `/publishes`, optionally project-scoped (C125). */
   getPublishFeed(options?: PublishFeedOptions): Promise<PublishFeed>;
+  /**
+   * Authoritative single-publication snapshot (receipt identity, joined project,
+   * whole-scope publish counts and same-project siblings) from
+   * `/publishes/{id}/overview`; unknown or unpublished assets resolve to
+   * `undefined` (C278).
+   */
+  getPublishOverview(
+    assetId: string,
+    options?: PublishOverviewOptions,
+  ): Promise<PublishOverview | undefined>;
   /** Most-used-first asset tag facets, optionally scoped/filtered (C33). */
   getTags(options?: TagOptions): Promise<TagIndex>;
   /** Transitive downstream asset impact; unknown roots resolve to undefined (C34). */
@@ -561,6 +573,7 @@ export const mockApiClient: ApiClient = {
   getVersionOverview: mockApi.fetchVersionOverview,
   getPublishStats: mockApi.fetchPublishStats,
   getPublishFeed: mockApi.fetchPublishFeed,
+  getPublishOverview: mockApi.fetchPublishOverview,
   getTags: mockApi.fetchTags,
   getAssetImpact: mockApi.fetchAssetImpact,
 };

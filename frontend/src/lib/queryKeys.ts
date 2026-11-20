@@ -48,6 +48,7 @@ import type { ProjectStatsOptions } from "./projectStats";
 import type { ProviderFeedOptions } from "./providerFeed";
 import type { ProviderStatsOptions } from "./providerStats";
 import type { PublishFeedOptions } from "./publishFeed";
+import type { PublishOverviewOptions } from "./publishOverview";
 import type { PublishStatsOptions } from "./publishStats";
 import type { RetryFeedOptions } from "./retryFeed";
 import type { RetryStatsOptions } from "./retryStats";
@@ -464,6 +465,10 @@ export const queryKeys = {
   publishFeed: {
     feed: (options: PublishFeedOptions = {}) =>
       ["publish-feed", "feed", options.projectId ?? "all", options.limit ?? "all"] as const,
+  },
+  publishOverview: {
+    detail: (assetId: string, options: PublishOverviewOptions = {}) =>
+      ["publish-overview", "detail", assetId, options.recentLimit ?? "all"] as const,
   },
   tags: {
     index: (options: TagOptions = {}) =>
