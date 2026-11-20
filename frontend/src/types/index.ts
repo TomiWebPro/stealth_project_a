@@ -63,6 +63,7 @@ export * from "./uploadStats";
 export * from "./uploadFeed";
 export * from "./uploadOverview";
 export * from "./userOverview";
+export * from "./membershipOverview";
 export * from "./eventFeed";
 export * from "./eventStats";
 export * from "./jobLogs";

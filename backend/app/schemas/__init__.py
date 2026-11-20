@@ -393,6 +393,10 @@ from .user_overview import (
     UserOverview,
     UserOverviewCounts,
 )
+from .membership_overview import (
+    MembershipOverview,
+    MembershipOverviewCounts,
+)
 from .version_feed import (
     VersionFeed,
     VersionFeedItem,
@@ -740,4 +744,7 @@ __all__ = [
     "UserMembership",
     "UserOverview",
     "UserOverviewCounts",
+    # membership overview
+    "MembershipOverview",
+    "MembershipOverviewCounts",
 ]

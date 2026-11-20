@@ -282,6 +282,12 @@ All paths are prefixed with `/api/v1`.
   organization/project/conversation/comment/presence counts and bounded
   newest-first projects/comments) derived fresh from the authoritative stores;
   shared 404 `user_not_found` / 422 envelopes
+  `GET /orgs/{org_id}/members/{user_id}/overview?recent_limit=` — authoritative
+  single-membership snapshot (joined org/user identity, role + join date,
+  whole-scope project/conversation/comment/presence activity scoped to the org,
+  and bounded newest-first projects/comments) derived fresh from the
+  authoritative stores; shared 404 `organization_not_found` / `user_not_found` /
+  `membership_not_found` and 422 envelopes
 - **Extensions:** `GET /extensions/registry`, `GET /extensions`,
   `POST /extensions/install`, `GET /extensions/{id}`,
   `POST /extensions/{id}/enable|disable`, `DELETE /extensions/{id}`,

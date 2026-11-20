@@ -75,6 +75,7 @@ from .upload_feed import UploadFeedRepository
 from .upload_overview import UploadOverviewRepository
 from .upload_stats import UploadStatsRepository
 from .user_overview import UserOverviewRepository
+from .membership_overview import MembershipOverviewRepository
 from .version_feed import VersionFeedRepository
 from .version_stats import VersionStatsRepository
 from .version_overview import VersionOverviewRepository
@@ -106,6 +107,7 @@ class Repositories:
     upload_overview: UploadOverviewRepository
     upload_stats: UploadStatsRepository
     user_overview: UserOverviewRepository
+    membership_overview: MembershipOverviewRepository
     jobs: JobRepository
     job_stats: JobStatsRepository
     job_feed: JobFeedRepository
@@ -185,6 +187,7 @@ class Repositories:
         upload_overview = UploadOverviewRepository(store, projects, clock=clock)
         upload_stats = UploadStatsRepository(store, projects, clock=clock)
         user_overview = UserOverviewRepository(store, clock=clock)
+        membership_overview = MembershipOverviewRepository(store, clock=clock)
         jobs = JobRepository(store, projects, clock=clock)
         job_stats = JobStatsRepository(store, projects, clock=clock)
         job_feed = JobFeedRepository(store, projects, clock=clock)
@@ -270,6 +273,7 @@ class Repositories:
             upload_overview=upload_overview,
             upload_stats=upload_stats,
             user_overview=user_overview,
+            membership_overview=membership_overview,
             jobs=jobs,
             job_stats=job_stats,
             job_feed=job_feed,
